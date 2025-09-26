@@ -14,7 +14,6 @@ public class User {
     private String lastName;
     @NotBlank
     @Email
-
     private String email;
     private String password; // Will be hashed later
     private Role role;
