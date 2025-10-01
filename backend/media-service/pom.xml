@@ -7,10 +7,10 @@
         <artifactId>backend</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-
     <artifactId>media-service</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
     <name>media-service</name>
-    <description>Service for managing media files</description>
+    <description>Demo project for Spring Boot</description>
 
     <dependencies>
         <dependency>
@@ -25,27 +25,34 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
+
+        <!-- Common module dependency -->
+        <dependency>
+            <groupId>com.backend</groupId>
+            <artifactId>common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.backend</groupId>
-            <artifactId>common</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.azure.spring</groupId>
-            <artifactId>spring-cloud-azure-starter-storage-blob</artifactId>
-            <version>5.12.0</version>
-        </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>

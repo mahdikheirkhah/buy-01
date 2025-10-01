@@ -18,7 +18,13 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="api-gateway" options="" />
       <module name="backend" options="" />
+      <module name="common" options="" />
+      <module name="discovery-service" options="" />
+      <module name="media-service" options="" />
+      <module name="product-service" options="" />
+      <module name="user-service" options="" />
     </option>
   </component>
 </project>

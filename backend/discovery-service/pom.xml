@@ -23,6 +23,12 @@
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-servlet</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
+
 
 </project>

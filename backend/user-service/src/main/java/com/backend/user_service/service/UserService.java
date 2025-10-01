@@ -46,8 +46,10 @@ public class UserService {
         if (user.getRole() == Role.CLIENT){
             user.setAvatarUrl(null);
         } else {
-            String avatarUrl =  saveAvatar(avatarFile);
-            user.setAvatarUrl(avatarUrl);
+            if (avatarFile != null && !avatarFile.isEmpty()) {
+                String avatarUrl = saveAvatar(avatarFile);
+                user.setAvatarUrl(avatarUrl);
+            }
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));

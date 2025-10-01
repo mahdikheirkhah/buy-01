@@ -7,15 +7,14 @@ import { Observable } from 'rxjs';
 })
 export class AuthService {
   private apiUrl = 'http://localhost:8080/api/users';
-
   constructor(private http: HttpClient) { }
-
-  register(userData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, userData);
+  // This method now accepts FormData
+  register(formData: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/register`, formData);
   }
 
+  // Login method remains the same
   login(credentials: any): Observable<any> {
-    // We will build this endpoint in the backend next
     return this.http.post(`${this.apiUrl}/login`, credentials);
   }
 }

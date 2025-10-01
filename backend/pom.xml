@@ -20,10 +20,16 @@
 
     <properties>
         <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
         <spring-boot.version>3.2.8</spring-boot.version>
         <spring-cloud.version>2023.0.2</spring-cloud.version>
+        <lombok.version>1.18.34</lombok.version>
         <jjwt.version>0.11.5</jjwt.version>
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
     </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -40,6 +46,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+            <!-- JWT Dependencies -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-api</artifactId>
@@ -49,11 +62,13 @@
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-impl</artifactId>
                 <version>${jjwt.version}</version>
+                <scope>runtime</scope>
             </dependency>
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-jackson</artifactId>
                 <version>${jjwt.version}</version>
+                <scope>runtime</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -64,7 +79,24 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.11.0</version> </plugin>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <release>17</release>
+                        <encoding>UTF-8</encoding>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>

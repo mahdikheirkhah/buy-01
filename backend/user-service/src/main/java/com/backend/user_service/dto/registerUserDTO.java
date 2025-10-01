@@ -5,11 +5,15 @@ import com.backend.user_service.model.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor; // Import this
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor; // Import this
 
 @Builder
 @Data
+@NoArgsConstructor    // ✅ ADD THIS annotation
+@AllArgsConstructor   // ✅ ADD THIS annotation
 public class registerUserDTO {
     @NotBlank(message = "First name is required")
     private String firstName;

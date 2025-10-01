@@ -1,6 +1,10 @@
 package com.backend.media_service.controller;
 
 import com.backend.common.dto.MediaUploadResponseDTO;
+import com.backend.media_service.service.FileStorageService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -9,27 +13,27 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/media")
 public class MediaController {
 
-    // You would inject a service here to handle the actual file saving logic
-    // @Autowired
-    // private FileStorageService fileStorageService;
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @PostMapping("/upload")
     public ResponseEntity<MediaUploadResponseDTO> uploadFile(@RequestPart("file") MultipartFile file) {
-        // 1. VALIDATION LOGIC
-        // Check file size (e.g., file.getSize() > 2 * 1024 * 1024)
-        // Check file type (e.g., file.getContentType() is "image/jpeg" or "image/png")
-        // If validation fails, throw a custom exception.
+        // Now we actually save the file and get its unique generated name
+        String filename = fileStorageService.save(file);
 
-        // 2. SAVING LOGIC (inside a service class)
-        // Save the file to a directory, a cloud storage service (like AWS S3), or a database.
-        // String fileId = fileStorageService.save(file);
+        // This is the URL path the frontend will use to fetch the image later
+        String fileUrl = "/api/media/files/" + filename;
 
-        // For this example, let's pretend we saved it and got an ID and URL.
-        String fileId = "some-unique-id-" + file.getOriginalFilename();
-        String fileUrl = "/media/" + fileId; // The URL to access the file later
-
-        // 3. RETURN RESPONSE
-        MediaUploadResponseDTO response = new MediaUploadResponseDTO(fileId, fileUrl);
+        MediaUploadResponseDTO response = new MediaUploadResponseDTO(filename, fileUrl);
         return ResponseEntity.ok(response);
+    }
+
+    // This new endpoint serves the saved files
+    @GetMapping("/files/{filename:.+}")
+    public ResponseEntity<Resource> getFile(@PathVariable String filename) {
+        Resource file = fileStorageService.load(filename);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+                .body(file);
     }
 }
