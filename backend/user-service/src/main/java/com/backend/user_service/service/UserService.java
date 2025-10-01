@@ -35,12 +35,14 @@ public class UserService {
     }
 
     public User registerUser(User user, MultipartFile avatarFile) {
-        if (this.checkUserExistence(user.getEmail())) {
+        if (checkUserExistence(user.getEmail())) {
             throw new CustomException("User already exists please go to the login page", HttpStatus.BAD_REQUEST);
         }
+
         if (user.getRole() == null){
             user.setRole(Role.CLIENT);
         }
+
         if (user.getRole() == Role.CLIENT){
             user.setAvatarUrl(null);
         } else {
@@ -53,7 +55,8 @@ public class UserService {
         kafkaTemplate.send("user-registered-topic", savedUser.getEmail());
         return savedUser;
     }
-    public boolean checkUserExistence(String email) {
+
+    private boolean checkUserExistence(String email) {
         return  userRepository.findByEmail(email).isPresent();
     }
 
@@ -71,7 +74,7 @@ public class UserService {
                 .block(); // .block() makes the call synchronous. A reactive chain is more advanced.
 
         if (mediaResponse == null || mediaResponse.getFileUrl() == null) {
-            throw new RuntimeException("Failed to upload avatar image.");
+            throw new CustomException("Failed to upload avatar image.", HttpStatus.BAD_REQUEST);
         }
         return mediaResponse.getFileUrl();
     }
