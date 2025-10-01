@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -20,13 +20,14 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> handleUserRegistration(
+    public ResponseEntity<Map<String, String>> handleUserRegistration(
             @RequestPart("userDto") @Valid registerUserDTO userDto,
             @RequestPart(value = "avatarFile", required = false) MultipartFile avatarFile) {
 
         // This assumes your DTO class has a method to convert it to a User entity
         // If not, you'll need to create the User object manually here.
         userService.registerUser(userDto.ToUser(), avatarFile);
-        return new ResponseEntity<>("User registered successfully", HttpStatus.OK);
+
+        return ResponseEntity.ok(Map.of("message", "User registered successfully"));
     }
 }
