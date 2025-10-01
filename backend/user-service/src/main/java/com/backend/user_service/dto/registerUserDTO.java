@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor; // Import this
 
 @Builder
 @Data
-@NoArgsConstructor    // ✅ ADD THIS annotation
-@AllArgsConstructor   // ✅ ADD THIS annotation
+@NoArgsConstructor
+@AllArgsConstructor
 public class registerUserDTO {
     @NotBlank(message = "First name is required")
     private String firstName;
