@@ -50,6 +50,15 @@ public class UserController {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String jwt = jwtUtil.generateToken(userDetails.getUsername());
         Cookie jwtCookie = jwtUtil.createCookie(jwt, 60 * 60 * 24 );
+        response.addCookie(jwtCookie);
         return ResponseEntity.ok(Map.of("message", "Login successful"));
     }
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> handleUserLogout(HttpServletResponse response) {
+        Cookie jwtCookie = jwtUtil.createCookie(null, 0 );
+        response.addCookie(jwtCookie);
+        return ResponseEntity.ok(Map.of("message", "Logout successful"));
+    }
+
+
 }
