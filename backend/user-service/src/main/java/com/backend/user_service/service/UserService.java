@@ -2,9 +2,11 @@ package com.backend.user_service.service;
 
 import com.backend.common.dto.MediaUploadResponseDTO;
 import com.backend.common.exception.CustomException;
+import com.backend.user_service.dto.loginUserDTO;
 import com.backend.user_service.model.Role;
 import com.backend.user_service.model.User;
 import com.backend.user_service.repository.UserRepository;
+import org.apache.kafka.common.config.types.Password;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -17,6 +19,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.BodyInserters;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -35,7 +38,7 @@ public class UserService {
     }
 
     public User registerUser(User user, MultipartFile avatarFile) {
-        if (checkUserExistence(user.getEmail())) {
+        if (checkUserExistence(user.getEmail()).isPresent()) {
             throw new CustomException("User already exists please go to the login page", HttpStatus.BAD_REQUEST);
         }
 
@@ -58,10 +61,12 @@ public class UserService {
         return savedUser;
     }
 
-    private boolean checkUserExistence(String email) {
-        return  userRepository.findByEmail(email).isPresent();
+    private Optional<User> checkUserExistence(String email) {
+        return  userRepository.findByEmail(email);
     }
-
+    private boolean checkPassword(String firstPassword, String secondPassword){
+        return passwordEncoder.matches(firstPassword, secondPassword);
+    }
     private String saveAvatar(MultipartFile avatarFile) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", avatarFile.getResource());
@@ -80,6 +85,17 @@ public class UserService {
         }
         return mediaResponse.getFileUrl();
     }
+
+    public void loginUser(loginUserDTO loginUserDTO) {
+        User user = checkUserExistence(loginUserDTO.getEmail())
+                .orElseThrow(()->new CustomException("wrong email or password", HttpStatus.BAD_REQUEST));
+        if (!checkPassword(loginUserDTO.getPassword(), user.getPassword())){
+            throw new CustomException("wrong email or password", HttpStatus.BAD_REQUEST);
+        }
+        // save the JWT in the cookie
+
+    }
+
 
     // ... other methods
 }
