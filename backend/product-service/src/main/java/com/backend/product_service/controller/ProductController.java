@@ -1,5 +1,6 @@
-package com.backend.product_service.controller;package package com.backend.product_service.controller;
+package com.backend.product_service.controller;
 import com.backend.product_service.dto.CreateProductDTO;
+import com.backend.product_service.dto.ProductDTO;
 import com.backend.product_service.dto.UpdateProductDTO;
 import com.backend.product_service.model.Product;
 import com.backend.product_service.service.ProductService;
@@ -19,6 +20,7 @@ public class ProductController {
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
+
     @PostMapping
     @PreAuthorize("hasRole('SELLER')") // Only users with ROLE_SELLER can access this
     public ResponseEntity<String> createProduct(
@@ -28,6 +30,7 @@ public class ProductController {
         productService.createProduct(sellerId, productDto);
         return ResponseEntity.ok("Product created successfully");
     }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<String> updateProduct(
@@ -37,6 +40,7 @@ public class ProductController {
         productService.updateProduct(productId, sellerId, productDto);
         return ResponseEntity.ok("Product updated successfully");
     }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<String> deleteProduct(
@@ -45,22 +49,18 @@ public class ProductController {
         productService.deleteProduct(productId, sellerId);
         return ResponseEntity.ok("Product deleted successfully");
     }
-    @GetMapping
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<List<Product>> getAllProductsBySeller() {
-        List<Product> products = productService.getAllProducts();
-        for (Product product : products) {
 
-        }
+    @GetMapping
+    public ResponseEntity<List<ProductDTO>> getAllProducts() {
+        List<ProductDTO> products = productService.getAllProductsWithSellerInfo();
         return ResponseEntity.ok(products);
     }
-    GetMapping
-    @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<List<Product>> getAllProductsByClient() {}
 
-    GetMapping("/me")
+    @GetMapping("/me")
     @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<List<Product>> getAllProductsBySellerId(
+    public ResponseEntity<List<ProductDTO>> getAllProductsBySellerId(
             @RequestHeader("X-User-ID") String sellerId) {
+        List<ProductDTO> products = productService.getAllMyProducts(sellerId);
+        return ResponseEntity.ok(products);
     }
 }

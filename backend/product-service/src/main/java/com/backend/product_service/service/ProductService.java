@@ -1,26 +1,33 @@
 package com.backend.product_service.service;
 
 import com.backend.common.exception.CustomException;
+import com.backend.common.dto.InfoUserDTO;
 import com.backend.product_service.dto.CreateProductDTO;
+import com.backend.product_service.dto.ProductDTO;
 import com.backend.product_service.dto.UpdateProductDTO;
 import com.backend.product_service.model.Product;
 import com.backend.product_service.repository.ProductMapper;
 import com.backend.product_service.repository.ProductRepository;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final WebClient.Builder webClientBuilder;
 
     @Autowired
-    public ProductService(ProductRepository productRepository,  ProductMapper productMapper) {
+    public ProductService(ProductRepository productRepository,  ProductMapper productMapper, WebClient.Builder webClientBuilder) {
         this.productMapper = productMapper;
         this.productRepository = productRepository;
+        this.webClientBuilder = webClientBuilder;
     }
     public Product getProduct(String id) {
         return productRepository.findById(id)
@@ -50,6 +57,54 @@ public class ProductService {
     public void deleteProduct(String productId, String sellerId) {
         Product existingProduct = checkProduct(productId, sellerId);
         productRepository.delete(existingProduct);
+    }
+
+    public List<ProductDTO> getAllProductsWithSellerInfo() {
+
+        List<Product> products = productRepository.findAll();
+
+        if (products.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> sellerIds = products.stream()
+                .map(Product::getSellerID)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<InfoUserDTO> sellers = getSellersInfo(sellerIds);
+        return appendSellersToProduct(products, sellers);
+    }
+
+    public List<ProductDTO> getAllMyProducts(String sellerId) {
+        List<Product> products = productRepository.findAllBySellerID(sellerId);
+        if (products.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<String> sellerIds = new ArrayList<>();
+        sellerIds.add(sellerId);
+        List<InfoUserDTO> seller = getSellersInfo(sellerIds);
+        return appendSellersToProduct(products, seller);
+    }
+
+    private List<ProductDTO> appendSellersToProduct(List<Product> products,List<InfoUserDTO>  sellers) {
+        assert sellers != null;
+        Map<String, InfoUserDTO> sellerMap = sellers.stream()
+                .collect(Collectors.toMap(InfoUserDTO::getId, user -> user));
+
+        return products.stream().map(product -> {
+            InfoUserDTO seller = sellerMap.get(product.getSellerID());
+            return new ProductDTO(product, seller);
+        }).collect(Collectors.toList());
+    }
+
+    private List<InfoUserDTO> getSellersInfo(List<String> sellerIds) {
+        return webClientBuilder.build().get()
+                .uri("http://USER-SERVICE/api/users/batch?ids=" + String.join(",", sellerIds))
+                .retrieve()
+                .bodyToFlux(InfoUserDTO.class) // Use Flux for a list
+                .collectList()
+                .block();
     }
 
     private boolean checkId(String id) {
