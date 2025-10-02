@@ -3,6 +3,7 @@ package com.backend.user_service.service;
 import com.backend.common.dto.MediaUploadResponseDTO;
 import com.backend.common.exception.CustomException;
 import com.backend.common.util.JwtUtil;
+import com.backend.common.dto.InfoUserDTO;
 import com.backend.user_service.dto.loginUserDTO;
 import com.backend.user_service.model.Role;
 import com.backend.user_service.model.User;
@@ -111,6 +112,26 @@ public class UserService implements UserDetailsService {
                 user.getPassword(),
                 new ArrayList<>() // You would add user roles/authorities here
         );
+    }
+
+    public List<InfoUserDTO> getUserByIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            throw new CustomException ("User not found with ids", HttpStatus.NOT_FOUND);
+        }
+        List<InfoUserDTO> users = new ArrayList<>();
+        for (String id : ids) {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new CustomException ("User not found with id: " + id, HttpStatus.NOT_FOUND));
+
+            users.add(InfoUserDTO
+                    .builder()
+                    .id(user.getId())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .email(user.getEmail())
+                    .build());
+        }
+        return users;
     }
 
     public Cookie generateCookie(String email) {

@@ -1,8 +1,10 @@
 package com.backend.user_service.controller;
 
 import com.backend.common.util.JwtUtil;
+import com.backend.common.dto.InfoUserDTO;
 import com.backend.user_service.dto.loginUserDTO;
 import com.backend.user_service.dto.registerUserDTO;
+import com.backend.user_service.model.User;
 import com.backend.user_service.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,6 +18,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
@@ -54,6 +58,13 @@ public class UserController {
         response.addCookie(userService.generateEmptyCookie());
         return ResponseEntity.ok(Map.of("message", "Logout successful"));
     }
+
+    @GetMapping("/batch")
+    public ResponseEntity<List<InfoUserDTO>> getUsersByIds(@RequestParam List<String> ids) {
+        List<InfoUserDTO> users = userService.getUserByIds(ids);
+        return ResponseEntity.ok(users);
+    }
+
 
 
 }
