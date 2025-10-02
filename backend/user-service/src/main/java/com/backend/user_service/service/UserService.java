@@ -2,10 +2,12 @@ package com.backend.user_service.service;
 
 import com.backend.common.dto.MediaUploadResponseDTO;
 import com.backend.common.exception.CustomException;
+import com.backend.common.util.JwtUtil;
 import com.backend.user_service.dto.loginUserDTO;
 import com.backend.user_service.model.Role;
 import com.backend.user_service.model.User;
 import com.backend.user_service.repository.UserRepository;
+import jakarta.servlet.http.Cookie;
 import org.apache.kafka.common.config.types.Password;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,9 +23,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.BodyInserters;
 
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -32,13 +32,14 @@ public class UserService implements UserDetailsService {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final PasswordEncoder passwordEncoder;
     private final WebClient.Builder webClientBuilder;
-
+    private final JwtUtil jwtUtil;
     @Autowired
-    public UserService(UserRepository userRepository, KafkaTemplate<String, String> kafkaTemplate,  PasswordEncoder passwordEncoder, WebClient.Builder webClientBuilder) {
+    public UserService(UserRepository userRepository, KafkaTemplate<String, String> kafkaTemplate,  PasswordEncoder passwordEncoder, WebClient.Builder webClientBuilder,  JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.kafkaTemplate = kafkaTemplate;
         this.passwordEncoder = passwordEncoder;
         this.webClientBuilder = webClientBuilder;
+        this.jwtUtil = jwtUtil;
     }
 
     public User registerUser(User user, MultipartFile avatarFile) {
@@ -90,13 +91,13 @@ public class UserService implements UserDetailsService {
         return mediaResponse.getFileUrl();
     }
 
-    public void loginUser(loginUserDTO loginUserDTO) {
+    public User loginUser(loginUserDTO loginUserDTO) {
         User user = checkUserExistence(loginUserDTO.getEmail())
                 .orElseThrow(()->new CustomException("wrong email or password", HttpStatus.BAD_REQUEST));
         if (!checkPassword(loginUserDTO.getPassword(), user.getPassword())){
             throw new CustomException("wrong email or password", HttpStatus.BAD_REQUEST);
         }
-
+        return user;
     }
 
     @Override
@@ -111,6 +112,17 @@ public class UserService implements UserDetailsService {
                 new ArrayList<>() // You would add user roles/authorities here
         );
     }
+
+    public Cookie generateCookie(String email) {
+        User user = userRepository.findByEmail(email)
+                        .orElseThrow(()-> new CustomException("can not find the User", HttpStatus.NOT_FOUND));
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getId());
+        claims.put("role", user.getRole());
+        String jwt = jwtUtil.generateToken(claims, user.getEmail());
+        return jwtUtil.createCookie(jwt, 60 * 60 * 24 );
+    }
+    public Cookie generateEmptyCookie() { return jwtUtil.createCookie(null, 0 ); }
 
 
     // ... other methods

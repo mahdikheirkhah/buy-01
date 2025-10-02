@@ -43,8 +43,16 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             }
 
             // 3. Add user info to headers
-            String username = jwtUtil.getUsernameFromToken(token);
-            request.mutate().header("X-User-Email", username).build();
+            String email = jwtUtil.getUsernameFromToken(token);
+            String userId = jwtUtil.getClaimFromToken(token, claims -> claims.get("userId", String.class));
+            String role = jwtUtil.getClaimFromToken(token, claims -> claims.get("role", String.class));
+
+            // Add headers for downstream services
+            request.mutate()
+                    .header("X-User-Email", email)
+                    .header("X-User-ID", userId)
+                    .header("X-User-Role", role)
+                    .build();
 
             return chain.filter(exchange.mutate().request(request).build());
         };

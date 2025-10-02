@@ -21,11 +21,9 @@ import java.util.Map;
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
-    private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     @Autowired
-    public UserController(UserService userService, JwtUtil jwtUtil,  AuthenticationManager authenticationManager) {
-        this.jwtUtil = jwtUtil;
+    public UserController(UserService userService,  AuthenticationManager authenticationManager) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
     }
@@ -46,17 +44,14 @@ public class UserController {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginUserDTO.getEmail(), loginUserDTO.getPassword())
         );
-
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String jwt = jwtUtil.generateToken(userDetails.getUsername());
-        Cookie jwtCookie = jwtUtil.createCookie(jwt, 60 * 60 * 24 );
+        Cookie jwtCookie = userService.generateCookie(loginUserDTO.getEmail());
         response.addCookie(jwtCookie);
         return ResponseEntity.ok(Map.of("message", "Login successful"));
     }
+
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> handleUserLogout(HttpServletResponse response) {
-        Cookie jwtCookie = jwtUtil.createCookie(null, 0 );
-        response.addCookie(jwtCookie);
+        response.addCookie(userService.generateEmptyCookie());
         return ResponseEntity.ok(Map.of("message", "Logout successful"));
     }
 
