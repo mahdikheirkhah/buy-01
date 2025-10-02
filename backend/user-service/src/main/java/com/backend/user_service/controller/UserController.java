@@ -1,11 +1,19 @@
 package com.backend.user_service.controller;
 
+import com.backend.common.util.JwtUtil;
+import com.backend.user_service.dto.loginUserDTO;
 import com.backend.user_service.dto.registerUserDTO;
 import com.backend.user_service.service.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid; // Assuming you have validation
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
@@ -13,10 +21,13 @@ import java.util.Map;
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
-
+    private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, JwtUtil jwtUtil,  AuthenticationManager authenticationManager) {
+        this.jwtUtil = jwtUtil;
         this.userService = userService;
+        this.authenticationManager = authenticationManager;
     }
 
     @PostMapping("/register")
@@ -29,5 +40,16 @@ public class UserController {
         userService.registerUser(userDto.ToUser(), avatarFile);
 
         return ResponseEntity.ok(Map.of("message", "User registered successfully"));
+    }
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, String>> handleUserLogin(@RequestBody loginUserDTO loginUserDTO, HttpServletResponse response) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginUserDTO.getEmail(), loginUserDTO.getPassword())
+        );
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String jwt = jwtUtil.generateToken(userDetails.getUsername());
+        Cookie jwtCookie = jwtUtil.createCookie(jwt, 60 * 60 * 24 );
+        return ResponseEntity.ok(Map.of("message", "Login successful"));
     }
 }
