@@ -10,6 +10,8 @@ import org.apache.kafka.common.config.types.Password;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -18,11 +20,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.BodyInserters;
+
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
@@ -92,8 +96,20 @@ public class UserService {
         if (!checkPassword(loginUserDTO.getPassword(), user.getPassword())){
             throw new CustomException("wrong email or password", HttpStatus.BAD_REQUEST);
         }
-        // save the JWT in the cookie
 
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException ("User not found with email: " + email,  HttpStatus.NOT_FOUND));
+
+        // Convert your User entity into Spring Security's UserDetails object
+        return new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getPassword(),
+                new ArrayList<>() // You would add user roles/authorities here
+        );
     }
 
 

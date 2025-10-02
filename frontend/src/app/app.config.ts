@@ -1,12 +1,13 @@
-import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, provideHttpClient, withInterceptors } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { HttpClientModule } from '@angular/common/http';
-import { FormsModule } from '@angular/forms';
 import { routes } from './app.routes';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { CookieService } from 'ngx-cookie-service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    importProvidersFrom(HttpClientModule, FormsModule)
+    provideHttpClient(withInterceptors([AuthInterceptor])),
+    CookieService
   ]
 };
