@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -52,7 +51,7 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<List<ProductDTO>> getAllProducts() {
-        List<ProductDTO> products = productService.getAllProductsWithSellerInfo();
+        List<ProductDTO> products = productService.getAllProductsWithDetail();
         return ResponseEntity.ok(products);
     }
 
