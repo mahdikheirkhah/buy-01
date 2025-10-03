@@ -7,6 +7,7 @@ import com.backend.product_service.service.ProductService;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -15,9 +16,11 @@ import java.util.List;
 @RequestMapping("/api/products")
 public class ProductController {
     private final ProductService productService;
+    private final KafkaTemplate<String, String> kafkaTemplate;
     @Autowired
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, KafkaTemplate<String, String> kafkaTemplate) {
         this.productService = productService;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     @PostMapping
@@ -46,6 +49,7 @@ public class ProductController {
             @PathVariable String productId,
             @RequestHeader("X-User-ID") String sellerId){
         productService.deleteProduct(productId, sellerId);
+        kafkaTemplate.send("product-deleted-topic", productId);
         return ResponseEntity.ok("Product deleted successfully");
     }
 

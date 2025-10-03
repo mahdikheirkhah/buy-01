@@ -49,4 +49,16 @@ public class FileStorageService {
             throw new RuntimeException("Error: " + e.getMessage());
         }
     }
+
+    public void delete(String filename) {
+        try {
+            // Construct the full path to the file
+            Path file = root.resolve(filename);
+            // Delete the file if it exists
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            // Or log the error
+            throw new RuntimeException("Could not delete the file. Error: " + e.getMessage());
+        }
+    }
 }

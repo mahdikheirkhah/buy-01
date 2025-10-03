@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,5 +50,14 @@ public class MediaController {
     public ResponseEntity<List<MediaUploadResponseDTO>> getMediaByIds(@RequestParam String productID) {
         List<MediaUploadResponseDTO> mediaList = mediaService.findMediaByProductID(productID);
         return ResponseEntity.ok(mediaList);
+    }
+    @KafkaListener(topics = "product-deleted-topic", groupId = "media-service-group")
+    public void handleProductDeleted(String productId) {
+        System.out.println("Received product deletion event for ID: " + productId);
+        mediaService.DeleteMediaByProductID(productId);
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteMediaById(@RequestParam String ID) {
+        mediaService.DeleteMediaByID(ID);
     }
 }

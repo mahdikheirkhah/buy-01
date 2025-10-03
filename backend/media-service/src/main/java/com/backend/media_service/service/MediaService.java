@@ -43,4 +43,14 @@ public class MediaService {
         }
         return mediaUploadResponseDTOList;
     }
+    public void DeleteMediaByProductID(String productID) {
+        List<Media> mediaToDelete = mediaRepository.findByProductID(productID);
+        for (Media media : mediaToDelete) {
+            fileStorageService.delete(media.getImagePath());
+        }
+        mediaRepository.deleteAll(mediaToDelete);
+    }
+    public void DeleteMediaByID(String ID) {
+        mediaRepository.deleteById(ID);
+    }
 }
