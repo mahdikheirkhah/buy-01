@@ -30,8 +30,21 @@ public class ProductService {
         this.productRepository = productRepository;
         this.webClientBuilder = webClientBuilder;
     }
-    public Product getProduct(String id) {
-        return productRepository.findById(id)
+    public ProductDTO getProductByProductID(String productID) {
+        Product product = productRepository.findById(productID)
+                .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
+        if (product == null) {
+            return null;
+        }
+
+        List<String> sellerIds = new ArrayList<>();
+        sellerIds.add(product.getSellerID());
+        List<InfoUserDTO> seller = getSellersInfo(sellerIds);
+        return new ProductDTO(product, seller.get(0), getMedia(productID));
+    }
+
+    public Product getProduct(String productID) {
+        return productRepository.findById(productID)
                 .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
     }
 
@@ -60,7 +73,7 @@ public class ProductService {
         productRepository.delete(existingProduct);
     }
 
-    public List<ProductDTO> getAllProductsWithSellerInfo() {
+    public List<ProductDTO> getAllProductsWithDetail() {
 
         List<Product> products = productRepository.findAll();
 

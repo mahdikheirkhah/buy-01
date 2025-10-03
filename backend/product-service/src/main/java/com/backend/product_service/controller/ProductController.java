@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @RestController
@@ -58,6 +60,8 @@ public class ProductController {
         List<ProductDTO> products = productService.getAllProductsWithDetail();
         return ResponseEntity.ok(products);
     }
+
+    @GetMapping()
 
     @GetMapping("/me")
     @PreAuthorize("hasRole('SELLER')")

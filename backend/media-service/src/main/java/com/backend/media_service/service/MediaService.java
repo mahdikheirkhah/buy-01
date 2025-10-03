@@ -53,4 +53,14 @@ public class MediaService {
     public void DeleteMediaByID(String ID) {
         mediaRepository.deleteById(ID);
     }
+    public Media updateMedia(String mediaId, MultipartFile newFile) {
+        Media existingMedia = mediaRepository.findById(mediaId)
+                .orElseThrow(() -> new RuntimeException("Media not found with id: " + mediaId));
+        String oldImagePath = existingMedia.getImagePath();
+        String newImagePath = fileStorageService.save(newFile);
+        existingMedia.setImagePath(newImagePath);
+        Media updatedMedia = mediaRepository.save(existingMedia);
+        fileStorageService.delete(oldImagePath);
+        return updatedMedia;
+    }
 }
