@@ -1,9 +1,13 @@
 package com.backend.product_service.dto;
 
 import com.backend.common.dto.InfoUserDTO;
+import com.backend.common.dto.MediaUploadResponseDTO;
 import com.backend.product_service.model.Product;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+
+import javax.print.attribute.standard.Media;
+import java.util.List;
 
 @Data
 public class ProductDTO {
@@ -28,8 +32,9 @@ public class ProductDTO {
     @Email(message = "Email should be valid")
     private String sellerEmail;
     private boolean CreatedByMe ;
+    private List<MediaUploadResponseDTO> media;
 
-    public ProductDTO(Product product, InfoUserDTO seller) {
+    public ProductDTO(Product product, InfoUserDTO seller, List<MediaUploadResponseDTO> media) {
         this.name = product.getName();
         this.description = product.getDescription();
         this.price = product.getPrice();
@@ -38,5 +43,6 @@ public class ProductDTO {
         this.sellerLastName = seller.getLastName();
         this.sellerEmail = seller.getEmail();
         this.CreatedByMe = seller.getId().equals(product.getSellerID());
+        this.media = media;
     }
 }

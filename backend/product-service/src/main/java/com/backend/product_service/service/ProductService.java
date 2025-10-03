@@ -1,5 +1,6 @@
 package com.backend.product_service.service;
 
+import com.backend.common.dto.MediaUploadResponseDTO;
 import com.backend.common.exception.CustomException;
 import com.backend.common.dto.InfoUserDTO;
 import com.backend.product_service.dto.CreateProductDTO;
@@ -66,14 +67,18 @@ public class ProductService {
         if (products.isEmpty()) {
             return Collections.emptyList();
         }
-
+        List<ProductDTO> result;
         List<String> sellerIds = products.stream()
                 .map(Product::getSellerID)
                 .distinct()
                 .collect(Collectors.toList());
-
         List<InfoUserDTO> sellers = getSellersInfo(sellerIds);
-        return appendSellersToProduct(products, sellers);
+        result = appendSellersToProduct(products, sellers);
+        for (ProductDTO productDTO : result) {
+            productDTO.setMedia(getMedia(productDTO.getProductId()));
+        }
+
+        return result;
     }
 
     public List<ProductDTO> getAllMyProducts(String sellerId) {
@@ -81,10 +86,15 @@ public class ProductService {
         if (products.isEmpty()) {
             return Collections.emptyList();
         }
+        List<ProductDTO> result;
         List<String> sellerIds = new ArrayList<>();
         sellerIds.add(sellerId);
         List<InfoUserDTO> seller = getSellersInfo(sellerIds);
-        return appendSellersToProduct(products, seller);
+        result = appendSellersToProduct(products, seller);
+        for (ProductDTO productDTO : result) {
+            productDTO.setMedia(getMedia(productDTO.getProductId()));
+        }
+        return result;
     }
 
     private List<ProductDTO> appendSellersToProduct(List<Product> products,List<InfoUserDTO>  sellers) {
@@ -94,7 +104,7 @@ public class ProductService {
 
         return products.stream().map(product -> {
             InfoUserDTO seller = sellerMap.get(product.getSellerID());
-            return new ProductDTO(product, seller);
+            return new ProductDTO(product, seller, null);
         }).collect(Collectors.toList());
     }
 
@@ -103,6 +113,14 @@ public class ProductService {
                 .uri("http://USER-SERVICE/api/users/batch?ids=" + String.join(",", sellerIds))
                 .retrieve()
                 .bodyToFlux(InfoUserDTO.class) // Use Flux for a list
+                .collectList()
+                .block();
+    }
+    private List<MediaUploadResponseDTO> getMedia(String productId) {
+        return webClientBuilder.build().get()
+                .uri("http://MEDIA-SERVICE/api/media/batch?productID={productId}", productId)
+                .retrieve()
+                .bodyToFlux(MediaUploadResponseDTO.class)
                 .collectList()
                 .block();
     }
