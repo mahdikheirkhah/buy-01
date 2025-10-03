@@ -59,5 +59,14 @@ public class MediaController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteMediaById(@RequestParam String ID) {
         mediaService.DeleteMediaByID(ID);
+        return ResponseEntity.ok("Delete media successfully");
     }
+    @PutMapping("/{mediaId}")
+    public ResponseEntity<Media> updateMedia(
+            @PathVariable String mediaId,
+            @RequestPart("file") MultipartFile file) {
+        Media updatedMedia = mediaService.updateMedia(mediaId, file);
+        return ResponseEntity.ok(updatedMedia);
+    }
+
 }
