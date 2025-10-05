@@ -26,7 +26,7 @@ public class ProductController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SELLER')") // Only users with ROLE_SELLER can access this
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<String> createProduct(
             @RequestBody @NotNull(message ="this request needs body") CreateProductDTO productDto,
             @RequestHeader("X-User-ID") String sellerId) {
