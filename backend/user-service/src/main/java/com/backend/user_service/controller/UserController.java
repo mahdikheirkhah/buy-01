@@ -27,7 +27,8 @@ public class UserController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     @Autowired
-    public UserController(UserService userService,  AuthenticationManager authenticationManager) {
+    public UserController(UserService userService,
+                          AuthenticationManager authenticationManager) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
     }
@@ -36,15 +37,12 @@ public class UserController {
     public ResponseEntity<Map<String, String>> handleUserRegistration(
             @RequestPart("userDto") @Valid registerUserDTO userDto,
             @RequestPart(value = "avatarFile", required = false) MultipartFile avatarFile) {
-
-        // This assumes your DTO class has a method to convert it to a User entity
-        // If not, you'll need to create the User object manually here.
         userService.registerUser(userDto.ToUser(), avatarFile);
-
         return ResponseEntity.ok(Map.of("message", "User registered successfully"));
     }
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> handleUserLogin(@RequestBody loginUserDTO loginUserDTO, HttpServletResponse response) {
+    public ResponseEntity<Map<String, String>> handleUserLogin(@RequestBody loginUserDTO loginUserDTO,
+                                                               HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginUserDTO.getEmail(), loginUserDTO.getPassword())
         );
@@ -59,6 +57,11 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Logout successful"));
     }
 
+
+    @GetMapping("/me")
+    public ResponseEntity<InfoUserDTO> getCurrentUser(@RequestHeader("X-User-ID") String userId) {
+        InfoUserDTO user = userService.
+    }
     @GetMapping("/batch")
     public ResponseEntity<List<InfoUserDTO>> getUsersByIds(@RequestParam List<String> ids) {
         List<InfoUserDTO> users = userService.getUserByIds(ids);
@@ -66,10 +69,7 @@ public class UserController {
     }
     @GetMapping("/email")
     public ResponseEntity<InfoUserDTO> getUsersByEmail(@RequestParam String email) {
-        InfoUserDTO users = userService.getUserByEmail(email);
-        return ResponseEntity.ok(users);
+        InfoUserDTO user = userService.getUserByEmail(email);
+        return ResponseEntity.ok(user);
     }
-
-
-
 }

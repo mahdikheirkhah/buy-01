@@ -68,6 +68,7 @@ public class UserService implements UserDetailsService {
     }
 
     private Optional<User> checkUserExistence(String email) {
+
         return  userRepository.findByEmail(email);
     }
     private boolean checkPassword(String firstPassword, String secondPassword){
@@ -76,8 +77,6 @@ public class UserService implements UserDetailsService {
     private String saveAvatar(MultipartFile avatarFile) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", avatarFile.getResource());
-        // Use WebClient to make a POST request to the media-service
-        // Note: The URL uses the service name 'media-service', not 'localhost'. Eureka handles it.
         MediaUploadResponseDTO mediaResponse = webClientBuilder.build().post()
                 .uri("http://media-service/api/media/upload")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
