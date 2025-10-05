@@ -61,13 +61,16 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping()
-
     @GetMapping("/me")
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<List<ProductDTO>> getAllProductsBySellerId(
             @RequestHeader("X-User-ID") String sellerId) {
-        List<ProductDTO> products = productService.getAllMyProducts(sellerId);
+        List<ProductDTO> products = productService.getAllProductsWithSellerID(sellerId);
+        return ResponseEntity.ok(products);
+    }
+    @GetMapping("/another/{email}")
+    public ResponseEntity<List<ProductDTO>> getAllProductsByEmail(@PathVariable String email) {
+        List<ProductDTO> products = productService.getAllProductsWithEmail(email);
         return ResponseEntity.ok(products);
     }
 }

@@ -93,8 +93,21 @@ public class ProductService {
 
         return result;
     }
+    public List<ProductDTO> getAllProductsWithEmail(String email) {
+         InfoUserDTO seller = getSellerInfoWithEmail(email);
+         List<Product> products = productRepository.findAllBySellerID(seller.getId());
+         if (products.isEmpty()) {
+             return Collections.emptyList();
+         }
+         List<ProductDTO> result;
+         result = appendSellersToProduct(products,Collections.singletonList(seller));
+         for (ProductDTO productDTO : result) {
+             productDTO.setMedia(getMedia(productDTO.getProductId()));
 
-    public List<ProductDTO> getAllMyProducts(String sellerId) {
+         }
+         return result;
+    }
+    public List<ProductDTO> getAllProductsWithSellerID(String sellerId) {
         List<Product> products = productRepository.findAllBySellerID(sellerId);
         if (products.isEmpty()) {
             return Collections.emptyList();
@@ -129,6 +142,14 @@ public class ProductService {
                 .collectList()
                 .block();
     }
+    private InfoUserDTO getSellerInfoWithEmail(String email) {
+        return webClientBuilder.build().get()
+                .uri("http://USER-SERVICE/api/users/email?email=" + email)
+                .retrieve()
+                .bodyToMono(InfoUserDTO.class)
+                .block();
+    }
+
     private List<MediaUploadResponseDTO> getMedia(String productId) {
         return webClientBuilder.build().get()
                 .uri("http://MEDIA-SERVICE/api/media/batch?productID={productId}", productId)
