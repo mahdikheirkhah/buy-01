@@ -133,7 +133,16 @@ public class UserService implements UserDetailsService {
         }
         return users;
     }
-
+    public InfoUserDTO getUserByEmail(String email) {
+        User user = checkUserExistence(email).
+                orElseThrow(()->new CustomException ("User not found with email: " + email,  HttpStatus.NOT_FOUND));
+        return InfoUserDTO.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .build();
+    }
     public Cookie generateCookie(String email) {
         User user = userRepository.findByEmail(email)
                         .orElseThrow(()-> new CustomException("can not find the User", HttpStatus.NOT_FOUND));

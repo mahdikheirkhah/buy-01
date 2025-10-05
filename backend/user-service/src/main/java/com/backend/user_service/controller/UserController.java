@@ -64,6 +64,11 @@ public class UserController {
         List<InfoUserDTO> users = userService.getUserByIds(ids);
         return ResponseEntity.ok(users);
     }
+    @GetMapping("/email")
+    public ResponseEntity<InfoUserDTO> getUsersByEmail(@RequestParam String email) {
+        InfoUserDTO users = userService.getUserByEmail(email);
+        return ResponseEntity.ok(users);
+    }
 
 
 
