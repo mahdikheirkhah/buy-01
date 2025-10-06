@@ -11,6 +11,11 @@ import com.backend.product_service.repository.ProductMapper;
 import com.backend.product_service.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
@@ -57,7 +62,6 @@ public class ProductService {
         if (checkId(sellerId)) {
             throw new CustomException("Seller ID is null", HttpStatus.UNAUTHORIZED);
         }
-
         product.setSellerID(sellerId);
         productRepository.save(product);
     }
@@ -133,7 +137,32 @@ public class ProductService {
             return new ProductDTO(product, seller, null);
         }).collect(Collectors.toList());
     }
+    public void createImage(List<MultipartFile> files, String productId, String sellerId)  {
+        if (files == null || files.isEmpty()) {
+                return;
+        }
+        Product product = checkProduct(productId, sellerId);
+        for (MultipartFile file : files) {
+            saveProductImage(file,productId);
+        }
+        return;
+    }
+    public String saveProductImage(MultipartFile image, String productId) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", image.getResource());
+        MediaUploadResponseDTO mediaResponse = webClientBuilder.build().post()
+                .uri("http://media-service/api/media/upload/product/"+productId)
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(body))
+                .retrieve()
+                .bodyToMono(MediaUploadResponseDTO.class)
+                .block(); // .block() makes the call synchronous. A reactive chain is more advanced.
 
+        if (mediaResponse == null || mediaResponse.getFileUrl().isBlank()) {
+            throw new CustomException("Failed to upload avatar image.", HttpStatus.BAD_REQUEST);
+        }
+        return mediaResponse.getFileUrl();
+    }
     private List<InfoUserDTO> getSellersInfo(List<String> sellerIds) {
         return webClientBuilder.build().get()
                 .uri("http://USER-SERVICE/api/users/batch?ids=" + String.join(",", sellerIds))

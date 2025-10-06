@@ -77,8 +77,13 @@ public class UserController {
         InfoUserDTO user = userService.getUserByEmail(email);
         return ResponseEntity.ok(user);
     }
-    @PutMapping("/me")
-    public ResponseEntity<Map<String, String>> updateMe(@Valid @RequestBody updateUserDTO user) {
+    @PutMapping("/me/{email}")
+    public ResponseEntity<Map<String, String>> updateMe(
+            @Valid @RequestBody updateUserDTO user,
+            @RequestHeader("X-User-ID") String userId,
+            @RequestParam MultipartFile avatarFile,
+            @PathVariable String email) {
+
 
     }
 

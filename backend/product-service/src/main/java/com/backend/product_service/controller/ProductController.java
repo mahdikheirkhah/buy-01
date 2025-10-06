@@ -30,9 +30,18 @@ public class ProductController {
     public ResponseEntity<String> createProduct(
             @RequestBody @NotNull(message ="this request needs body") CreateProductDTO productDto,
             @RequestHeader("X-User-ID") String sellerId) {
-
         productService.createProduct(sellerId, productDto);
         return ResponseEntity.ok("Product created successfully");
+    }
+    @PostMapping("/create/images/{productId}")
+    @PreAuthorize("hasRole('SELLER')")
+    public ResponseEntity<String> addImagesToProduct(
+            @RequestHeader("X-User-ID") String sellerId,
+            @PathVariable("productId") String productId,
+            @RequestParam("files") List<MultipartFile> files
+    ){
+        productService.createImage(files, productId, sellerId);
+        return ResponseEntity.ok("Image(s) created successfully");
     }
 
     @PutMapping("/{id}")

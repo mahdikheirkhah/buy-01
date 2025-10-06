@@ -8,6 +8,7 @@ import com.backend.user_service.dto.loginUserDTO;
 import com.backend.user_service.dto.updateUserDTO;
 import com.backend.user_service.model.Role;
 import com.backend.user_service.model.User;
+import com.backend.user_service.repository.UserMapper;
 import com.backend.user_service.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,14 +34,16 @@ public class UserService implements UserDetailsService {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final PasswordEncoder passwordEncoder;
     private final WebClient.Builder webClientBuilder;
+    private final UserMapper userMapper;
     private final JwtUtil jwtUtil;
     @Autowired
-    public UserService(UserRepository userRepository, KafkaTemplate<String, String> kafkaTemplate,  PasswordEncoder passwordEncoder, WebClient.Builder webClientBuilder,  JwtUtil jwtUtil) {
+    public UserService(UserRepository userRepository, KafkaTemplate<String, String> kafkaTemplate,  PasswordEncoder passwordEncoder, WebClient.Builder webClientBuilder,  JwtUtil jwtUtil,  UserMapper userMapper) {
         this.userRepository = userRepository;
         this.kafkaTemplate = kafkaTemplate;
         this.passwordEncoder = passwordEncoder;
         this.webClientBuilder = webClientBuilder;
         this.jwtUtil = jwtUtil;
+        this.userMapper = userMapper;
     }
 
     public User registerUser(User user, MultipartFile avatarFile) {
@@ -90,18 +93,18 @@ public class UserService implements UserDetailsService {
     private String saveAvatar(MultipartFile avatarFile) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", avatarFile.getResource());
-        MediaUploadResponseDTO mediaResponse = webClientBuilder.build().post()
-                .uri("http://media-service/api/media/upload")
+        String mediaResponse = webClientBuilder.build().post()
+                .uri("http://media-service/api/media/upload/avatar/{sellerId}")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(body))
                 .retrieve()
-                .bodyToMono(MediaUploadResponseDTO.class)
+                .bodyToMono(String.class)
                 .block(); // .block() makes the call synchronous. A reactive chain is more advanced.
 
-        if (mediaResponse == null || mediaResponse.getFileUrl() == null) {
+        if (mediaResponse == null || mediaResponse.isBlank()) {
             throw new CustomException("Failed to upload avatar image.", HttpStatus.BAD_REQUEST);
         }
-        return mediaResponse.getFileUrl();
+        return mediaResponse;
     }
 
     public User loginUser(loginUserDTO loginUserDTO) {
@@ -113,9 +116,14 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
-    public void updateUser(updateUserDTO userForm) {
+    public void updateUser(updateUserDTO userForm, String loggedInUserId, String userEmail, MultipartFile avatarFile) {
+        User user = checkUpdateUser(loggedInUserId, userEmail);
+        String oldAvatarUrl = user.getAvatarUrl();
+        if (avatarFile != null && !avatarFile.isEmpty()) {
+            String avatarUrl = saveAvatar(avatarFile);
+        }
+        userMapper.updateUserFromDto(userForm, user);
 
-        userRepository.save(user);
     }
 
     @Override
@@ -129,6 +137,17 @@ public class UserService implements UserDetailsService {
                 user.getPassword(),
                 new ArrayList<>() // You would add user roles/authorities here
         );
+    }
+
+    private User checkUpdateUser(String loggedInUserId, String userEmail){
+        User loggedInUser = userRepository.findById(loggedInUserId).
+                orElseThrow(()-> new CustomException ("User not found with id: ", HttpStatus.FORBIDDEN));
+        User updatesUser = userRepository.findByEmail(userEmail)
+                .orElseThrow(()-> new CustomException ("User not found with email: ", HttpStatus.FORBIDDEN));
+        if (!updatesUser.getId().equals(loggedInUser.getId())){
+            throw new CustomException ("Access Denied", HttpStatus.FORBIDDEN);
+        }
+        return loggedInUser;
     }
 
     public List<InfoUserDTO> getUserByIds(List<String> ids) {

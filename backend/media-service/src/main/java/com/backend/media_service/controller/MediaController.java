@@ -12,6 +12,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -24,16 +25,24 @@ public class MediaController {
     @Autowired
     private MediaService mediaService; // ✅ Inject the new MediaService
 
-    @PostMapping("/upload")
-    public ResponseEntity<MediaUploadResponseDTO> uploadFile(
-            @RequestPart("file") MultipartFile file,
-            @RequestPart("productId") String productId) {
-
+    @PostMapping("/upload/product/{productId}")
+    public ResponseEntity<MediaUploadResponseDTO> uploadFileForProduct(
+            @RequestPart("file")MultipartFile file,
+            @PathVariable("productId") String productId) {
         Media savedMedia = mediaService.uploadFile(file, productId);
         String fileUrl = "/api/media/files/" + savedMedia.getImagePath();
+        MediaUploadResponseDTO mediaUploadResponseDTO = new MediaUploadResponseDTO(savedMedia.getId(), fileUrl);
+        return ResponseEntity.ok(mediaUploadResponseDTO);
+    }
 
-        MediaUploadResponseDTO response = new MediaUploadResponseDTO(savedMedia.getId(), fileUrl);
-        return ResponseEntity.ok(response);
+    @PostMapping("/upload/avatar/{sellerID}")
+    public ResponseEntity<String> uploadFileForAvatar(
+            @RequestParam("file") MultipartFile file,
+            @PathVariable String sellerId
+    ){
+        String fileName = mediaService.uploadFileAvatar(file);
+        String fileUrl = "/api/media/files/" + fileName;
+        return ResponseEntity.ok(fileUrl);
     }
 
     // This endpoint for serving files is still correct
