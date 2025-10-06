@@ -12,6 +12,7 @@ import com.backend.product_service.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,12 +29,14 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final WebClient.Builder webClientBuilder;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Autowired
-    public ProductService(ProductRepository productRepository,  ProductMapper productMapper, WebClient.Builder webClientBuilder) {
+    public ProductService(ProductRepository productRepository,  ProductMapper productMapper, WebClient.Builder webClientBuilder, KafkaTemplate<String, String> kafkaTemplate) {
         this.productMapper = productMapper;
         this.productRepository = productRepository;
         this.webClientBuilder = webClientBuilder;
+        this.kafkaTemplate = kafkaTemplate;
     }
     public ProductDTO getProductByProductID(String productID) {
         Product product = productRepository.findById(productID)
@@ -71,9 +74,19 @@ public class ProductService {
         productMapper.updateProductFromDto(productDto, existingProduct);
         productRepository.save(existingProduct);
     }
-
+    public void DeleteProductsOfUser(String sellerId) {
+        List<Product> products = productRepository.findAllBySellerID(sellerId);
+        if (products.isEmpty()) {
+            return;
+        }
+        for (Product product : products) {
+            kafkaTemplate.send("product-deleted-topic", product.getID());
+            productRepository.delete(product);
+        }
+    }
     public void deleteProduct(String productId, String sellerId) {
         Product existingProduct = checkProduct(productId, sellerId);
+        kafkaTemplate.send("product-deleted-topic", productId);
         productRepository.delete(existingProduct);
     }
 

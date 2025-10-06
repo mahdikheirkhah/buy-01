@@ -7,6 +7,7 @@ import com.backend.product_service.service.ProductService;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -60,8 +61,12 @@ public class ProductController {
             @PathVariable String productId,
             @RequestHeader("X-User-ID") String sellerId){
         productService.deleteProduct(productId, sellerId);
-        kafkaTemplate.send("product-deleted-topic", productId);
         return ResponseEntity.ok("Product deleted successfully");
+    }
+    @KafkaListener(topics = "user-deleted-topic", groupId = "product-service-group")
+    public void handleUserDeleted(String userId) {
+        System.out.println("Received user deletion event for ID: " + userId);
+        productService.DeleteProductsOfUser(userId);
     }
 
     @GetMapping
