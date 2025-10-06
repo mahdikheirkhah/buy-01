@@ -1,17 +1,18 @@
 package com.backend.user_service.service;
 
+import com.backend.common.dto.InfoUserDTO;
 import com.backend.common.dto.MediaUploadResponseDTO;
 import com.backend.common.exception.CustomException;
 import com.backend.common.util.JwtUtil;
-import com.backend.common.dto.InfoUserDTO;
 import com.backend.user_service.dto.loginUserDTO;
+import com.backend.user_service.dto.updateUserDTO;
 import com.backend.user_service.model.Role;
 import com.backend.user_service.model.User;
 import com.backend.user_service.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
-import org.apache.kafka.common.config.types.Password;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,9 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
 
@@ -71,6 +71,19 @@ public class UserService implements UserDetailsService {
 
         return  userRepository.findByEmail(email);
     }
+    public InfoUserDTO getMe(String Id) {
+        User user = userRepository.findById(Id)
+                .orElseThrow(()-> new CustomException("Not Authorized", HttpStatus.FORBIDDEN));
+
+        return  InfoUserDTO
+                .builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .avatarUrl(user.getAvatarUrl())
+                .build();
+    }
     private boolean checkPassword(String firstPassword, String secondPassword){
         return passwordEncoder.matches(firstPassword, secondPassword);
     }
@@ -98,6 +111,11 @@ public class UserService implements UserDetailsService {
             throw new CustomException("wrong email or password", HttpStatus.BAD_REQUEST);
         }
         return user;
+    }
+
+    public void updateUser(updateUserDTO userForm) {
+
+        userRepository.save(user);
     }
 
     @Override
@@ -128,6 +146,7 @@ public class UserService implements UserDetailsService {
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
                     .email(user.getEmail())
+                    .avatarUrl(user.getAvatarUrl())
                     .build());
         }
         return users;
@@ -140,6 +159,7 @@ public class UserService implements UserDetailsService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .email(user.getEmail())
+                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
     public Cookie generateCookie(String email) {
@@ -151,7 +171,9 @@ public class UserService implements UserDetailsService {
         String jwt = jwtUtil.generateToken(claims, user.getEmail());
         return jwtUtil.createCookie(jwt, 60 * 60 * 24 );
     }
-    public Cookie generateEmptyCookie() { return jwtUtil.createCookie(null, 0 ); }
+    public Cookie generateEmptyCookie() {
+        return jwtUtil.createCookie(null, 0 );
+    }
 
 
     // ... other methods
