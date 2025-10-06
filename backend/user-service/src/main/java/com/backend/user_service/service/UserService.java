@@ -181,6 +181,14 @@ public class UserService implements UserDetailsService {
                 .avatarUrl(user.getAvatarUrl())
                 .build();
     }
+    public void deleteUser(String id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(()-> new CustomException ("Access denied " , HttpStatus.FORBIDDEN));
+        if (user.getRole().equals(Role.SELLER)){
+
+        }
+        deleteUser(user.getId());
+    }
     public Cookie generateCookie(String email) {
         User user = userRepository.findByEmail(email)
                         .orElseThrow(()-> new CustomException("can not find the User", HttpStatus.NOT_FOUND));

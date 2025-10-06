@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -83,8 +84,11 @@ public class UserController {
             @RequestHeader("X-User-ID") String userId,
             @RequestParam MultipartFile avatarFile,
             @PathVariable String email) {
-
-
+         return ResponseEntity.ok(Map.of("message", "updated successfully"));
     }
-
+    @DeleteMapping
+    public ResponseEntity<Map<String, String>> deleteUser(@RequestHeader("X-User-ID") String userId) {
+        userService.deleteUser(userId);
+        return ResponseEntity.ok(Map.of("message", "user deleted successfully"));
+    }
 }
