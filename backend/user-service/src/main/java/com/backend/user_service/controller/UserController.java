@@ -4,12 +4,14 @@ import com.backend.common.util.JwtUtil;
 import com.backend.common.dto.InfoUserDTO;
 import com.backend.user_service.dto.loginUserDTO;
 import com.backend.user_service.dto.registerUserDTO;
+import com.backend.user_service.dto.updateUserDTO;
 import com.backend.user_service.model.User;
 import com.backend.user_service.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid; // Assuming you have validation
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -40,6 +42,7 @@ public class UserController {
         userService.registerUser(userDto.ToUser(), avatarFile);
         return ResponseEntity.ok(Map.of("message", "User registered successfully"));
     }
+
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> handleUserLogin(@RequestBody loginUserDTO loginUserDTO,
                                                                HttpServletResponse response) {
@@ -57,19 +60,26 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Logout successful"));
     }
 
-
     @GetMapping("/me")
     public ResponseEntity<InfoUserDTO> getCurrentUser(@RequestHeader("X-User-ID") String userId) {
-        InfoUserDTO user = userService.
+        InfoUserDTO user = userService.getMe(userId);
+        return ResponseEntity.ok(user);
     }
+
     @GetMapping("/batch")
     public ResponseEntity<List<InfoUserDTO>> getUsersByIds(@RequestParam List<String> ids) {
         List<InfoUserDTO> users = userService.getUserByIds(ids);
         return ResponseEntity.ok(users);
     }
+
     @GetMapping("/email")
     public ResponseEntity<InfoUserDTO> getUsersByEmail(@RequestParam String email) {
         InfoUserDTO user = userService.getUserByEmail(email);
         return ResponseEntity.ok(user);
     }
+    @PutMapping("/me")
+    public ResponseEntity<Map<String, String>> updateMe(@Valid @RequestBody updateUserDTO user) {
+
+    }
+
 }
