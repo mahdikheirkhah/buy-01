@@ -185,9 +185,12 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findById(id)
                 .orElseThrow(()-> new CustomException ("Access denied " , HttpStatus.FORBIDDEN));
         if (user.getRole().equals(Role.SELLER)){
-
+            kafkaTemplate.send("user-deleted-topic", id);
+            if(user.getAvatarUrl() != null){
+                kafkaTemplate.send("user-avatar-deleted-topic", user.getAvatarUrl());
+            }
         }
-        deleteUser(user.getId());
+        userRepository.deleteById(user.getId());
     }
     public Cookie generateCookie(String email) {
         User user = userRepository.findByEmail(email)
