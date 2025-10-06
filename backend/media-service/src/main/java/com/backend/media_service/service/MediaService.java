@@ -1,10 +1,15 @@
 package com.backend.media_service.service;
 
 import com.backend.common.dto.MediaUploadResponseDTO;
+import com.backend.common.exception.CustomException;
 import com.backend.media_service.model.Media;
 import com.backend.media_service.repository.MediaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
@@ -26,6 +31,9 @@ public class MediaService {
         media.setImagePath(filename);
         media.setProductID(productId);
         return mediaRepository.save(media);
+    }
+    public String uploadFileAvatar(MultipartFile file) {
+        return fileStorageService.save(file);
     }
 
     public List<MediaUploadResponseDTO> findMediaByProductID(String productID) {
