@@ -1,0 +1,14 @@
+<mat-toolbar color="primary">
+  <button mat-icon-button (click)="toggleSidenav.emit()">
+    <mat-icon>menu</mat-icon>
+  </button>
+  
+  <a routerLink="/home" class="brand-logo">My Site</a>
+  
+  <span class="spacer"></span>
+  
+  <div *ngIf="currentUser$ | async as user">
+    <span>{{ user.firstName }} {{ user.lastName }}</span>
+    <span class="email">({{ user.email }})</span>
+  </div>
+</mat-toolbar>
