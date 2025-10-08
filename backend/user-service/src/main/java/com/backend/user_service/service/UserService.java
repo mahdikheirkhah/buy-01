@@ -11,6 +11,7 @@ import com.backend.user_service.model.User;
 import com.backend.user_service.repository.UserMapper;
 import com.backend.user_service.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
+import lombok.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,7 +30,8 @@ import java.util.*;
 
 @Service
 public class UserService implements UserDetailsService {
-
+    @org.springframework.beans.factory.annotation.Value("${jwt.expiration}")
+    private long expiration;
     private final UserRepository userRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final PasswordEncoder passwordEncoder;
@@ -199,12 +201,19 @@ public class UserService implements UserDetailsService {
         claims.put("userId", user.getId());
         claims.put("role", user.getRole());
         String jwt = jwtUtil.generateToken(claims, user.getEmail());
-        return jwtUtil.createCookie(jwt, 60 * 60 * 24 );
+        return createCookie(jwt, 24 * 60 * 60);
     }
     public Cookie generateEmptyCookie() {
-        return jwtUtil.createCookie(null, 0 );
+        return createCookie(null, 0 );
     }
-
+    public Cookie createCookie(String token, int maxAge) {
+        Cookie jwtCookie = new Cookie("jwt", token);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(true); // Should be true in production
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(maxAge); // 1 day
+        return jwtCookie;
+    }
 
     // ... other methods
 }

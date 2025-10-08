@@ -13,11 +13,12 @@ import org.springframework.web.server.ResponseStatusException;
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
 
-    @Autowired
-    private JwtUtil jwtUtil;
 
-    public AuthenticationFilter() {
+    private final JwtUtil jwtUtil;
+    @Autowired
+    public AuthenticationFilter(JwtUtil jwtUtil) {
         super(Config.class);
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
