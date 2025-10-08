@@ -8,11 +8,16 @@ MAVEN_CMD = mvn
 FRONTEND_DIR = ./frontend
 NPM_CMD = npm
 
+# --- Docker Configuration ---
+DOCKER_COMPOSE_CMD = docker-compose
+
 # ==============================================================================
 # Main Targets
 # ==============================================================================
 
-all: clean-backend run-backend run-frontend
+all: docker-up clean-backend run-backend run-frontend
+
+all-docker: docker-up clean-backend run-backend run-frontend
 
 clean-backend:
 	@echo "--- Cleaning backend projects... ---"
@@ -34,10 +39,31 @@ run-frontend:
 	@echo "--- Starting frontend Angular application... ---"
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(FRONTEND_DIR) && $(NPM_CMD) install && $(NPM_CMD) start"'
 
+docker-up:
+	@echo "--- Starting Docker Compose services (Kafka, Zookeeper)... ---"
+	$(DOCKER_COMPOSE_CMD) up -d
+	@echo "--- Docker services started successfully. ---"
+
+docker-down:
+	@echo "--- Stopping Docker Compose services... ---"
+	$(DOCKER_COMPOSE_CMD) down
+	@echo "--- Docker services stopped. ---"
+
+docker-logs:
+	@echo "--- Showing Docker Compose logs... ---"
+	$(DOCKER_COMPOSE_CMD) logs -f
+
+docker-status:
+	@echo "--- Docker Compose services status... ---"
+	$(DOCKER_COMPOSE_CMD) ps
+
 stop:
 	@echo "--- Stopping all Java (backend) and Node (frontend) processes... ---"
 	@killall -9 java || true
 	@killall -9 node || true
 	@echo "--- All services stopped. ---"
 
-.PHONY: all clean-backend run-backend run-frontend stop
+stop-all: stop docker-down
+	@echo "--- All services and Docker containers stopped. ---"
+
+.PHONY: all all-docker clean-backend run-backend run-frontend docker-up docker-down docker-logs docker-status stop stop-all

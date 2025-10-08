@@ -7,12 +7,12 @@ import com.backend.product_service.dto.CreateProductDTO;
 import com.backend.product_service.dto.ProductDTO;
 import com.backend.product_service.dto.UpdateProductDTO;
 import com.backend.product_service.model.Product;
-import com.backend.product_service.repository.ProductMapper;
 import com.backend.product_service.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
+@Service
 public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;

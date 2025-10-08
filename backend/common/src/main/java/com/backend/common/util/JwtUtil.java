@@ -1,5 +1,4 @@
 package com.backend.common.util;
-import jakarta.servlet.http.Cookie;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -71,13 +70,5 @@ public class JwtUtil {
 
     private Claims getAllClaimsFromToken(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
-    }
-    public Cookie createCookie(String token, int maxAge) {
-        Cookie jwtCookie = new Cookie("jwt", token);
-        jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(true); // Should be true in production
-        jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(maxAge); // 1 day
-        return jwtCookie;
     }
 }
