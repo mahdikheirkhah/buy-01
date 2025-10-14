@@ -35,31 +35,31 @@ public class UserController {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
     }
-
-    @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> handleUserRegistration(
-            @RequestPart("userDto") @Valid registerUserDTO userDto,
-            @RequestPart(value = "avatarFile", required = false) MultipartFile avatarFile) {
-        userService.registerUser(userDto.ToUser(), avatarFile);
-        return ResponseEntity.ok(Map.of("message", "User registered successfully"));
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> handleUserLogin(@RequestBody loginUserDTO loginUserDTO,
-                                                               HttpServletResponse response) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginUserDTO.getEmail(), loginUserDTO.getPassword())
-        );
-        Cookie jwtCookie = userService.generateCookie(loginUserDTO.getEmail());
-        response.addCookie(jwtCookie);
-        return ResponseEntity.ok(Map.of("message", "Login successful"));
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> handleUserLogout(HttpServletResponse response) {
-        response.addCookie(userService.generateEmptyCookie());
-        return ResponseEntity.ok(Map.of("message", "Logout successful"));
-    }
+//
+//    @PostMapping("/register")
+//    public ResponseEntity<Map<String, String>> handleUserRegistration(
+//            @RequestPart("userDto") @Valid registerUserDTO userDto,
+//            @RequestPart(value = "avatarFile", required = false) MultipartFile avatarFile) {
+//        userService.registerUser(userDto.ToUser(), avatarFile);
+//        return ResponseEntity.ok(Map.of("message", "User registered successfully"));
+//    }
+//
+//    @PostMapping("/login")
+//    public ResponseEntity<Map<String, String>> handleUserLogin(@RequestBody loginUserDTO loginUserDTO,
+//                                                               HttpServletResponse response) {
+//        Authentication authentication = authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(loginUserDTO.getEmail(), loginUserDTO.getPassword())
+//        );
+//        Cookie jwtCookie = userService.generateCookie(loginUserDTO.getEmail());
+//        response.addCookie(jwtCookie);
+//        return ResponseEntity.ok(Map.of("message", "Login successful"));
+//    }
+//
+//    @PostMapping("/logout")
+//    public ResponseEntity<Map<String, String>> handleUserLogout(HttpServletResponse response) {
+//        response.addCookie(userService.generateEmptyCookie());
+//        return ResponseEntity.ok(Map.of("message", "Logout successful"));
+//    }
 
     @GetMapping("/me")
     public ResponseEntity<InfoUserDTO> getCurrentUser(@RequestHeader("X-User-ID") String userId) {
