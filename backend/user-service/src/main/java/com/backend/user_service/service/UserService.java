@@ -67,9 +67,8 @@ public class UserService implements UserDetailsService {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        User savedUser = userRepository.save(user);
-        kafkaTemplate.send("user-registered-topic", savedUser.getEmail());
-        return savedUser;
+        //kafkaTemplate.send("user-registered-topic", savedUser.getEmail());
+        return userRepository.save(user);
     }
 
     private Optional<User> checkUserExistence(String email) {

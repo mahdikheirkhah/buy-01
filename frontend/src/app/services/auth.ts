@@ -7,8 +7,8 @@ import { User } from '../models/user.model'; // We'll create this model
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8080/api/users';
-  
+  private apiUrl = 'http://localhost:8080/api/auth';
+
   // Use a BehaviorSubject to store and share the current user state
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
