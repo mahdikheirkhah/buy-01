@@ -1,0 +1,59 @@
+# Makefile for running the full-stack application on WINDOWS
+
+# --- Backend Configuration ---
+BACKEND_DIR = ./backend
+MAVEN_CMD = mvn
+
+# --- Frontend Configuration ---
+FRONTEND_DIR = ./frontend
+NPM_CMD = npm
+
+# --- Docker Configuration ---
+DOCKER_COMPOSE_CMD = docker-compose
+
+# ==============================================================================
+# Main Targets
+# ==============================================================================
+
+all: docker-up clean-backend run-backend run-frontend
+
+run-backend:
+	@echo "--- Building all backend microservices... ---"
+	$(MAVEN_CMD) -f $(BACKEND_DIR)/pom.xml clean install -DskipTests
+	@echo "--- Starting all backend microservices... ---"
+	start powershell -Command "cd $(BACKEND_DIR)/discovery-service; $(MAVEN_CMD) spring-boot:run; pause"
+	@timeout /t 10 >nul
+	start powershell -Command "cd $(BACKEND_DIR)/api-gateway; $(MAVEN_CMD) spring-boot:run; pause"
+	start powershell -Command "cd $(BACKEND_DIR)/user-service; $(MAVEN_CMD) spring-boot:run; pause"
+	start powershell -Command "cd $(BACKEND_DIR)/product-service; $(MAVEN_CMD) spring-boot:run; pause"
+	start powershell -Command "cd $(BACKEND_DIR)/media-service; $(MAVEN_CMD) spring-boot:run; pause"
+	@echo "--- Backend services are starting in new PowerShell windows. ---"
+
+run-frontend:
+	@echo "--- Starting frontend Angular application... ---"
+	start powershell -Command "cd $(FRONTEND_DIR); $(NPM_CMD) install; $(NPM_CMD) start; pause"
+
+stop:
+	@echo "--- Stopping all Java (backend) and Node (frontend) processes... ---"
+	@taskkill /F /IM java.exe >nul 2>&1 || echo No Java processes to kill.
+	@taskkill /F /IM node.exe >nul 2>&1 || echo No Node processes to kill.
+	@echo "--- All services stopped. ---"
+
+# --- Common Targets (No changes needed) ---
+
+clean-backend:
+	@echo "--- Cleaning backend projects... ---"
+	$(MAVEN_CMD) -f $(BACKEND_DIR)/pom.xml clean
+
+docker-up:
+	@echo "--- Starting Docker Compose services (Kafka, Zookeeper)... ---"
+	$(DOCKER_COMPOSE_CMD) up -d
+
+docker-down:
+	@echo "--- Stopping Docker Compose services... ---"
+	$(DOCKER_COMPOSE_CMD) down
+
+stop-all: stop docker-down
+	@echo "--- All services and Docker containers stopped. ---"
+
+.PHONY: all clean-backend run-backend run-frontend docker-up docker-down stop stop-all

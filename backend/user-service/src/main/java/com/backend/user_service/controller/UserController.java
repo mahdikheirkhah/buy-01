@@ -55,11 +55,11 @@ public class UserController {
 //        return ResponseEntity.ok(Map.of("message", "Login successful"));
 //    }
 //
-//    @PostMapping("/logout")
-//    public ResponseEntity<Map<String, String>> handleUserLogout(HttpServletResponse response) {
-//        response.addCookie(userService.generateEmptyCookie());
-//        return ResponseEntity.ok(Map.of("message", "Logout successful"));
-//    }
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> handleUserLogout(HttpServletResponse response) {
+        response.addCookie(userService.generateEmptyCookie());
+        return ResponseEntity.ok(Map.of("message", "Logout successful"));
+    }
 
     @GetMapping("/me")
     public ResponseEntity<InfoUserDTO> getCurrentUser(@RequestHeader("X-User-ID") String userId) {
