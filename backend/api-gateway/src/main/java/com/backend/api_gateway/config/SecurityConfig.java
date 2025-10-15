@@ -5,32 +5,33 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        http
-                // ✅ 1. Disable CSRF Protection
+        return http
+                // ✅ Disable CSRF for API Gateway
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
 
-                // ✅ 2. Apply the CORS settings from your CorsConfig file
-                .cors(withDefaults())
+                // ✅ Disable built-in CORS to use our custom CorsWebFilter
+                .cors(ServerHttpSecurity.CorsSpec::disable)
 
-                // ✅ 3. Define which paths are public and which are protected
-                .authorizeExchange(exchange -> exchange
-                        // Allow browser preflight requests
-                        .pathMatchers(HttpMethod.OPTIONS).permitAll()
+                // ✅ Configure authorization
+                .authorizeExchange(exchanges -> exchanges
+                        // Allow all OPTIONS requests (preflight)
+                        .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Allow public access to register and login
+                        // Allow public access to auth endpoints
                         .pathMatchers("/api/auth/**").permitAll()
 
-                        // Require authentication for all other requests
-                        .anyExchange().authenticated()
-                );
+                        // Allow public access to user registration and login
+                        .pathMatchers("/api/users/register", "/api/users/login").permitAll()
 
-        return http.build();
+                        // All other requests require authentication
+                        .anyExchange().authenticated()
+                )
+                .build();
     }
 }

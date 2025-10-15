@@ -16,8 +16,6 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // You no longer need to autowire the JwtRequestFilter here.
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -31,16 +29,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        // This is the main job of this class now: define which routes are public.
-                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        // All other routes require authentication (which the gateway will have checked).
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                // ✅ Disable CORS - let API Gateway handle it
+                .cors(AbstractHttpConfigurer::disable)
 
-        // The addFilterBefore(...) line is removed.
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
+                        .requestMatchers("/api/auth/**", "/api/users/register", "/api/users/login").permitAll()
+                        // All other endpoints require authentication
+                        .anyRequest().authenticated()
+                );
 
         return http.build();
     }

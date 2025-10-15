@@ -31,6 +31,7 @@ public class FileStorageService {
             Files.copy(file.getInputStream(), this.root.resolve(filename));
             return filename;
         } catch (Exception e) {
+            System.err.println("Could not save file!"+e.getMessage());
             throw new RuntimeException("Could not store the file. Error: " + e.getMessage());
         }
     }
