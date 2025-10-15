@@ -78,6 +78,7 @@ public class UserService implements UserDetailsService {
         return  userRepository.findByEmail(email);
     }
     public InfoUserDTO getMe(String Id) {
+        System.out.println("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
         User user = userRepository.findById(Id)
                 .orElseThrow(()-> new CustomException("Not Authorized", HttpStatus.FORBIDDEN));
 

@@ -29,18 +29,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // ✅ Disable CORS - let API Gateway handle it
-                .cors(AbstractHttpConfigurer::disable)
-
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers("/api/auth/**", "/api/users/register", "/api/users/login").permitAll()
-                        // All other endpoints require authentication
-                        .anyRequest().authenticated()
-                );
+                        // ❌ CHANGE THIS:
+                        // .requestMatchers("/api/auth/**").permitAll()
+                        // .anyRequest().authenticated()
 
+                        // ✅ TO THIS:
+                        // Since the gateway handles all auth, this service can permit all traffic.
+                        .anyRequest().permitAll()
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        // The JWT filter should NOT be in this service.
         return http.build();
     }
 }

@@ -7,8 +7,8 @@ import { User } from '../models/user.model';
   providedIn: 'root'
 })
 export class AuthService {
-  private authApiUrl = 'http://localhost:8080/api/auth';
-  private usersApiUrl = 'http://localhost:8080/api/users'; // ✅ Use the correct URL for user data
+  private authApiUrl = 'https://localhost:8080/api/auth';
+  private usersApiUrl = 'https://localhost:8080/api/users'; // ✅ Use the correct URL for user data
 
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
