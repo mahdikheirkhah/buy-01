@@ -12,10 +12,12 @@ import com.backend.user_service.repository.UserMapper;
 import com.backend.user_service.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import lombok.Value;
+import org.mapstruct.control.MappingControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -59,16 +61,16 @@ public class UserService implements UserDetailsService {
 
         if (user.getRole() == Role.CLIENT){
             user.setAvatarUrl(null);
-        } else {
-            if (avatarFile != null && !avatarFile.isEmpty()) {
-                String avatarUrl = saveAvatar(avatarFile);
-                user.setAvatarUrl(avatarUrl);
-            }
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        User savedUser = userRepository.save(user);
         //kafkaTemplate.send("user-registered-topic", savedUser.getEmail());
-        return userRepository.save(user);
+        if (savedUser.getRole() == Role.SELLER && avatarFile != null && !avatarFile.isEmpty()) {
+            String avatarUrl = saveAvatar(avatarFile, savedUser.getId());
+            savedUser.setAvatarUrl(avatarUrl);
+        }
+        return userRepository.save(savedUser);
     }
 
     private Optional<User> checkUserExistence(String email) {
@@ -91,11 +93,11 @@ public class UserService implements UserDetailsService {
     private boolean checkPassword(String firstPassword, String secondPassword){
         return passwordEncoder.matches(firstPassword, secondPassword);
     }
-    private String saveAvatar(MultipartFile avatarFile) {
+    private String saveAvatar(MultipartFile avatarFile, String sellerID) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", avatarFile.getResource());
         String mediaResponse = webClientBuilder.build().post()
-                .uri("http://media-service/api/media/upload/avatar/{sellerId}")
+                .uri("http://media-service/api/media/upload/avatar/"+sellerID)
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(body))
                 .retrieve()
@@ -121,7 +123,7 @@ public class UserService implements UserDetailsService {
         User user = checkUpdateUser(loggedInUserId, userEmail);
         String oldAvatarUrl = user.getAvatarUrl();
         if (avatarFile != null && !avatarFile.isEmpty()) {
-            String avatarUrl = saveAvatar(avatarFile);
+            String avatarUrl = saveAvatar(avatarFile, user.getId());
         }
         userMapper.updateUserFromDto(userForm, user);
 
@@ -130,13 +132,15 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException ("User not found with email: " + email,  HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException("User not found with email: " + email, HttpStatus.NOT_FOUND));
 
-        // Convert your User entity into Spring Security's UserDetails object
+        // ✅ FIX: Create an authority from the user's role
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
+
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
-                new ArrayList<>() // You would add user roles/authorities here
+                Collections.singletonList(authority) // Add the user's real permission
         );
     }
 
