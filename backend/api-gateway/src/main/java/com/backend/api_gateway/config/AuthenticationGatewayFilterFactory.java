@@ -24,23 +24,21 @@ public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFac
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
+            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getURI().getPath();
-            HttpMethod method = request.getMethod();
-
-            // ✅ Allow OPTIONS requests (preflight)
-            if (method == HttpMethod.OPTIONS) {
+            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+            // Allow all CORS preflight requests
+            if (request.getMethod() == HttpMethod.OPTIONS) {
                 return chain.filter(exchange);
             }
 
-            // ✅ Allow public access to authentication endpoints
-            if (path.startsWith("/api/auth/") ||
-                    path.equals("/api/users/register") ||
-                    path.equals("/api/users/login")) {
+            // ✅ THE FIX: If the path is for authentication, let it pass without checking for a token.
+            if (path.startsWith("/api/auth/")) {
                 return chain.filter(exchange);
             }
-
-            // ✅ For secured routes, check JWT token
+            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+            // For all OTHER requests, perform JWT validation.
             if (request.getCookies().getFirst("jwt") == null) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing JWT token");
             }
@@ -51,11 +49,13 @@ public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFac
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid JWT token");
             }
 
-            // Extract user info and add to headers
+            // Extract user info and add to headers for downstream services
             String email = jwtUtil.getUsernameFromToken(token);
             String userId = jwtUtil.getClaimFromToken(token, claims -> claims.get("userId", String.class));
             String role = jwtUtil.getClaimFromToken(token, claims -> claims.get("role", String.class));
-
+            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+            System.out.println("email: " + email + "userId: " + userId + "role: " + role);
+            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
             ServerHttpRequest modifiedRequest = request.mutate()
                     .header("X-User-Email", email)
                     .header("X-User-ID", userId)
