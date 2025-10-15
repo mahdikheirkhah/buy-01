@@ -67,7 +67,7 @@ public class UserService implements UserDetailsService {
         User savedUser = userRepository.save(user);
         //kafkaTemplate.send("user-registered-topic", savedUser.getEmail());
         if (savedUser.getRole() == Role.SELLER && avatarFile != null && !avatarFile.isEmpty()) {
-            String avatarUrl = saveAvatar(avatarFile, savedUser.getId());
+            String avatarUrl = saveAvatar(avatarFile);
             savedUser.setAvatarUrl(avatarUrl);
         }
         return userRepository.save(savedUser);
@@ -93,11 +93,11 @@ public class UserService implements UserDetailsService {
     private boolean checkPassword(String firstPassword, String secondPassword){
         return passwordEncoder.matches(firstPassword, secondPassword);
     }
-    private String saveAvatar(MultipartFile avatarFile, String sellerID) {
+    private String saveAvatar(MultipartFile avatarFile) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", avatarFile.getResource());
         String mediaResponse = webClientBuilder.build().post()
-                .uri("http://media-service/api/media/upload/avatar/"+sellerID)
+                .uri("http://media-service/api/media/upload/avatar")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(body))
                 .retrieve()
@@ -123,7 +123,7 @@ public class UserService implements UserDetailsService {
         User user = checkUpdateUser(loggedInUserId, userEmail);
         String oldAvatarUrl = user.getAvatarUrl();
         if (avatarFile != null && !avatarFile.isEmpty()) {
-            String avatarUrl = saveAvatar(avatarFile, user.getId());
+            String avatarUrl = saveAvatar(avatarFile);
         }
         userMapper.updateUserFromDto(userForm, user);
 
@@ -131,6 +131,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) {
+        System.out.println(email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("User not found with email: " + email, HttpStatus.NOT_FOUND));
 
@@ -212,7 +213,7 @@ public class UserService implements UserDetailsService {
     public Cookie createCookie(String token, int maxAge) {
         Cookie jwtCookie = new Cookie("jwt", token);
         jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(true); // Should be true in production
+        jwtCookie.setSecure(true);
         jwtCookie.setPath("/");
         jwtCookie.setMaxAge(maxAge); // 1 day
         return jwtCookie;

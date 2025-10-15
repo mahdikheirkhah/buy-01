@@ -35,10 +35,9 @@ public class MediaController {
         return ResponseEntity.ok(mediaUploadResponseDTO);
     }
 
-    @PostMapping("/upload/avatar/{sellerID}")
+    @PostMapping("/upload/avatar")
     public ResponseEntity<String> uploadFileForAvatar(
-            @RequestParam("file") MultipartFile file,
-            @PathVariable String sellerId
+            @RequestParam("file") MultipartFile file
     ){
         String fileName = mediaService.uploadFileAvatar(file);
         String fileUrl = "/api/media/files/" + fileName;
