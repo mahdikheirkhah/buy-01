@@ -29,6 +29,9 @@
         <jjwt.version>0.11.5</jjwt.version>
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
+        <server.ssl.key-store-password>changeit</server.ssl.key-store-password>
+        <server.ssl.key-store-type>PKCS12</server.ssl.key-store-type>
+        <server.ssl.trust-store-password>changeit</server.ssl.trust-store-password>
     </properties>
 
     <dependencyManagement>
@@ -76,6 +79,7 @@
                 <artifactId>mapstruct</artifactId>
                 <version>${org.mapstruct.version}</version>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -105,5 +109,13 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*</include> <!-- This includes ALL files -->
+                </includes>
+            </resource>
+        </resources>
     </build>
 </project>

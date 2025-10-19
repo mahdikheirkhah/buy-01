@@ -78,7 +78,6 @@ public class UserService implements UserDetailsService {
         return  userRepository.findByEmail(email);
     }
     public InfoUserDTO getMe(String Id) {
-        System.out.println("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
         User user = userRepository.findById(Id)
                 .orElseThrow(()-> new CustomException("Not Authorized", HttpStatus.FORBIDDEN));
 
@@ -98,7 +97,7 @@ public class UserService implements UserDetailsService {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", avatarFile.getResource());
         String mediaResponse = webClientBuilder.build().post()
-                .uri("http://media-service/api/media/upload/avatar")
+                .uri("https://media-service/api/media/upload/avatar")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(body))
                 .retrieve()
