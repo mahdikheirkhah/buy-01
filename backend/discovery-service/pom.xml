@@ -18,7 +18,11 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>com.backend</groupId>
+            <artifactId>common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-servlet</artifactId>
@@ -29,6 +33,4 @@
             <optional>true</optional>
         </dependency>
     </dependencies>
-
-
 </project>

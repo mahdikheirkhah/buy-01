@@ -164,7 +164,7 @@ public class ProductService {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", image.getResource());
         MediaUploadResponseDTO mediaResponse = webClientBuilder.build().post()
-                .uri("http://media-service/api/media/upload/product/"+productId)
+                .uri("https://MEDIA-SERVICE/api/media/upload/product/"+productId)
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(body))
                 .retrieve()
@@ -178,7 +178,7 @@ public class ProductService {
     }
     private List<InfoUserDTO> getSellersInfo(List<String> sellerIds) {
         return webClientBuilder.build().get()
-                .uri("http://USER-SERVICE/api/users/batch?ids=" + String.join(",", sellerIds))
+                .uri("https://USER-SERVICE/api/users/batch?ids=" + String.join(",", sellerIds))
                 .retrieve()
                 .bodyToFlux(InfoUserDTO.class) // Use Flux for a list
                 .collectList()
@@ -186,7 +186,7 @@ public class ProductService {
     }
     private InfoUserDTO getSellerInfoWithEmail(String email) {
         return webClientBuilder.build().get()
-                .uri("http://USER-SERVICE/api/users/email?email=" + email)
+                .uri("https://USER-SERVICE/api/users/email?email=" + email)
                 .retrieve()
                 .bodyToMono(InfoUserDTO.class)
                 .block();
@@ -194,7 +194,7 @@ public class ProductService {
 
     private List<MediaUploadResponseDTO> getMedia(String productId) {
         return webClientBuilder.build().get()
-                .uri("http://MEDIA-SERVICE/api/media/batch?productID={productId}", productId)
+                .uri("https://MEDIA-SERVICE/api/media/batch?productID={productId}", productId)
                 .retrieve()
                 .bodyToFlux(MediaUploadResponseDTO.class)
                 .collectList()
