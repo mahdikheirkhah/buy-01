@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpMethod;
 
+import java.util.List;
+
 @Component
 public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthenticationGatewayFilterFactory.Config> {
 
@@ -24,42 +26,42 @@ public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFac
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getURI().getPath();
-            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-            // Allow all CORS preflight requests
-            if (request.getMethod() == HttpMethod.OPTIONS) {
+            HttpMethod method = request.getMethod();
+
+            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"); // Your debug print
+
+            if (method == HttpMethod.OPTIONS) {
                 return chain.filter(exchange);
             }
 
-            // ✅ THE FIX: If the path is for authentication, let it pass without checking for a token.
+            // ✅ THE FIX: This is now the ONLY check you need for public routes
             if (path.startsWith("/api/auth/")) {
                 return chain.filter(exchange);
             }
-            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-            // For all OTHER requests, perform JWT validation.
+
+            // ... Your cookie check logic is fine ...
             if (request.getCookies().getFirst("jwt") == null) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing JWT token");
             }
-
             String token = request.getCookies().getFirst("jwt").getValue();
-
             if (!jwtUtil.validateToken(token)) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid JWT token");
             }
 
-            // Extract user info and add to headers for downstream services
+            // 3. Add user info to headers
             String email = jwtUtil.getUsernameFromToken(token);
             String userId = jwtUtil.getClaimFromToken(token, claims -> claims.get("userId", String.class));
-            String role = jwtUtil.getClaimFromToken(token, claims -> claims.get("role", String.class));
-            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-            System.out.println("email: " + email + "userId: " + userId + "role: " + role);
-            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+
+            // ✅ THE FIX: Extract roles as a List and join them into a String
+            List<String> roles = jwtUtil.getClaimFromToken(token, claims -> claims.get("roles", List.class));
+            String roleHeaderValue = String.join(",", roles); // e.g., "ROLE_CLIENT" or "ROLE_CLIENT,ROLE_ADMIN"
+
             ServerHttpRequest modifiedRequest = request.mutate()
                     .header("X-User-Email", email)
                     .header("X-User-ID", userId)
-                    .header("X-User-Role", role)
+                    .header("X-User-Role", roleHeaderValue) // Pass the joined string
                     .build();
 
             return chain.filter(exchange.mutate().request(modifiedRequest).build());
