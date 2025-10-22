@@ -17,41 +17,44 @@ DOCKER_COMPOSE_CMD = docker-compose
 
 all: docker-up clean-backend run-backend run-frontend
 
-run-backend:
-	@echo "--- Building all backend microservices... ---"
-	$(MAVEN_CMD) -f $(BACKEND_DIR)/pom.xml clean install -DskipTests
-	@echo "--- Starting all backend microservices... ---"
-	start powershell -Command "cd $(BACKEND_DIR)/discovery-service; $(MAVEN_CMD) spring-boot:run; pause"
-	@timeout /t 10 >nul
-	start powershell -Command "cd $(BACKEND_DIR)/api-gateway; $(MAVEN_CMD) spring-boot:run; pause"
-	start powershell -Command "cd $(BACKEND_DIR)/user-service; $(MAVEN_CMD) spring-boot:run; pause"
-	start powershell -Command "cd $(BACKEND_DIR)/product-service; $(MAVEN_CMD) spring-boot:run; pause"
-	start powershell -Command "cd $(BACKEND_DIR)/media-service; $(MAVEN_CMD) spring-boot:run; pause"
-	@echo "--- Backend services are starting in new PowerShell windows. ---"
-
-run-frontend:
-	@echo "--- Starting frontend Angular application... ---"
-	start powershell -Command "cd $(FRONTEND_DIR); $(NPM_CMD) install; $(NPM_CMD) start; pause"
-
-stop:
-	@echo "--- Stopping all Java (backend) and Node (frontend) processes... ---"
-	@taskkill /F /IM java.exe >nul 2>&1 || echo No Java processes to kill.
-	@taskkill /F /IM node.exe >nul 2>&1 || echo No Node processes to kill.
-	@echo "--- All services stopped. ---"
-
-# --- Common Targets (No changes needed) ---
-
 clean-backend:
 	@echo "--- Cleaning backend projects... ---"
 	$(MAVEN_CMD) -f $(BACKEND_DIR)/pom.xml clean
 
+run-backend:
+	@echo "--- Building all backend microservices... ---"
+	$(MAVEN_CMD) -f $(BACKEND_DIR)/pom.xml clean install -DskipTests
+	@echo "--- Starting all backend microservices... ---"
+	start powershell -Command "Write-Host 'Starting Discovery Service...'; cd '$(CURDIR)/$(BACKEND_DIR)/discovery-service'; $(MAVEN_CMD) spring-boot:run; pause"
+	@echo "Waiting 15 seconds for Discovery Service to start..."
+	@timeout /t 15 /nobreak > nul
+	start powershell -Command "Write-Host 'Starting API Gateway...'; cd '$(CURDIR)/$(BACKEND_DIR)/api-gateway'; $(MAVEN_CMD) spring-boot:run; pause"
+	start powershell -Command "Write-Host 'Starting User Service...'; cd '$(CURDIR)/$(BACKEND_DIR)/user-service'; $(MAVEN_CMD) spring-boot:run; pause"
+	start powershell -Command "Write-Host 'Starting Product Service...'; cd '$(CURDIR)/$(BACKEND_DIR)/product-service'; $(MAVEN_CMD) spring-boot:run; pause"
+	start powershell -Command "Write-Host 'Starting Media Service...'; cd '$(CURDIR)/$(BACKEND_DIR)/media-service'; $(MAVEN_CMD) spring-boot:run; pause"
+	@echo "--- Backend services are starting in new PowerShell windows. ---"
+
+run-frontend:
+	@echo "--- Starting frontend Angular application... ---"
+	start powershell -Command "Write-Host 'Starting Frontend...'; cd '$(CURDIR)/$(FRONTEND_DIR)'; $(NPM_CMD) install; $(NPM_CMD) start; pause"
+
 docker-up:
 	@echo "--- Starting Docker Compose services (Kafka, Zookeeper)... ---"
 	$(DOCKER_COMPOSE_CMD) up -d
+	@echo "--- Docker services started successfully. ---"
 
 docker-down:
 	@echo "--- Stopping Docker Compose services... ---"
 	$(DOCKER_COMPOSE_CMD) down
+	@echo "--- Docker services stopped. ---"
+
+# Consider adding docker-logs and docker-status if needed, similar to macOS version
+
+stop:
+	@echo "--- Stopping all Java (backend) and Node (frontend) processes by name... ---"
+	@taskkill /F /IM java.exe /T 2>nul || echo No Java processes found.
+	@taskkill /F /IM node.exe /T 2>nul || echo No Node processes found.
+	@echo "--- All services stopped (check task manager if issues persist). ---"
 
 stop-all: stop docker-down
 	@echo "--- All services and Docker containers stopped. ---"
