@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import static org.springframework.security.config.Customizer.withDefaults; // Import this
 
 @Configuration
 public class SecurityConfig {
@@ -12,24 +13,14 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-                // ✅ Disable CSRF for API Gateway
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-
-                // ✅ Disable built-in CORS to use our custom CorsWebFilter
-                .cors(ServerHttpSecurity.CorsSpec::disable)
-
-                // ✅ Configure authorization
+                // ✅ CHANGE THIS to use your CorsConfig bean
+                .cors(withDefaults())
                 .authorizeExchange(exchanges -> exchanges
-                        // Allow all OPTIONS requests (preflight)
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // Allow public access to auth endpoints
                         .pathMatchers("/api/auth/**").permitAll()
-
-                        // Allow public access to user registration and login
-                        .pathMatchers("/api/users/register", "/api/users/login").permitAll()
-
-                        // All other requests require authentication
+                        // ❌ DELETE this redundant line:
+                        // .pathMatchers("/api/users/register", "/api/users/login").permitAll()
                         .anyExchange().authenticated()
                 )
                 .build();

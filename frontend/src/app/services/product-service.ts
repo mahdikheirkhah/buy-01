@@ -6,8 +6,8 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ProductService {
-  private productApiUrl = 'https://localhost:8080/api/products';
-  private imageApiUrl = 'https://localhost:8080/api/products/create/images/';
+  private productApiUrl = 'https://localhost:8443/api/products';
+  private imageApiUrl = 'https://localhost:8443/api/products/create/images/';
 
   constructor(private http: HttpClient) { }
 
