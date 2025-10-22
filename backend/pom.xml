@@ -113,7 +113,7 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <includes>
-                    <include>**/*</include> <!-- This includes ALL files -->
+                    <include>**/*</include>
                 </includes>
             </resource>
         </resources>

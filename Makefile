@@ -28,7 +28,8 @@ run-backend:
 	$(MAVEN_CMD) -f $(BACKEND_DIR)/pom.xml clean install -DskipTests
 	@echo "--- Starting all backend microservices... ---"
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/discovery-service && $(MAVEN_CMD) spring-boot:run"'
-	@sleep 10
+	@echo "Waiting 15 seconds for Discovery Service to start..."
+	@sleep 15
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/api-gateway && $(MAVEN_CMD) spring-boot:run"'
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/user-service && $(MAVEN_CMD) spring-boot:run"'
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/product-service && $(MAVEN_CMD) spring-boot:run"'
@@ -58,9 +59,13 @@ docker-status:
 	$(DOCKER_COMPOSE_CMD) ps
 
 stop:
-	@echo "--- Stopping all Java (backend) and Node (frontend) processes... ---"
-	@killall -9 java || true
-	@killall -9 node || true
+	@echo "--- Stopping all microservices and frontend by port... ---"
+	@kill -9 $$(lsof -ti:8761) || echo "Discovery Service was not running."
+	@kill -9 $$(lsof -ti:8080) || echo "API Gateway was not running."
+	@kill -9 $$(lsof -ti:8444) || echo "User Service was not running."
+	@kill -9 $$(lsof -ti:8082) || echo "Product Service was not running."
+	@kill -9 $$(lsof -ti:8083) || echo "Media Service was not running."
+	@kill -9 $$(lsof -ti:4200) || echo "Frontend was not running."
 	@echo "--- All services stopped. ---"
 
 stop-all: stop docker-down
