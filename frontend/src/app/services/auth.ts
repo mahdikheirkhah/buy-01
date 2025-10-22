@@ -19,11 +19,11 @@ export class AuthService {
     return this.currentUserSubject.value?.role || null;
   }
 
-  login(credentials: any): Observable<any> {
-    // ✅ Add withCredentials: true to send/receive cookies
-    return this.http.post(`${this.authApiUrl}/login`, credentials, { withCredentials: true }).pipe(
-      tap(() => this.fetchCurrentUser().subscribe())
-    );
+login(credentials: any): Observable<any> {
+    // ✅ Remove the tap operator calling fetchCurrentUser
+    return this.http.post(`${this.authApiUrl}/login`, credentials, { withCredentials: true });
+    // If you needed other side effects on login success *not* involving another HTTP call,
+    // you could keep tap: .pipe(tap(response => console.log('Login API call successful')));
   }
 
   fetchCurrentUser(): Observable<User> {
@@ -35,7 +35,7 @@ export class AuthService {
 
   logout(): Observable<any> {
     // ✅ Include credentials to allow the backend to clear the cookie
-    return this.http.post(`${this.authApiUrl}/logout`, {}, { withCredentials: true }).pipe(
+    return this.http.post(`${this.usersApiUrl}/logout`, {}, { withCredentials: true }).pipe(
       tap(() => this.currentUserSubject.next(null))
     );
   }

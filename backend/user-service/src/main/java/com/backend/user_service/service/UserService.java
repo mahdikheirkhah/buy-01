@@ -212,8 +212,9 @@ public class UserService implements UserDetailsService {
     }
     public Cookie createCookie(String token, int maxAge) {
         Cookie jwtCookie = new Cookie("jwt", token);
-        jwtCookie.setHttpOnly(true);
+//        jwtCookie.setHttpOnly(true);
         jwtCookie.setSecure(true);
+        jwtCookie.setAttribute("SameSite", "Lax");
         jwtCookie.setPath("/");
         jwtCookie.setMaxAge(maxAge); // 1 day
         return jwtCookie;
