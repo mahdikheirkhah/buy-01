@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,6 +17,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -30,38 +34,36 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        String jwt = null;
-        String username = null;
+        // 1. Extract headers sent by the Gateway
+        String userId = request.getHeader("X-User-ID");
+        String email = request.getHeader("X-User-Email");
+        String rolesHeader = request.getHeader("X-User-Role");
 
-        // 1. Extract the JWT from the "jwt" cookie
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if (cookie.getName().equals("jwt")) {
-                    jwt = cookie.getValue();
-                }
-            }
+        // 2. If headers are present (meaning request came from Gateway and is authenticated)
+        //    and user is not already authenticated in this service's context
+        if (userId != null && email != null && rolesHeader != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            // 3. Create a list of authorities from the roles header
+            List<SimpleGrantedAuthority> authorities = Arrays.stream(rolesHeader.split(","))
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
+
+            // 4. Create the authentication token
+            // We use the 'email' as the principal, matching what UserDetailsService would do.
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    email, // The principal (can also be userId)
+                    null,  // No credentials
+                    authorities // The authorities (roles)
+            );
+
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            // 5. Set the user in Spring's security context *for this service*
+            SecurityContextHolder.getContext().setAuthentication(authToken);
         }
 
-        // 2. If a token is found, validate it
-        if (jwt != null) {
-            username = jwtUtil.getUsernameFromToken(jwt);
-        }
-
-        // 3. If token is valid and user is not yet authenticated, set the security context
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-
-            if (jwtUtil.validateToken(jwt)) { // We can add more checks here if needed
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // This is the crucial step: setting the user in Spring's security context
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-        }
-
-        // 4. Continue the filter chain
+        // 6. Continue the filter chain
         chain.doFilter(request, response);
     }
 }
