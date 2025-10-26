@@ -63,7 +63,12 @@
               "buildTarget": "frontend:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "ssl": true,
+            "sslKey": "../frontend-dev.key",
+            "sslCert": "../frontend-dev.pem"
+          }
         },
         "extract-i18n": {
           "builder": "@angular/build:extract-i18n"

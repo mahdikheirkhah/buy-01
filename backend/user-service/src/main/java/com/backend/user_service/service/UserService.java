@@ -212,11 +212,11 @@ public class UserService implements UserDetailsService {
     }
     public Cookie createCookie(String token, int maxAge) {
         Cookie jwtCookie = new Cookie("jwt", token);
-//        jwtCookie.setHttpOnly(true);
+        // jwtCookie.setHttpOnly(true); // <-- Comment out or remove this line
         jwtCookie.setSecure(true);
-        jwtCookie.setAttribute("SameSite", "Lax");
         jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(maxAge); // 1 day
+        jwtCookie.setMaxAge(maxAge);
+        jwtCookie.setAttribute("SameSite", "Lax"); // Keep SameSite
         return jwtCookie;
     }
 

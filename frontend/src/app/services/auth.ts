@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { User } from '../models/user.model';
+import { CookieService } from 'ngx-cookie-service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,9 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient,
+    private cookieService: CookieService
+    ) {}
 
   public get currentUserRole(): string | null {
     return this.currentUserSubject.value?.role || null;
@@ -26,13 +29,23 @@ login(credentials: any): Observable<any> {
     // you could keep tap: .pipe(tap(response => console.log('Login API call successful')));
   }
 
-  fetchCurrentUser(): Observable<User> {
-    // ✅ Use the /users/me endpoint and include credentials
+fetchCurrentUser(): Observable<User> {
+    // Check and log the cookie value BEFORE sending the request
+    const jwtToken = this.cookieService.get('jwt'); // Get the cookie value by name
+    if (jwtToken) {
+      console.log('JWT Cookie value before sending request:', jwtToken);
+    } else {
+      console.log('JWT Cookie not found before sending request.');
+    }
+
+    // Now make the HTTP request
     return this.http.get<User>(`${this.usersApiUrl}/me`, { withCredentials: true }).pipe(
-      tap(user => this.currentUserSubject.next(user))
+      tap(user => {
+        console.log('Received user data:', user);
+        this.currentUserSubject.next(user);
+      })
     );
   }
-
   logout(): Observable<any> {
     // ✅ Include credentials to allow the backend to clear the cookie
     return this.http.post(`${this.usersApiUrl}/logout`, {}, { withCredentials: true }).pipe(

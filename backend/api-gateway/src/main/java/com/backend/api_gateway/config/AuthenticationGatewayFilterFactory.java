@@ -11,7 +11,6 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpMethod;
 
 import java.util.List;
-
 @Component
 public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthenticationGatewayFilterFactory.Config> {
 
@@ -21,6 +20,7 @@ public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFac
     public AuthenticationGatewayFilterFactory(JwtUtil jwtUtil) {
         super(Config.class);
         this.jwtUtil = jwtUtil;
+        System.out.println("✅ AuthenticationGatewayFilterFactory CREATED"); // This should print on startup
     }
 
     @Override
@@ -30,45 +30,45 @@ public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFac
             String path = request.getURI().getPath();
             HttpMethod method = request.getMethod();
 
-            System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"); // Your debug print
+            System.out.println("🔍 Filter executing for path: " + path + ", method: " + method);
 
-            if (method == HttpMethod.OPTIONS) {
+            // Skip OPTIONS and auth endpoints
+            if (method == HttpMethod.OPTIONS || path.startsWith("/api/auth/")) {
+                System.out.println("✅ Skipping authentication for: " + path);
                 return chain.filter(exchange);
             }
 
-            // ✅ THE FIX: This is now the ONLY check you need for public routes
-            if (path.startsWith("/api/auth/")) {
-                return chain.filter(exchange);
-            }
+            System.out.println("🔐 Authenticating request for: " + path);
 
-            // ... Your cookie check logic is fine ...
+            // Your existing authentication logic...
             if (request.getCookies().getFirst("jwt") == null) {
+                System.out.println("❌ Missing JWT token");
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing JWT token");
             }
+
             String token = request.getCookies().getFirst("jwt").getValue();
             if (!jwtUtil.validateToken(token)) {
+                System.out.println("❌ Invalid JWT token");
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid JWT token");
             }
 
-            // 3. Add user info to headers
+            // Continue with your existing code...
             String email = jwtUtil.getUsernameFromToken(token);
             String userId = jwtUtil.getClaimFromToken(token, claims -> claims.get("userId", String.class));
-
-            // ✅ THE FIX: Extract roles as a List and join them into a String
-            List<String> roles = jwtUtil.getClaimFromToken(token, claims -> claims.get("roles", List.class));
-            String roleHeaderValue = String.join(",", roles); // e.g., "ROLE_CLIENT" or "ROLE_CLIENT,ROLE_ADMIN"
+            String role = jwtUtil.getClaimFromToken(token, claims -> claims.get("role", String.class));
 
             ServerHttpRequest modifiedRequest = request.mutate()
                     .header("X-User-Email", email)
                     .header("X-User-ID", userId)
-                    .header("X-User-Role", roleHeaderValue) // Pass the joined string
+                    .header("X-User-Role", role)
                     .build();
 
+            System.out.println("✅ Authentication successful for user: " + email);
             return chain.filter(exchange.mutate().request(modifiedRequest).build());
         };
     }
 
     public static class Config {
-        // Configuration properties
+        // Configuration properties if needed
     }
 }

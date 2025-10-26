@@ -63,6 +63,8 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<InfoUserDTO> getCurrentUser(@RequestHeader("X-User-ID") String userId) {
+        System.out.println("Hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+        System.out.println(userId);
         InfoUserDTO user = userService.getMe(userId);
         return ResponseEntity.ok(user);
     }
