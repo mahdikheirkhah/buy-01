@@ -12,6 +12,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,12 +47,26 @@ public class MediaController {
         return ResponseEntity.ok(fileUrl);
     }
 
-    // This endpoint for serving files is still correct
-    @GetMapping("/files/{filename:.+}")
-    public ResponseEntity<Resource> getFile(@PathVariable String filename) {
+    @GetMapping("/files/{filename}") // Make sure this path matches your DB
+    public ResponseEntity<Resource> getFile(@PathVariable("filename") String filename) {
         Resource file = fileStorageService.load(filename);
+
+        // Try to determine the file's content type
+        String contentType = "application/octet-stream"; // Default
+        try {
+            // Get the path from the resource and probe its content type
+            contentType = Files.probeContentType(file.getFile().toPath());
+        } catch (IOException e) {
+            // Log this error, but we can proceed with the default
+            System.err.println("Could not determine file type for: " + filename);
+        }
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+                // ❌ REMOVE THIS LINE
+                // .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+
+                // ✅ ADD THIS LINE
+                .header(HttpHeaders.CONTENT_TYPE, contentType)
                 .body(file);
     }
 

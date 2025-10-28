@@ -4,7 +4,7 @@
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="9">
+          <list size="17">
             <item index="0" class="java.lang.String" itemvalue="routerLink" />
             <item index="1" class="java.lang.String" itemvalue="[(ngModel)]" />
             <item index="2" class="java.lang.String" itemvalue="(ngSubmit)" />
@@ -14,6 +14,14 @@
             <item index="6" class="java.lang.String" itemvalue="color" />
             <item index="7" class="java.lang.String" itemvalue="[disabled]" />
             <item index="8" class="java.lang.String" itemvalue="(change)" />
+            <item index="9" class="java.lang.String" itemvalue="*ngIf" />
+            <item index="10" class="java.lang.String" itemvalue="[routerLink]" />
+            <item index="11" class="java.lang.String" itemvalue="[src]" />
+            <item index="12" class="java.lang.String" itemvalue="(click)" />
+            <item index="13" class="java.lang.String" itemvalue="[matMenuTriggerFor]" />
+            <item index="14" class="java.lang.String" itemvalue="mat-button" />
+            <item index="15" class="java.lang.String" itemvalue="mat-menu-item" />
+            <item index="16" class="java.lang.String" itemvalue="mat-icon-button" />
           </list>
         </value>
       </option>
@@ -22,7 +30,7 @@
     <inspection_tool class="HtmlUnknownTag" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="8">
+          <list size="14">
             <item index="0" class="java.lang.String" itemvalue="nobr" />
             <item index="1" class="java.lang.String" itemvalue="noembed" />
             <item index="2" class="java.lang.String" itemvalue="comment" />
@@ -31,6 +39,12 @@
             <item index="5" class="java.lang.String" itemvalue="script" />
             <item index="6" class="java.lang.String" itemvalue="mat-form-field" />
             <item index="7" class="java.lang.String" itemvalue="mat-label" />
+            <item index="8" class="java.lang.String" itemvalue="image-cropper" />
+            <item index="9" class="java.lang.String" itemvalue="ng-container" />
+            <item index="10" class="java.lang.String" itemvalue="mat-menu" />
+            <item index="11" class="java.lang.String" itemvalue="ng-template" />
+            <item index="12" class="java.lang.String" itemvalue="mat-toolbar" />
+            <item index="13" class="java.lang.String" itemvalue="mat-icon" />
           </list>
         </value>
       </option>

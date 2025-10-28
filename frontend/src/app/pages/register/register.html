@@ -31,10 +31,34 @@
 
     <div class="form-group" *ngIf="registerData.role === 'SELLER'">
       <label for="avatar">Avatar</label>
-      <input type="file" id="avatar" (change)="onFileSelected($event)">
+      <input type="file" id="avatar" accept="image/*" (change)="onFileSelected($event)">
+
+      <div class="preview-container" *ngIf="croppedImage">
+        <p>Avatar Preview:</p>
+        <img [src]="croppedImage" class="avatar-preview" />
+      </div>
     </div>
 
     <button type="submit">Register</button>
   </form>
   <p>Already have an account? <a routerLink="/login">Login here</a></p>
+</div>
+
+<div class="cropper-modal-overlay" *ngIf="showCropper">
+  <div class="cropper-modal-content">
+    <h3>Crop Your Avatar</h3>
+    <image-cropper
+      [imageChangedEvent]="imageChangedEvent"
+      [maintainAspectRatio]="true"
+      [aspectRatio]="1 / 1"
+      [roundCropper]="true"     [resizeToWidth]="256"
+      format="png"
+      (imageCropped)="imageCropped($event)"
+      (loadImageFailed)="loadImageFailed()"
+    ></image-cropper>
+    <div class="cropper-buttons">
+      <button type="button" (click)="cancelCrop()" class="cancel-btn">Cancel</button>
+      <button type="button" (click)="saveCrop()" class="save-btn">Save Avatar</button>
+    </div>
+  </div>
 </div>

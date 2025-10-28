@@ -1,14 +1,44 @@
 <mat-toolbar color="primary">
+  <!-- Hamburger Menu (always visible) -->
   <button mat-icon-button (click)="toggleSidenav.emit()">
     <mat-icon>menu</mat-icon>
   </button>
-  
+
+  <!-- Brand Logo -->
   <a routerLink="/home" class="brand-logo">My Site</a>
-  
+
   <span class="spacer"></span>
-  
-  <div *ngIf="currentUser$ | async as user">
-    <span>{{ user.firstName }} {{ user.lastName }}</span>
-    <span class="email">({{ user.email }})</span>
-  </div>
+
+  <!-- We use ng-container to avoid extra divs -->
+  <ng-container *ngIf="currentUser$ | async as user; else loggedOutButtons">
+
+    <!-- USER IS LOGGED IN -->
+
+    <!-- Seller Avatar -->
+    <button mat-icon-button class="avatar-button" *ngIf="user.role === 'SELLER' && user.avatarUrl" [matMenuTriggerFor]="userMenu">
+      <img [src]="getAvatarUrl(user.avatarUrl)" alt="{{ user.firstName }}'s avatar" class="avatar-image">
+    </button>
+
+    <!-- Client / Seller (no avatar) Fallback -->
+    <button mat-button *ngIf="user.role === 'CLIENT' || !user.avatarUrl" [matMenuTriggerFor]="userMenu">
+      {{ user.firstName }} {{ user.lastName }}
+      <span class="email">({{ user.email }})</span>
+    </button>
+
+    <!-- This is the menu that pops up when you click the avatar/name -->
+    <mat-menu #userMenu="matMenu">
+      <button mat-menu-item (click)="onLogout()">
+        <mat-icon>exit_to_app</mat-icon>
+        <span>Logout</span>
+      </button>
+    </mat-menu>
+
+  </ng-container>
+
+  <!-- USER IS LOGGED OUT -->
+  <ng-template #loggedOutButtons>
+    <button mat-button routerLink="/login">Login</button>
+    <button mat-raised-button color="accent" routerLink="/register">Register</button>
+  </ng-template>
+
 </mat-toolbar>
