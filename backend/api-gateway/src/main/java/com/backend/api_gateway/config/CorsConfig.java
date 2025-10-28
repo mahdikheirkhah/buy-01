@@ -29,7 +29,7 @@ public class CorsConfig {
                 "X-Requested-With", "X-User-Email", "X-User-ID", "X-User-Role"
         ));
         corsConfig.setExposedHeaders(Arrays.asList(
-                "Authorization", "X-User-Email", "X-User-ID", "X-User-Role"
+                "Authorization", "X-User-Email", "X-User -ID", "X-User-Role"
         ));
         corsConfig.setAllowCredentials(true);
 
