@@ -1,0 +1,97 @@
+/* src/styles.scss */
+@use '@angular/material' as mat; // <-- MUST BE ON LINE 1 (or after comments)
+
+// Include the default "core" styles
+@include mat.core();
+
+// 1. Define your color palettes
+// Deep Navy (Primary Color)
+$navy-palette: (
+  50: #e8eaf6,
+  100: #c5cbe9,
+  200: #9fa8da,
+  300: #7986cb,
+  400: #5c6bc0,
+  500: #3f51b5,
+  600: #3949ab,
+  700: #303f9f, // This is the 'default' we select below
+  800: #283593,
+  900: #1a237e,
+  contrast: (
+    50: #000000,
+    100: #000000,
+    200: #000000,
+    300: #ffffff,
+    400: #ffffff,
+    500: #ffffff,
+    600: #ffffff,
+    700: #ffffff, // Contrast for '700'
+    800: #ffffff,
+    900: #ffffff,
+  )
+);
+
+// Green (Accent Color)
+$green-palette: (
+  50: #e8f5e9,
+  100: #c8e6c9,
+  200: #a5d6a7,
+  300: #81c784,
+  400: #66bb6a,
+  500: #4caf50, // This is the 'default' we select below
+  600: #43a047,
+  700: #388e3c,
+  800: #2e7d32,
+  900: #1b5e20,
+  contrast: (
+    50: #000000,
+    100: #000000,
+    200: #000000,
+    300: #000000,
+    400: #000000,
+    500: #ffffff, // Contrast for '500'
+    600: #ffffff,
+    700: #ffffff,
+    800: #ffffff,
+    900: #ffffff,
+  )
+);
+
+// 2. Create the theme
+$my-primary: mat.define-palette($navy-palette, 700); // This line will now work
+$my-accent: mat.define-palette($green-palette, 500);
+
+$my-theme: mat.define-light-theme((
+  color: (
+    primary: $my-primary,
+    accent: $my-accent,
+  ),
+  typography: mat.define-typography-config(),
+  density: 0,
+));
+
+// 3. Apply the theme to all Material components
+@include mat.all-component-themes($my-theme);
+
+/* --- Your Global CSS Variables --- */
+:root {
+  --navy: mat.get-color-from-palette($my-primary, 'default'); // #303f9f
+  --navy-dark: mat.get-color-from-palette($my-primary, 'darker'); // #1a237e
+  --navy-light: mat.get-color-from-palette($my-primary, 'lighter'); // #5c6bc0
+
+  --green: mat.get-color-from-palette($my-accent, 'default'); // #4caf50
+  --green-dark: mat.get-color-from-palette($my-accent, 'darker'); // #1b5e20
+
+  --white: #ffffff;
+  --text-primary: #333;
+  --text-light: #f4f4f4;
+  --background-light: #f9f9f9;
+}
+
+/* 4. Apply global (non-Material) styles */
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: var(--background-light);
+  color: var(--text-primary);
+}

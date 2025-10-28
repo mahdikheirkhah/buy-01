@@ -1,3 +1,7 @@
+button[routerLink="/register"] {
+  background-color: var(--green);
+  color: var(--white);
+}
 .navbar-container {
   position: fixed;
   top: 0;
