@@ -1,4 +1,5 @@
-package com.backend.user_service.model;
+package com.backend.common.dto;
+
 
 public enum Role {
     CLIENT, SELLER
