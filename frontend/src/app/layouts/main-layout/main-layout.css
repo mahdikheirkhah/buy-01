@@ -1,0 +1,23 @@
+/* This is the main container for the sidenav and content */
+.sidenav-container {
+  /* This is the magic part:
+    100vh = 100% of the viewport (screen) height.
+  */
+  height: 100vh;
+}
+
+/* This is the content area *inside* the container.
+  We need to add padding to the top so your
+  content doesn't get hidden behind the fixed navbar.
+*/
+main {
+  /* Adjust this value to match your navbar's height.
+    64px is the default for Material toolbars.
+  */
+  padding-top: 64px;
+}
+
+/* This makes the sidenav itself look better */
+.sidenav {
+  width: 250px; /* Give it a standard width */
+}
