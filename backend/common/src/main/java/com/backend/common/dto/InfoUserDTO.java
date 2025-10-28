@@ -21,4 +21,6 @@ public class InfoUserDTO {
     private String email;
     @NotBlank
     private String avatarUrl;
+    @NotBlank
+    private Role role;
 }

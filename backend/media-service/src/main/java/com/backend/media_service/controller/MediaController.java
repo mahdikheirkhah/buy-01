@@ -41,6 +41,7 @@ public class MediaController {
     ){
         String fileName = mediaService.uploadFileAvatar(file);
         String fileUrl = "/api/media/files/" + fileName;
+        System.out.println(fileUrl);
         return ResponseEntity.ok(fileUrl);
     }
 

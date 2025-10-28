@@ -1,18 +1,15 @@
 package com.backend.user_service.service;
 
 import com.backend.common.dto.InfoUserDTO;
-import com.backend.common.dto.MediaUploadResponseDTO;
 import com.backend.common.exception.CustomException;
 import com.backend.common.util.JwtUtil;
 import com.backend.user_service.dto.loginUserDTO;
 import com.backend.user_service.dto.updateUserDTO;
-import com.backend.user_service.model.Role;
+import com.backend.common.dto.Role;
 import com.backend.user_service.model.User;
 import com.backend.user_service.repository.UserMapper;
 import com.backend.user_service.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
-import lombok.Value;
-import org.mapstruct.control.MappingControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,7 +26,8 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
-
+import org.springframework.core.io.ByteArrayResource;
+import java.io.IOException;
 @Service
 public class UserService implements UserDetailsService {
     @org.springframework.beans.factory.annotation.Value("${jwt.expiration}")
@@ -87,6 +85,7 @@ public class UserService implements UserDetailsService {
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
+                .role(user.getRole())
                 .avatarUrl(user.getAvatarUrl())
                 .build();
     }
@@ -95,14 +94,30 @@ public class UserService implements UserDetailsService {
     }
     private String saveAvatar(MultipartFile avatarFile) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", avatarFile.getResource());
+
+        try {
+            // ✅ Create a ByteArrayResource that WebClient can reliably send
+            ByteArrayResource fileResource = new ByteArrayResource(avatarFile.getBytes()) {
+                @Override
+                public String getFilename() {
+                    // This is crucial for the receiving service
+                    return avatarFile.getOriginalFilename();
+                }
+            };
+
+            body.add("file", fileResource);
+
+        } catch (IOException e) {
+            throw new CustomException("Failed to read avatar file", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         String mediaResponse = webClientBuilder.build().post()
-                .uri("https://media-service/api/media/upload/avatar")
+                .uri("https://MEDIA-SERVICE/api/media/upload/avatar") // This is correct with @LoadBalanced
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(body))
                 .retrieve()
                 .bodyToMono(String.class)
-                .block(); // .block() makes the call synchronous. A reactive chain is more advanced.
+                .block(); // .block() is fine for now
 
         if (mediaResponse == null || mediaResponse.isBlank()) {
             throw new CustomException("Failed to upload avatar image.", HttpStatus.BAD_REQUEST);
