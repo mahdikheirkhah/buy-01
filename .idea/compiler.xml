@@ -48,12 +48,12 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="api-gateway" options="" />
+      <module name="api-gateway" options="-parameters" />
       <module name="backend" options="" />
-      <module name="common" options="" />
-      <module name="discovery-service" options="" />
-      <module name="media-service" options="" />
-      <module name="product-service" options="" />
+      <module name="common" options="-parameters" />
+      <module name="discovery-service" options="-parameters" />
+      <module name="media-service" options="-parameters" />
+      <module name="product-service" options="-parameters" />
       <module name="user-service" options="-parameters" />
     </option>
   </component>

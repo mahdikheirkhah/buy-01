@@ -27,14 +27,16 @@ public class MediaController {
     @Autowired
     private MediaService mediaService; // ✅ Inject the new MediaService
 
-    @PostMapping("/upload/product/{productId}")
-    public ResponseEntity<MediaUploadResponseDTO> uploadFileForProduct(
-            @RequestPart("file")MultipartFile file,
-            @PathVariable("productId") String productId) {
-        Media savedMedia = mediaService.uploadFile(file, productId);
+    @PostMapping("/upload")
+    public ResponseEntity<MediaUploadResponseDTO> uploadFile(
+            @RequestPart("file") MultipartFile file,
+            @RequestPart("productId") String productId) { // ✅ Make sure it accepts productId
+
+        Media savedMedia = mediaService.uploadFile(file, productId); // Service saves file & metadata
         String fileUrl = "/api/media/files/" + savedMedia.getImagePath();
-        MediaUploadResponseDTO mediaUploadResponseDTO = new MediaUploadResponseDTO(savedMedia.getId(), fileUrl);
-        return ResponseEntity.ok(mediaUploadResponseDTO);
+
+        MediaUploadResponseDTO response = new MediaUploadResponseDTO(savedMedia.getId(), fileUrl);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/upload/avatar")

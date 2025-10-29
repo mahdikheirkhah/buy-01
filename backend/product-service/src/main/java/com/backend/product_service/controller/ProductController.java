@@ -6,6 +6,7 @@ import com.backend.product_service.model.Product;
 import com.backend.product_service.service.ProductService;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -27,22 +28,28 @@ public class ProductController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<String> createProduct(
+    //@PreAuthorize("hasRole('SELLER')") // Make sure role name matches JWT
+    public ResponseEntity<Product> createProduct(
             @RequestBody @NotNull(message ="this request needs body") CreateProductDTO productDto,
             @RequestHeader("X-User-ID") String sellerId) {
-        productService.createProduct(sellerId, productDto);
-        return ResponseEntity.ok("Product created successfully");
+
+        // This service method now only saves the product and returns it
+        Product newProduct = productService.createProduct(sellerId, productDto);
+
+        // Return the full product (including its new ID) so the frontend can use it in step 2
+        return ResponseEntity.status(HttpStatus.CREATED).body(newProduct);
     }
+
     @PostMapping("/create/images/{productId}")
-    @PreAuthorize("hasRole('SELLER')")
+   // @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<String> addImagesToProduct(
             @RequestHeader("X-User-ID") String sellerId,
             @PathVariable("productId") String productId,
-            @RequestParam("files") List<MultipartFile> files
-    ){
-        productService.createImage(files, productId, sellerId);
-        return ResponseEntity.ok("Image(s) created successfully");
+            @RequestParam("file") MultipartFile file) { // Changed to "file" to match frontend
+
+        // This service method now only handles saving the image
+        productService.createImage(file, productId, sellerId);
+        return ResponseEntity.ok("Image created successfully");
     }
 
     @PutMapping("/{id}")
