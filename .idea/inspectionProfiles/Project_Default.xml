@@ -4,7 +4,7 @@
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="17">
+          <list size="20">
             <item index="0" class="java.lang.String" itemvalue="routerLink" />
             <item index="1" class="java.lang.String" itemvalue="[(ngModel)]" />
             <item index="2" class="java.lang.String" itemvalue="(ngSubmit)" />
@@ -22,6 +22,9 @@
             <item index="14" class="java.lang.String" itemvalue="mat-button" />
             <item index="15" class="java.lang.String" itemvalue="mat-menu-item" />
             <item index="16" class="java.lang.String" itemvalue="mat-icon-button" />
+            <item index="17" class="java.lang.String" itemvalue="mat-card-image" />
+            <item index="18" class="java.lang.String" itemvalue="*ngFor" />
+            <item index="19" class="java.lang.String" itemvalue="[formGroup]" />
           </list>
         </value>
       </option>
@@ -30,7 +33,7 @@
     <inspection_tool class="HtmlUnknownTag" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="14">
+          <list size="22">
             <item index="0" class="java.lang.String" itemvalue="nobr" />
             <item index="1" class="java.lang.String" itemvalue="noembed" />
             <item index="2" class="java.lang.String" itemvalue="comment" />
@@ -45,6 +48,14 @@
             <item index="11" class="java.lang.String" itemvalue="ng-template" />
             <item index="12" class="java.lang.String" itemvalue="mat-toolbar" />
             <item index="13" class="java.lang.String" itemvalue="mat-icon" />
+            <item index="14" class="java.lang.String" itemvalue="mat-card" />
+            <item index="15" class="java.lang.String" itemvalue="mat-card-actions" />
+            <item index="16" class="java.lang.String" itemvalue="mat-card-header" />
+            <item index="17" class="java.lang.String" itemvalue="mat-card-subtitle" />
+            <item index="18" class="java.lang.String" itemvalue="mat-card-content" />
+            <item index="19" class="java.lang.String" itemvalue="mat-card-title" />
+            <item index="20" class="java.lang.String" itemvalue="mat-paginator" />
+            <item index="21" class="java.lang.String" itemvalue="app-product-card" />
           </list>
         </value>
       </option>

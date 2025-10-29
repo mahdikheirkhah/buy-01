@@ -1,14 +1,15 @@
+// src/app/pages/create-product/create-product.ts
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms'; // ✅ Import ReactiveFormsModule
-import { Router, RouterLink } from '@angular/router'; // ✅ Import RouterLink
-import { CommonModule } from '@angular/common'; // ✅ Import CommonModule
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../services/product-service';
-
-// ✅ Import all the Angular Material modules you are using
+import { forkJoin, Observable } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-create-product',
@@ -19,7 +20,9 @@ import { MatButtonModule } from '@angular/material/button';
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './create-product.html',
   styleUrls: ['./create-product.css']
@@ -27,6 +30,13 @@ import { MatButtonModule } from '@angular/material/button';
 export class CreateProduct {
   productForm: FormGroup;
   selectedFiles: File[] = [];
+  isUploading = false;
+
+  // --- ✅ New Properties for Validation ---
+  fileErrors: string[] = []; // To hold error messages
+  private maxSizeInBytes = 2 * 1024 * 1024; // 2MB
+  private allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  // ----------------------------------------
 
   constructor(
     private fb: FormBuilder,
@@ -36,38 +46,95 @@ export class CreateProduct {
     this.productForm = this.fb.group({
       name: ['', Validators.required],
       description: ['', Validators.required],
-      price: [0, [Validators.required, Validators.min(0)]],
-      quantity: [0, [Validators.required, Validators.min(0)]],
+      price: [null, [Validators.required, Validators.min(0.01)]],
+      quantity: [null, [Validators.required, Validators.min(0)]],
     });
   }
 
-  onFileSelected(event: any): void {
-    this.selectedFiles = Array.from(event.target.files);
+  /**
+   * ✅ This method now ADDS files and VALIDATES them.
+   */
+  onFilesSelected(event: any): void {
+    this.fileErrors = []; // Clear errors on new selection
+    const files = event.target.files;
+
+    if (files && files.length > 0) {
+      for (const file of files) {
+        // 1. Check type
+        if (!this.allowedTypes.includes(file.type)) {
+          this.fileErrors.push(`File: "${file.name}" has an invalid type. Only PNG, JPG, GIF, WebP are allowed.`);
+          continue; // Skip this file
+        }
+
+        // 2. Check size
+        if (file.size > this.maxSizeInBytes) {
+          this.fileErrors.push(`File: "${file.name}" is too large (Max 2MB).`);
+          continue; // Skip this file
+        }
+
+        // 3. If all checks pass, add the file
+        this.selectedFiles.push(file);
+      }
+    }
   }
 
-  async onSubmit(): Promise<void> {
-    if (this.productForm.invalid) {
+  /**
+   * Removes a file from the list.
+   */
+  removeFile(index: number): void {
+    this.selectedFiles.splice(index, 1);
+  }
+
+  //
+  // The onSubmit method remains exactly the same as before.
+  // It will correctly upload all files in the 'selectedFiles' array.
+  //
+  onSubmit(): void {
+    if (this.productForm.invalid || this.isUploading) {
       return;
     }
+    this.isUploading = true;
 
-    try {
-      // Step 1: Create the product with text data
-      const productResponse: any = await this.productService.createProduct(this.productForm.value).toPromise();
-      const productId = productResponse.id;
+    // Step 1: Create the product
+    this.productService.createProduct(this.productForm.value).subscribe({
+      next: (productResponse: any) => {
+        const newProductId = productResponse.id;
 
-      // Step 2: Upload images one by one
-      if (this.selectedFiles.length > 0) {
-        for (const file of this.selectedFiles) {
-          await this.productService.uploadProductImage(productId, file).toPromise();
+        // Step 2: Check for images
+        if (this.selectedFiles.length > 0) {
+
+          // Create upload observables
+          const uploadObservables: Observable<any>[] = this.selectedFiles.map(file => {
+            return this.productService.uploadProductImage(newProductId, file);
+          });
+
+          // Step 3: Run all uploads in parallel
+          forkJoin(uploadObservables).subscribe({
+            next: (uploadResponses) => {
+              console.log('All images uploaded successfully', uploadResponses);
+              this.isUploading = false;
+              this.router.navigate(['/my-products']);
+            },
+            error: (err) => {
+              console.error('One or more image uploads failed', err);
+              this.isUploading = false;
+              alert('Product created, but image upload failed.');
+              this.router.navigate(['/my-products']);
+            }
+          });
+
+        } else {
+          // No files, just navigate
+          console.log('Product created with no images.');
+          this.isUploading = false;
+          this.router.navigate(['/my-products']);
         }
+      },
+      error: (err) => {
+        console.error('Failed to create product', err);
+        this.isUploading = false;
+        alert('Error creating product. Please try again.');
       }
-
-      alert('Product created successfully!');
-      this.router.navigate(['/my-products']); // Navigate to another page on success
-
-    } catch (error) {
-      console.error('Failed to create product:', error);
-      alert('Error creating product. Please try again.');
-    }
+    });
   }
 }

@@ -5,6 +5,9 @@ import com.backend.common.exception.CustomException;
 import com.backend.media_service.model.Media;
 import com.backend.media_service.repository.MediaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -28,7 +31,7 @@ public class MediaService {
     public Media uploadFile(MultipartFile file, String productId) {
         String filename = fileStorageService.save(file);
         Media media = new Media();
-        media.setImagePath(filename);
+        media.setImagePath("/api/media/files/"+filename);
         media.setProductID(productId);
         return mediaRepository.save(media);
     }
@@ -70,5 +73,16 @@ public class MediaService {
         Media updatedMedia = mediaRepository.save(existingMedia);
         fileStorageService.delete(oldImagePath);
         return updatedMedia;
+    }
+    public List<String> getLimitedImageUrlsForProduct(String productId, int limit) {
+        // Create a Pageable object:
+        // Page 0, 'limit' items, sorted by createdAt ascending (oldest first)
+        Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.ASC, "createdAt"));
+
+        List<Media> mediaList = mediaRepository.findByProductID(productId, pageable);
+
+        return mediaList.stream()
+                .map(Media::getImagePath)
+                .toList();
     }
 }

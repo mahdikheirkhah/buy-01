@@ -1,0 +1,41 @@
+.home-container {
+  max-width: 1200px;
+  /* 80px top padding to clear the fixed navbar */
+  margin: 80px auto 40px;
+  padding: 24px;
+}
+
+.welcome-banner {
+  background-color: var(--white);
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.welcome-banner h2 {
+  margin-top: 0;
+  color: var(--navy);
+}
+
+.error-banner {
+  background-color: #fff0f0;
+  color: #c51111;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.product-grid {
+  display: grid;
+  /* Creates a responsive grid of cards */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+mat-paginator {
+  margin-top: 24px;
+  /* Use our theme variable for the background */
+  background-color: var(--background-light);
+}
