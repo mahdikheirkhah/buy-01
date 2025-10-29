@@ -1,44 +1,82 @@
-// src/app/components/home/home.ts (or wherever you land after login)
 import { Component, OnInit } from '@angular/core';
-import { AuthService } from '../../services/auth'; // Adjust path
-import { User } from '../../models/user.model'; // Adjust path
 import { CommonModule } from '@angular/common'; // For *ngIf
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+// Import our new components and services
+import { ProductCard } from '../../components/product-card/product-card';
+import { ProductService, Page } from '../../services/product-service'; // Adjust path
+import { ProductCardDTO } from '../../models/productCard.model'; // Adjust path
+import { AuthService } from '../../services/auth';
+import { User } from '../../models/user.model';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule], // Add CommonModule
-  template: `
-    <h2>Home</h2>
-    <div *ngIf="currentUser">
-      <p>Welcome, {{ currentUser.firstName }} {{ currentUser.lastName }}!</p>
-      <p>Email: {{ currentUser.email }}</p>
-      <p>Role: {{ currentUser.role }}</p>
-    </div>
-    <div *ngIf="errorMessage">
-        <p style="color: red;">{{ errorMessage }}</p>
-    </div>
-  `
-  // Add styleUrls if needed
+  imports: [
+    CommonModule,
+    MatPaginatorModule,
+    ProductCard // Import the reusable card component
+  ],
+  templateUrl: './home.html', // We'll create this file
+  styleUrls: ['./home.css']   // We'll create this file
 })
 export class HomeComponent implements OnInit {
+  // User data state
   currentUser: User | null = null;
   errorMessage: string | null = null;
 
-  constructor(private authService: AuthService) {}
+  // Product data state
+  products: ProductCardDTO[] = [];
+
+  // Paginator properties
+  totalElements: number = 0;
+  pageSize: number = 10;
+  pageIndex: number = 0;
+
+  constructor(
+    private authService: AuthService,
+    private productService: ProductService // Inject ProductService
+  ) {}
 
   ngOnInit(): void {
-    console.log('HomeComponent initialized, fetching current user...');
+    // 1. Fetch the user (like before)
     this.authService.fetchCurrentUser().subscribe({
       next: (user) => {
         this.currentUser = user;
-        console.log('Current user fetched successfully:', user);
       },
       error: (err) => {
          console.error('Failed to fetch current user:', err);
-         this.errorMessage = 'Could not load user data. Please try logging in again.';
-         // Optionally navigate back to login or handle error
+         this.errorMessage = 'Could not load user data.';
       }
     });
+
+    // 2. Fetch the first page of products
+    this.fetchProducts();
+  }
+
+  fetchProducts(): void {
+    this.productService.getAllProducts(this.pageIndex, this.pageSize).subscribe((page: Page<ProductCardDTO>) => {
+      this.products = page.content;
+      this.totalElements = page.totalElements;
+    });
+   console.log("image urls", this.products);
+  }
+
+  // This is called by the <mat-paginator>
+  onPageChange(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.fetchProducts();
+  }
+
+  // The home page doesn't need edit/delete, so we can
+  // create empty handlers or just not bind them.
+  onEdit(productId: string): void {
+    console.log('Edit (from home):', productId);
+    // You could navigate to an edit page here
+  }
+
+  onDelete(productId: string): void {
+    console.log('Delete (from home):', productId);
+    // You could open a confirmation modal here
   }
 }

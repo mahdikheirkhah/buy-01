@@ -1,0 +1,157 @@
+/* --- Main Container --- */
+.create-product-container {
+  max-width: 700px;
+  margin: 80px auto 40px;
+  padding: 24px 32px;
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.create-product-container h2 {
+  text-align: center;
+  color: var(--navy);
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+/* --- Form Layout --- */
+form {
+  display: flex;
+  flex-direction: column;
+  /* ✅ This centers all the form fields horizontally */
+  align-items: center;
+}
+
+/* * ✅ This gives all your form elements a limited width
+ * and ensures they are responsive.
+*/
+mat-form-field,
+.form-group,
+.file-errors,
+.file-list {
+  width: 100%;
+  max-width: 500px; /* <--- This is the limited length */
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+/* --- File Input Section --- */
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-group input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  box-sizing: border-box; /* Ensures padding fits */
+}
+
+/* --- File Error & List Styles --- */
+.file-errors {
+  padding: 10px;
+  background-color: #fff0f0;
+  border: 1px solid #f44336;
+  border-radius: 4px;
+}
+
+.file-errors p {
+  color: #d32f2f;
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.file-list {
+  padding: 10px;
+  background-color: #f9f9f9;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+}
+
+.file-list p {
+  margin-top: 0;
+  font-weight: 500;
+  color: var(--navy);
+}
+
+.file-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.file-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.file-list li:last-child {
+  border-bottom: none;
+}
+
+.file-list li span {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.file-list li .remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-list li .remove-btn mat-icon {
+  color: #f44336;
+  font-size: 20px;
+}
+
+/* --- Loading Spinner --- */
+.upload-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.upload-spinner p {
+  margin-top: 16px;
+  font-size: 1.1rem;
+  color: var(--navy);
+}
+
+/* --- Submit Button --- */
+button[type="submit"] {
+  width: 100%;
+  max-width: 500px; /* ✅ Make the button match the fields */
+  background-color: var(--green);
+  color: var(--white);
+  padding: 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 16px;
+}
+
+button[type="submit"]:hover {
+  background-color: var(--green-dark);
+}
+
+button[type="submit"]:disabled {
+  background-color: #ccc;
+  color: #777;
+}

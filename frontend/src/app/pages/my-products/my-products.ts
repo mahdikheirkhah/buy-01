@@ -1,11 +1,68 @@
-import { Component } from '@angular/core';
+// my-products.component.ts
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { ProductService } from '../../services/product-service'; // Adjust path
+import { ProductCardDTO } from '../../models/productCard.model'; // You'll need to create this model
+import { ProductCard} from '../../components/product-card/product-card';
+
+// Create a model for the Page object
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number; // Current page number
+}
 
 @Component({
   selector: 'app-my-products',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatPaginatorModule, ProductCard],
   templateUrl: './my-products.html',
-  styleUrl: './my-products.css'
+  styleUrls: ['./my-products.css']
 })
-export class MyProducts {
+export class MyProducts implements OnInit {
+  products: ProductCardDTO[] = [];
 
+  // Paginator properties
+  totalElements: number = 0;
+  pageSize: number = 10;
+  pageIndex: number = 0;
+
+  constructor(private productService: ProductService) {}
+
+  ngOnInit(): void {
+    this.fetchMyProducts();
+  }
+
+  fetchMyProducts(): void {
+    this.productService.getMyProducts(this.pageIndex, this.pageSize).subscribe((page: Page<ProductCardDTO>) => {
+      this.products = page.content;
+      this.totalElements = page.totalElements;
+    });
+  }
+
+  // This is called by the <mat-paginator>
+  onPageChange(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.fetchMyProducts();
+  }
+
+  onEdit(productId: string): void {
+    // Navigate to edit page
+    console.log('Edit product:', productId);
+  }
+
+  onDelete(productId: string): void {
+    // Call delete service
+    console.log('Delete product:', productId);
+  }
+
+  // Helper to build the full URL for the image
+  getImageUrl(imagePath: string): string {
+    return `https://localhost:8443${imagePath}`;
+  }
 }

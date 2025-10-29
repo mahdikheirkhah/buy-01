@@ -34,7 +34,7 @@ public class GatewayHeadersFilter extends OncePerRequestFilter {
 
             // 3. Create the list of authorities (roles)
             List<SimpleGrantedAuthority> authorities = Arrays.stream(rolesHeader.split(","))
-                    .map(SimpleGrantedAuthority::new)
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role)) // ✅ FIX: Add ROLE_ prefix
                     .collect(Collectors.toList());
 
             // 4. Create the auth token. We use the email as the "principal"

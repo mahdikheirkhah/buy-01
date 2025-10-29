@@ -6,8 +6,12 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.Instant;
 
 @Document(collection = "products")
 @Data
@@ -27,5 +31,9 @@ public class Product {
     private Integer quantity;
     @NotBlank
     private String sellerID;
+    @CreatedDate
+    private Instant createdAt; // Automatically set on creation
+    @LastModifiedDate
+    private Instant updatedAt;
 
 }

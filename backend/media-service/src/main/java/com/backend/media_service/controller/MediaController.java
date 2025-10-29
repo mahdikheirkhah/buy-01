@@ -71,7 +71,14 @@ public class MediaController {
                 .header(HttpHeaders.CONTENT_TYPE, contentType)
                 .body(file);
     }
+    @GetMapping("/product/{productId}/urls")
+    public ResponseEntity<List<String>> getLimitedProductImageUrls(
+            @PathVariable("productId") String productId, // <-- Be explicit
+            @RequestParam(value = "limit", defaultValue = "3") int limit) { // <-- Be explicit
 
+        List<String> urls = mediaService.getLimitedImageUrlsForProduct(productId, limit);
+        return ResponseEntity.ok(urls);
+    }
     // Update the batch endpoint to use the service and return real data
     @GetMapping("/batch")
     public ResponseEntity<List<MediaUploadResponseDTO>> getMediaByIds(@RequestParam String productID) {

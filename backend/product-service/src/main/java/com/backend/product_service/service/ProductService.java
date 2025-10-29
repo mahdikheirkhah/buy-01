@@ -4,6 +4,7 @@ import com.backend.common.dto.MediaUploadResponseDTO;
 import com.backend.common.exception.CustomException;
 import com.backend.common.dto.InfoUserDTO;
 import com.backend.product_service.dto.CreateProductDTO;
+import com.backend.product_service.dto.ProductCardDTO;
 import com.backend.product_service.dto.ProductDTO;
 import com.backend.product_service.dto.UpdateProductDTO;
 import com.backend.product_service.model.Product;
@@ -19,13 +20,18 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.core.ParameterizedTypeReference;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static io.jsonwebtoken.Jwts.header;
+
 @Service
 public class ProductService {
     private final ProductRepository productRepository;
@@ -118,6 +124,66 @@ public class ProductService {
          }
          return result;
     }
+
+    // --- New Method 1: Get ALL products (for Home page) ---
+    public Page<ProductCardDTO> getAllProducts(Pageable pageable, String sellerId) {
+        Page<Product> productPage = productRepository.findAll(pageable);
+        return convertToCardDTOPage(productPage, sellerId);
+    }
+
+    // --- New Method 2: Get products for a specific seller (for My Products page) ---
+    public Page<ProductCardDTO> getMyProducts(Pageable pageable, String sellerId) {
+        Page<Product> productPage = productRepository.findBySellerID(sellerId, pageable);
+        return convertToCardDTOPage(productPage, sellerId);
+    }
+
+    private Page<ProductCardDTO> convertToCardDTOPage(Page<Product> productPage, String sellerId) {
+        return productPage.map(product -> {
+
+            // 1. Logic for createdByMe
+            boolean isCreator = (sellerId != null && product.getSellerID().equals(sellerId));
+
+            // 2. Logic for limiting images (NOW calls Media Service)
+            List<String> limitedImages = getLimitedImageUrls(product.getId(), 3); // Call new helper
+
+            // 3. Create the DTO
+            return new ProductCardDTO(
+                    product.getId(),
+                    product.getName(),
+                    product.getDescription(), // You might want to truncate this
+                    product.getPrice(),
+                    product.getQuantity(),
+                    isCreator,
+                    limitedImages // Pass in the new list of URLs
+            );
+        });
+    }
+
+    /**
+     * New private helper to fetch limited image URLs from Media Service
+     */
+    private List<String> getLimitedImageUrls(String productId, int limit) {
+        try {
+            // This is the correct type for deserializing a generic list
+            ParameterizedTypeReference<List<String>> listType = new ParameterizedTypeReference<>() {};
+
+            return webClientBuilder.build().get()
+                    .uri(uriBuilder -> uriBuilder
+                            .scheme("https")
+                            .host("MEDIA-SERVICE")
+                            .path("/api/media/product/{productId}/urls")
+                            .queryParam("limit", limit)
+                            .build(productId)
+                    )
+                    .retrieve()
+                    // ✅ THE FIX: Deserialize directly into a List<String>
+                    .bodyToMono(listType)
+                    .block(); // .block() is acceptable here
+        } catch (Exception e) {
+            System.err.println("Failed to fetch media URLs for product " + productId + ": " + e.getMessage());
+            return List.of();
+        }
+    }
     public List<ProductDTO> getAllProductsWithSellerID(String sellerId) {
         List<Product> products = productRepository.findAllBySellerID(sellerId);
         if (products.isEmpty()) {
@@ -155,7 +221,7 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    public void createImage(MultipartFile file, String productId, String sellerId)  {
+    public void createImage(MultipartFile file, String productId, String sellerId, String role)  {
         if (file == null || file.isEmpty()) {
             return;
         }
@@ -164,9 +230,10 @@ public class ProductService {
         Product product = checkProduct(productId, sellerId);
         System.out.println("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH");
         // Save the single image
-        saveProductImage(file, productId);
+
+        saveProductImage(file, productId, role);
     }
-    public String saveProductImage(MultipartFile image, String productId) {
+    public String saveProductImage(MultipartFile image, String productId, String role) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         System.out.println("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
 
@@ -190,6 +257,7 @@ public class ProductService {
                 // ✅ Make sure this URL is correct for your media-service
                 .uri("https://MEDIA-SERVICE/api/media/upload")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
+                .header("X-User-Role", role)
                 .body(BodyInserters.fromMultipartData(body))
                 .retrieve()
                 .bodyToMono(MediaUploadResponseDTO.class)
@@ -241,4 +309,5 @@ public class ProductService {
         }
         return existingProduct;
     }
+
 }
