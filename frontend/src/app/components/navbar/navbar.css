@@ -2,46 +2,84 @@ button[routerLink="/register"] {
   background-color: var(--green);
   color: var(--white);
 }
+
 .navbar-container {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
+
+  /* --- 1. MAKE NAVBAR BIGGER --- */
+  /* Increased from 64px to 72px. */
+  height: 72px;
+
+  /* --- 2. MAKE IT LOOK 'LIGHTER' --- */
+  /* Adds a clean shadow for a modern, layered look */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  /* This helps vertically center all items in the taller bar */
+  display: flex;
+  align-items: center;
 }
 
 .spacer {
-  flex: 1 1 auto; /* Pushes content to the right */
+  flex: 1 1 auto;
 }
 
 .brand-logo {
   text-decoration: none;
-  color: black;
-  font-size: 1.25rem;
-  margin: 0 10px;
+  /* --- 2. MAKE IT LOOK 'LIGHTER' --- */
+  /* Changed from black to white for high contrast */
+  color: var(--white);
+
+  /* --- 1. MAKE IT BIGGER --- */
+  font-size: 1.5rem; /* Increased from 1.25rem */
+  font-weight: 500;
+  margin: 0 16px; /* Added a bit more margin */
 }
 
+/* This is the button holding the avatar and/or name */
 .user-menu-button {
-  /* This is the key change */
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  border-radius: 20px; /* Gives it a nice pill shape */
+  padding: 0 16px;
+  border-radius: 30px; /* Makes it a pill shape */
   min-width: 0;
+
+  /* --- 1. MAKE IT BIGGER --- */
+  height: 48px; /* Give it a larger, fixed height */
+
+  /* --- 2. MAKE IT LOOK 'LIGHTER' --- */
+  /* Adds a subtle hover effect */
+  transition: background-color 0.2s ease;
+}
+
+/* --- 2. MAKE IT LOOK 'LIGHTER' --- */
+.user-menu-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .navbar-avatar-image {
-  width: 32px;  /* A bit smaller to fit nicely with text */
-  height: 32px;
+  /* --- 1. MAKE IT BIGGER --- */
+  width: 40px;  /* Increased from 32px */
+  height: 40px; /* Increased from 32px */
+
   border-radius: 50%;
   object-fit: cover;
-  margin-right: 8px; /* Adds space between avatar and name */
-  border: 1px solid white;
+  margin-right: 10px; /* More space between avatar and name */
+
+  /* --- 2. MAKE IT LOOK 'LIGHTER' --- */
+  border: 2px solid var(--white); /* Thicker, cleaner border */
 }
 
 .navbar-user-name {
-  color: black;
+  /* --- 2. MAKE IT LOOK 'LIGHTER' --- */
+  color: var(--white);
+
   font-weight: 500;
-  font-size: 14px;
-  line-height: 1; /* Helps vertical alignment */
+
+  /* --- 1. MAKE IT BIGGER --- */
+  font-size: 1rem; /* Increased from 14px */
+  /* line-height: 1; <-- This was removed to improve vertical alignment */
 }

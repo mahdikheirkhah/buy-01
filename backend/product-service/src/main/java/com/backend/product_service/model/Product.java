@@ -9,12 +9,12 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collation = "products")
+@Document(collection = "products")
 @Data
 @Builder
 public class Product {
     @Id
-    private String ID;
+    private String id;
     @NotBlank(message = "name is required ")
     @Size(min = 3, max = 100, message = "name should be between 3 to 100 characters")
     private String name;

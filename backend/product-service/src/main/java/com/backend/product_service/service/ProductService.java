@@ -9,6 +9,7 @@ import com.backend.product_service.dto.UpdateProductDTO;
 import com.backend.product_service.model.Product;
 import com.backend.product_service.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,21 +54,13 @@ public class ProductService {
     }
 
     public Product getProduct(String productID) {
+        System.out.println("Get product by productID: " + productID);
         return productRepository.findById(productID)
                 .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
     }
 
     public List<Product> getAllProducts() {
         return productRepository.findAll();
-    }
-
-    public void createProduct(String sellerId,CreateProductDTO productDto) {
-        Product product = productDto.toProduct();
-        if (checkId(sellerId)) {
-            throw new CustomException("Seller ID is null", HttpStatus.UNAUTHORIZED);
-        }
-        product.setSellerID(sellerId);
-        productRepository.save(product);
     }
 
     public void updateProduct(String productId, String sellerId ,UpdateProductDTO productDto) {
@@ -80,7 +74,7 @@ public class ProductService {
             return;
         }
         for (Product product : products) {
-            kafkaTemplate.send("product-deleted-topic", product.getID());
+            kafkaTemplate.send("product-deleted-topic", product.getId());
             productRepository.delete(product);
         }
     }
@@ -150,29 +144,59 @@ public class ProductService {
             return new ProductDTO(product, seller, null);
         }).collect(Collectors.toList());
     }
-    public void createImage(List<MultipartFile> files, String productId, String sellerId)  {
-        if (files == null || files.isEmpty()) {
-                return;
+    public Product createProduct(String sellerId, CreateProductDTO productDto) {
+        Product product = productDto.toProduct();
+        if (checkId(sellerId)) {
+            throw new CustomException("Seller ID is null", HttpStatus.UNAUTHORIZED);
         }
+        product.setSellerID(sellerId);
+
+        // Save and return the product so we can get its ID
+        return productRepository.save(product);
+    }
+
+    public void createImage(MultipartFile file, String productId, String sellerId)  {
+        if (file == null || file.isEmpty()) {
+            return;
+        }
+        System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+        // Check that the seller owns this product
         Product product = checkProduct(productId, sellerId);
-        for (MultipartFile file : files) {
-            saveProductImage(file,productId);
-        }
-        return;
+        System.out.println("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH");
+        // Save the single image
+        saveProductImage(file, productId);
     }
     public String saveProductImage(MultipartFile image, String productId) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", image.getResource());
+        System.out.println("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+
+        try {
+            // ✅ Use ByteArrayResource, which is more reliable
+            ByteArrayResource fileResource = new ByteArrayResource(image.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return image.getOriginalFilename();
+                }
+            };
+            body.add("file", fileResource);
+            body.add("productId", productId); // Send productId as a part
+
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            throw new CustomException("Failed to read image file", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         MediaUploadResponseDTO mediaResponse = webClientBuilder.build().post()
-                .uri("https://MEDIA-SERVICE/api/media/upload/product/"+productId)
+                // ✅ Make sure this URL is correct for your media-service
+                .uri("https://MEDIA-SERVICE/api/media/upload")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(body))
                 .retrieve()
                 .bodyToMono(MediaUploadResponseDTO.class)
-                .block(); // .block() makes the call synchronous. A reactive chain is more advanced.
+                .block();
 
         if (mediaResponse == null || mediaResponse.getFileUrl().isBlank()) {
-            throw new CustomException("Failed to upload avatar image.", HttpStatus.BAD_REQUEST);
+            throw new CustomException("Failed to upload product image.", HttpStatus.BAD_REQUEST);
         }
         return mediaResponse.getFileUrl();
     }
