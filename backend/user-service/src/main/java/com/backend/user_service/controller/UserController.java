@@ -67,8 +67,8 @@ public class UserController {
          return ResponseEntity.ok(Map.of("message", "updated successfully"));
     }
     @DeleteMapping
-    public ResponseEntity<Map<String, String>> deleteUser(@RequestHeader("X-User-ID") String userId) {
-        userService.deleteUser(userId);
+    public ResponseEntity<Map<String, String>> deleteUser(@RequestHeader("X-User-ID") String userId, @RequestParam String password) {
+        userService.deleteUser(userId, password);
         return ResponseEntity.ok(Map.of("message", "user deleted successfully"));
     }
 }
