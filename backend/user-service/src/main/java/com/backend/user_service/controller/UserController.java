@@ -47,10 +47,10 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @GetMapping("/batch")
-    public ResponseEntity<List<InfoUserDTO>> getUsersByIds(@RequestParam List<String> ids) {
-        List<InfoUserDTO> users = userService.getUserByIds(ids);
-        return ResponseEntity.ok(users);
+    @GetMapping("/seller")
+    public ResponseEntity<InfoUserDTO> getUsersByIds(@RequestParam String id) {
+        InfoUserDTO seller = userService.getUserById(id);
+        return ResponseEntity.ok(seller);
     }
 
     @GetMapping("/email")

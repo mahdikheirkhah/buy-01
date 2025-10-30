@@ -171,25 +171,19 @@ public class UserService implements UserDetailsService {
         return loggedInUser;
     }
 
-    public List<InfoUserDTO> getUserByIds(List<String> ids) {
-        if (ids == null || ids.isEmpty()) {
+    public InfoUserDTO getUserById(String id) {
+        if (id == null || id.isBlank()) {
             throw new CustomException ("User not found with ids", HttpStatus.NOT_FOUND);
         }
-        List<InfoUserDTO> users = new ArrayList<>();
-        for (String id : ids) {
-            User user = userRepository.findById(id)
-                    .orElseThrow(() -> new CustomException ("User not found with id: " + id, HttpStatus.NOT_FOUND));
-
-            users.add(InfoUserDTO
-                    .builder()
-                    .id(user.getId())
-                    .firstName(user.getFirstName())
-                    .lastName(user.getLastName())
-                    .email(user.getEmail())
-                    .avatarUrl(user.getAvatarUrl())
-                    .build());
-        }
-        return users;
+        User user = userRepository.findById(id).orElseThrow(()-> new CustomException ("User not found with id: ", HttpStatus.NOT_FOUND));
+        return InfoUserDTO
+                .builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .avatarUrl(user.getAvatarUrl())
+                .build();
     }
     public InfoUserDTO getUserByEmail(String email) {
         User user = checkUserExistence(email).

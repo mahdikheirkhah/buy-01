@@ -1,0 +1,64 @@
+<div class="product-detail-container">
+
+  <div *ngIf="isLoading" class="spinner-container">
+    <mat-spinner></mat-spinner>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-container">
+    <p>{{ errorMessage }}</p>
+    <a routerLink="/home">Go back home</a>
+  </div>
+
+  <div *ngIf="product" class="product-content-grid">
+
+    <div class="product-gallery">
+      <div class="main-image-container">
+        <img *ngIf="selectedImageUrl" [src]="selectedImageUrl" alt="{{ product.name }}">
+        <div *ngIf="!selectedImageUrl" class="no-image-placeholder">
+          <mat-icon>image_not_supported</mat-icon>
+        </div>
+      </div>
+
+      <div class="thumbnail-list" *ngIf="product.media.length > 1">
+        <img *ngFor="let media of product.media"
+             [src]="getFullImageUrl(media.fileUrl)"
+             (click)="selectImage(media.fileUrl)"
+             [class.active]="getFullImageUrl(media.fileUrl) === selectedImageUrl"
+             alt="Thumbnail">
+      </div>
+    </div>
+
+    <div class="product-info">
+      <h1>{{ product.name }}</h1>
+
+      <div class="price">{{ product.price | currency:'USD' }}</div>
+
+      <div class="quantity">
+        <strong>Quantity Available:</strong> {{ product.quantity }}
+      </div>
+
+      <div class="description">
+        <h3>Description</h3>
+        <p>{{ product.description }}</p>
+      </div>
+
+      <div class="seller-info">
+        <strong>Sold by:</strong> {{ product.sellerFirstName }} {{ product.sellerLastName }}
+        <span>({{ product.sellerEmail }})</span>
+      </div>
+
+      <div class="action-buttons" *ngIf="product.createdByMe">
+        <button mat-raised-button color="primary" (click)="onEdit()">
+          <mat-icon>edit</mat-icon>
+          Edit Product
+        </button>
+        <button mat-raised-button color="warn" (click)="onDelete()">
+          <mat-icon>delete</mat-icon>
+          Delete Product
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>

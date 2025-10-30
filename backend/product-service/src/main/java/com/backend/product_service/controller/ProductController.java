@@ -105,19 +105,19 @@ public class ProductController {
         productService.DeleteProductsOfUser(userId);
     }
 
-    @GetMapping
-    public ResponseEntity<List<ProductDTO>> getAllProducts() {
-        List<ProductDTO> products = productService.getAllProductsWithDetail();
-        return ResponseEntity.ok(products);
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductDTO> getProductWithId(@PathVariable String productId) {
+        ProductDTO product = productService.getProductWithDetail(productId);
+        return ResponseEntity.ok(product);
     }
 
-    @GetMapping("/me")
-    @PreAuthorize("hasRole('ROLE_SELLER')")
-    public ResponseEntity<List<ProductDTO>> getAllProductsBySellerId(
-            @RequestHeader("X-User-ID") String sellerId) {
-        List<ProductDTO> products = productService.getAllProductsWithSellerID(sellerId);
-        return ResponseEntity.ok(products);
-    }
+//    @GetMapping("/me")
+//    @PreAuthorize("hasRole('ROLE_SELLER')")
+//    public ResponseEntity<List<ProductDTO>> getAllProductsBySellerId(
+//            @RequestHeader("X-User-ID") String sellerId) {
+//        List<ProductDTO> products = productService.getAllProductsWithSellerID(sellerId);
+//        return ResponseEntity.ok(products);
+//    }
     @GetMapping("/another/{email}")
     public ResponseEntity<List<ProductDTO>> getAllProductsByEmail(@PathVariable String email) {
         List<ProductDTO> products = productService.getAllProductsWithEmail(email);

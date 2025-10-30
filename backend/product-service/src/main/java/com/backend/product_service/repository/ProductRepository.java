@@ -12,6 +12,7 @@ public interface ProductRepository extends MongoRepository<Product, String> { //
 
     // This new method will find all products by a seller, with pagination
     Page<Product> findBySellerID(String sellerId, Pageable pageable);
+
     List<Product> findAllBySellerID(String sellerId);
     // You now get all these methods:
     // 1. Basic CRUD: save(), findById(), delete() (from CrudRepository)
