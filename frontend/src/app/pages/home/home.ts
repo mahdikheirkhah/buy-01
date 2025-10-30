@@ -75,8 +75,8 @@ export class HomeComponent implements OnInit {
     // You could navigate to an edit page here
   }
 
-  onDelete(productId: string): void {
-    console.log('Delete (from home):', productId);
-    // You could open a confirmation modal here
+onProductDeleted(): void {
+    console.log('Product deleted from home, refreshing list...');
+    this.fetchProducts();
   }
 }

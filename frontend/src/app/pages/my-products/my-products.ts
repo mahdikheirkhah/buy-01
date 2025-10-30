@@ -56,9 +56,9 @@ export class MyProducts implements OnInit {
     console.log('Edit product:', productId);
   }
 
-  onDelete(productId: string): void {
-    // Call delete service
-    console.log('Delete product:', productId);
+  onProductDeleted(): void {
+    console.log('Product deleted, refreshing list...');
+    this.fetchMyProducts();
   }
 
   // Helper to build the full URL for the image

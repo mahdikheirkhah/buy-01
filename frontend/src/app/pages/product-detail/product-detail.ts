@@ -6,6 +6,8 @@ import { ProductDetailDTO } from '../../models/product.model';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmDialog } from '../../components/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-product-detail',
@@ -16,7 +18,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     CurrencyPipe,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatDialogModule,
+    ConfirmDialog
   ],
   templateUrl: './product-detail.html',
   styleUrls: ['./product-detail.css']
@@ -30,7 +34,8 @@ export class ProductDetail implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private productService: ProductService
+    private productService: ProductService,
+    public dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -39,6 +44,7 @@ export class ProductDetail implements OnInit {
       this.productService.getProductById(id).subscribe({
         next: (data) => {
           this.product = data;
+          console.log(this.product);
           // Set the first image as the default selected one
           if (data.media && data.media.length > 0) {
             this.selectedImageUrl = this.getFullImageUrl(data.media[0].fileUrl);
@@ -71,10 +77,30 @@ export class ProductDetail implements OnInit {
     }
   }
 
-  onDelete(): void {
-    if (this.product) {
-      // Implement delete confirmation logic
-      console.log('Deleting product:', this.product.productId);
-    }
+onDelete(): void {
+    if (!this.product) return;
+
+    const dialogRef = this.dialog.open(ConfirmDialog, {
+      width: '350px',
+      data: {
+        title: 'Delete Product',
+        message: `Are you sure you want to delete "${this.product.name}"? This action cannot be undone.`
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true && this.product) {
+        this.productService.deleteProduct(this.product.productId).subscribe({
+          next: (response) => {
+            console.log(response);
+            this.router.navigate(['/my-products']);
+          },
+          error: (err) => {
+            console.error('Failed to delete product', err);
+            // TODO: Show a snackbar or alert
+          }
+        });
+      }
+    });
   }
 }

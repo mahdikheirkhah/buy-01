@@ -4,7 +4,7 @@
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="21">
+          <list size="25">
             <item index="0" class="java.lang.String" itemvalue="routerLink" />
             <item index="1" class="java.lang.String" itemvalue="[(ngModel)]" />
             <item index="2" class="java.lang.String" itemvalue="(ngSubmit)" />
@@ -26,6 +26,10 @@
             <item index="18" class="java.lang.String" itemvalue="*ngFor" />
             <item index="19" class="java.lang.String" itemvalue="[formGroup]" />
             <item index="20" class="java.lang.String" itemvalue="[class.active]" />
+            <item index="21" class="java.lang.String" itemvalue="mat-dialog-actions" />
+            <item index="22" class="java.lang.String" itemvalue="mat-flat-button" />
+            <item index="23" class="java.lang.String" itemvalue="mat-dialog-content" />
+            <item index="24" class="java.lang.String" itemvalue="mat-dialog-title" />
           </list>
         </value>
       </option>

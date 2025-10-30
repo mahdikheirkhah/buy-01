@@ -91,10 +91,10 @@ public class ProductController {
         return ResponseEntity.ok("Product updated successfully");
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{productId}")
     @PreAuthorize("hasRole('ROLE_SELLER')")
     public ResponseEntity<String> deleteProduct(
-            @PathVariable String productId,
+            @PathVariable("productId") String productId,
             @RequestHeader("X-User-ID") String sellerId){
         productService.deleteProduct(productId, sellerId);
         return ResponseEntity.ok("Product deleted successfully");

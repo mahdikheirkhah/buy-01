@@ -35,6 +35,7 @@ public class ProductDTO {
     private List<MediaUploadResponseDTO> media;
 
     public ProductDTO(Product product, InfoUserDTO seller, List<MediaUploadResponseDTO> media) {
+        this.productId = product.getId();
         this.name = product.getName();
         this.description = product.getDescription();
         this.price = product.getPrice();
