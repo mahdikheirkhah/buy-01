@@ -196,9 +196,12 @@ public class UserService implements UserDetailsService {
                 .avatarUrl(user.getAvatarUrl())
                 .build();
     }
-    public void deleteUser(String id) {
+    public void deleteUser(String id, String password) {
         User user = userRepository.findById(id)
                 .orElseThrow(()-> new CustomException ("Access denied " , HttpStatus.FORBIDDEN));
+        if(!checkPassword(password, user.getPassword())){
+            throw new CustomException ("Wrong password", HttpStatus.BAD_REQUEST);
+        }
         if (user.getRole().equals(Role.SELLER)){
             kafkaTemplate.send("user-deleted-topic", id);
             if(user.getAvatarUrl() != null){
