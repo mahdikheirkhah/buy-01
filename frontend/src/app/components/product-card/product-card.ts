@@ -7,6 +7,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { ProductCardDTO } from '../../models/productCard.model'; // Adjust path
 import { CurrencyPipe } from '@angular/common'; // For the price
 import { Router, RouterLink } from '@angular/router';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
+import { ProductService } from '../../services/product-service';
 @Component({
   selector: 'app-product-card',
   standalone: true,
@@ -16,7 +19,7 @@ import { Router, RouterLink } from '@angular/router';
     MatButtonModule,
     MatIconModule,
     CurrencyPipe,
-    RouterLink
+    MatDialogModule,
   ],
   templateUrl: './product-card.html',
   styleUrls: ['./product-card.css']
@@ -25,14 +28,17 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
 
   @Input() product: ProductCardDTO | null = null;
   @Output() edit = new EventEmitter<string>();
-  @Output() delete = new EventEmitter<string>();
+  @Output() delete = new EventEmitter<void>();
 
   // --- New Carousel Logic ---
   currentImageIndex = 0;
   imageChangeInterval: any = null;
   // -------------------------
 
-  constructor(private router: Router) {}
+  constructor(private router: Router,
+    private productService: ProductService,
+     public dialog: MatDialog
+    ) {}
 
   ngOnInit(): void {
     // Start the carousel when the component loads
@@ -91,9 +97,34 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
     }
 
     onDelete(event: MouseEvent): void {
-      event.stopPropagation();
-      if (this.product) {
-        this.delete.emit(this.product.id);
+        event.stopPropagation(); // Stop the card click
+        if (!this.product) return;
+
+        // 1. Open the confirmation dialog
+        const dialogRef = this.dialog.open(ConfirmDialog, {
+          width: '350px',
+          data: {
+            title: 'Delete Product',
+            message: `Are you sure you want to delete "${this.product.name}"? This action cannot be undone.`
+          }
+        });
+
+        // 2. Listen for the dialog to close
+        dialogRef.afterClosed().subscribe(result => {
+          // 3. If the user clicked "Delete" (result is true)
+          if (result === true && this.product) {
+            this.productService.deleteProduct(this.product.id).subscribe({
+              next: (response) => {
+                console.log(response); // "Product deleted successfully"
+                // 4. Emit the (delete) event to tell the parent to refresh
+                this.delete.emit();
+              },
+              error: (err) => {
+                console.error('Failed to delete product', err);
+                // TODO: Show a snackbar or alert
+              }
+            });
+          }
+        });
       }
-    }
 }

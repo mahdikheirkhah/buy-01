@@ -86,4 +86,10 @@ export class ProductService {
         withCredentials: true
       });
     }
+  deleteProduct(id: string): Observable<string> {
+      return this.http.delete(`${this.productApiUrl}/${id}`, {
+        withCredentials: true,
+        responseType: 'text' // Because your backend returns a plain string
+      });
+    }
 }

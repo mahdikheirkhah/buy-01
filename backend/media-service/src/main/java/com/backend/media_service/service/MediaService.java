@@ -60,6 +60,7 @@ public class MediaService {
             fileStorageService.delete(media.getImagePath());
         }
         mediaRepository.deleteAll(mediaToDelete);
+        System.out.println("Media deleted!");
     }
     public void DeleteMediaByID(String ID) {
         mediaRepository.deleteById(ID);

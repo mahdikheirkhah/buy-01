@@ -14,9 +14,8 @@
       *ngFor="let product of products"
       [product]="product"
       (edit)="onEdit($event)"
-      (delete)="onDelete($event)">
+      (delete)="onProductDeleted()">
     </app-product-card>
-
   </div>
 
   <ng-template #noProducts>

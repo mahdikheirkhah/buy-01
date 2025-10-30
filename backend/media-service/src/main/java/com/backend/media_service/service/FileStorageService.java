@@ -31,7 +31,7 @@ public class FileStorageService {
             Files.copy(file.getInputStream(), this.root.resolve(filename));
             return filename;
         } catch (Exception e) {
-            System.err.println("Could not save file!"+e.getMessage());
+            System.err.println("Could not save file!" + e.getMessage());
             throw new RuntimeException("Could not store the file. Error: " + e.getMessage());
         }
     }
@@ -51,14 +51,20 @@ public class FileStorageService {
         }
     }
 
-    public void delete(String filename) {
+    public void delete(String fileUrl) { // Renamed to fileUrl for clarity
         try {
-            // Construct the full path to the file
+            Path filePath = Path.of(fileUrl);
+            String filename = filePath.getFileName().toString();
+
+            // 2. Construct the *actual* full path to the file on disk
             Path file = root.resolve(filename);
-            // Delete the file if it exists
+
+            // 3. Delete the file
             Files.deleteIfExists(file);
+
+            System.out.println("File " + filename + " deleted!");
+
         } catch (IOException e) {
-            // Or log the error
             throw new RuntimeException("Could not delete the file. Error: " + e.getMessage());
         }
     }
