@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http'; // Import HttpPar
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ProductCardDTO } from '../models/productCard.model'; // Make sure this path is correct
-
+import {ProductDetailDTO} from '../models/product.model';
 // We can define the Page response interface here or in its own file
 export interface Page<T> {
   content: T[];
@@ -81,4 +81,9 @@ export class ProductService {
       params: params // Pass the parameters
     });
   }
+  getProductById(id: string): Observable<ProductDetailDTO> {
+      return this.http.get<ProductDetailDTO>(`${this.productApiUrl}/${id}`, {
+        withCredentials: true
+      });
+    }
 }

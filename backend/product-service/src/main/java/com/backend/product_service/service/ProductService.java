@@ -52,11 +52,8 @@ public class ProductService {
         if (product == null) {
             return null;
         }
-
-        List<String> sellerIds = new ArrayList<>();
-        sellerIds.add(product.getSellerID());
-        List<InfoUserDTO> seller = getSellersInfo(sellerIds);
-        return new ProductDTO(product, seller.get(0), getMedia(productID));
+        InfoUserDTO seller = getSellersInfo(product.getSellerID());
+        return new ProductDTO(product, seller, getMedia(productID));
     }
 
     public Product getProduct(String productID) {
@@ -90,25 +87,17 @@ public class ProductService {
         productRepository.delete(existingProduct);
     }
 
-    public List<ProductDTO> getAllProductsWithDetail() {
-
-        List<Product> products = productRepository.findAll();
-
-        if (products.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<ProductDTO> result;
-        List<String> sellerIds = products.stream()
-                .map(Product::getSellerID)
-                .distinct()
-                .collect(Collectors.toList());
-        List<InfoUserDTO> sellers = getSellersInfo(sellerIds);
-        result = appendSellersToProduct(products, sellers);
-        for (ProductDTO productDTO : result) {
-            productDTO.setMedia(getMedia(productDTO.getProductId()));
+    public ProductDTO getProductWithDetail(String productId) {
+        Product product = productRepository.findById(productId).orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
+        if (product == null) {
+            return null;
         }
 
-        return result;
+        InfoUserDTO seller = getSellersInfo(product.getSellerID());
+
+        List<MediaUploadResponseDTO> media = getMedia(product.getId());
+
+        return new ProductDTO(product, seller, media);
     }
     public List<ProductDTO> getAllProductsWithEmail(String email) {
          InfoUserDTO seller = getSellerInfoWithEmail(email);
@@ -184,21 +173,17 @@ public class ProductService {
             return List.of();
         }
     }
-    public List<ProductDTO> getAllProductsWithSellerID(String sellerId) {
-        List<Product> products = productRepository.findAllBySellerID(sellerId);
-        if (products.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<ProductDTO> result;
-        List<String> sellerIds = new ArrayList<>();
-        sellerIds.add(sellerId);
-        List<InfoUserDTO> seller = getSellersInfo(sellerIds);
-        result = appendSellersToProduct(products, seller);
-        for (ProductDTO productDTO : result) {
-            productDTO.setMedia(getMedia(productDTO.getProductId()));
-        }
-        return result;
-    }
+//    public List<ProductDTO> getAllProductsWithSellerID(String sellerId) {
+//        Product product = productRepository.findBySellerID(sellerId);
+//        if (product == null) {
+//            return null;
+//        }
+//        ProductDTO result;
+//        InfoUserDTO seller = getSellersInfo(sellerId);
+//            getMedia(.getProductId());
+//
+//        return result;
+//    }
 
     private List<ProductDTO> appendSellersToProduct(List<Product> products,List<InfoUserDTO>  sellers) {
         assert sellers != null;
@@ -268,12 +253,11 @@ public class ProductService {
         }
         return mediaResponse.getFileUrl();
     }
-    private List<InfoUserDTO> getSellersInfo(List<String> sellerIds) {
+    private InfoUserDTO getSellersInfo(String sellerId) {
         return webClientBuilder.build().get()
-                .uri("https://USER-SERVICE/api/users/batch?ids=" + String.join(",", sellerIds))
+                .uri("https://USER-SERVICE/api/users/seller?id={sellerId}", sellerId) // Use URI variable
                 .retrieve()
-                .bodyToFlux(InfoUserDTO.class) // Use Flux for a list
-                .collectList()
+                .bodyToMono(InfoUserDTO.class) // ✅ FIX: Expect a single object
                 .block();
     }
     private InfoUserDTO getSellerInfoWithEmail(String email) {

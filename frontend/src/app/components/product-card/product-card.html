@@ -1,10 +1,12 @@
-<mat-card *ngIf="product" class="product-card">
+<mat-card *ngIf="product" class="product-card" (click)="onCardClick()">
 
   <div class="card-image-container">
-    <img mat-card-image
-         [src]="getImageUrl(product.imageUrls[0])"
-         *ngIf="product.imageUrls.length > 0"
-         alt="{{ product.name }}">
+
+    <img
+      *ngFor="let imageUrl of product.imageUrls; let i = index"
+      mat-card-image
+      [src]="getImageUrl(imageUrl)"
+      [class.active]="i === currentImageIndex" alt="{{ product.name }} (image {{i + 1}})">
 
     <div *ngIf="product.imageUrls.length === 0" class="no-image-placeholder">
       <mat-icon>image_not_supported</mat-icon>
@@ -22,7 +24,7 @@
   </mat-card-content>
 
   <mat-card-actions *ngIf="product.createdByMe">
-    <button mat-button (click)="onEdit()">EDIT</button>
-    <button mat-button color="warn" (click)="onDelete()">DELETE</button>
+    <button mat-button (click)="onEdit($event)">EDIT</button>
+    <button mat-button color="warn" (click)="onDelete($event)">DELETE</button>
   </mat-card-actions>
 </mat-card>

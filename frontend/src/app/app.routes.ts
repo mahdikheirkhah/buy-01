@@ -9,7 +9,8 @@ import { CreateProduct } from './pages/create-product/create-product';
 import { MainLayout } from './layouts/main-layout/main-layout';
 import { AuthLayout } from './layouts/auth-layout/auth-layout';
 import { LoggedInGuard } from './guards/logged-in-guard';
-import { AuthGuard } from './guards/auth-guard'; // Import AuthGuard
+import { AuthGuard } from './guards/auth-guard';
+import { ProductDetail } from './pages/product-detail/product-detail';
 
 export const routes: Routes = [
   {
@@ -22,6 +23,7 @@ export const routes: Routes = [
       { path: 'my-info', component: MyInfo },
       { path: 'my-products', component: MyProducts },
       { path: 'create-product', component: CreateProduct },
+      { path: 'product/:id', component: ProductDetail },
     ]
   },
   {
