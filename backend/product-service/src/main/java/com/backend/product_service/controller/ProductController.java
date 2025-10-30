@@ -106,8 +106,8 @@ public class ProductController {
     }
 
     @GetMapping("/{productId}")
-    public ResponseEntity<ProductDTO> getProductWithId(@PathVariable String productId) {
-        ProductDTO product = productService.getProductWithDetail(productId);
+    public ResponseEntity<ProductDTO> getProductWithId(@PathVariable String productId, @RequestHeader("X-User-ID") String userId) {
+        ProductDTO product = productService.getProductWithDetail(productId, userId);
         return ResponseEntity.ok(product);
     }
 

@@ -87,7 +87,7 @@ public class ProductService {
         productRepository.delete(existingProduct);
     }
 
-    public ProductDTO getProductWithDetail(String productId) {
+    public ProductDTO getProductWithDetail(String productId, String userId) {
         Product product = productRepository.findById(productId).orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
         if (product == null) {
             return null;
@@ -96,8 +96,9 @@ public class ProductService {
         InfoUserDTO seller = getSellersInfo(product.getSellerID());
 
         List<MediaUploadResponseDTO> media = getMedia(product.getId());
-
-        return new ProductDTO(product, seller, media);
+        ProductDTO productDTO = new ProductDTO(product, seller, media);
+        productDTO.setCreatedByMe(product.getSellerID().equals(userId));
+        return productDTO;
     }
     public List<ProductDTO> getAllProductsWithEmail(String email) {
          InfoUserDTO seller = getSellerInfoWithEmail(email);

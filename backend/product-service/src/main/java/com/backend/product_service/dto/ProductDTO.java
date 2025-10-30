@@ -42,7 +42,7 @@ public class ProductDTO {
         this.sellerFirstName = seller.getFirstName();
         this.sellerLastName = seller.getLastName();
         this.sellerEmail = seller.getEmail();
-        this.CreatedByMe = seller.getId().equals(product.getSellerID());
+        this.CreatedByMe = false;
         this.media = media;
     }
 }
