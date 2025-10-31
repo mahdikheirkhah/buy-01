@@ -25,6 +25,12 @@ export class UserService {
       responseType: 'json' // Your backend returns a JSON map
     });
   }
+deleteAvatar(): Observable<string>{ // You can also change <any> to <string>
+  return this.http.delete(`${this.apiUrl}/avatar`, {
+        withCredentials: true,
+        responseType: 'text' // ✅ ADD THIS LINE
+      });
+  }
 
   // TODO: Add methods for update user, change avatar, delete avatar
 }

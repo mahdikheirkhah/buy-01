@@ -65,6 +65,9 @@ public class MediaService {
     public void DeleteMediaByID(String ID) {
         mediaRepository.deleteById(ID);
     }
+    public void DeleteMediaByAvatarUrl(String avatarUrl) {
+        fileStorageService.delete(avatarUrl);
+    }
     public Media updateMedia(String mediaId, MultipartFile newFile) {
         Media existingMedia = mediaRepository.findById(mediaId)
                 .orElseThrow(() -> new RuntimeException("Media not found with id: " + mediaId));
@@ -75,6 +78,7 @@ public class MediaService {
         fileStorageService.delete(oldImagePath);
         return updatedMedia;
     }
+
     public List<String> getLimitedImageUrlsForProduct(String productId, int limit) {
         // Create a Pageable object:
         // Page 0, 'limit' items, sorted by createdAt ascending (oldest first)

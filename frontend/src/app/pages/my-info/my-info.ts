@@ -4,6 +4,7 @@ import { AuthService } from '../../services/auth';
 import { UserService } from '../../services/user'; // Adjust path
 import { User } from '../../models/user.model'; // Adjust path
 import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
 
 // Material Imports
 import { MatCardModule } from '@angular/material/card';
@@ -13,7 +14,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PasswordConfirmDialog } from '../../components/password-confirm-dialog/password-confirm-dialog';
-
+import {ConfirmDialog} from '../../components/confirm-dialog/confirm-dialog';
 @Component({
   selector: 'app-my-info',
   standalone: true,
@@ -34,13 +35,15 @@ export class MyInfo implements OnInit {
   currentUser: User | null = null;
   isLoading = true;
   errorMessage: string | null = null;
-
+  public currentUser$: Observable<User | null>;
   constructor(
     private authService: AuthService,
     private userService: UserService,
     private router: Router,
     public dialog: MatDialog
-  ) {}
+  ) {
+    this.currentUser$ = this.authService.currentUser$;
+    }
 
   ngOnInit(): void {
     this.authService.fetchCurrentUser().subscribe({
@@ -65,11 +68,39 @@ export class MyInfo implements OnInit {
     // TODO: Open file picker, open cropper modal, call user service
   }
 
-  onDeleteAvatar(): void {
-    console.log('Delete Avatar clicked');
-    // TODO: Open confirm dialog, call user service
-  }
+onDeleteAvatar(): void {
+  if (!this.currentUser) return;
 
+  // Make sure you're using the correct component name
+  const dialogRef = this.dialog.open(ConfirmDialog, {
+    width: '350px',
+    data: {
+      title: 'Delete Avatar',
+      message: 'Are you sure you want to delete your avatar? This action cannot be undone.'
+    }
+  });
+
+  dialogRef.afterClosed().subscribe(result => {
+    if (result === true && this.currentUser) {
+      this.userService.deleteAvatar().subscribe({
+        next: (response) => {
+          console.log(response); // "avatar deleted successfully"
+
+          // ✅ THE FIX:
+          // Update the local user object to refresh the UI
+          this.ngOnInit();
+
+          // ❌ REMOVE THIS:
+          // this.router.navigate(['/my-info']);
+        },
+        error: (err) => {
+          console.error('Failed to delete avatar', err);
+          // TODO: Show a snackbar or alert
+        }
+      });
+    }
+  });
+}
   onUpdateInfo(): void {
     console.log('Update Info clicked');
     // TODO: Open update info modal

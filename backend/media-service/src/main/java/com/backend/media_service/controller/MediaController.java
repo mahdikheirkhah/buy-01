@@ -90,6 +90,10 @@ public class MediaController {
         System.out.println("Received product deletion event for ID: " + productId);
         mediaService.DeleteMediaByProductID(productId);
     }
+    @KafkaListener(topics = "user-avatar-deleted-topic", groupId = "media-service-group")
+    public void handleAvatarDeleted(String avatarUrl) {
+        mediaService.DeleteMediaByAvatarUrl(avatarUrl);
+    }
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteMediaById(@RequestParam String ID) {
         mediaService.DeleteMediaByID(ID);

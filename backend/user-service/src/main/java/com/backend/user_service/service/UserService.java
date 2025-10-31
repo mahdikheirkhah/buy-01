@@ -204,11 +204,21 @@ public class UserService implements UserDetailsService {
         }
         if (user.getRole().equals(Role.SELLER)){
             kafkaTemplate.send("user-deleted-topic", id);
-            if(user.getAvatarUrl() != null){
-                kafkaTemplate.send("user-avatar-deleted-topic", user.getAvatarUrl());
-            }
+            kafkaSendDeleteAvatar(user.getAvatarUrl());
         }
         userRepository.deleteById(user.getId());
+    }
+    public void deleteAvatar(String sellerId){
+        User user = userRepository.findById(sellerId)
+                .orElseThrow(()-> new CustomException ("Access denied " , HttpStatus.FORBIDDEN));
+        kafkaSendDeleteAvatar(user.getAvatarUrl());
+        user.setAvatarUrl(null);
+        userRepository.save(user);
+    }
+    private void kafkaSendDeleteAvatar(String avatarUrl){
+        if(avatarUrl != null){
+            kafkaTemplate.send("user-avatar-deleted-topic", avatarUrl);
+        }
     }
     public Cookie generateCookie(String email) {
         User user = userRepository.findByEmail(email)
