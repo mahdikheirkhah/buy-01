@@ -71,4 +71,10 @@ public class UserController {
         userService.deleteUser(userId, password);
         return ResponseEntity.ok(Map.of("message", "user deleted successfully"));
     }
+    @DeleteMapping("/avatar")
+    @PreAuthorize("hasRole('ROLE_SELLER')")
+    public  ResponseEntity<String> deleteAvatar(@RequestHeader("X-User-ID") String userId) {
+            userService.deleteAvatar(userId);
+            return ResponseEntity.ok("avatar deleted successfully");
+    }
 }
