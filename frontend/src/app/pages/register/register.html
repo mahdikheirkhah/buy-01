@@ -44,21 +44,9 @@
   <p>Already have an account? <a routerLink="/login">Login here</a></p>
 </div>
 
-<div class="cropper-modal-overlay" *ngIf="showCropper">
-  <div class="cropper-modal-content">
-    <h3>Crop Your Avatar</h3>
-    <image-cropper
-      [imageChangedEvent]="imageChangedEvent"
-      [maintainAspectRatio]="true"
-      [aspectRatio]="1 / 1"
-      [roundCropper]="true"     [resizeToWidth]="256"
-      format="png"
-      (imageCropped)="imageCropped($event)"
-      (loadImageFailed)="loadImageFailed()"
-    ></image-cropper>
-    <div class="cropper-buttons">
-      <button type="button" (click)="cancelCrop()" class="cancel-btn">Cancel</button>
-      <button type="button" (click)="saveCrop()" class="save-btn">Save Avatar</button>
-    </div>
-  </div>
-</div>
+<app-image-cropper-modal
+  *ngIf="showCropper"
+  [imageChangedEvent]="imageChangedEvent"
+  (croppedImageBlob)="handleImageBlob($event)"
+  (modalClosed)="handleModalClose()">
+</app-image-cropper-modal>

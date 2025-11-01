@@ -3,7 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth'; // Corrected path
-import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper'; // Corrected import
+import { ImageCropperModal } from '../../components/image-cropper-modal/image-cropper-modal';
+
 
 @Component({
   selector: 'app-register',
@@ -12,7 +13,7 @@ import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper'; //
     CommonModule,
     FormsModule,
     RouterLink,
-    ImageCropperComponent // Corrected import
+    ImageCropperModal
   ],
   templateUrl: './register.html',
   styleUrls: ['./register.css']
@@ -34,59 +35,38 @@ export class RegisterComponent {
 
   constructor(private authService: AuthService, private router: Router) { }
 
-  // 1. File is selected
-  onFileSelected(event: any): void {
+onFileSelected(event: any): void {
     this.imageChangedEvent = event;
     this.showCropper = true; // Show the modal
   }
 
-  // 2. User moves the cropper
-imageCropped(event: ImageCroppedEvent) {
-    this.croppedImage = event.base64; // For the preview
-
-    // ✅ THE FIX:
-    // Use the nullish coalescing operator (??) to convert
-    // undefined to null, which matches your variable's type.
-    this.croppedBlob = event.blob ?? null;
+  // --- New Handlers for the Modal ---
+  handleImageBlob(blob: Blob) {
+    this.croppedBlob = blob;
+    // Create a URL for the preview image
+    this.croppedImage = URL.createObjectURL(blob);
   }
 
-  // 3. User clicks "Save Avatar" in the modal
-  saveCrop() {
-    this.showCropper = false; // Hide the modal
-    // The this.croppedBlob is now ready to be uploaded
-  }
-
-  // 4. User clicks "Cancel" in the modal
-  cancelCrop() {
+  handleModalClose() {
     this.showCropper = false;
-    this.imageChangedEvent = '';
-    this.croppedImage = '';
-    this.croppedBlob = null;
-    // We also need to clear the file input
+    // Clear the file input so you can select the same file again
     const fileInput = document.getElementById('avatar') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
     }
   }
+  // ---------------------------------
 
-  loadImageFailed() {
-    console.error('Image failed to load');
-    this.cancelCrop();
-  }
-
-  // 5. User clicks "Register"
   onRegister(): void {
     const formData = new FormData();
     formData.append('userDto', new Blob([JSON.stringify(this.registerData)], {
       type: 'application/json'
     }));
 
-    // Check if we have a cropped blob to send
     if (this.registerData.role === 'SELLER' && this.croppedBlob) {
       const avatarFile = new File([this.croppedBlob], 'avatar.png', { type: 'image/png' });
       formData.append('avatarFile', avatarFile);
     }
-
     this.authService.register(formData).subscribe({
       next: (response: any) => {
         console.log('Registration successful', response);

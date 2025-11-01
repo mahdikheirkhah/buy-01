@@ -52,23 +52,13 @@ public class UserService implements UserDetailsService {
         if (checkUserExistence(user.getEmail()).isPresent()) {
             throw new CustomException("User already exists please go to the login page", HttpStatus.BAD_REQUEST);
         }
-
         if (user.getRole() == null){
             user.setRole(Role.CLIENT);
         }
 
-        if (user.getRole() == Role.CLIENT){
-            user.setAvatarUrl(null);
-        }
-
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        User savedUser = userRepository.save(user);
-        //kafkaTemplate.send("user-registered-topic", savedUser.getEmail());
-        if (savedUser.getRole() == Role.SELLER && avatarFile != null && !avatarFile.isEmpty()) {
-            String avatarUrl = saveAvatar(avatarFile);
-            savedUser.setAvatarUrl(avatarUrl);
-        }
-        return userRepository.save(savedUser);
+        user.setAvatarUrl(checkAvatarFile(user.getRole(), avatarFile));
+        return userRepository.save(user);
     }
 
     private Optional<User> checkUserExistence(String email) {
@@ -90,7 +80,20 @@ public class UserService implements UserDetailsService {
                 .build();
     }
     private boolean checkPassword(String firstPassword, String secondPassword){
-        return passwordEncoder.matches(firstPassword, secondPassword);
+        return !passwordEncoder.matches(firstPassword, secondPassword);
+    }
+    public void AvatarUpdate(String userID, MultipartFile avatarFile) {
+        User user = userRepository.findById(userID)
+                .orElseThrow(()-> new CustomException("Not Authorized", HttpStatus.FORBIDDEN));
+        kafkaSendDeleteAvatar(user.getAvatarUrl());
+        user.setAvatarUrl(checkAvatarFile(user.getRole(), avatarFile));
+        userRepository.save(user);
+    }
+    private String checkAvatarFile(Role role, MultipartFile avatarFile){
+         if (role.equals(Role.SELLER) && avatarFile != null && !avatarFile.isEmpty()) {
+             return saveAvatar(avatarFile);
+        }
+        return null;
     }
     private String saveAvatar(MultipartFile avatarFile) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -128,7 +131,7 @@ public class UserService implements UserDetailsService {
     public User loginUser(loginUserDTO loginUserDTO) {
         User user = checkUserExistence(loginUserDTO.getEmail())
                 .orElseThrow(()->new CustomException("wrong email or password", HttpStatus.BAD_REQUEST));
-        if (!checkPassword(loginUserDTO.getPassword(), user.getPassword())){
+        if (checkPassword(loginUserDTO.getPassword(), user.getPassword())){
             throw new CustomException("wrong email or password", HttpStatus.BAD_REQUEST);
         }
         return user;
@@ -199,7 +202,7 @@ public class UserService implements UserDetailsService {
     public void deleteUser(String id, String password) {
         User user = userRepository.findById(id)
                 .orElseThrow(()-> new CustomException ("Access denied " , HttpStatus.FORBIDDEN));
-        if(!checkPassword(password, user.getPassword())){
+        if(checkPassword(password, user.getPassword())){
             throw new CustomException ("Wrong password", HttpStatus.BAD_REQUEST);
         }
         if (user.getRole().equals(Role.SELLER)){
@@ -242,5 +245,5 @@ public class UserService implements UserDetailsService {
         return jwtCookie;
     }
 
-    // ... other methods
+    // ... other methods XDD
 }
