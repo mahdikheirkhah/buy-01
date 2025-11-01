@@ -31,6 +31,15 @@ deleteAvatar(): Observable<string>{ // You can also change <any> to <string>
         responseType: 'text' // ✅ ADD THIS LINE
       });
   }
+updateAvatar(avatarFile: File): Observable<any> {
+    const formData = new FormData();
+    // The key "avatarFile" must match the @RequestParam name in your controller
+    formData.append('avatarFile', avatarFile);
 
-  // TODO: Add methods for update user, change avatar, delete avatar
+    // We use POST to send FormData. The backend returns the updated User object.
+    return this.http.post(`${this.apiUrl}/newAvatar`, formData, {
+      withCredentials: true,
+      responseType: 'json'
+    });
+  }
 }

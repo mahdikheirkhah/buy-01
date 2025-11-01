@@ -40,7 +40,15 @@ public class UserController {
         response.addCookie(userService.generateEmptyCookie());
         return ResponseEntity.ok(Map.of("message", "Logout successful"));
     }
-
+    @PostMapping("/newAvatar")
+    @PreAuthorize("hasRole('ROLE_SELLER')")
+    public ResponseEntity<Map<String, String>> handleUserNewAvatar(
+            @RequestPart(value = "avatarFile", required = true) MultipartFile avatarFile,
+            @RequestHeader("X-User-ID") String userId
+    ) {
+        userService.AvatarUpdate(userId, avatarFile);
+        return ResponseEntity.ok(Map.of("message", "Avatar updated successfully"));
+    }
     @GetMapping("/me")
     public ResponseEntity<InfoUserDTO> getCurrentUser(@RequestHeader("X-User-ID") String userId) {
         InfoUserDTO user = userService.getMe(userId);

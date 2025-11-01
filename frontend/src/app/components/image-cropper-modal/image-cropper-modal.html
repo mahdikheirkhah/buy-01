@@ -1,0 +1,28 @@
+<div class="cropper-modal-overlay">
+  <div class="cropper-modal-content">
+    <h3>Crop Your Image</h3>
+
+    <div class="cropper-wrapper">
+      <image-cropper
+        [imageChangedEvent]="imageChangedEvent"
+        [maintainAspectRatio]="true"
+        [aspectRatio]="1 / 1"
+        [roundCropper]="true"
+        [resizeToWidth]="256"
+        format="png"
+        (imageCropped)="imageCropped($event)"
+        (loadImageFailed)="loadImageFailed()"
+      ></image-cropper>
+    </div>
+
+    <div class="preview-container" *ngIf="croppedImage">
+      <p>Preview:</p>
+      <img [src]="croppedImage" />
+    </div>
+
+    <div class="cropper-buttons">
+      <button type="button" (click)="cancelCrop()" class="cancel-btn">Cancel</button>
+      <button type="button" (click)="saveCrop()" class="save-btn" [disabled]="!croppedBlob">Save</button>
+    </div>
+  </div>
+</div>

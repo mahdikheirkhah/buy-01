@@ -24,10 +24,19 @@
       </div>
 
       <div class="avatar-actions">
-        <button mat-stroked-button color="primary" (click)="onChangeAvatar()">
+        <button mat-stroked-button color="primary" (click)="avatarUploadInput.click()">
           <mat-icon>upload</mat-icon>
-          Change Photo
+          new avatar
         </button>
+
+        <input
+          type="file"
+          hidden
+          #avatarUploadInput
+          id="avatar-upload-input"
+          (change)="onFileSelect($event)"
+          accept="image/*" />
+
         <button mat-stroked-button color="warn" *ngIf="currentUser.avatarUrl" (click)="onDeleteAvatar()">
           <mat-icon>delete</mat-icon>
           Delete Photo
@@ -73,3 +82,10 @@
     </mat-card-actions>
   </mat-card>
 </div>
+
+<app-image-cropper-modal
+  *ngIf="showCropper"
+  [imageChangedEvent]="imageChangedEvent"
+  (croppedImageBlob)="handleAvatarBlob($event)"
+  (modalClosed)="handleModalClose()">
+</app-image-cropper-modal>
