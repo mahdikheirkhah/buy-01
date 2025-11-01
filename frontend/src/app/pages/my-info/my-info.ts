@@ -81,7 +81,7 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
 
     this.userService.updateAvatar(avatarFile).subscribe({
       next: (updatedUser: User) => {
-        this.currentUser = updatedUser; // Update local user
+       this.ngOnInit();
         this.authService.fetchCurrentUser().subscribe(); // Re-sync global state
       },
       error: (err) => console.error('Failed to update avatar', err)
@@ -134,7 +134,37 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
     // TODO: Logic for updating info
   }
 
+// --- Delete User Logic ---
   onDeleteMe(): void {
-    // ... (Your delete logic is correct) ...
+    // 1. Open the password dialog
+    const dialogRef = this.dialog.open(PasswordConfirmDialog, {
+      width: '400px',
+      data: {
+        title: 'Delete Account',
+        message: 'This action is permanent. To confirm, please enter your password.'
+      }
+    });
+
+    // 2. Listen for the dialog to close
+    dialogRef.afterClosed().subscribe(password => {
+      // 3. If the user provided a password
+      if (password) {
+        this.userService.deleteUser(password).subscribe({
+          next: (response) => {
+            console.log('User deleted:', response.message);
+            // 4. Log the user out (which clears local state)
+            this.authService.logout().subscribe(() => {
+              // 5. Redirect to register page
+              this.router.navigate(['/register']);
+            });
+          },
+          error: (err) => {
+            console.error('Failed to delete user:', err);
+            // TODO: Show a snackbar error
+            alert(`Error: ${err.error.message || 'Wrong password or server error.'}`);
+          }
+        });
+      }
+    });
   }
 }
