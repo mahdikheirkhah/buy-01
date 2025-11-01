@@ -4,15 +4,13 @@ import { AuthService } from '../../services/auth';
 import { UserService } from '../../services/user';
 import { User } from '../../models/user.model';
 import { Router } from '@angular/router';
-
-// Material Imports
+import { UpdateInfoForm } from '../../components/update-info-form/update-info-form';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-
 // ✅ Import BOTH dialog components
 import { PasswordConfirmDialog } from '../../components/password-confirm-dialog/password-confirm-dialog';
 import { ConfirmDialog } from '../../components/confirm-dialog/confirm-dialog';
@@ -25,14 +23,16 @@ import { ImageCropperModal } from '../../components/image-cropper-modal/image-cr
   imports: [
     CommonModule,
     MatCardModule,
+    MatDividerModule,
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
     MatProgressSpinnerModule,
     MatDialogModule,
     PasswordConfirmDialog,
-    ConfirmDialog, // ✅ FIX: Add ConfirmDialog here
-    ImageCropperModal // ✅ Add Cropper Modal
+    ConfirmDialog,
+    ImageCropperModal,
+    UpdateInfoForm
   ],
   templateUrl: './my-info.html',
   styleUrls: ['./my-info.css']
@@ -41,7 +41,7 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
   currentUser: User | null = null;
   isLoading = true;
   errorMessage: string | null = null;
-
+   isEditingInfo = false;
   // --- State for the cropper ---
   imageChangedEvent: any = '';
   showCropper = false;
@@ -88,7 +88,6 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
     });
   }
 
-  // This is called by the cropper modal
   handleModalClose() {
     this.showCropper = false;
     const fileInput = document.getElementById('avatar-upload-input') as HTMLInputElement;
@@ -96,13 +95,9 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
       fileInput.value = '';
     }
   }
-
   getAvatarUrl(avatarPath: string): string {
     return `https://localhost:8443${avatarPath}`;
   }
-
-  // ❌ REMOVED: Empty onChangeAvatar() stub
-
   onDeleteAvatar(): void {
     if (!this.currentUser) return;
 
@@ -129,11 +124,6 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
       }
     });
   }
-
-  onUpdateInfo(): void {
-    // TODO: Logic for updating info
-  }
-
 // --- Delete User Logic ---
   onDeleteMe(): void {
     // 1. Open the password dialog
@@ -167,4 +157,13 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
       }
     });
   }
+  onUpdateInfo(): void {
+    this.isEditingInfo = true;
+  }
+  onFormClosed(isSuccess: boolean): void {
+      this.isEditingInfo = false;
+      if (isSuccess) {
+        this.ngOnInit();
+      }
+    }
 }

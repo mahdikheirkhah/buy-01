@@ -1,6 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable,tap } from 'rxjs';
+import { UpdateUserDTO } from '../models/update-user.dto';
+import { AuthService } from './auth';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +11,7 @@ export class UserService {
   // We assume your user controller is at /api/users
   private apiUrl = 'https://localhost:8443/api/users';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
   /**
    * Deletes the currently authenticated user.
@@ -41,5 +43,15 @@ updateAvatar(avatarFile: File): Observable<any> {
       withCredentials: true,
       responseType: 'json'
     });
+  }
+updateUser(updateDto: UpdateUserDTO): Observable<any> {
+    return this.http.put(`${this.apiUrl}/me`, updateDto, {
+      withCredentials: true,
+      responseType: 'json'
+    }).pipe(
+      tap(() => {
+        this.authService.fetchCurrentUser().subscribe();
+      })
+    );
   }
 }

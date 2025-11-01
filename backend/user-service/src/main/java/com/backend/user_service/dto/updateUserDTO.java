@@ -12,7 +12,7 @@ public class updateUserDTO {
     private String firstName;
     private String lastName;
     @Size(min = 5, message = "Password should be at least 5 characters")
-    private String password;
-    private Role role;
-    private String avatarUrl;
+    private String currentPassword;
+    @Size(min = 5, message = "Password should be at least 5 characters")
+    private String newPassword;
 }
