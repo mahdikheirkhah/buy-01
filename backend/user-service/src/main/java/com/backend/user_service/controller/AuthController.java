@@ -44,7 +44,6 @@ public class AuthController {
 
         Cookie jwtCookie = userService.generateCookie(loginUserDTO.getEmail());
         response.addCookie(jwtCookie);
-        System.out.println(jwtCookie.getValue());
         return ResponseEntity.ok(Map.of("message", "Login successful"));
     }
 

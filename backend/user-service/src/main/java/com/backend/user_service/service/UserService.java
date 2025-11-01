@@ -136,7 +136,54 @@ public class UserService implements UserDetailsService {
         }
         return user;
     }
+    public record UserUpdateResult(boolean newJwtNeeded, String userEmail) {}
+    public UserUpdateResult updateUserInfo(String userID, updateUserDTO userUpdatedInfo) {
 
+        User user = userRepository.findById(userID)
+                .orElseThrow(() -> new CustomException("Not Authorized", HttpStatus.FORBIDDEN));
+
+        boolean newJwt = false;
+
+        // --- 1. Non-sensitive updates (can be done without password) ---
+        if (userUpdatedInfo.getFirstName() != null && !userUpdatedInfo.getFirstName().isBlank()) {
+            user.setFirstName(userUpdatedInfo.getFirstName());
+        }
+        if (userUpdatedInfo.getLastName() != null && !userUpdatedInfo.getLastName().isBlank()) {
+            user.setLastName(userUpdatedInfo.getLastName());
+        }
+
+        // --- 2. Check if any sensitive fields need to be updated ---
+        boolean isEmailChange = userUpdatedInfo.getEmail() != null &&
+                !userUpdatedInfo.getEmail().isBlank() &&
+                !user.getEmail().equals(userUpdatedInfo.getEmail());
+
+        boolean isPasswordChange = userUpdatedInfo.getNewPassword() != null &&
+                !userUpdatedInfo.getNewPassword().isBlank();
+
+        // If they are changing *either* email or password, they MUST provide the correct current password
+        if (isEmailChange || isPasswordChange) {
+
+            // Check if current password was provided or is correct
+            if (userUpdatedInfo.getCurrentPassword() == null || checkPassword(userUpdatedInfo.getCurrentPassword(), user.getPassword())) {
+                throw new CustomException("Invalid current password", HttpStatus.FORBIDDEN);
+            }
+
+            // Now that we're authenticated, perform the updates
+            if (isEmailChange) {
+                user.setEmail(userUpdatedInfo.getEmail());
+                newJwt = true;
+            }
+            if (isPasswordChange) {
+                user.setPassword(passwordEncoder.encode(userUpdatedInfo.getNewPassword()));
+                newJwt = true;
+            }
+        }
+
+        userRepository.save(user);
+
+        // Always return the user's *final* email, in case it was changed
+        return new UserUpdateResult(newJwt, user.getEmail());
+    }
     public void updateUser(updateUserDTO userForm, String loggedInUserId, String userEmail, MultipartFile avatarFile) {
         User user = checkUpdateUser(loggedInUserId, userEmail);
         String oldAvatarUrl = user.getAvatarUrl();

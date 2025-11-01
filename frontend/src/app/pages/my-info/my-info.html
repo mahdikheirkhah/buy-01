@@ -1,88 +1,109 @@
 <div class="my-info-container">
   <h2>My Information</h2>
 
+  <!-- Loading Spinner -->
   <div *ngIf="isLoading" class="spinner-container">
     <mat-spinner></mat-spinner>
   </div>
 
+  <!-- Error Message -->
   <div *ngIf="errorMessage" class="error-message">
     {{ errorMessage }}
   </div>
 
   <mat-card *ngIf="currentUser && !isLoading">
 
-    <div class="avatar-section">
-      <h3>Avatar</h3>
+    <!--
+      This section (Avatar, Details, Actions) is wrapped in an *ngIf.
+      It will HIDE when 'isEditingInfo' is true.
+    -->
+    <ng-container *ngIf="!isEditingInfo">
+      <div class="avatar-section">
+        <h3>Avatar</h3>
 
-      <img *ngIf="currentUser.avatarUrl"
-           [src]="getAvatarUrl(currentUser.avatarUrl)"
-           alt="Your Avatar"
-           class="avatar-image">
+        <img *ngIf="currentUser.avatarUrl"
+             [src]="getAvatarUrl(currentUser.avatarUrl)"
+             alt="Your Avatar"
+             class="avatar-image">
 
-      <div *ngIf="!currentUser.avatarUrl" class="avatar-placeholder">
-        <mat-icon>person</mat-icon>
+        <div *ngIf="!currentUser.avatarUrl" class="avatar-placeholder">
+          <mat-icon>person</mat-icon>
+        </div>
+
+        <div class="avatar-actions">
+          <button mat-stroked-button color="primary" (click)="avatarUploadInput.click()">
+            <mat-icon>upload</mat-icon>
+            Change Photo
+          </button>
+
+          <input
+            type="file"
+            hidden
+            #avatarUploadInput
+            id="avatar-upload-input"
+            (change)="onFileSelect($event)"
+            accept="image/*" />
+
+          <button mat-stroked-button color="warn" *ngIf="currentUser.avatarUrl" (click)="onDeleteAvatar()">
+            <mat-icon>delete</mat-icon>
+            Delete Photo
+          </button>
+        </div>
       </div>
 
-      <div class="avatar-actions">
-        <button mat-stroked-button color="primary" (click)="avatarUploadInput.click()">
-          <mat-icon>upload</mat-icon>
-          new avatar
+      <mat-divider></mat-divider>
+
+      <mat-card-content class="details-section">
+        <h3>Details</h3>
+
+        <div class="info-row">
+          <strong>First Name:</strong>
+          <span>{{ currentUser.firstName }}</span>
+        </div>
+        <div class="info-row">
+          <strong>Last Name:</strong>
+          <span>{{ currentUser.lastName }}</span>
+        </div>
+        <div class="info-row">
+          <strong>Email:</strong>
+          <span>{{ currentUser.email }}</span>
+        </div>
+        <div class="info-row">
+          <strong>Role:</strong>
+          <span>{{ currentUser.role | titlecase }}</span>
+        </div>
+      </mat-card-content>
+
+      <mat-divider></mat-divider>
+
+      <mat-card-actions class="account-actions">
+        <!-- ✅ FIX: This button now toggles the 'isEditingInfo' flag -->
+        <button mat-flat-button color="primary" (click)="isEditingInfo = true">
+          <mat-icon>edit</mat-icon>
+          Update Information
         </button>
 
-        <input
-          type="file"
-          hidden
-          #avatarUploadInput
-          id="avatar-upload-input"
-          (change)="onFileSelect($event)"
-          accept="image/*" />
-
-        <button mat-stroked-button color="warn" *ngIf="currentUser.avatarUrl" (click)="onDeleteAvatar()">
-          <mat-icon>delete</mat-icon>
-          Delete Photo
+        <button mat-flat-button color="warn" class="delete-me-btn" (click)="onDeleteMe()">
+          <mat-icon>warning</mat-icon>
+          Delete My Account
         </button>
-      </div>
-    </div>
+      </mat-card-actions>
+    </ng-container>
 
-    <mat-divider></mat-divider>
+    <!--
+      ✅ NEW: This form will APPEAR when 'isEditingInfo' is true.
+      It lives inside the same mat-card.
+    -->
+    <app-update-info-form
+      *ngIf="isEditingInfo"
+      [currentUser]="currentUser"
+      (close)="onFormClosed($event)">
+    </app-update-info-form>
 
-    <mat-card-content class="details-section">
-      <h3>Details</h3>
-
-      <div class="info-row">
-        <strong>First Name:</strong>
-        <span>{{ currentUser.firstName }}</span>
-      </div>
-      <div class="info-row">
-        <strong>Last Name:</strong>
-        <span>{{ currentUser.lastName }}</span>
-      </div>
-      <div class="info-row">
-        <strong>Email:</strong>
-        <span>{{ currentUser.email }}</span>
-      </div>
-      <div class="info-row">
-        <strong>Role:</strong>
-        <span>{{ currentUser.role | titlecase }}</span>
-      </div>
-    </mat-card-content>
-
-    <mat-divider></mat-divider>
-
-    <mat-card-actions class="account-actions">
-      <button mat-flat-button color="primary" (click)="onUpdateInfo()">
-        <mat-icon>edit</mat-icon>
-        Update Information
-      </button>
-
-      <button mat-flat-button color="warn" class="delete-me-btn" (click)="onDeleteMe()">
-        <mat-icon>warning</mat-icon>
-        Delete My Account
-      </button>
-    </mat-card-actions>
   </mat-card>
 </div>
 
+<!-- This modal stays outside the mat-card, as it's a global overlay -->
 <app-image-cropper-modal
   *ngIf="showCropper"
   [imageChangedEvent]="imageChangedEvent"

@@ -66,13 +66,17 @@ public class UserController {
         InfoUserDTO user = userService.getUserByEmail(email);
         return ResponseEntity.ok(user);
     }
-    @PutMapping("/me/{email}")
+    @PutMapping("/me")
     public ResponseEntity<Map<String, String>> updateMe(
-            @Valid @RequestBody updateUserDTO user,
+            @Valid @RequestBody updateUserDTO userUpdatedInfo,
             @RequestHeader("X-User-ID") String userId,
-            @RequestParam MultipartFile avatarFile,
-            @PathVariable String email) {
-         return ResponseEntity.ok(Map.of("message", "updated successfully"));
+            HttpServletResponse response) {
+        UserService.UserUpdateResult result = userService.updateUserInfo(userId, userUpdatedInfo);
+        if (result.newJwtNeeded()) {
+            Cookie jwtCookie = userService.generateCookie(result.userEmail());
+            response.addCookie(jwtCookie);
+        }
+        return ResponseEntity.ok(Map.of("message", "updated successfully"));
     }
     @DeleteMapping
     public ResponseEntity<Map<String, String>> deleteUser(@RequestHeader("X-User-ID") String userId, @RequestParam String password) {
