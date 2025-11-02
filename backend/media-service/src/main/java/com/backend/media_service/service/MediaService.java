@@ -63,7 +63,9 @@ public class MediaService {
         System.out.println("Media deleted!");
     }
     public void DeleteMediaByID(String ID) {
-        mediaRepository.deleteById(ID);
+        Media media = mediaRepository.findById(ID).orElseThrow(()-> new CustomException("Media Not Found!",HttpStatus.NOT_FOUND));
+        fileStorageService.delete(media.getImagePath());
+        mediaRepository.delete(media);
     }
     public void DeleteMediaByAvatarUrl(String avatarUrl) {
         fileStorageService.delete(avatarUrl);

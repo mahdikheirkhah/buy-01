@@ -1,6 +1,5 @@
 <h2 mat-dialog-title>Edit Product</h2>
 
-<!-- Spinner Overlay -->
 <div *ngIf="isLoading" class.loading="isLoading" class="loading-overlay">
   <mat-spinner></mat-spinner>
 </div>
@@ -8,7 +7,6 @@
 <div mat-dialog-content [class.loading]="isLoading">
   <mat-tab-group>
 
-    <!-- Tab 1: Product Details -->
     <mat-tab label="Details">
       <form [formGroup]="editForm" class="details-form">
         <mat-form-field appearance="fill">
@@ -33,17 +31,18 @@
       </form>
     </mat-tab>
 
-    <!-- Tab 2: Manage Images -->
     <mat-tab label="Manage Images">
       <div class="image-section">
 
-        <!-- 1. List of existing images -->
         <h4>Current Images</h4>
         <p *ngIf="currentMedia.length === 0">This product has no images.</p>
         <div class="image-grid">
-          <div *ngFor="let media of currentMedia; let i = index" class="thumbnail-wrapper">
+          <div *ngFor="let media of currentMedia; let i = index"
+               class="thumbnail-wrapper"
+               [class.deleting]="mediaToDelete.includes(media.fileId)">
             <img [src]="getImageUrl(media.fileUrl)" alt="Product Image" class="thumbnail">
-            <button mat-icon-button class="delete-image-btn" (click)="deleteExistingImage(media.productId, media.id, i)">
+
+            <button mat-icon-button class="delete-image-btn" (click)="deleteExistingImage(media.fileId, i)">
               <mat-icon>cancel</mat-icon>
             </button>
           </div>
@@ -51,16 +50,19 @@
 
         <mat-divider></mat-divider>
 
-        <!-- 2. "Add Images" field -->
         <h4>Add New Images</h4>
         <div class="form-group">
-          <input type="file" id="images" (change)="onFilesSelected($event)" accept="image/*" multiple>
-        </div>
+          <input
+            type="file"
+            id="images"
+            (change)="onFilesSelected($event)"
+            accept="image/png, image/jpeg, image/gif, image/webp"
+            multiple> </div>
+
         <div class="file-errors" *ngIf="fileErrors.length > 0">
           <p *ngFor="let error of fileErrors">{{ error }}</p>
         </div>
 
-        <!-- 3. List of NEWLY added images -->
         <div class="file-list" *ngIf="filesToUpload.length > 0">
           <p>Staged for upload:</p>
           <ul>
@@ -80,7 +82,8 @@
 
 <div mat-dialog-actions align="end" [class.loading]="isLoading">
   <button mat-button (click)="onCancel()">Cancel</button>
-  <button mat-flat-button color="primary" (click)="onSave()" [disabled]="editForm.invalid && filesToUpload.length === 0">
+  <button mat-flat-button color="primary" (click)="onSave()"
+          [disabled]="editForm.invalid || !hasChanges">
     Save Changes
   </button>
 </div>

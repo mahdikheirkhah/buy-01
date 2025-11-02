@@ -1,5 +1,5 @@
 // src/app/pages/create-product/create-product.ts
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
+import { AuthService } from '../../services/auth';
 @Component({
   selector: 'app-create-product',
   standalone: true,
@@ -39,6 +39,7 @@ export class CreateProduct {
   // ----------------------------------------
 
   constructor(
+     private authService: AuthService,
     private fb: FormBuilder,
     private productService: ProductService,
     private router: Router
@@ -50,7 +51,15 @@ export class CreateProduct {
       quantity: [null, [Validators.required, Validators.min(0)]],
     });
   }
-
+  ngOnInit(): void {
+      // Guarantees the AuthService.subject is populated even after a refresh
+      this.authService.fetchCurrentUser().subscribe({
+        error: () => {
+          // 401 → user not logged in → subject already cleared by the service
+          // (nothing else to do – navbar will show Login/Register)
+        }
+      });
+    }
   /**
    * ✅ This method now ADDS files and VALIDATES them.
    */
