@@ -66,10 +66,16 @@ public class ProductService {
         return productRepository.findAll();
     }
 
-    public void updateProduct(String productId, String sellerId ,UpdateProductDTO productDto) {
+    public UpdateProductDTO updateProduct(String productId, String sellerId ,UpdateProductDTO productDto) {
         Product existingProduct = checkProduct(productId, sellerId);
         productMapper.updateProductFromDto(productDto, existingProduct);
-        productRepository.save(existingProduct);
+        Product savedProduct = productRepository.save(existingProduct);
+        return UpdateProductDTO.builder()
+                .name(savedProduct.getName())
+                .description(savedProduct.getDescription())
+                .price(savedProduct.getPrice())
+                .quantity(savedProduct.getQuantity())
+                .build();
     }
     public void DeleteProductsOfUser(String sellerId) {
         List<Product> products = productRepository.findAllBySellerID(sellerId);
@@ -86,7 +92,7 @@ public class ProductService {
         kafkaTemplate.send("product-deleted-topic", productId);
         productRepository.delete(existingProduct);
     }
-    public void deleteProductMedia(String productId, String sellerId,String mediaId) {
+    public void deleteProductMedia(String productId, String sellerId, String mediaId) {
         Product existingProduct = checkProduct(productId, sellerId);
         deleteMedia(mediaId);
     }
@@ -282,8 +288,9 @@ public class ProductService {
                 .block();
     }
     private String deleteMedia(String mediaId) {
+        System.out.println("sending the delete request");
         return webClientBuilder.build().delete()
-                .uri("https://MEDIA-SERVICE/api/media/{mediaId}")
+                .uri("https://MEDIA-SERVICE/api/media/{mediaId}",mediaId)
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();

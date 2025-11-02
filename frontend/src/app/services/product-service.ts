@@ -17,7 +17,7 @@ export interface Page<T> {
 })
 export class ProductService {
   private productApiUrl = 'https://localhost:8443/api/products';
-   private mediaApiUrl = 'https://localhost:8443/api/media';
+  private mediaApiUrl = 'https://localhost:8443/api/media';
   private imageApiUrl = 'https://localhost:8443/api/products/create/images';
 
   constructor(private http: HttpClient) { }
@@ -26,23 +26,16 @@ export class ProductService {
     return this.http.post(this.productApiUrl, productData, { withCredentials: true });
   }
 
-  /**
-   * Uploads a single image for a given product.
-   * Both the file and the productId are sent in the FormData.
-   */
-  uploadProductImage(productId: string, file: File): Observable<any> {
+
+uploadProductImage(productId: string, file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('productId', productId);
-
-    // We no longer need the productId in the URL itself
-    // We also tell the backend to expect 'text'
     return this.http.post(this.imageApiUrl, formData, {
       withCredentials: true,
-      responseType: 'text' // Expect a plain text "success" message
+      responseType: 'text'
     });
   }
-
   /**
    * Fetches the products created by the currently logged-in seller,
    * with pagination.
@@ -86,14 +79,14 @@ export class ProductService {
   }
   updateProduct(id: string, productData: any): Observable<ProductDetailDTO> {
       return this.http.put<ProductDetailDTO>(`${this.productApiUrl}/${id}`, productData, {
-        withCredentials: true
+        withCredentials: true,
       });
   }
   deleteProductImage(productId: string,mediaId: string): Observable<any> {
 
       return this.http.delete(`${this.productApiUrl}/deleteMedia/${productId}/${mediaId}`, {
         withCredentials: true,
-        responseType: 'json' // Expects a JSON response like { "message": "..." }
+        responseType: 'json'
       });
   }
 }

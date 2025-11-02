@@ -7,6 +7,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { ProductService } from '../../services/product-service'; // Adjust path
 import { ProductCardDTO } from '../../models/productCard.model'; // You'll need to create this model
 import { ProductCard} from '../../components/product-card/product-card';
+import { AuthService } from '../../services/auth';
 
 // Create a model for the Page object
 export interface Page<T> {
@@ -31,10 +32,11 @@ export class MyProducts implements OnInit {
   pageSize: number = 10;
   pageIndex: number = 0;
 
-  constructor(private productService: ProductService) {}
+  constructor(private productService: ProductService,  private authService: AuthService) {}
 
   ngOnInit(): void {
     this.fetchMyProducts();
+    this.authService.fetchCurrentUser().subscribe();
   }
 
   fetchMyProducts(): void {

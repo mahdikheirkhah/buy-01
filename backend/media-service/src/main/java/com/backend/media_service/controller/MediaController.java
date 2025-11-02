@@ -96,8 +96,9 @@ public class MediaController {
         mediaService.DeleteMediaByAvatarUrl(avatarUrl);
     }
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteMediaById(@RequestParam String ID) {
-        mediaService.DeleteMediaByID(ID);
+    public ResponseEntity<String> deleteMediaById(@PathVariable String id) {
+        System.out.println("Delete media by ID: " + id);
+        mediaService.DeleteMediaByID(id);
         return ResponseEntity.ok("Delete media successfully");
     }
 }

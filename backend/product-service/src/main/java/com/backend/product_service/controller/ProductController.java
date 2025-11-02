@@ -81,14 +81,14 @@ public class ProductController {
         return ResponseEntity.ok(Map.of("message", "Image created successfully"));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{productId}")
     @PreAuthorize("hasRole('ROLE_SELLER')")
-    public ResponseEntity<String> updateProduct(
+    public ResponseEntity<UpdateProductDTO> updateProduct(
             @PathVariable String productId,
             @RequestBody @NotNull(message ="this request needs body") UpdateProductDTO productDto,
             @RequestHeader("X-User-ID") String sellerId ) {
-        productService.updateProduct(productId, sellerId, productDto);
-        return ResponseEntity.ok("Product updated successfully");
+        UpdateProductDTO savedProduct = productService.updateProduct(productId, sellerId, productDto);
+        return ResponseEntity.ok(savedProduct);
     }
 
     @DeleteMapping("/{productId}")
@@ -101,13 +101,13 @@ public class ProductController {
     }
     @DeleteMapping("deleteMedia/{productId}/{mediaId}")
     @PreAuthorize("hasRole('ROLE_SELLER')")
-    public ResponseEntity<String> deleteMedia(
+    public ResponseEntity<Map<String, String>> deleteMedia(
             @PathVariable("mediaId") String mediaId,
             @PathVariable("productId") String productId,
             @RequestHeader("X-User-ID") String sellerId
     ) {
         productService.deleteProductMedia(productId, sellerId, mediaId);
-        return ResponseEntity.ok("Media deleted successfully");
+        return ResponseEntity.ok(Map.of("message", "Media deleted successfully"));
     }
     @KafkaListener(topics = "user-deleted-topic", groupId = "product-service-group")
     public void handleUserDeleted(String userId) {

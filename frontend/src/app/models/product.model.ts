@@ -1,5 +1,5 @@
 export interface MediaUploadResponseDTO {
-  id: string;
+  fileId: string;
   fileUrl: string;
   productId: string;
 }

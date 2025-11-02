@@ -1,6 +1,6 @@
 :host {
   display: block;
-  position: relative;
+  position: relative; /* For the loading overlay */
 }
 
 .loading-overlay {
@@ -55,33 +55,47 @@ mat-divider {
   border: 1px solid #ddd;
   border-radius: 8px;
   overflow: hidden;
+  background-color: #f0f0f0; /* ✅ ADD THIS: Adds a light gray background for letterboxing */
 }
 
 .thumbnail {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* ✅ FIX: Changed from 'cover' to 'contain' */
 }
 
+/* This is the "X" button */
 .delete-image-btn {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: 0px;
+  right: 0px;
   background-color: rgba(0, 0, 0, 0.6);
   color: white;
   width: 24px;
   height: 24px;
   line-height: 24px;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 0 8px 0 8px; /* Optional: Nice styling */
+}
+
+.delete-image-btn:hover {
+  background-color: rgba(244, 67, 54, 0.9); /* Red on hover */
 }
 
 .delete-image-btn mat-icon {
-  font-size: 16px;
-  line-height: 24px;
-  width: 16px;
-  height: 16px;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
 }
 
-/* This is the "trembling" animation */
+/* "trembling" animation */
 .thumbnail-wrapper:hover {
   animation: shake 0.5s;
   animation-iteration-count: infinite;

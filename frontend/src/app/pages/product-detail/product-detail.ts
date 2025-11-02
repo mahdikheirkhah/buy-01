@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialog } from '../../components/confirm-dialog/confirm-dialog';
 import { EditProductModal } from '../../components/edit-product-modal/edit-product-modal';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-product-detail',
@@ -33,7 +34,9 @@ export class ProductDetail implements OnInit {
   isLoading = true;
   errorMessage: string | null = null;
 
+
   constructor(
+     private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router,
     private productService: ProductService,
@@ -41,7 +44,9 @@ export class ProductDetail implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.authService.fetchCurrentUser().subscribe();
     const id = this.route.snapshot.paramMap.get('id');
+
     if (id) {
       this.productService.getProductById(id).subscribe({
         next: (data) => {
