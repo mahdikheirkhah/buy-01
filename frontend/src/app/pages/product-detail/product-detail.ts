@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialog } from '../../components/confirm-dialog/confirm-dialog';
+import { EditProductModal } from '../../components/edit-product-modal/edit-product-modal';
 
 @Component({
   selector: 'app-product-detail',
@@ -20,7 +21,8 @@ import { ConfirmDialog } from '../../components/confirm-dialog/confirm-dialog';
     MatIconModule,
     MatProgressSpinnerModule,
     MatDialogModule,
-    ConfirmDialog
+    ConfirmDialog,
+    EditProductModal
   ],
   templateUrl: './product-detail.html',
   styleUrls: ['./product-detail.css']
@@ -70,11 +72,20 @@ export class ProductDetail implements OnInit {
     return `https://localhost:8443${path}`;
   }
 
-  onEdit(): void {
-    // Navigate to an edit page (e.g., /product/edit/123)
-    if (this.product) {
-      this.router.navigate(['/product/edit', this.product.productId]);
-    }
+onEdit(): void {
+    if (!this.product) return;
+
+    const dialogRef = this.dialog.open(EditProductModal, {
+      width: '600px',
+      data: { product: this.product } // We already have the full product data
+    });
+
+    // After the modal closes, refresh this page's data
+    dialogRef.afterClosed().subscribe(wasSuccessful => {
+      if (wasSuccessful) {
+       this.ngOnInit();
+      }
+    });
   }
 
 onDelete(): void {

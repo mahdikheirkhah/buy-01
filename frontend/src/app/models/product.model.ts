@@ -1,7 +1,7 @@
 export interface MediaUploadResponseDTO {
   id: string;
   fileUrl: string;
-  // Add other fields if they exist, like createdAt
+  productId: string;
 }
 
 // ✅ This is the model for your product detail page

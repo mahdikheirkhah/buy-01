@@ -99,6 +99,16 @@ public class ProductController {
         productService.deleteProduct(productId, sellerId);
         return ResponseEntity.ok("Product deleted successfully");
     }
+    @DeleteMapping("deleteMedia/{productId}/{mediaId}")
+    @PreAuthorize("hasRole('ROLE_SELLER')")
+    public ResponseEntity<String> deleteMedia(
+            @PathVariable("mediaId") String mediaId,
+            @PathVariable("productId") String productId,
+            @RequestHeader("X-User-ID") String sellerId
+    ) {
+        productService.deleteProductMedia(productId, sellerId, mediaId);
+        return ResponseEntity.ok("Media deleted successfully");
+    }
     @KafkaListener(topics = "user-deleted-topic", groupId = "product-service-group")
     public void handleUserDeleted(String userId) {
         System.out.println("Received user deletion event for ID: " + userId);

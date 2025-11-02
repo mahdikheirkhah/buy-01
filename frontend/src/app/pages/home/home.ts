@@ -16,8 +16,8 @@ import { User } from '../../models/user.model';
     MatPaginatorModule,
     ProductCard // Import the reusable card component
   ],
-  templateUrl: './home.html', // We'll create this file
-  styleUrls: ['./home.css']   // We'll create this file
+  templateUrl: './home.html',
+  styleUrls: ['./home.css']
 })
 export class HomeComponent implements OnInit {
   // User data state
@@ -77,6 +77,10 @@ export class HomeComponent implements OnInit {
 
 onProductDeleted(): void {
     console.log('Product deleted from home, refreshing list...');
+    this.fetchProducts();
+  }
+  onProductUpdated(): void {
+    console.log('Product was updated, refreshing list...');
     this.fetchProducts();
   }
 }

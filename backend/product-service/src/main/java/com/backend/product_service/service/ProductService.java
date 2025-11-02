@@ -86,6 +86,10 @@ public class ProductService {
         kafkaTemplate.send("product-deleted-topic", productId);
         productRepository.delete(existingProduct);
     }
+    public void deleteProductMedia(String productId, String sellerId,String mediaId) {
+        Product existingProduct = checkProduct(productId, sellerId);
+        deleteMedia(mediaId);
+    }
 
     public ProductDTO getProductWithDetail(String productId, String userId) {
         Product product = productRepository.findById(productId).orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
@@ -275,6 +279,13 @@ public class ProductService {
                 .retrieve()
                 .bodyToFlux(MediaUploadResponseDTO.class)
                 .collectList()
+                .block();
+    }
+    private String deleteMedia(String mediaId) {
+        return webClientBuilder.build().delete()
+                .uri("https://MEDIA-SERVICE/api/media/{mediaId}")
+                .retrieve()
+                .bodyToMono(String.class)
                 .block();
     }
 
