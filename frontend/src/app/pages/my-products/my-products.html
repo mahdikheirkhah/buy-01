@@ -6,7 +6,7 @@
     <app-product-card
       *ngFor="let product of products"
       [product]="product"
-      (edit)="onEdit($event)"
+      (edit)="onProductUpdated()"
       (delete)="onProductDeleted()">
     </app-product-card>
 

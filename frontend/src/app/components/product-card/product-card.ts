@@ -10,6 +10,8 @@ import { Router, RouterLink } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 import { ProductService } from '../../services/product-service';
+import { EditProductModal } from '../edit-product-modal/edit-product-modal';
+import { ProductDetailDTO,MediaUploadResponseDTO } from '../../models/product.model';
 @Component({
   selector: 'app-product-card',
   standalone: true,
@@ -20,6 +22,7 @@ import { ProductService } from '../../services/product-service';
     MatIconModule,
     CurrencyPipe,
     MatDialogModule,
+    EditProductModal
   ],
   templateUrl: './product-card.html',
   styleUrls: ['./product-card.css']
@@ -27,7 +30,7 @@ import { ProductService } from '../../services/product-service';
 export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfaces
 
   @Input() product: ProductCardDTO | null = null;
-  @Output() edit = new EventEmitter<string>();
+  @Output() edit = new EventEmitter<void>();
   @Output() delete = new EventEmitter<void>();
 
   // --- New Carousel Logic ---
@@ -89,14 +92,7 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
       }
     }
 
-    onEdit(event: MouseEvent): void {
-      event.stopPropagation();
-      if (this.product) {
-        this.edit.emit(this.product.id);
-      }
-    }
-
-    onDelete(event: MouseEvent): void {
+  onDelete(event: MouseEvent): void {
         event.stopPropagation(); // Stop the card click
         if (!this.product) return;
 
@@ -127,4 +123,29 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
           }
         });
       }
+   onEdit(event: MouseEvent): void {
+       event.stopPropagation(); // Stop the card click
+       if (!this.product) return;
+
+       // 1. Fetch the *full* product details first
+       this.productService.getProductById(this.product.id).subscribe({
+         next: (fullProduct: ProductDetailDTO) => {
+           // 2. Open the modal
+           const dialogRef = this.dialog.open(EditProductModal, {
+             width: '600px',
+             data: { product: fullProduct }
+           });
+           // 3. After modal closes, emit the 'edit' event
+           dialogRef.afterClosed().subscribe(wasSuccessful => {
+             if (wasSuccessful) {
+               this.edit.emit(); // <-- Emits void
+             }
+           });
+         },
+         error: (err) => {
+           console.error('Failed to fetch product details for editing', err);
+           alert('Could not open editor. Please try again.');
+         }
+       });
+     }
 }

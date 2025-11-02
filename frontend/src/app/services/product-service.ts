@@ -17,8 +17,7 @@ export interface Page<T> {
 })
 export class ProductService {
   private productApiUrl = 'https://localhost:8443/api/products';
-
-  // ✅ I'm assuming this is your *single* endpoint for uploading images
+   private mediaApiUrl = 'https://localhost:8443/api/media';
   private imageApiUrl = 'https://localhost:8443/api/products/create/images';
 
   constructor(private http: HttpClient) { }
@@ -34,7 +33,7 @@ export class ProductService {
   uploadProductImage(productId: string, file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('productId', productId); // ✅ ADD THIS LINE
+    formData.append('productId', productId);
 
     // We no longer need the productId in the URL itself
     // We also tell the backend to expect 'text'
@@ -62,23 +61,16 @@ export class ProductService {
       params: params // Pass the parameters
     });
   }
-
-  /**
-   * Fetches all products from all sellers (for the home page),
-   * with pagination.
-   * @param page Page number (0-indexed)
-   * @param size Number of items per page
-   */
   getAllProducts(page: number, size: number): Observable<Page<ProductCardDTO>> {
     // Create URL parameters
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
-      .set('sort', 'createdAt,desc'); // Sort by newest first
+      .set('sort', 'createdAt,desc');
 
     return this.http.get<Page<ProductCardDTO>>(`${this.productApiUrl}/all`, {
       withCredentials: true,
-      params: params // Pass the parameters
+      params: params
     });
   }
   getProductById(id: string): Observable<ProductDetailDTO> {
@@ -91,5 +83,17 @@ export class ProductService {
         withCredentials: true,
         responseType: 'text' // Because your backend returns a plain string
       });
-    }
+  }
+  updateProduct(id: string, productData: any): Observable<ProductDetailDTO> {
+      return this.http.put<ProductDetailDTO>(`${this.productApiUrl}/${id}`, productData, {
+        withCredentials: true
+      });
+  }
+  deleteProductImage(productId: string,mediaId: string): Observable<any> {
+
+      return this.http.delete(`${this.productApiUrl}/deleteMedia/${productId}/${mediaId}`, {
+        withCredentials: true,
+        responseType: 'json' // Expects a JSON response like { "message": "..." }
+      });
+  }
 }

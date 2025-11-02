@@ -68,15 +68,18 @@ public class MediaService {
     public void DeleteMediaByAvatarUrl(String avatarUrl) {
         fileStorageService.delete(avatarUrl);
     }
-    public Media updateMedia(String mediaId, MultipartFile newFile) {
-        Media existingMedia = mediaRepository.findById(mediaId)
-                .orElseThrow(() -> new RuntimeException("Media not found with id: " + mediaId));
-        String oldImagePath = existingMedia.getImagePath();
-        String newImagePath = fileStorageService.save(newFile);
-        existingMedia.setImagePath(newImagePath);
-        Media updatedMedia = mediaRepository.save(existingMedia);
-        fileStorageService.delete(oldImagePath);
-        return updatedMedia;
+//    public Media updateMedia(String mediaId, MultipartFile newFile) {
+//        Media existingMedia = mediaRepository.findById(mediaId)
+//                .orElseThrow(() -> new RuntimeException("Media not found with id: " + mediaId));
+//        String oldImagePath = existingMedia.getImagePath();
+//        String newImagePath = fileStorageService.save(newFile);
+//        existingMedia.setImagePath(newImagePath);
+//        Media updatedMedia = mediaRepository.save(existingMedia);
+//        fileStorageService.delete(oldImagePath);
+//        return updatedMedia;
+//    }
+    public Media updateMedia(Media media) {
+        return mediaRepository.save(media);
     }
 
     public List<String> getLimitedImageUrlsForProduct(String productId, int limit) {

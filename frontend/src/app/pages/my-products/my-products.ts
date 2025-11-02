@@ -65,4 +65,8 @@ export class MyProducts implements OnInit {
   getImageUrl(imagePath: string): string {
     return `https://localhost:8443${imagePath}`;
   }
+  onProductUpdated(): void {
+    console.log('Product was updated, refreshing list...');
+    this.fetchMyProducts();
+  }
 }
