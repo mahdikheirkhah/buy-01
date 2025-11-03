@@ -14,12 +14,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import com.backend.common.config.filter.GatewayHeadersFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
+import org.springframework.security.web.AuthenticationEntryPoint;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
     @Autowired
     private GatewayHeadersFilter gatewayHeadersFilter;
+    @Autowired
+    private AuthenticationEntryPoint customAuthEntryPoint;
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -34,13 +36,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(customAuthEntryPoint)
+                )
                 .authorizeHttpRequests(auth -> auth
-                        // ❌ CHANGE THIS:
-                        // .requestMatchers("/api/auth/**").permitAll()
-                        // .anyRequest().authenticated()
-
-                        // ✅ TO THIS:
-                        // Since the gateway handles all auth, this service can permit all traffic.
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
