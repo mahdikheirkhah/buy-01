@@ -34,7 +34,7 @@ export class CreateProduct {
 
   // --- ✅ New Properties for Validation ---
   fileErrors: string[] = []; // To hold error messages
-  private maxSizeInBytes = 2 * 1024 * 1024; // 2MB
+  private maxSizeInBytes = 12 * 1024 * 1024; // 2MB
   private allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   // ----------------------------------------
 
