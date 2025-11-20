@@ -46,7 +46,7 @@ public class ProductController {
 
     // --- Endpoint 2: For the "My Products" page ---
     @GetMapping("/my-products")
-    @PreAuthorize("hasRole('ROLE_SELLER')")
+    @PreAuthorize("hasRole('ROLE_SELLER') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<Page<ProductCardDTO>> getMyProducts(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestHeader(value = "X-User-ID") String sellerId) { // required = true (default)
@@ -56,20 +56,20 @@ public class ProductController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_SELLER')") // Make sure role name matches JWT
+    @PreAuthorize("hasRole('ROLE_SELLER') || hasRole('ROLE_ADMIN')") // Make sure role name matches JWT
     public ResponseEntity<Product> createProduct(
             @RequestBody @NotNull(message ="this request needs body") CreateProductDTO productDto,
             @RequestHeader("X-User-ID") String sellerId) {
-
+            System.out.println("Creating product " + productDto+ "seller " + sellerId);
         // This service method now only saves the product and returns it
-        Product newProduct = productService.createProduct(sellerId, productDto);
+            Product newProduct = productService.createProduct(sellerId, productDto);
 
         // Return the full product (including its new ID) so the frontend can use it in step 2
         return ResponseEntity.status(HttpStatus.CREATED).body(newProduct);
     }
 
     @PostMapping("/create/images")
-    @PreAuthorize("hasRole('ROLE_SELLER')")
+    @PreAuthorize("hasRole('ROLE_SELLER') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<Map<String, String>> addImagesToProduct(
             @RequestHeader("X-User-ID") String sellerId,
             @RequestHeader("X-User-Role") String role,
@@ -82,7 +82,7 @@ public class ProductController {
     }
 
     @PutMapping("/{productId}")
-    @PreAuthorize("hasRole('ROLE_SELLER')")
+    @PreAuthorize("hasRole('ROLE_SELLER') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<UpdateProductDTO> updateProduct(
             @PathVariable String productId,
             @RequestBody @NotNull(message ="this request needs body") UpdateProductDTO productDto,
@@ -92,7 +92,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{productId}")
-    @PreAuthorize("hasRole('ROLE_SELLER')")
+    @PreAuthorize("hasRole('ROLE_SELLER') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> deleteProduct(
             @PathVariable("productId") String productId,
             @RequestHeader("X-User-ID") String sellerId){
@@ -100,7 +100,7 @@ public class ProductController {
         return ResponseEntity.ok("Product deleted successfully");
     }
     @DeleteMapping("deleteMedia/{productId}/{mediaId}")
-    @PreAuthorize("hasRole('ROLE_SELLER')")
+    @PreAuthorize("hasRole('ROLE_SELLER') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<Map<String, String>> deleteMedia(
             @PathVariable("mediaId") String mediaId,
             @PathVariable("productId") String productId,

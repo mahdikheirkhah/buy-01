@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dataSourceStorageLocal" created-in="IU-252.27397.103">
+    <data-source name="users_db@localhost" uuid="4829ffbd-17ed-46f5-8069-23adaeab47cc">
+      <database-info product="Mongo DB" version="7.0.23" jdbc-version="4.2" driver-name="MongoDB JDBC Driver" driver-version="1.20" dbms="MONGO" exact-version="7.0.23" exact-driver-version="1.20" />
+      <case-sensitivity plain-identifiers="mixed" quoted-identifiers="mixed" />
+      <schema-mapping />
+    </data-source>
+    <data-source name="products_db@localhost" uuid="b4904d84-525d-49ca-ad71-695fe7cefdbb">
+      <database-info product="Mongo DB" version="7.0.23" jdbc-version="4.2" driver-name="MongoDB JDBC Driver" driver-version="1.20" dbms="MONGO" exact-version="7.0.23" exact-driver-version="1.20" />
+      <case-sensitivity plain-identifiers="mixed" quoted-identifiers="mixed" />
+      <schema-mapping />
+    </data-source>
+    <data-source name="media_db@localhost" uuid="9bb67354-d8bb-48ed-9511-9bfb2b505197">
+      <database-info product="Mongo DB" version="7.0.23" jdbc-version="4.2" driver-name="MongoDB JDBC Driver" driver-version="1.20" dbms="MONGO" exact-version="7.0.23" exact-driver-version="1.20" />
+      <case-sensitivity plain-identifiers="mixed" quoted-identifiers="mixed" />
+      <user-name>admin</user-name>
+      <schema-mapping />
+    </data-source>
+  </component>
+</project>

@@ -1,6 +1,5 @@
 package com.backend.common.dto;
 
-
 public enum Role {
-    CLIENT, SELLER
+    CLIENT, SELLER, ADMIN
 }
