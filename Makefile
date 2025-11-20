@@ -32,8 +32,8 @@ run-backend:
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/user-service && $(MAVEN_CMD) spring-boot:run"'
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/product-service && $(MAVEN_CMD) spring-boot:run"'
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/media-service && $(MAVEN_CMD) spring-boot:run"'
-	@sleep 60
-	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/dummy-data && $(MAVEN_CMD) spring-boot:run"'
+# 	@sleep 60
+# 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/dummy-data && $(MAVEN_CMD) spring-boot:run"'
 
 run-frontend:
 	@echo "--- Starting frontend Angular application... ---"
