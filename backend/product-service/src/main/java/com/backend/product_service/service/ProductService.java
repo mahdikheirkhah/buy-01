@@ -221,17 +221,14 @@ public class ProductService {
         if (file == null || file.isEmpty()) {
             return;
         }
-        System.out.println("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
         // Check that the seller owns this product
         Product product = checkProduct(productId, sellerId);
-        System.out.println("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH");
         // Save the single image
 
         saveProductImage(file, productId, role);
     }
     public String saveProductImage(MultipartFile image, String productId, String role) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        System.out.println("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
 
         try {
             // ✅ Use ByteArrayResource, which is more reliable
