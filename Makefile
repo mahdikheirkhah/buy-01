@@ -24,17 +24,16 @@ clean-backend:
 	$(MAVEN_CMD) -f $(BACKEND_DIR)/pom.xml clean
 
 run-backend:
-	@echo "--- Building all backend microservices... ---"
-	$(MAVEN_CMD) -f $(BACKEND_DIR)/pom.xml clean install -DskipTests
+run-backend:
 	@echo "--- Starting all backend microservices... ---"
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/discovery-service && $(MAVEN_CMD) spring-boot:run"'
-	@echo "Waiting 15 seconds for Discovery Service to start..."
 	@sleep 15
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/api-gateway && $(MAVEN_CMD) spring-boot:run"'
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/user-service && $(MAVEN_CMD) spring-boot:run"'
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/product-service && $(MAVEN_CMD) spring-boot:run"'
 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/media-service && $(MAVEN_CMD) spring-boot:run"'
-	@echo "--- Backend services are starting in new Terminal windows. ---"
+# 	@sleep 60
+# 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/dummy-data && $(MAVEN_CMD) spring-boot:run"'
 
 run-frontend:
 	@echo "--- Starting frontend Angular application... ---"

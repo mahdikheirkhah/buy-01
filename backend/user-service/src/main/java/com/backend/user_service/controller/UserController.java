@@ -41,7 +41,7 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Logout successful"));
     }
     @PostMapping("/newAvatar")
-    @PreAuthorize("hasRole('ROLE_SELLER')")
+    @PreAuthorize("hasRole('ROLE_SELLER') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<Map<String, String>> handleUserNewAvatar(
             @RequestPart(value = "avatarFile", required = true) MultipartFile avatarFile,
             @RequestHeader("X-User-ID") String userId
@@ -61,11 +61,11 @@ public class UserController {
         return ResponseEntity.ok(seller);
     }
 
-    @GetMapping("/email")
-    public ResponseEntity<InfoUserDTO> getUsersByEmail(@RequestParam String email) {
-        InfoUserDTO user = userService.getUserByEmail(email);
-        return ResponseEntity.ok(user);
-    }
+//    @GetMapping("/email")
+//    public ResponseEntity<InfoUserDTO> getUsersByEmail(@RequestParam String email) {
+//        InfoUserDTO user = userService.getUserByEmail(email);
+//        return ResponseEntity.ok(user);
+//    }
     @PutMapping("/me")
     public ResponseEntity<Map<String, String>> updateMe(
             @Valid @RequestBody updateUserDTO userUpdatedInfo,
@@ -84,9 +84,15 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "user deleted successfully"));
     }
     @DeleteMapping("/avatar")
-    @PreAuthorize("hasRole('ROLE_SELLER')")
+    @PreAuthorize("hasRole('ROLE_SELLER') || hasRole('ROLE_ADMIN')")
     public  ResponseEntity<String> deleteAvatar(@RequestHeader("X-User-ID") String userId) {
             userService.deleteAvatar(userId);
             return ResponseEntity.ok("avatar deleted successfully");
+    }
+    @GetMapping("/email")
+    @PreAuthorize("hasRole('ROLE_ADMIN')") // <-- SECURE THIS ENDPOINT
+    public ResponseEntity<InfoUserDTO> getUsersByEmail(@RequestParam String email) {
+        InfoUserDTO user = userService.getUserByEmail(email);
+        return ResponseEntity.ok(user);
     }
 }

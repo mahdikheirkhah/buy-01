@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-public class CustomAuthEntryPoint implements AuthenticationEntryPoint {
+public class CustomAuthEntryPoint implements AuthenticationEntryPoint  {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
