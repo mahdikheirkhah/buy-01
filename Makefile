@@ -1,73 +1,67 @@
-# Makefile for running the full-stack application on macOS
+# This Makefile is placed in the project root directory.
 
-# --- Backend Configuration ---
-BACKEND_DIR = ./backend
-MAVEN_CMD = mvn
+# --- Configuration Variables ---
 
-# --- Frontend Configuration ---
-FRONTEND_DIR = ./frontend
-NPM_CMD = npm
+# List of all Java services, defined by their path relative to the project root.
+# This list is used to iterate and build each microservice image using Dockerfile.java.
+# NOTE: 'backend/auth-service' has been removed as authentication logic is now in 'user-service'.
+# NOTE: Ensure these folders exist: backend/api-gateway, backend/user-service, etc.
+JAVA_SERVICE_PATHS = backend/api-gateway backend/user-service backend/product-service backend/media-service backend/dummy-data
 
-# --- Docker Configuration ---
-DOCKER_COMPOSE_CMD = docker-compose
+FRONTEND_DIR = frontend
+JAVA_DOCKERFILE = Dockerfile.java # The generic Dockerfile for Java services in the root directory.
 
-# ==============================================================================
-# Main Targets
-# ==============================================================================
+# --- Primary Targets ---
 
-all: docker-up clean-backend run-backend run-frontend
+# Default target: Run 'make build' then 'make up'.
+all: build up
 
-all-docker: docker-up clean-backend run-backend run-frontend
+# Build all Docker images (Java services and Frontend).
+build: build-java build-frontend
 
-clean-backend:
-	@echo "--- Cleaning backend projects... ---"
-	$(MAVEN_CMD) -f $(BACKEND_DIR)/pom.xml clean
+# Start all services defined in docker-compose.yml in detached mode (-d).
+up:
+	@echo "--- Starting Docker Compose Services ---"
+	docker-compose up -d
 
-run-backend:
-run-backend:
-	@echo "--- Starting all backend microservices... ---"
-	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/discovery-service && $(MAVEN_CMD) spring-boot:run"'
-	@sleep 15
-	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/api-gateway && $(MAVEN_CMD) spring-boot:run"'
-	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/user-service && $(MAVEN_CMD) spring-boot:run"'
-	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/product-service && $(MAVEN_CMD) spring-boot:run"'
-	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/media-service && $(MAVEN_CMD) spring-boot:run"'
-# 	@sleep 60
-# 	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(BACKEND_DIR)/dummy-data && $(MAVEN_CMD) spring-boot:run"'
+# Stop and remove all containers, networks, and volumes defined in docker-compose.yml.
+down:
+	@echo "--- Stopping and Removing Containers ---"
+	docker-compose down
 
-run-frontend:
-	@echo "--- Starting frontend Angular application... ---"
-	@osascript -e 'tell application "Terminal" to do script "cd $(CURDIR)/$(FRONTEND_DIR) && $(NPM_CMD) install && $(NPM_CMD) start"'
+# --- Build Sub-Targets ---
 
-docker-up:
-	@echo "--- Starting Docker Compose services (Kafka, Zookeeper)... ---"
-	$(DOCKER_COMPOSE_CMD) up -d
-	@echo "--- Docker services started successfully. ---"
+# Build Java Microservice images.
+# This iterates through JAVA_SERVICE_PATHS and runs a tailored build command for each.
+build-java:
+	@echo "--- Building Java Microservices ---"
+	@for service_path in $(JAVA_SERVICE_PATHS); do \
+		service_name=$$(basename $$service_path); \
+		echo "Building $$service_name..."; \
+		docker build --file $(JAVA_DOCKERFILE) \
+		--tag backend/$$service_name \
+		--build-arg SERVICE_NAME=$$service_name \
+		. ; \
+	done
 
-docker-down:
-	@echo "--- Stopping Docker Compose services... ---"
-	$(DOCKER_COMPOSE_CMD) down
-	@echo "--- Docker services stopped. ---"
+# Build Angular Frontend image.
+build-frontend:
+	@echo "--- Building Angular Frontend ---"
+	# Execute the docker build command, setting the context to the frontend folder
+	docker build --file $(FRONTEND_DIR)/Dockerfile \
+		--tag backend/frontend \
+		$(FRONTEND_DIR)
 
-docker-logs:
-	@echo "--- Showing Docker Compose logs... ---"
-	$(DOCKER_COMPOSE_CMD) logs -f
+# --- Clean Target ---
 
-docker-status:
-	@echo "--- Docker Compose services status... ---"
-	$(DOCKER_COMPOSE_CMD) ps
+# Clean up local Maven artifacts and remove custom Docker images.
+clean: down
+	@echo "--- Cleaning Maven build artifacts ---"
+	# Run Maven clean command in the project root
+	mvn clean
+	@echo "--- Pruning custom backend images ---"
+	# Remove all custom images tagged 'backend/*'
+	docker rmi -f $$(docker images -q --filter reference='backend/*') 2> /dev/null || true
 
-stop:
-	@echo "--- Stopping all microservices and frontend by port... ---"
-	@kill -9 $$(lsof -ti:8761) || echo "Discovery Service was not running."
-	@kill -9 $$(lsof -ti:8080) || echo "API Gateway was not running."
-	@kill -9 $$(lsof -ti:8444) || echo "User Service was not running."
-	@kill -9 $$(lsof -ti:8082) || echo "Product Service was not running."
-	@kill -9 $$(lsof -ti:8083) || echo "Media Service was not running."
-	@kill -9 $$(lsof -ti:4200) || echo "Frontend was not running."
-	@echo "--- All services stopped. ---"
-
-stop-all: stop docker-down
-	@echo "--- All services and Docker containers stopped. ---"
-
-.PHONY: all all-docker clean-backend run-backend run-frontend docker-up docker-down docker-logs docker-status stop stop-all
+# Define Phony targets to ensure make runs the commands even if files with these names exist.
+.PHONY: all build build-java build-frontend up down clean

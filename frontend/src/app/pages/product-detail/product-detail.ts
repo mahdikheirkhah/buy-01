@@ -21,9 +21,7 @@ import { AuthService } from '../../services/auth';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatDialogModule,
-    ConfirmDialog,
-    EditProductModal
+    MatDialogModule
   ],
   templateUrl: './product-detail.html',
   styleUrls: ['./product-detail.css']
