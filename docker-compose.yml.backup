@@ -40,7 +40,7 @@ services:
     networks:
       - backend-network
     healthcheck:
-      test: ["CMD", "mongosh", "--username", "admin", "--password", "password", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
+      test: [ "CMD", "mongosh", "--username", "admin", "--password", "password", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -51,6 +51,7 @@ services:
   discovery-service:
     image: backend/discovery-service
     container_name: discovery-service
+    restart: on-failure # Added restart policy
     build:
       context: .
       dockerfile: Dockerfile.java
@@ -59,76 +60,94 @@ services:
     ports:
       - "8761:8761"
     environment:
-      SPRING_PROFILES_ACTIVE: docker          # ← REMOVED 'https'
-      EUREKA_INSTANCE_HOSTNAME: discovery-service
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_PROFILES_ACTIVE: docker,https
+      # Keystore path inside the container must match the volume mount
+      SERVER_SSL_KEY_STORE: /app/certs/keystore.p12
+      SERVER_SSL_KEY_STORE_PASSWORD: password
+      SERVER_SSL_KEY_STORE_TYPE: PKCS12
+      SERVER_SSL_KEY_ALIAS: springboot
     healthcheck:
-      test: [ "CMD-SHELL", "nc -z localhost 8761 || exit 1" ]
+      # Use curl -k for HTTPS healthcheck
+      test: ["CMD", "curl", "-k", "https://localhost:8761/actuator/health"]
       interval: 10s
       timeout: 5s
-      retries: 20
-      start_period: 40s
+      retries: 5
+      start_period: 30s
     networks:
       - backend-network
 
   api-gateway:
     image: backend/api-gateway
     container_name: api-gateway
+    restart: on-failure # Added restart policy
     build:
       context: .
       dockerfile: Dockerfile.java
       args:
         SERVICE_NAME: api-gateway
-    ports:
-      - "8443:8443"          # ← Only this service exposes HTTPS
     environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: https://discovery-service:8761/eureka/
       SPRING_PROFILES_ACTIVE: prod,https
       SERVER_SSL_KEY_STORE: classpath:certs/keystore.p12
-      SERVER_SSL_KEY_STORE_PASSWORD: changeit
-      SERVER_SSL_KEY_PASSWORD: changeit
+      SERVER_SSL_KEY_STORE_PASSWORD: password
       SERVER_SSL_KEY_STORE_TYPE: PKCS12
-      SERVER_SSL_KEY_ALIAS: myapp
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/   # ← HTTP to Eureka
+      SERVER_SSL_KEY_ALIAS: springboot
+    ports:
+      - "8443:8443"
     depends_on:
       discovery-service:
         condition: service_healthy
+    volumes:
+      - ./certs/keystore.p12:/app/certs/keystore.p12
     networks:
       - backend-network
 
   user-service:
     image: backend/user-service
     container_name: user-service
+    restart: on-failure
     build:
       context: .
       dockerfile: Dockerfile.java
       args:
         SERVICE_NAME: user-service
     environment:
-      SPRING_PROFILES_ACTIVE: prod            # ← NO 'https'
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: https://discovery-service:8761/eureka/
       SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_PROFILES_ACTIVE: prod,https
+      SERVER_SSL_KEY_STORE: /app/certs/keystore.p12
+      SERVER_SSL_KEY_STORE_PASSWORD: password
+      SERVER_SSL_KEY_STORE_TYPE: PKCS12
+      SERVER_SSL_KEY_ALIAS: springboot
     depends_on:
       discovery-service:
         condition: service_healthy
       buy-01:
         condition: service_healthy
+    volumes:
+      - ./certs/keystore.p12:/app/certs/keystore.p12
     networks:
       - backend-network
 
   product-service:
     image: backend/product-service
     container_name: product-service
+    restart: on-failure
     build:
       context: .
       dockerfile: Dockerfile.java
       args:
         SERVICE_NAME: product-service
     environment:
-      SPRING_PROFILES_ACTIVE: prod
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: https://discovery-service:8761/eureka/
       SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_PROFILES_ACTIVE: prod,https
+      SERVER_SSL_KEY_STORE: classpath:certs/keystore.p12
+      SERVER_SSL_KEY_STORE_PASSWORD: password
+      SERVER_SSL_KEY_STORE_TYPE: PKCS12
+      SERVER_SSL_KEY_ALIAS: springboot
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -140,16 +159,21 @@ services:
   media-service:
     image: backend/media-service
     container_name: media-service
+    restart: on-failure
     build:
       context: .
       dockerfile: Dockerfile.java
       args:
         SERVICE_NAME: media-service
     environment:
-      SPRING_PROFILES_ACTIVE: prod
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: https://discovery-service:8761/eureka/
       SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_PROFILES_ACTIVE: prod,https
+      SERVER_SSL_KEY_STORE: classpath:certs/keystore.p12
+      SERVER_SSL_KEY_STORE_PASSWORD: password
+      SERVER_SSL_KEY_STORE_TYPE: PKCS12
+      SERVER_SSL_KEY_ALIAS: springboot
     volumes:
       - ./backend/media-service/uploads:/app/uploads
     depends_on:
@@ -169,14 +193,21 @@ services:
       args:
         SERVICE_NAME: dummy-data
     environment:
-      SPRING_PROFILES_ACTIVE: prod
-      APP_API_GATEWAY_URL: https://api-gateway:8443   # ← HTTPS to gateway (external)
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: https://discovery-service:8761/eureka/
+      SPRING_PROFILES_ACTIVE: prod,https
+      APP_API_GATEWAY_URL: https://api-gateway:8443
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
-      - api-gateway
-      - user-service
-      - product-service
-      - media-service
+      api-gateway:
+        condition: service_started
+      user-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      media-service:
+        condition: service_started
+    command: ["java", "-jar", "app.jar"]
     networks:
       - backend-network
 
@@ -188,7 +219,7 @@ services:
     ports:
       - "4200:4200"
     environment:
-      API_GATEWAY_URL: https://localhost:8443   # ← Browser uses HTTPS
+      API_GATEWAY_URL: https://api-gateway:8443
     depends_on:
       - api-gateway
     networks:

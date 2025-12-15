@@ -1,28 +1,16 @@
-# --- STAGE 1: Build the Angular App ---
-FROM node:20-alpine AS build
-
+# Stage 1: Build Angular app
+FROM node:20 AS build
 WORKDIR /app
 
-# Copy package files
-COPY package*.json .
+# Copy package files and install dependencies
+COPY package*.json ./
 RUN npm install
 
-# Copy source files
+# Copy source code and build
 COPY . .
 
-# Build the app
-RUN npm run build -- --output-path=./dist/browser
+# Expose port 4200
+EXPOSE 4200
 
-# --- STAGE 2: Serve the App using Nginx ---
-FROM nginx:stable-alpine
-
-# ✅ FIX: Remove 'frontend/' prefix. The file is at the root of the build context.
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy built files
-COPY --from=build /app/dist/browser /usr/share/nginx/html
-
-EXPOSE 80
-EXPOSE 443
-
-CMD ["nginx", "-g", "daemon off;"]
+# Run Angular dev server with HTTPS
+CMD ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--ssl", "true", "--ssl-cert", "certs/frontend-dev.pem", "--ssl-key", "certs/frontend-dev.key"]
