@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # --- Message Broker ---
   zookeeper:
@@ -30,92 +28,175 @@ services:
     networks:
       - backend-network
 
-  # --- Microservices (Java/Spring Boot) ---
-  api-gateway:
-    build:
-      context: .
-      dockerfile: Dockerfile.java # <-- UPDATED: Reference root Dockerfile
-      args:
-        SERVICE_PATH: backend/api-gateway # <-- UPDATED: Use SERVICE_PATH with full backend folder
-    container_name: api-gateway
+  # --- Database ---
+  buy-01:
+    image: mongo:7.0
+    container_name: buy-01
     environment:
-      # Use internal service names and ports for communication
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_PROFILES_ACTIVE: prod
-      # The gateway must use HTTPS/8443 externally
-    ports:
-      - "8443:8443"
-    depends_on:
-      - eureka-server
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo_data:/data/db
     networks:
       - backend-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--username", "admin", "--password", "password", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-  # Add all your services here (e.g., auth, user, product, media, dummy-data)
-  auth-service:
-    build:
-      context: .
-      dockerfile: Dockerfile.java # <-- UPDATED: Reference root Dockerfile
-      args:
-        SERVICE_PATH: backend/auth-service # <-- UPDATED: Use SERVICE_PATH with full backend folder
-    container_name: auth-service
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_PROFILES_ACTIVE: prod
-      # External connection to Kafka
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-    depends_on:
-      - eureka-server
-      - kafka
-    networks:
-      - backend-network
+  # --- Microservices ---
 
-  user-service:
+  discovery-service:
+    image: backend/discovery-service
+    container_name: discovery-service
     build:
       context: .
       dockerfile: Dockerfile.java
       args:
-        SERVICE_PATH: backend/user-service # Example for other services
-    container_name: user-service
+        SERVICE_NAME: discovery-service
+    ports:
+      - "8761:8761"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-    depends_on:
-      - eureka-server
+      SPRING_PROFILES_ACTIVE: docker          # ← REMOVED 'https'
+      EUREKA_INSTANCE_HOSTNAME: discovery-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z localhost 8761 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
     networks:
       - backend-network
 
-  # --- Data Generation Service ---
-  dummy-data:
+  api-gateway:
+    image: backend/api-gateway
+    container_name: api-gateway
     build:
       context: .
-      dockerfile: Dockerfile.java # <-- UPDATED: Reference root Dockerfile
+      dockerfile: Dockerfile.java
       args:
-        SERVICE_PATH: backend/dummy-data # <-- UPDATED: Use SERVICE_PATH with full backend folder
-    container_name: dummy-data
+        SERVICE_NAME: api-gateway
+    ports:
+      - "8443:8443"          # ← Only this service exposes HTTPS
     environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_PROFILES_ACTIVE: prod
-      # Point to the API Gateway in the Docker network
-      APP_API_GATEWAY_URL: https://api-gateway:8443
+      SPRING_PROFILES_ACTIVE: prod,https
+      SERVER_SSL_KEY_STORE: classpath:certs/keystore.p12
+      SERVER_SSL_KEY_STORE_PASSWORD: changeit
+      SERVER_SSL_KEY_PASSWORD: changeit
+      SERVER_SSL_KEY_STORE_TYPE: PKCS12
+      SERVER_SSL_KEY_ALIAS: myapp
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/   # ← HTTP to Eureka
     depends_on:
-      - api-gateway
-      - auth-service
-    # Run once and exit
-    command: ["java", "-jar", "app.jar"]
+      discovery-service:
+        condition: service_healthy
     networks:
       - backend-network
 
-  # --- Frontend (Angular) ---
+  user-service:
+    image: backend/user-service
+    container_name: user-service
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_NAME: user-service
+    environment:
+      SPRING_PROFILES_ACTIVE: prod            # ← NO 'https'
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      buy-01:
+        condition: service_healthy
+    networks:
+      - backend-network
+
+  product-service:
+    image: backend/product-service
+    container_name: product-service
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_NAME: product-service
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      buy-01:
+        condition: service_healthy
+    networks:
+      - backend-network
+
+  media-service:
+    image: backend/media-service
+    container_name: media-service
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_NAME: media-service
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    volumes:
+      - ./backend/media-service/uploads:/app/uploads
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      buy-01:
+        condition: service_healthy
+    networks:
+      - backend-network
+
+  dummy-data:
+    image: backend/dummy-data
+    container_name: dummy-data
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_NAME: dummy-data
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      APP_API_GATEWAY_URL: https://api-gateway:8443   # ← HTTPS to gateway (external)
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      - api-gateway
+      - user-service
+      - product-service
+      - media-service
+    networks:
+      - backend-network
+
   frontend:
     build:
-      context: ./frontend # <-- CONTEXT updated to frontend directory
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: frontend
     ports:
-      - "4200:80" # Expose standard HTTP port (can be proxied/redirected)
+      - "4200:4200"
+    environment:
+      API_GATEWAY_URL: https://localhost:8443   # ← Browser uses HTTPS
+    depends_on:
+      - api-gateway
     networks:
       - backend-network
 
 networks:
   backend-network:
     driver: bridge
+
+volumes:
+  mongo_data:

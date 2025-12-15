@@ -1,9 +1,7 @@
-// api-gateway/src/main/java/com/backend/api_gateway/config/AuthenticationGatewayFilterFactory.java
-
 package com.backend.api_gateway.config;
 
 import com.backend.api_gateway.util.JwtUtil;
-import  com.backend.api_gateway.exception.CustomException;
+import com.backend.api_gateway.exception.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
@@ -11,7 +9,6 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.http.*;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
@@ -22,6 +19,8 @@ public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFac
 
     private final JwtUtil jwtUtil;
 
+    // Although defined, we only use this for reference; deep type validation is difficult
+    // at the gateway level without consuming the request body.
     private static final List<String> ALLOWED_IMAGE_TYPES = List.of(
             "image/jpeg", "image/png", "image/gif", "image/webp"
     );
@@ -40,58 +39,60 @@ public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFac
             String path = request.getURI().getPath();
             HttpMethod method = request.getMethod();
 
+            // Skip authentication and validation for OPTIONS and Auth service
             if (method == HttpMethod.OPTIONS || path.startsWith("/api/auth/")) {
                 return chain.filter(exchange);
             }
 
+            // Apply file validation first for image uploads
             if (method == HttpMethod.POST && path.startsWith("/api/media/images")) {
-                return validateFileUpload(exchange) // ← now matches
+                return validateFileUpload(exchange)
                         .flatMap(valid -> authenticateAndForward(exchange, chain));
             }
 
+            // Apply standard authentication for all other requests
             return authenticateAndForward(exchange, chain);
         };
     }
 
     // ────────────────────────────────────────────────────────────────
-    // FILE VALIDATION
+    // FILE VALIDATION (Size and Multipart Format Check)
     // ────────────────────────────────────────────────────────────────
-    private Mono<Boolean> validateFileUpload(ServerWebExchange exchange) { // ← Correct type
+    private Mono<Boolean> validateFileUpload(ServerWebExchange exchange) {
+        // Use getFormData() to ensure the body is accessible and parseable as form data
         return exchange.getFormData().flatMap(formData -> {
+
+            // Check for the mandatory 'file' part
             if (!formData.containsKey("file")) {
-                return Mono.error(new CustomException( "Missing file part.",HttpStatus.BAD_REQUEST));
+                return Mono.error(new CustomException("Missing file part.", HttpStatus.BAD_REQUEST));
             }
 
             HttpHeaders headers = exchange.getRequest().getHeaders();
             long contentLength = headers.getContentLength();
 
+            // 1. Check file size limit
             if (contentLength > MAX_FILE_SIZE) {
                 return Mono.error(new CustomException(
-                        "File size exceeds 2 MB limit.",HttpStatus.PAYLOAD_TOO_LARGE));
+                        "File size exceeds 2 MB limit.", HttpStatus.PAYLOAD_TOO_LARGE));
             }
 
             String contentType = headers.getFirst(HttpHeaders.CONTENT_TYPE);
+
+            // 2. Check general content type format
             if (contentType == null || !contentType.contains("multipart/form-data")) {
                 return Mono.error(new CustomException(
-                        "Expected multipart/form-data.",HttpStatus.BAD_REQUEST));
+                        "Expected multipart/form-data.", HttpStatus.BAD_REQUEST));
             }
 
-            // Extract file's Content-Type from form data
-            String fileContentType = extractFileContentType(exchange);
-            if (fileContentType == null || !ALLOWED_IMAGE_TYPES.contains(fileContentType)) {
-                return Mono.error(new CustomException(
-                        "Invalid file type. Only JPEG, PNG, GIF, WebP allowed.", HttpStatus.BAD_REQUEST));
-            }
+            // NOTE: The previous attempt to extract the file's specific content type (image/jpeg)
+            // from headers at the gateway level was flawed. We now rely on the downstream
+            // Media Service to perform the deep file type validation.
 
             return Mono.just(true);
-        });
+        }).switchIfEmpty(Mono.error(new CustomException("Request body is empty or not form data.", HttpStatus.BAD_REQUEST)));
     }
 
-    private String extractFileContentType(ServerWebExchange exchange) {
-        // In multipart, the part has its own Content-Type
-        // Gateway doesn't parse deeply → rely on client + Media Service
-        return exchange.getRequest().getHeaders().getFirst("Content-Type");
-    }
+    // The flawed extractFileContentType method has been removed.
 
     // ────────────────────────────────────────────────────────────────
     // AUTHENTICATION & HEADER FORWARDING
