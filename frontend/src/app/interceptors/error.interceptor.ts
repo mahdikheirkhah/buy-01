@@ -20,6 +20,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         message = backend?.message || backend?.error || `HTTP ${error.status}`;
       }
 
+      // Skip error handling for auth endpoints (login/register handle their own errors)
+      const isAuthEndpoint = req.url.includes('/api/auth/login') || req.url.includes('/api/auth/register');
+
       // Specific handling
       switch (error.status) {
         case 400:
@@ -31,8 +34,14 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           }
           break;
         case 401:
-          message = 'Session expired. Please log in.';
-          router.navigate(['/login']);
+          // Don't show "Session expired" for login/register - let them handle it
+          if (!isAuthEndpoint) {
+            message = 'Session expired. Please log in.';
+            router.navigate(['/login']);
+          }
+          else {
+            message = 'Invalid credentials. Please try again.';
+          }
           break;
         case 403:
           message = 'You are not authorized.';
@@ -45,7 +54,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           break;
       }
 
+      // Don't show snackbar for auth endpoint errors (they have their own error display)
       snackBar.open(message, 'Close', { duration: 5000, panelClass: 'error-snack' });
+
+
       return throwError(() => error);
     })
   );
