@@ -52,6 +52,36 @@ docker compose logs -f api-gateway
 
 ---
 
+## HTTPS Certificate Setup (New Computer)
+
+When running the project on a new computer, your browser may show HTTPS security warnings. To trust the self-signed certificates, install the mkcert root CA:
+
+### Windows:
+1. Double-click `certs/rootCA.pem`
+2. Click **Install Certificate**
+3. Select **Local Machine**
+4. Choose **Trusted Root Certification Authorities**
+5. Click **Finish**
+6. Restart your browser
+
+### macOS:
+1. Open **Keychain Access** (Applications → Utilities → Keychain Access)
+2. Drag `certs/rootCA.pem` into **System Keychain** (left sidebar)
+3. Right-click the certificate → **Get Info**
+4. Expand **Trust**
+5. Set to **Always Trust**
+6. Restart your browser
+
+### Linux (Debian/Ubuntu):
+```bash
+sudo cp certs/rootCA.pem /usr/local/share/ca-certificates/mkcert-rootCA.crt
+sudo update-ca-certificates
+```
+
+After installation, access the frontend at **https://localhost:4200** - it should show as secure.
+
+---
+
 ## Troubleshooting:
 
 ### If discovery-service fails to start:
