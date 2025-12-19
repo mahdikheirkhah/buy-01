@@ -7,10 +7,10 @@ DOCKER_REPO_PREFIX="mahdikheirkhah"
 
 # Fallback tag if IMAGE_TAG is not set.
 # CRITICAL FIX: The 'export' command makes this variable available to 'docker compose'
-export IMAGE_TAG=${IMAGE_TAG:-latest-prod}
+export IMAGE_TAG=${IMAGE_TAG:-latest}
 # 1. Your Docker Hub Username
 export DOCKER_USERNAME="mahdikheirkhah"
-
+DOCKER_PASSWORD=${DOCKER_PASSWORD=-}
 # 3. Registry URL:
 # If you are using Docker Hub, you can omit this, as the script defaults to 'docker.io'.
 # If you are using a different service (like GitHub's registry), you would set it to that URL.
