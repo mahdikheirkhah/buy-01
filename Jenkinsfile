@@ -24,10 +24,12 @@ pipeline {
             steps {
                 script {
                     // Use Maven Docker image to build - no need to install Maven in Jenkins
+                    // Create .m2 directory in Jenkins workspace for Maven cache
                     sh '''
+                        mkdir -p $HOME/.m2
                         docker run --rm \
                           -v "$PWD/backend":/app \
-                          -v "$HOME/.m2":/root/.m2 \
+                          -v jenkins_m2_cache:/root/.m2 \
                           -w /app \
                           maven:3.9.6-amazoncorretto-21 \
                           mvn clean install -DskipTests -B -f pom.xml
