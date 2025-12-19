@@ -299,32 +299,28 @@ EOF
 
         success {
             echo "✅ Pipeline completed successfully!"
-            script {
-                // Optional: Send success notification to Slack
-                // Uncomment if you have Slack configured
-                /*
-                sh """
-                curl -X POST -H 'Content-type: application/json' --data '{
-                    \"text\": \":white_check_mark: Build SUCCESS\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\\n*Branch:* ${params.BRANCH}\\n*Version:* ${env.IMAGE_TAG}\"
-                }' ${env.SLACK_WEBHOOK}
-                """
-                */
-            }
+            // Optional: Send success notification to Slack
+            // Uncomment if you have Slack configured
+            /*
+            sh """
+            curl -X POST -H 'Content-type: application/json' --data '{
+                \"text\": \":white_check_mark: Build SUCCESS\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\\n*Branch:* ${params.BRANCH}\\n*Version:* ${env.IMAGE_TAG}\"
+            }' ${env.SLACK_WEBHOOK}
+            """
+            */
         }
 
         failure {
             echo "❌ Pipeline failed!"
-            script {
-                // Optional: Send failure notification to Slack
-                // Uncomment if you have Slack configured
-                /*
-                sh """
-                curl -X POST -H 'Content-type: application/json' --data '{
-                    \"text\": \":x: Build FAILED\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\\n*Branch:* ${params.BRANCH}\\n*Error:* ${currentBuild.currentResult}\"
-                }' ${env.SLACK_WEBHOOK}
-                """
-                */
-            }
+            // Optional: Send failure notification to Slack
+            // Uncomment if you have Slack configured
+            /*
+            sh """
+            curl -X POST -H 'Content-type: application/json' --data '{
+                \"text\": \":x: Build FAILED\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\\n*Branch:* ${params.BRANCH}\\n*Error:* ${currentBuild.currentResult}\"
+            }' ${env.SLACK_WEBHOOK}
+            """
+            */
         }
     }
 }
