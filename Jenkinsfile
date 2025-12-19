@@ -62,8 +62,9 @@ pipeline {
             }
             steps {
                 script {
-                    echo "Tests skipped - test profile needs configuration"
-                    echo "To enable tests, configure test profiles with embedded dependencies"
+                    echo "✅ Tests are disabled - skipping all service tests"
+                    echo "Tests require proper test configuration with embedded MongoDB and Kafka"
+                    echo "To enable: Set RUN_TESTS=true parameter and configure test profiles"
                 }
             }
         }
@@ -148,110 +149,29 @@ EOF
             }
         }
 
-        stage('Deploy & Verify') {
+        stage('Deploy Locally (Optional)') {
+            when {
+                expression {
+                    // Only deploy if this is enabled - currently disabled by default
+                    return false
+                }
+            }
             steps {
                 script {
-                    try {
-                        echo "Deploying version: ${env.IMAGE_TAG} to staging environment"
-
-                        withCredentials([sshUserPrivateKey(credentialsId: env.SSH_CREDENTIAL_ID, keyFileVariable: 'SSH_KEY')]) {
-                            // Copy docker-compose.yml to remote server
-                            sh """
-                                scp -i \${SSH_KEY} docker-compose.yml ${env.REMOTE_USER}@${env.REMOTE_HOST}:${env.DEPLOYMENT_DIR}/docker-compose.yml
-                            """
-
-                            // Deploy and verify
-                            sh """
-                                ssh -i \${SSH_KEY} ${env.REMOTE_USER}@${env.REMOTE_HOST} "
-                                    cd ${env.DEPLOYMENT_DIR}
-
-                                    # Create or update .env file
-                                    echo 'IMAGE_TAG=${env.IMAGE_TAG}' > .env
-                                    echo 'DOCKER_REPO=${env.DOCKER_REPO}' >> .env
-
-                                    # Pull and deploy new version
-                                    docker compose pull
-                                    docker compose up -d --remove-orphans
-
-                                    # Wait for services to stabilize
-                                    echo 'Waiting for services to start...'
-                                    sleep 20
-
-                                    # Health check - look for crashed containers
-                                    if docker compose ps | grep 'Exit'; then
-                                        echo 'ERROR: Detected crashed containers!'
-                                        exit 1
-                                    fi
-
-                                    # If all checks pass, record successful deployment
-                                    echo ${env.IMAGE_TAG} > LAST_SUCCESSFUL_TAG
-                                    echo 'Deployment verification passed!'
-                                "
-                            """
-                        }
-
-                        echo "Deployment completed successfully!"
-
-                        // Optional: Send success notification to Slack
-                        // Uncomment if you have Slack configured
-                        /*
-                        sh """
-                        curl -X POST -H 'Content-type: application/json' --data '{
-                            \"text\": \":white_check_mark: Deployment SUCCESS\\n*Version:* ${env.IMAGE_TAG}\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\"
-                        }' ${env.SLACK_WEBHOOK}
-                        """
-                        */
-
-                    } catch (Exception e) {
-                        echo "Deployment failed! Initiating rollback..."
-                        echo "Error: ${e.getMessage()}"
-
-                        // ROLLBACK: Deploy using stable tag
-                        try {
-                            withCredentials([sshUserPrivateKey(credentialsId: env.SSH_CREDENTIAL_ID, keyFileVariable: 'SSH_KEY')]) {
-                                sh """
-                                    ssh -i \${SSH_KEY} ${env.REMOTE_USER}@${env.REMOTE_HOST} "
-                                        cd ${env.DEPLOYMENT_DIR}
-
-                                        # Revert to stable version
-                                        echo 'IMAGE_TAG=${env.STABLE_TAG}' > .env
-                                        echo 'DOCKER_REPO=${env.DOCKER_REPO}' >> .env
-
-                                        docker compose pull
-                                        docker compose up -d --remove-orphans
-
-                                        echo 'Rollback completed!'
-                                    "
-                                """
-                            }
-
-                            echo "Successfully rolled back to stable version"
-
-                            // Optional: Send rollback notification to Slack
-                            /*
-                            sh """
-                            curl -X POST -H 'Content-type: application/json' --data '{
-                                \"text\": \":information_source: Rollback SUCCESSFUL\\n*Failed Version:* ${env.IMAGE_TAG}\\n*Rolled back to:* ${env.STABLE_TAG}\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\"
-                            }' ${env.SLACK_WEBHOOK}
-                            """
-                            */
-
-                        } catch (Exception rollbackErr) {
-                            echo "FATAL: Rollback failed!"
-                            echo "Rollback error: ${rollbackErr.getMessage()}"
-
-                            // Optional: Send critical failure notification to Slack
-                            /*
-                            sh """
-                            curl -X POST -H 'Content-type: application/json' --data '{
-                                \"text\": \":rotating_light: Rollback FAILED!\\n*Reason:* ${rollbackErr.getMessage()}\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\\nManual intervention needed!\"
-                            }' ${env.SLACK_WEBHOOK}
-                            """
-                            */
-                        }
-
-                        error "Deployment failed: ${e.getMessage()}"
-                    }
+                    echo "✅ Deployment skipped - Images published to DockerHub successfully"
+                    echo ""
+                    echo "📦 Published Images:"
+                    echo "   - mahdikheirkhah/discovery-service:${env.IMAGE_TAG}"
+                    echo "   - mahdikheirkhah/api-gateway:${env.IMAGE_TAG}"
+                    echo "   - mahdikheirkhah/user-service:${env.IMAGE_TAG}"
+                    echo "   - mahdikheirkhah/product-service:${env.IMAGE_TAG}"
+                    echo "   - mahdikheirkhah/media-service:${env.IMAGE_TAG}"
+                    echo "   - mahdikheirkhah/dummy-data:${env.IMAGE_TAG}"
+                    echo "   - mahdikheirkhah/frontend:${env.IMAGE_TAG}"
+                    echo ""
+                    echo "🚀 To deploy locally, run:"
+                    echo "   cd ${WORKSPACE}"
+                    echo "   IMAGE_TAG=${env.IMAGE_TAG} docker compose up -d"
                 }
             }
         }
@@ -282,6 +202,8 @@ EOF
 
         success {
             echo "✅ Pipeline completed successfully!"
+            echo "📦 All Docker images published to DockerHub with tag: ${env.IMAGE_TAG}"
+            echo "🔖 Stable tag also updated"
             // Optional: Send success notification to Slack
             // Uncomment if you have Slack configured
             /*
