@@ -23,14 +23,13 @@ pipeline {
         stage('Build & Test Backend') {
             steps {
                 script {
-                    // Use Maven Docker image to build - no need to install Maven in Jenkins
-                    // Create .m2 directory in Jenkins workspace for Maven cache
+                    // Use Maven Docker image to build - Docker-in-Docker setup
+                    // Mount the entire workspace via jenkins_home volume
                     sh '''
-                        mkdir -p $HOME/.m2
                         docker run --rm \
-                          -v "$PWD/backend":/app \
+                          --volumes-from jenkins-cicd \
+                          -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \
                           -v jenkins_m2_cache:/root/.m2 \
-                          -w /app \
                           maven:3.9.6-amazoncorretto-21 \
                           mvn clean install -DskipTests -B
                     '''
