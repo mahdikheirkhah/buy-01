@@ -14,28 +14,27 @@ import { ProductDetail } from './pages/product-detail/product-detail';
 
 export const routes: Routes = [
   {
-    path: '',
-    component: MainLayout, // Layout for logged-in users
-    canActivate: [LoggedInGuard], // Protects this whole section
+    path: 'auth',
+    component: AuthLayout,
+    canActivate: [AuthGuard],
     children: [
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
+      { path: 'login', component: LoginComponent },
+      { path: 'register', component: RegisterComponent },
+      { path: '', redirectTo: 'login', pathMatch: 'full' }
+    ]
+  },
+  {
+    path: '',
+    component: MainLayout,
+    canActivate: [LoggedInGuard],
+    children: [
       { path: 'home', component: HomeComponent },
       { path: 'my-info', component: MyInfo },
       { path: 'my-products', component: MyProducts },
       { path: 'create-product', component: CreateProduct },
       { path: 'product/:id', component: ProductDetail },
+      { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
-  {
-    path: '',
-    component: AuthLayout, // Layout for login/register
-    // Apply AuthGuard here to prevent access if already logged in
-    canActivate: [AuthGuard],
-    children: [
-      { path: 'login', component: LoginComponent },
-      { path: 'register', component: RegisterComponent }
-    ]
-  },
-  // Fallback route (often redirects to login or home depending on auth state)
-  { path: '**', redirectTo: 'home' } // Or maybe check auth state here? For now, home is fine.
+  { path: '**', redirectTo: 'auth/login' }
 ];

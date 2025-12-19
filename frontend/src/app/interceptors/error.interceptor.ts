@@ -1,13 +1,29 @@
 // src/app/interceptors/error.interceptor.ts
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { Router } from '@angular/router';
+import { MatSnackBar, MatSnackBarRef, SimpleSnackBar } from '@angular/material/snack-bar';
+import { Router, NavigationStart } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+
+let routerSubscription: Subscription | null = null;
+let activeSnackRef: MatSnackBarRef<SimpleSnackBar> | null = null;
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const snackBar = inject(MatSnackBar);
   const router = inject(Router);
+
+  if (!routerSubscription || routerSubscription.closed) {
+    routerSubscription = router.events
+      .pipe(filter(event => event instanceof NavigationStart))
+      .subscribe(() => {
+        if (activeSnackRef) {
+          activeSnackRef.dismiss();
+          activeSnackRef = null;
+        }
+      });
+  }
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -38,8 +54,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           if (!isAuthEndpoint) {
             message = 'Session expired. Please log in.';
             router.navigate(['/login']);
-          }
-          else {
+          } else {
             message = 'Invalid credentials. Please try again.';
           }
           break;
@@ -54,9 +69,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           break;
       }
 
-      // Don't show snackbar for auth endpoint errors (they have their own error display)
-      snackBar.open(message, 'Close', { duration: 5000, panelClass: 'error-snack' });
-
+      if (activeSnackRef) {
+        activeSnackRef.dismiss();
+      }
+      activeSnackRef = snackBar.open(message, 'Close', { duration: 5000, panelClass: 'error-snack' });
 
       return throwError(() => error);
     })

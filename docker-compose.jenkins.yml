@@ -1,0 +1,32 @@
+services:
+  jenkins:
+    # Use the official Jenkins image with JDK 17, suitable for your Spring Boot project
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins-server
+    # Map Jenkins ports to the host
+    ports:
+      # Jenkins UI
+      - "8080:8080"
+      # JNLP port for agents (required if we scale to distributed builds later)
+      - "50000:50000"
+    volumes:
+      # Persistent storage for Jenkins data, jobs, and configuration
+      - jenkins_home:/var/jenkins_home
+      # CRITICAL: Mount the Docker daemon socket from the host.
+      # This allows Jenkins (running inside its container) to execute 'docker' commands on the host machine.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount the Maven settings file if you have one, or just the Maven repository cache
+      # This speeds up subsequent builds by caching downloaded dependencies
+      - ~/.m2:/root/.m2
+    # Ensure Jenkins starts automatically
+    restart: unless-stopped
+    # Use a custom network if Jenkins needs to interact directly with other services (e.g., Kafka)
+    # If the main docker-compose.yml is also running, you might need to connect them, but for now, we focus on building images.
+    user: root # Run as root to ensure permissions for /var/run/docker.sock
+    environment:
+      # Set timezone for consistency
+      - TZ=Europe/Helsinki # Or your local timezone
+
+volumes:
+  jenkins_home:
+    driver: local
