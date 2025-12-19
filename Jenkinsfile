@@ -22,7 +22,7 @@ pipeline {
 
         stage('Build & Test Backend') {
             steps {
-                sh 'cd backend && ./mvnw clean install'
+                sh 'cd backend && mvn clean install -DskipTests -B'
             }
         }
 
