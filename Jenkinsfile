@@ -48,11 +48,18 @@ pipeline {
                     def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'dummy-data']
 
                     for (service in services) {
+                        // Create a temporary Dockerfile that uses already-built JAR
                         sh """
-                        docker build -t ${env.DOCKER_REPO}/${service}:${env.IMAGE_TAG} \
-                            -f Dockerfile.java \
-                            --build-arg SERVICE_NAME=${service} .
+                        cat > Dockerfile.${service}.tmp << 'EOF'
+FROM amazoncorretto:21-alpine-jdk
+WORKDIR /app
+COPY backend/${service}/target/*.jar app.jar
+EXPOSE 8080 8443
+ENTRYPOINT ["java", "-jar", "app.jar"]
+EOF
+                        docker build --volumes-from jenkins-cicd -t ${env.DOCKER_REPO}/${service}:${env.IMAGE_TAG} -f Dockerfile.${service}.tmp .
                         docker push ${env.DOCKER_REPO}/${service}:${env.IMAGE_TAG}
+                        rm Dockerfile.${service}.tmp
                         """
                     }
 
