@@ -73,7 +73,7 @@ pipeline {
                                   -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend/${service} \
                                   -v jenkins_m2_cache:/root/.m2 \
                                   maven:3.9.6-amazoncorretto-21 \
-                                  mvn test -B
+                                  mvn test -B -Dspring.profiles.active=test
                             """
                             echo "${service} tests passed"
                         } catch (Exception e) {
@@ -135,7 +135,7 @@ COPY backend/${service}/target/*.jar app.jar
 EXPOSE 8080 8443
 ENTRYPOINT ["java", "-jar", "app.jar"]
 EOF
-                        docker build --volumes-from jenkins-cicd -t ${env.DOCKER_REPO}/${service}:${env.IMAGE_TAG} -f Dockerfile.${service}.tmp .
+                        docker build -t ${env.DOCKER_REPO}/${service}:${env.IMAGE_TAG} -f Dockerfile.${service}.tmp .
                         docker push ${env.DOCKER_REPO}/${service}:${env.IMAGE_TAG}
 
                         # Tag as stable for rollback capability
