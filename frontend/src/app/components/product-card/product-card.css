@@ -69,3 +69,24 @@ mat-card-actions {
 }
 
 
+
+/* --- Edit and Delete Button Styling --- */
+mat-card-actions button[mat-button]:first-child {
+  background-color: #4caf50; /* Green */
+  color: white;
+  font-weight: 600;
+}
+
+mat-card-actions button[mat-button]:first-child:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
+mat-card-actions button[color="warn"] {
+  background-color: #f44336; /* Red */
+  color: white;
+  font-weight: 600;
+}
+
+mat-card-actions button[color="warn"]:hover {
+  background-color: #da190b; /* Darker red on hover */
+}
