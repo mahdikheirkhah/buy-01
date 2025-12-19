@@ -22,7 +22,17 @@ pipeline {
 
         stage('Build & Test Backend') {
             steps {
-                sh 'cd backend && mvn clean install -DskipTests -B'
+                script {
+                    // Use Maven Docker image to build - no need to install Maven in Jenkins
+                    sh '''
+                        docker run --rm \
+                          -v "$PWD/backend":/app \
+                          -v "$HOME/.m2":/root/.m2 \
+                          -w /app \
+                          maven:3.9.6-amazoncorretto-21 \
+                          mvn clean install -DskipTests -B -f pom.xml
+                    '''
+                }
             }
         }
 
