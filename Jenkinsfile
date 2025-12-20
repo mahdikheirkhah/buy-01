@@ -1,38 +1,29 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_TAG = "${env.BUILD_NUMBER}"
-        STABLE_TAG = "stable"
-        DOCKER_CREDENTIAL_ID = 'dockerhub-creds'
-        DOCKER_REPO = 'mahdikheirkhah'
-        
-        // Optional: Slack notifications (comment out if not using)
-        // SLACK_WEBHOOK = credentials('slack-webhook')
-
-        // Optional: SonarQube analysis (comment out if not using)
-        // SONAR_SCANNER_HOME = tool 'SonarScanner'
-
-        // Remote Deployment Info
-        REMOTE_USER = 'ssh-user' 
-        REMOTE_HOST = '192.168.1.100' 
-        SSH_CREDENTIAL_ID = 'deployment-ssh-key' 
-        DEPLOYMENT_DIR = '/opt/ecommerce'
-    }
-
-    // Enable GitHub webhook trigger
-    triggers {
-        // GitHub webhook will trigger builds automatically
-        // No polling needed with webhooks
-        githubPush()
-    }
-
     parameters {
-        string(name: 'BRANCH', defaultValue: 'main', description: 'Branch to build')
-        booleanParam(name: 'RUN_TESTS', defaultValue: false, description: 'Run tests (disabled by default)')
+        string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
+        booleanParam(name: 'RUN_TESTS', defaultValue: false, description: 'Run tests (requires embedded MongoDB/Kafka)')
         booleanParam(name: 'RUN_SONAR', defaultValue: false, description: 'Run SonarQube analysis')
-        booleanParam(name: 'DEPLOY_LOCALLY', defaultValue: true, description: 'Deploy to local machine (no SSH needed)')
-        booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip remote deployment (until SSH is configured)')
+        booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip deployment (for local development)')
+        booleanParam(name: 'DEPLOY_LOCALLY', defaultValue: true, description: 'Deploy locally without SSH')
+    }
+
+    environment {
+        // Docker configuration
+        DOCKER_REPO = 'mahdikheirkhah'
+        DOCKER_CREDENTIAL_ID = 'dockerhub-credentials'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        STABLE_TAG = 'stable'
+
+        // Remote SSH deployment (optional)
+        SSH_CREDENTIAL_ID = 'ssh-deployment-key'
+        REMOTE_HOST = '192.168.1.100'
+        REMOTE_USER = 'ssh-user'
+        DEPLOYMENT_DIR = '/opt/ecommerce'
+
+        // SonarQube
+        SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
     }
 
     stages {
@@ -168,23 +159,21 @@ EOF
 
                     try {
                         // Stop existing containers
-                        sh "docker compose down || true"
+                        sh "docker-compose down || true"
 
-                        // Set the image tag
-                        sh "export IMAGE_TAG=${env.IMAGE_TAG}"
-
-                        // Pull latest images
-                        sh "IMAGE_TAG=${env.IMAGE_TAG} docker compose pull"
-
-                        // Start services
-                        sh "IMAGE_TAG=${env.IMAGE_TAG} docker compose up -d --remove-orphans"
+                        // Pull latest images and start services
+                        sh """
+                            export IMAGE_TAG=${env.IMAGE_TAG}
+                            docker-compose pull
+                            docker-compose up -d --remove-orphans
+                        """
 
                         // Wait for services to start
                         echo "Waiting for services to start..."
                         sleep(30)
 
                         // Show status
-                        sh "docker compose ps"
+                        sh "docker-compose ps"
 
                         echo "✅ Local deployment successful!"
                         echo "🌐 Access your application at:"
@@ -196,7 +185,7 @@ EOF
                         echo "❌ Local deployment failed: ${e.getMessage()}"
                         echo "You can deploy manually with these commands:"
                         echo "   export IMAGE_TAG=${env.IMAGE_TAG}"
-                        echo "   docker compose up -d"
+                        echo "   docker-compose up -d"
                         error("Local deployment failed: ${e.getMessage()}")
                     }
                 }
@@ -211,17 +200,21 @@ EOF
                 script {
                     echo "🚀 Deploying version: ${env.IMAGE_TAG} to staging environment"
 
-                    // SSH deployment to remote server
-                    sshagent(credentials: [env.SSH_CREDENTIAL_ID]) {
-                        try {
+                    // Note: SSH deployment requires SSH Agent plugin and proper credentials
+                    // For local deployment, set SKIP_DEPLOY=true or DEPLOY_LOCALLY=true
+
+                    try {
+                        // Use withCredentials instead of sshagent for better compatibility
+                        withCredentials([sshUserPrivateKey(credentialsId: env.SSH_CREDENTIAL_ID, keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+
                             // Copy docker-compose.yml to remote server
                             sh """
-                                scp -o StrictHostKeyChecking=no docker-compose.yml ${env.REMOTE_USER}@${env.REMOTE_HOST}:${env.DEPLOYMENT_DIR}/docker-compose.yml
+                                scp -i \$SSH_KEY -o StrictHostKeyChecking=no docker-compose.yml ${env.REMOTE_USER}@${env.REMOTE_HOST}:${env.DEPLOYMENT_DIR}/docker-compose.yml
                             """
 
                             // Deploy on remote server
                             sh """
-                                ssh -o StrictHostKeyChecking=no ${env.REMOTE_USER}@${env.REMOTE_HOST} "
+                                ssh -i \$SSH_KEY -o StrictHostKeyChecking=no ${env.REMOTE_USER}@${env.REMOTE_HOST} "
                                     cd ${env.DEPLOYMENT_DIR}
 
                                     # Create/update .env file
@@ -229,26 +222,27 @@ EOF
                                     echo 'DOCKER_REPO=${env.DOCKER_REPO}' >> .env
 
                                     # Pull latest images
-                                    docker compose pull
+                                    docker-compose pull
 
                                     # Deploy with zero-downtime
-                                    docker compose up -d --remove-orphans
+                                    docker-compose up -d --remove-orphans
 
                                     # Wait for services to be healthy
                                     echo 'Waiting for services to start...'
                                     sleep 30
 
                                     # Verify deployment
-                                    docker compose ps
+                                    docker-compose ps
                                 "
                             """
 
                             echo "✅ Deployment successful!"
-
-                        } catch (Exception e) {
-                            echo "❌ Deployment failed: ${e.getMessage()}"
-                            error("Deployment failed: ${e.getMessage()}")
                         }
+                    } catch (Exception e) {
+                        echo "❌ Deployment failed: ${e.getMessage()}"
+                        echo "💡 For local deployment, use DEPLOY_LOCALLY=true parameter instead"
+                        currentBuild.result = 'FAILURE'
+                        error("Deployment failed: ${e.getMessage()}")
                     }
                 }
             }
@@ -277,13 +271,13 @@ EOF
                     echo "   Run these commands on the Jenkins machine:"
                     echo "   cd ${env.WORKSPACE}"
                     echo "   export IMAGE_TAG=${env.IMAGE_TAG}"
-                    echo "   docker compose down  # Stop old containers"
-                    echo "   docker compose pull  # Pull new images"
-                    echo "   docker compose up -d # Start new containers"
+                    echo "   docker-compose down  # Stop old containers"
+                    echo "   docker-compose pull  # Pull new images"
+                    echo "   docker-compose up -d # Start new containers"
                     echo ""
                     echo "   Or use the stable tag:"
                     echo "   export IMAGE_TAG=stable"
-                    echo "   docker compose up -d"
+                    echo "   docker-compose up -d"
                     echo ""
                     echo "⚙️  REMOTE DEPLOYMENT (SSH required):"
                     echo "   To deploy to remote server ${env.REMOTE_HOST}:"
@@ -295,56 +289,75 @@ EOF
             }
         }
     }
+  post {
+      always {
+          script {
+              echo "Post-build cleanup and reporting"
 
-    post {
-        always {
-            script {
-                echo "Post-build cleanup and reporting"
+              // Collect test results
+              if (params.RUN_TESTS) {
+                  junit allowEmptyResults: true, testResults: 'backend/*/target/surefire-reports/*.xml'
+                  archiveArtifacts artifacts: 'backend/*/target/surefire-reports/*.xml', allowEmptyArchive: true
+              }
 
-                // Collect test results if tests were run
-                if (params.RUN_TESTS) {
-                    // Backend test reports
-                    junit allowEmptyResults: true, testResults: 'backend/*/target/surefire-reports/*.xml'
+              // Clean workspace
+              if (env.WORKSPACE) {
+                  cleanWs notFailBuild: true
+              }
+          }
+      }
 
-                    // Archive test artifacts
-                    archiveArtifacts artifacts: 'backend/*/target/surefire-reports/*.xml', allowEmptyArchive: true
-                }
+      success {
+          echo "✅ Pipeline completed successfully!"
 
-                // Clean workspace after build
-                if (env.WORKSPACE) {
-                    cleanWs notFailBuild: true
-                } else {
-                    echo "No workspace available; skipping cleanWs"
-                }
-            }
-        }
+          emailext (
+              subject: "✅ Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+              body: """
+                  <h2>Build Successful!</h2>
+                  <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                  <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                  <p><strong>Branch:</strong> ${params.BRANCH}</p>
+                  <p><strong>Image Tag:</strong> ${env.IMAGE_TAG}</p>
+                  <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                  <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
 
-        success {
-            echo "✅ Pipeline completed successfully!"
-            echo "📦 All Docker images published to DockerHub with tag: ${env.IMAGE_TAG}"
-            echo "🔖 Stable tag also updated"
-            // Optional: Send success notification to Slack
-            // Uncomment if you have Slack configured
-            /*
-            sh """
-            curl -X POST -H 'Content-type: application/json' --data '{
-                \"text\": \":white_check_mark: Build SUCCESS\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\\n*Branch:* ${params.BRANCH}\\n*Version:* ${env.IMAGE_TAG}\"
-            }' ${env.SLACK_WEBHOOK}
-            """
-            */
-        }
+                  <h3>Deployed Services:</h3>
+                  <ul>
+                      <li>Frontend: http://localhost:4200</li>
+                      <li>API Gateway: https://localhost:8443</li>
+                      <li>Eureka: http://localhost:8761</li>
+                  </ul>
 
-        failure {
-            echo "❌ Pipeline failed!"
-            // Optional: Send failure notification to Slack
-            // Uncomment if you have Slack configured
-            /*
-            sh """
-            curl -X POST -H 'Content-type: application/json' --data '{
-                \"text\": \":x: Build FAILED\\n*Job:* ${env.JOB_NAME}\\n*Build:* ${env.BUILD_NUMBER}\\n*Branch:* ${params.BRANCH}\\n*Error:* ${currentBuild.currentResult}\"
-            }' ${env.SLACK_WEBHOOK}
-            """
-            */
-        }
-    }
+                  <p>All Docker images have been published to Docker Hub with tag: ${env.IMAGE_TAG}</p>
+              """,
+              to: "mohammad.kheirkhah@gritlab.ax",
+              mimeType: 'text/html'
+          )
+      }
+
+      failure {
+          echo "❌ Pipeline failed!"
+
+          emailext (
+              subject: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+              body: """
+                  <h2 style="color: red;">Build Failed!</h2>
+                  <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                  <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                  <p><strong>Branch:</strong> ${params.BRANCH}</p>
+                  <p><strong>Error:</strong> ${currentBuild.result}</p>
+                  <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                  <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+
+                  <h3>Console Output:</h3>
+                  <pre>${currentBuild.rawBuild.getLog(50).join('\n')}</pre>
+
+                  <p>Please check the Jenkins console for detailed error information.</p>
+              """,
+              to: "mohammad.kheirkhah@gritlab.ax",
+              mimeType: 'text/html'
+          )
+      }
+  }
+
 }
