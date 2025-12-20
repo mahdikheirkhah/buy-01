@@ -21,9 +21,6 @@ pipeline {
         REMOTE_HOST = '192.168.1.100'
         REMOTE_USER = 'ssh-user'
         DEPLOYMENT_DIR = '/opt/ecommerce'
-
-        // SonarQube
-        SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
     }
 
     stages {
@@ -77,9 +74,12 @@ pipeline {
                 script {
                     echo "Running SonarQube analysis"
                     try {
+                        // Try to get the SonarQube scanner tool
+                        def scannerHome = tool name: 'SonarQubeScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+
                         withSonarQubeEnv('SonarQube') {
                             sh """
-                                ${env.SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                                ${scannerHome}/bin/sonar-scanner \
                                   -Dsonar.projectKey=ecommerce-microservices \
                                   -Dsonar.sources=backend,frontend/src \
                                   -Dsonar.java.binaries=backend/*/target/classes
@@ -90,7 +90,11 @@ pipeline {
                             waitForQualityGate abortPipeline: false
                         }
                     } catch (Exception e) {
-                        echo "SonarQube analysis failed: ${e.getMessage()}"
+                        echo "⚠️  SonarQube analysis skipped: ${e.getMessage()}"
+                        echo "To enable SonarQube:"
+                        echo "1. Install SonarQube Scanner plugin"
+                        echo "2. Configure SonarQube server in Jenkins"
+                        echo "3. Add SonarQubeScanner tool in Global Tool Configuration"
                         // Don't fail build if SonarQube is not configured
                     }
                 }
@@ -345,12 +349,18 @@ EOF
                   <p><strong>Job:</strong> ${env.JOB_NAME}</p>
                   <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
                   <p><strong>Branch:</strong> ${params.BRANCH}</p>
-                  <p><strong>Error:</strong> ${currentBuild.result}</p>
+                  <p><strong>Status:</strong> ${currentBuild.result}</p>
                   <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
                   <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                  <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
 
-                  <h3>Console Output:</h3>
-                  <pre>${currentBuild.rawBuild.getLog(50).join('\n')}</pre>
+                  <h3>Possible Issues:</h3>
+                  <ul>
+                      <li>Check if all services are properly configured</li>
+                      <li>Verify Docker Hub credentials are valid</li>
+                      <li>Review the console output for detailed errors</li>
+                      <li>Check if backend build completed successfully</li>
+                  </ul>
 
                   <p>Please check the Jenkins console for detailed error information.</p>
               """,
