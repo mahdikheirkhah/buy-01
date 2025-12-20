@@ -20,10 +20,19 @@ pipeline {
         DEPLOYMENT_DIR = '/opt/ecommerce'
     }
 
+    // Enable GitHub webhook trigger
+    triggers {
+        // GitHub webhook will trigger builds automatically
+        // No polling needed with webhooks
+        githubPush()
+    }
+
     parameters {
         string(name: 'BRANCH', defaultValue: 'main', description: 'Branch to build')
-        booleanParam(name: 'RUN_TESTS', defaultValue: false, description: 'Run tests')
+        booleanParam(name: 'RUN_TESTS', defaultValue: false, description: 'Run tests (disabled by default)')
         booleanParam(name: 'RUN_SONAR', defaultValue: false, description: 'Run SonarQube analysis')
+        booleanParam(name: 'DEPLOY_LOCALLY', defaultValue: true, description: 'Deploy to local machine (no SSH needed)')
+        booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip remote deployment (until SSH is configured)')
     }
 
     stages {
@@ -149,29 +158,139 @@ EOF
             }
         }
 
-        stage('Deploy Locally (Optional)') {
+        stage('Deploy Locally') {
             when {
-                expression {
-                    // Only deploy if this is enabled - currently disabled by default
-                    return false
-                }
+                expression { params.DEPLOY_LOCALLY == true }
             }
             steps {
                 script {
-                    echo "✅ Deployment skipped - Images published to DockerHub successfully"
+                    echo "🚀 Deploying locally (no SSH needed) with tag: ${env.IMAGE_TAG}"
+
+                    try {
+                        // Stop existing containers
+                        sh "docker compose down || true"
+
+                        // Set the image tag
+                        sh "export IMAGE_TAG=${env.IMAGE_TAG}"
+
+                        // Pull latest images
+                        sh "IMAGE_TAG=${env.IMAGE_TAG} docker compose pull"
+
+                        // Start services
+                        sh "IMAGE_TAG=${env.IMAGE_TAG} docker compose up -d --remove-orphans"
+
+                        // Wait for services to start
+                        echo "Waiting for services to start..."
+                        sleep(30)
+
+                        // Show status
+                        sh "docker compose ps"
+
+                        echo "✅ Local deployment successful!"
+                        echo "🌐 Access your application at:"
+                        echo "   - Frontend: http://localhost:4200"
+                        echo "   - API Gateway: https://localhost:8443"
+                        echo "   - Eureka Dashboard: http://localhost:8761"
+
+                    } catch (Exception e) {
+                        echo "❌ Local deployment failed: ${e.getMessage()}"
+                        echo "You can deploy manually with these commands:"
+                        echo "   export IMAGE_TAG=${env.IMAGE_TAG}"
+                        echo "   docker compose up -d"
+                        error("Local deployment failed: ${e.getMessage()}")
+                    }
+                }
+            }
+        }
+
+        stage('Deploy & Verify') {
+            when {
+                expression { params.SKIP_DEPLOY == false }
+            }
+            steps {
+                script {
+                    echo "🚀 Deploying version: ${env.IMAGE_TAG} to staging environment"
+
+                    // SSH deployment to remote server
+                    sshagent(credentials: [env.SSH_CREDENTIAL_ID]) {
+                        try {
+                            // Copy docker-compose.yml to remote server
+                            sh """
+                                scp -o StrictHostKeyChecking=no docker-compose.yml ${env.REMOTE_USER}@${env.REMOTE_HOST}:${env.DEPLOYMENT_DIR}/docker-compose.yml
+                            """
+
+                            // Deploy on remote server
+                            sh """
+                                ssh -o StrictHostKeyChecking=no ${env.REMOTE_USER}@${env.REMOTE_HOST} "
+                                    cd ${env.DEPLOYMENT_DIR}
+
+                                    # Create/update .env file
+                                    echo 'IMAGE_TAG=${env.IMAGE_TAG}' > .env
+                                    echo 'DOCKER_REPO=${env.DOCKER_REPO}' >> .env
+
+                                    # Pull latest images
+                                    docker compose pull
+
+                                    # Deploy with zero-downtime
+                                    docker compose up -d --remove-orphans
+
+                                    # Wait for services to be healthy
+                                    echo 'Waiting for services to start...'
+                                    sleep 30
+
+                                    # Verify deployment
+                                    docker compose ps
+                                "
+                            """
+
+                            echo "✅ Deployment successful!"
+
+                        } catch (Exception e) {
+                            echo "❌ Deployment failed: ${e.getMessage()}"
+                            error("Deployment failed: ${e.getMessage()}")
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Local Deploy Info') {
+            when {
+                expression { params.SKIP_DEPLOY == true }
+            }
+            steps {
+                script {
+                    echo "✅ Build & Publish completed successfully!"
                     echo ""
-                    echo "📦 Published Images:"
-                    echo "   - mahdikheirkhah/discovery-service:${env.IMAGE_TAG}"
-                    echo "   - mahdikheirkhah/api-gateway:${env.IMAGE_TAG}"
-                    echo "   - mahdikheirkhah/user-service:${env.IMAGE_TAG}"
-                    echo "   - mahdikheirkhah/product-service:${env.IMAGE_TAG}"
-                    echo "   - mahdikheirkhah/media-service:${env.IMAGE_TAG}"
-                    echo "   - mahdikheirkhah/dummy-data:${env.IMAGE_TAG}"
-                    echo "   - mahdikheirkhah/frontend:${env.IMAGE_TAG}"
+                    echo "📦 Published Images (Tag: ${env.IMAGE_TAG}):"
+                    echo "   - ${env.DOCKER_REPO}/discovery-service:${env.IMAGE_TAG}"
+                    echo "   - ${env.DOCKER_REPO}/api-gateway:${env.IMAGE_TAG}"
+                    echo "   - ${env.DOCKER_REPO}/user-service:${env.IMAGE_TAG}"
+                    echo "   - ${env.DOCKER_REPO}/product-service:${env.IMAGE_TAG}"
+                    echo "   - ${env.DOCKER_REPO}/media-service:${env.IMAGE_TAG}"
+                    echo "   - ${env.DOCKER_REPO}/dummy-data:${env.IMAGE_TAG}"
+                    echo "   - ${env.DOCKER_REPO}/frontend:${env.IMAGE_TAG}"
                     echo ""
-                    echo "🚀 To deploy locally, run:"
-                    echo "   cd ${WORKSPACE}"
-                    echo "   IMAGE_TAG=${env.IMAGE_TAG} docker compose up -d"
+                    echo "🔖 Stable tag also updated for rollback capability"
+                    echo ""
+                    echo "🚀 LOCAL DEPLOYMENT (No SSH needed):"
+                    echo "   Run these commands on the Jenkins machine:"
+                    echo "   cd ${env.WORKSPACE}"
+                    echo "   export IMAGE_TAG=${env.IMAGE_TAG}"
+                    echo "   docker compose down  # Stop old containers"
+                    echo "   docker compose pull  # Pull new images"
+                    echo "   docker compose up -d # Start new containers"
+                    echo ""
+                    echo "   Or use the stable tag:"
+                    echo "   export IMAGE_TAG=stable"
+                    echo "   docker compose up -d"
+                    echo ""
+                    echo "⚙️  REMOTE DEPLOYMENT (SSH required):"
+                    echo "   To deploy to remote server ${env.REMOTE_HOST}:"
+                    echo "   1. Configure SSH key access to the remote server"
+                    echo "   2. Add SSH credentials to Jenkins (ID: ${env.SSH_CREDENTIAL_ID})"
+                    echo "   3. Set SKIP_DEPLOY=false in pipeline parameters"
+                    echo "   4. Re-run the build"
                 }
             }
         }
