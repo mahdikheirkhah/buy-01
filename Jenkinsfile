@@ -105,9 +105,40 @@ pipeline {
             steps {
                 script {
                     echo "Building and publishing Docker images with tag: ${env.IMAGE_TAG}"
+
                     // Login using Jenkins Credentials
-                    withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDENTIAL_ID, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
+                    try {
+                        withCredentials([usernamePassword(
+                            credentialsId: env.DOCKER_CREDENTIAL_ID,
+                            passwordVariable: 'DOCKER_PASSWORD',
+                            usernameVariable: 'DOCKER_USERNAME'
+                        )]) {
+                            echo "Logging in to Docker Hub as: ${env.DOCKER_USERNAME}"
+                            sh '''
+                                if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
+                                    echo "❌ ERROR: Docker credentials are not set properly!"
+                                    echo "Please configure Docker Hub credentials in Jenkins:"
+                                    echo "1. Go to Jenkins > Manage Jenkins > Credentials"
+                                    echo "2. Add a 'Username with password' credential"
+                                    echo "3. ID: dockerhub-credentials"
+                                    echo "4. Username: your-dockerhub-username"
+                                    echo "5. Password: your-dockerhub-password or token"
+                                    exit 1
+                                fi
+
+                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+                                if [ $? -ne 0 ]; then
+                                    echo "❌ Docker login failed!"
+                                    echo "Please verify your Docker Hub credentials are correct"
+                                    exit 1
+                                fi
+
+                                echo "✅ Successfully logged in to Docker Hub"
+                            '''
+                        }
+                    } catch (Exception e) {
+                        error("Docker login failed: ${e.message}. Please check your Docker Hub credentials in Jenkins.")
                     }
 
                     def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'dummy-data']
