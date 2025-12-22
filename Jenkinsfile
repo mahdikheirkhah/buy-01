@@ -382,59 +382,145 @@ EOF
       success {
           echo "✅ Pipeline completed successfully!"
 
-          emailext (
-              subject: "✅ Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-              body: """
-                  <h2>Build Successful!</h2>
-                  <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                  <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                  <p><strong>Branch:</strong> ${params.BRANCH}</p>
-                  <p><strong>Image Tag:</strong> ${env.IMAGE_TAG}</p>
-                  <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-                  <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+          script {
+              try {
+                  // Try emailext first (HTML email)
+                  emailext (
+                      subject: "✅ Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                      body: """
+                          <h2>Build Successful!</h2>
+                          <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                          <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                          <p><strong>Branch:</strong> ${params.BRANCH}</p>
+                          <p><strong>Image Tag:</strong> ${env.IMAGE_TAG}</p>
+                          <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                          <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
 
-                  <h3>Deployed Services:</h3>
-                  <ul>
-                      <li>Frontend: http://localhost:4200</li>
-                      <li>API Gateway: https://localhost:8443</li>
-                      <li>Eureka: http://localhost:8761</li>
-                  </ul>
+                          <h3>Deployed Services:</h3>
+                          <ul>
+                              <li>Frontend: http://localhost:4200</li>
+                              <li>API Gateway: https://localhost:8443</li>
+                              <li>Eureka: http://localhost:8761</li>
+                          </ul>
 
-                  <p>All Docker images have been published to Docker Hub with tag: ${env.IMAGE_TAG}</p>
-              """,
-              to: "mohammad.kheirkhah@gritlab.ax",
-              mimeType: 'text/html'
-          )
+                          <p>All Docker images have been published to Docker Hub with tag: ${env.IMAGE_TAG}</p>
+                      """,
+                      to: "mohammad.kheirkhah@gritlab.ax",
+                      mimeType: 'text/html'
+                  )
+                  echo "✅ Email sent successfully via emailext"
+              } catch (Exception e) {
+                  echo "⚠️  Failed to send HTML email: ${e.message}"
+                  echo "Trying simple email as fallback..."
+
+                  try {
+                      // Fallback to simple mail
+                      mail to: 'mohammad.kheirkhah@gritlab.ax',
+                           subject: "✅ Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                           body: """
+Build Successful!
+
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+Branch: ${params.BRANCH}
+Image Tag: ${env.IMAGE_TAG}
+Duration: ${currentBuild.durationString}
+
+Build URL: ${env.BUILD_URL}
+
+Deployed Services:
+- Frontend: http://localhost:4200
+- API Gateway: https://localhost:8443
+- Eureka: http://localhost:8761
+
+All Docker images published with tag: ${env.IMAGE_TAG}
+
+---
+To configure email notifications, see EMAIL_SETUP.md
+                           """
+                      echo "✅ Email sent successfully via simple mail"
+                  } catch (Exception e2) {
+                      echo "❌ Failed to send email: ${e2.message}"
+                      echo "📧 To receive email notifications:"
+                      echo "   1. Configure SMTP settings in Jenkins"
+                      echo "   2. See EMAIL_SETUP.md for detailed instructions"
+                      echo "   3. Or check your spam folder"
+                  }
+              }
+          }
       }
 
       failure {
           echo "❌ Pipeline failed!"
 
-          emailext (
-              subject: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-              body: """
-                  <h2 style="color: red;">Build Failed!</h2>
-                  <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                  <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                  <p><strong>Branch:</strong> ${params.BRANCH}</p>
-                  <p><strong>Status:</strong> ${currentBuild.result}</p>
-                  <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-                  <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                  <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
+          script {
+              try {
+                  // Try emailext first (HTML email)
+                  emailext (
+                      subject: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                      body: """
+                          <h2 style="color: red;">Build Failed!</h2>
+                          <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                          <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                          <p><strong>Branch:</strong> ${params.BRANCH}</p>
+                          <p><strong>Status:</strong> ${currentBuild.result}</p>
+                          <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                          <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                          <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
 
-                  <h3>Possible Issues:</h3>
-                  <ul>
-                      <li>Check if all services are properly configured</li>
-                      <li>Verify Docker Hub credentials are valid</li>
-                      <li>Review the console output for detailed errors</li>
-                      <li>Check if backend build completed successfully</li>
-                  </ul>
+                          <h3>Possible Issues:</h3>
+                          <ul>
+                              <li>Check if all services are properly configured</li>
+                              <li>Verify Docker Hub credentials are valid</li>
+                              <li>Review the console output for detailed errors</li>
+                              <li>Check if backend build completed successfully</li>
+                          </ul>
 
-                  <p>Please check the Jenkins console for detailed error information.</p>
-              """,
-              to: "mohammad.kheirkhah@gritlab.ax",
-              mimeType: 'text/html'
-          )
+                          <p>Please check the Jenkins console for detailed error information.</p>
+                      """,
+                      to: "mohammad.kheirkhah@gritlab.ax",
+                      mimeType: 'text/html'
+                  )
+                  echo "✅ Email sent successfully via emailext"
+              } catch (Exception e) {
+                  echo "⚠️  Failed to send HTML email: ${e.message}"
+                  echo "Trying simple email as fallback..."
+
+                  try {
+                      // Fallback to simple mail
+                      mail to: 'mohammad.kheirkhah@gritlab.ax',
+                           subject: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                           body: """
+Build Failed!
+
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+Branch: ${params.BRANCH}
+Status: ${currentBuild.result}
+Duration: ${currentBuild.durationString}
+
+Build URL: ${env.BUILD_URL}
+Console: ${env.BUILD_URL}console
+
+Possible Issues:
+- Check if all services are properly configured
+- Verify Docker Hub credentials are valid
+- Review the console output for detailed errors
+- Check if backend build completed successfully
+
+---
+To configure email notifications, see EMAIL_SETUP.md
+                           """
+                      echo "✅ Email sent successfully via simple mail"
+                  } catch (Exception e2) {
+                      echo "❌ Failed to send email: ${e2.message}"
+                      echo "📧 To receive email notifications:"
+                      echo "   1. Configure SMTP settings in Jenkins"
+                      echo "   2. See EMAIL_SETUP.md for detailed instructions"
+                      echo "   3. Or check your spam folder"
+                  }
+              }
+          }
       }
   }
 

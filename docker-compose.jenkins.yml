@@ -1,8 +1,11 @@
 services:
   jenkins:
-    # Use the official Jenkins image with JDK 17, suitable for your Spring Boot project
-    image: jenkins/jenkins:lts-jdk17
-    container_name: jenkins-server
+    # Use custom Jenkins image with Docker CLI pre-installed
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    image: jenkins-with-docker:lts
+    container_name: jenkins-cicd
     # Map Jenkins ports to the host
     ports:
       # Jenkins UI
