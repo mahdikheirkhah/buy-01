@@ -176,15 +176,6 @@ services:
     networks:
       - BACKEND
 
-  # MailHog - Email testing tool
-  mailhog:
-    image: mailhog/mailhog:latest
-    container_name: mailhog
-    ports:
-      - "1025:1025"  # SMTP server
-      - "8025:8025"  # Web UI
-    networks:
-      - BACKEND
 
 networks:
   BACKEND:
