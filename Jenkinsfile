@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    triggers {
+        // Trigger builds on GitHub push events
+        githubPush()
+    }
+
     parameters {
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
         booleanParam(name: 'RUN_TESTS', defaultValue: false, description: 'Run tests (requires embedded MongoDB/Kafka)')
