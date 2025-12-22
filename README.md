@@ -427,6 +427,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📚 Additional Resources
 
+### Project Documentation
+- [GMAIL_SETUP.md](./GMAIL_SETUP.md) - Configure Gmail for Jenkins email notifications
+- [MAILHOG_SETUP.md](./MAILHOG_SETUP.md) - Local email testing with MailHog
+- [JENKINS_TROUBLESHOOTING.md](./JENKINS_TROUBLESHOOTING.md) - CI/CD troubleshooting guide
+- [TODO.md](./TODO.md) - Planned features and known issues
+
+### External Documentation
 - [Spring Boot Documentation](https://spring.io/projects/spring-boot)
 - [Spring Cloud Documentation](https://spring.io/projects/spring-cloud)
 - [Angular Documentation](https://angular.io/docs)
@@ -442,6 +449,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 For issues, questions, or suggestions:
 - Open an issue on GitHub
 - Email: mohammad.kheirkhah@gritlab.ax
+- Check [GMAIL_SETUP.md](./GMAIL_SETUP.md) for email notification setup
 - Check [JENKINS_TROUBLESHOOTING.md](./JENKINS_TROUBLESHOOTING.md) for CI/CD issues
 - Check [TODO.md](./TODO.md) for planned features and known issues
 

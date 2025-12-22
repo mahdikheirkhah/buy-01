@@ -1,144 +1,196 @@
-# 📧 Email Not Working? Quick Fix Guide
+# Quick Fix: Gmail Email Notifications Not Working
 
 ## Problem
-Jenkins shows "Sending email to: your-email" but you're not receiving emails.
+You configured Gmail SMTP in Jenkins (Manage Jenkins → System), test emails work, but you're not receiving build notification emails.
 
-## Solution (5 minutes)
+## Root Cause
+The Jenkinsfile was sending emails to `test@example.com` instead of your actual email address.
 
-### Step 1: Generate Gmail App Password
+## ✅ Solution Applied
 
-1. Go to: https://myaccount.google.com/security
-2. Enable **2-Step Verification** (if not already enabled)
-3. Go to: https://myaccount.google.com/apppasswords
-4. Create App Password:
-   - App: **Mail**
-   - Device: **Other (Custom name)** → type "Jenkins"
-5. Click **Generate**
-6. **COPY the 16-character password** (you won't see it again!)
+I've updated your Jenkinsfile to send emails to the correct address: `mohammad.kheirkhah@gritlab.ax`
 
-### Step 2: Configure Jenkins
+## 🚀 Next Steps (Do This Now!)
 
-1. Open Jenkins: http://localhost:8080
-2. Go to: **Manage Jenkins** → **Configure System**
-3. Scroll to **Extended E-mail Notification**:
-   - SMTP server: `smtp.gmail.com`
-   - SMTP Port: `587`
-   - ☑ Use SMTP Authentication
-   - User Name: `your-email@gmail.com`
-   - Password: `[paste the 16-character App Password]`
-   - ☑ Use TLS
-   - Default Recipients: `your-email@gmail.com`
+### Step 1: Verify Your Gmail Settings in Jenkins
 
-4. Scroll to **E-mail Notification**:
-   - SMTP server: `smtp.gmail.com`
-   - ☑ Use SMTP Authentication
-   - User Name: `your-email@gmail.com`
-   - Password: `[paste the 16-character App Password]`
-   - ☑ Use TLS
-   - SMTP Port: `587`
+1. **Open Jenkins**: http://localhost:8080
+2. **Go to**: Manage Jenkins → System
+3. **Find**: "Extended E-mail Notification" section
+4. **Verify these settings are correct**:
 
-5. **TEST IT**:
-   - Click "Test configuration by sending test e-mail"
-   - Enter your email
-   - Click "Test configuration"
-   - Check your **inbox and spam folder**
+```
+SMTP server: smtp.gmail.com
+SMTP Port: 587
+✅ Use SMTP Authentication: CHECKED
+Username: mohammad.kheirkhah@gritlab.ax
+Password: [Your 16-character App Password]
+✅ Use TLS: CHECKED
+❌ Use SSL: UNCHECKED (since we're using TLS)
+```
 
-### Step 3: If Test Fails
+### Step 2: Generate Gmail App Password (if you haven't already)
 
-Run diagnostic:
+1. Go to: https://myaccount.google.com/apppasswords
+2. Make sure 2-Step Verification is enabled first
+3. Create new App Password:
+   - App: Mail
+   - Device: Other (Jenkins)
+4. Copy the 16-character password (e.g., `abcd efgh ijkl mnop`)
+5. Use this password in Jenkins, NOT your regular Gmail password
+
+### Step 3: Send Test Email from Jenkins
+
+1. Still in Jenkins → System
+2. Scroll to "E-mail Notification" section
+3. Click "Test configuration by sending test e-mail"
+4. Enter: `mohammad.kheirkhah@gritlab.ax`
+5. Click "Test configuration"
+6. **Check your Gmail inbox** (and spam folder!)
+
+### Step 4: Commit and Push the Updated Jenkinsfile
+
+The Jenkinsfile has been updated, now commit and push it:
+
 ```bash
-./check-email-config.sh
+cd /Users/mohammad.kheirkhah/Desktop/buy-01
+
+# Check what was changed
+git diff Jenkinsfile
+
+# Stage the changes
+git add Jenkinsfile
+
+# Commit
+git commit -m "fix: update email recipients to mohammad.kheirkhah@gritlab.ax"
+
+# Push to trigger webhook
+git push origin main
 ```
 
-Common issues:
-- ❌ Wrong password → Use App Password, not Gmail password
-- ❌ Port blocked → Check firewall
-- ❌ Plugin missing → Install "Email Extension Plugin"
-- ❌ Spam folder → Check it!
+### Step 5: Trigger a Build and Check Email
 
-### Step 4: Test with a Pipeline
+1. The push will automatically trigger a build via webhook
+2. Wait for the build to complete (watch in Jenkins)
+3. **Check your Gmail inbox** for the build notification
+4. **If not in inbox, check spam folder**
 
-Create a new Pipeline job in Jenkins:
+## 📧 What Changed in Jenkinsfile
 
-1. Click **New Item**
-2. Name: `test-email`
-3. Select **Pipeline**
-4. In Pipeline script, paste content from: `test-email-pipeline.groovy`
-5. Click **Build Now**
-6. Check your email!
-
-## Still Not Working?
-
-### Check Jenkins Logs
-```bash
-docker logs jenkins-cicd | grep -i "mail\|smtp"
+**Before:**
+```groovy
+to: "test@example.com",
 ```
 
-### Enable Debug Logging
-1. **Manage Jenkins** → **System Log**
-2. **Add new log recorder**
-3. Name: `Email Debug`
-4. Add logger: `hudson.tasks.Mailer`, Level: `ALL`
-5. Add logger: `javax.mail`, Level: `ALL`
-6. Save and check logs after next build
-
-### Alternative Email Providers
-
-#### SendGrid (Free)
+**After:**
+```groovy
+to: "mohammad.kheirkhah@gritlab.ax",
 ```
-SMTP server: smtp.sendgrid.net
+
+This change was made in 4 places:
+- Success notification (HTML email)
+- Success notification (plain text fallback)
+- Failure notification (HTML email)
+- Failure notification (plain text fallback)
+
+## 🔍 Troubleshooting
+
+### "Test email sent successfully" but still no emails?
+
+**Check these:**
+
+1. **Spam Folder** - Gmail might be filtering it
+   - If you find it in spam, mark as "Not Spam"
+   - Add Jenkins sender to your contacts
+
+2. **Gmail Filters** - Check if you have filters blocking it
+   - Go to Gmail → Settings → Filters and Blocked Addresses
+
+3. **App Password** - Make sure you're using the App Password
+   - NOT your regular Gmail password
+   - It should be 16 characters without spaces
+
+4. **Username** - Must be full email address
+   - Correct: `mohammad.kheirkhah@gritlab.ax`
+   - Wrong: `mohammad.kheirkhah` or `mohammad`
+
+5. **Port and Security**
+   - Port 587 with TLS (recommended)
+   - OR Port 465 with SSL
+   - NOT both SSL and TLS checked at the same time
+
+### Authentication Failed?
+
+1. Regenerate App Password: https://myaccount.google.com/apppasswords
+2. Copy it carefully (remove spaces if needed)
+3. Update in Jenkins
+
+### Connection Timeout?
+
+1. Check firewall settings
+2. Try alternative port:
+   - If using 587, try 465 with SSL
+   - If using 465, try 587 with TLS
+
+## 📋 Complete Gmail SMTP Settings
+
+For your reference, here are the correct settings:
+
+```
+SMTP Server: smtp.gmail.com
 Port: 587
-Username: apikey
-Password: [Your SendGrid API Key]
-Use TLS: Yes
+Security: TLS (not SSL)
+Authentication: Required
+Username: mohammad.kheirkhah@gritlab.ax
+Password: [Your 16-character Gmail App Password]
 ```
 
-#### Outlook/Office 365
-```
-SMTP server: smtp.office365.com
-Port: 587
-Use TLS: Yes
-```
+## 📚 Full Documentation
 
-## Reverse Proxy Warning Fix
+For detailed setup instructions, see:
+- **[GMAIL_SETUP.md](./GMAIL_SETUP.md)** - Complete Gmail configuration guide
+- **[MAILHOG_SETUP.md](./MAILHOG_SETUP.md)** - Alternative local testing setup
 
-To fix the "reverse proxy broken" warning:
+## ✅ Expected Email Behavior
 
-1. **Manage Jenkins** → **Configure System**
-2. Find **Jenkins Location**
-3. Jenkins URL: `http://localhost:8080/`
-4. Click **Save**
+Once configured correctly, you'll receive emails for:
 
-Or suppress the warning:
-- Uncheck "Enable proxy compatibility"
+**✅ Successful Builds:**
+- Subject: "✅ Build SUCCESS: [Job Name] #[Number]"
+- Contains: Build info, deployed services URLs, Docker image tags
 
-## Complete Documentation
+**❌ Failed Builds:**
+- Subject: "❌ Build FAILED: [Job Name] #[Number]"
+- Contains: Build info, error links, troubleshooting tips
 
-See [EMAIL_SETUP.md](EMAIL_SETUP.md) for comprehensive troubleshooting.
+## 🎯 Quick Test Right Now
 
-## Quick Checklist
+1. **Verify Jenkins SMTP settings** (see Step 1 above)
+2. **Send test email from Jenkins** (see Step 3 above)
+3. **If test works:** Commit and push the updated Jenkinsfile
+4. **Check your email after build completes**
 
-- [ ] 2-Step Verification enabled
-- [ ] App Password generated
-- [ ] Email Extension Plugin installed
-- [ ] SMTP configured in Jenkins
-- [ ] Test email sent successfully
-- [ ] Checked spam folder
-- [ ] Email address correct in Jenkinsfile
-- [ ] No firewall blocking port 587
+## Need Help?
 
-## Need More Help?
+If emails still don't work after following these steps:
 
-1. Check [EMAIL_SETUP.md](EMAIL_SETUP.md) - Detailed guide
-2. Check [JENKINS_SETUP.md](JENKINS_SETUP.md) - Jenkins setup
-3. Run `./check-email-config.sh` - Diagnostic tool
-4. Check Jenkins System Log for errors
+1. Check Jenkins logs:
+   ```bash
+   docker logs jenkins-cicd | grep -i mail
+   ```
+
+2. Check your Gmail "Less secure app access" settings (though App Passwords should work regardless)
+
+3. Try sending from a different Gmail account to rule out account-specific issues
+
+4. Open an issue on GitHub with:
+   - Jenkins SMTP configuration (screenshot without password)
+   - Console output of failed email attempt
+   - Error messages from Jenkins logs
 
 ---
 
-**Pro Tip**: If email never works, use these alternatives:
-- Slack notifications
-- Discord webhooks
-- Microsoft Teams
-- Jenkins Blue Ocean UI (better visual feedback)
+**Last Updated**: December 22, 2025
+
+**Status**: ✅ Jenkinsfile updated, ready to test after you configure Gmail SMTP in Jenkins
 
