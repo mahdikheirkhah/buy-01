@@ -186,21 +186,21 @@ EOF
 
         stage('Deploy Locally') {
             when {
-                expression { params.DEPLOY_LOCALLY == true }
+                expression { params.DEPLOY_LOCALLY == true && params.SKIP_DEPLOY == true }
             }
             steps {
                 script {
                     echo "🚀 Deploying locally (no SSH needed) with tag: ${env.IMAGE_TAG}"
 
                     try {
-                        // Stop existing containers
-                        sh "docker-compose down || true"
+                        // Stop existing containers (use docker compose, not docker-compose)
+                        sh "docker compose down || true"
 
                         // Pull latest images and start services
                         sh """
                             export IMAGE_TAG=${env.IMAGE_TAG}
-                            docker-compose pull
-                            docker-compose up -d --remove-orphans
+                            docker compose pull
+                            docker compose up -d --remove-orphans
                         """
 
                         // Wait for services to start
@@ -208,7 +208,7 @@ EOF
                         sleep(30)
 
                         // Show status
-                        sh "docker-compose ps"
+                        sh "docker compose ps"
 
                         echo "✅ Local deployment successful!"
                         echo "🌐 Access your application at:"
@@ -220,7 +220,7 @@ EOF
                         echo "❌ Local deployment failed: ${e.getMessage()}"
                         echo "You can deploy manually with these commands:"
                         echo "   export IMAGE_TAG=${env.IMAGE_TAG}"
-                        echo "   docker-compose up -d"
+                        echo "   docker compose up -d"
                         error("Local deployment failed: ${e.getMessage()}")
                     }
                 }
@@ -229,17 +229,43 @@ EOF
 
         stage('Deploy & Verify') {
             when {
-                expression { params.SKIP_DEPLOY == false }
+                allOf {
+                    expression { params.SKIP_DEPLOY == false }
+                    expression { params.DEPLOY_LOCALLY == false }
+                }
             }
             steps {
                 script {
-                    echo "🚀 Deploying version: ${env.IMAGE_TAG} to staging environment"
+                    echo "🚀 Deploying version: ${env.IMAGE_TAG} to remote staging environment"
 
                     // Note: SSH deployment requires SSH Agent plugin and proper credentials
-                    // For local deployment, set SKIP_DEPLOY=true or DEPLOY_LOCALLY=true
+                    // For local deployment, set SKIP_DEPLOY=true and DEPLOY_LOCALLY=true
+
+                    // Check if SSH credentials exist before attempting deployment
+                    def credentialsExist = false
+                    try {
+                        withCredentials([sshUserPrivateKey(credentialsId: env.SSH_CREDENTIAL_ID, keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                            credentialsExist = true
+                        }
+                    } catch (Exception credError) {
+                        echo "⚠️  SSH credentials not found!"
+                        echo "❌ ERROR: Could not find credentials entry with ID '${env.SSH_CREDENTIAL_ID}'"
+                        echo ""
+                        echo "To set up remote SSH deployment:"
+                        echo "1. Go to Jenkins > Manage Jenkins > Credentials"
+                        echo "2. Add 'SSH Username with private key' credential"
+                        echo "3. ID: ${env.SSH_CREDENTIAL_ID}"
+                        echo "4. Username: ${env.REMOTE_USER}"
+                        echo "5. Private Key: [Enter your SSH private key]"
+                        echo ""
+                        echo "💡 For local deployment instead:"
+                        echo "   - Set SKIP_DEPLOY=true"
+                        echo "   - Set DEPLOY_LOCALLY=true"
+                        echo "   - Re-run the build"
+                        error("SSH credentials not configured. Cannot deploy remotely.")
+                    }
 
                     try {
-                        // Use withCredentials instead of sshagent for better compatibility
                         withCredentials([sshUserPrivateKey(credentialsId: env.SSH_CREDENTIAL_ID, keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
 
                             // Copy docker-compose.yml to remote server
@@ -257,27 +283,31 @@ EOF
                                     echo 'DOCKER_REPO=${env.DOCKER_REPO}' >> .env
 
                                     # Pull latest images
-                                    docker-compose pull
+                                    docker compose pull
 
                                     # Deploy with zero-downtime
-                                    docker-compose up -d --remove-orphans
+                                    docker compose up -d --remove-orphans
 
                                     # Wait for services to be healthy
                                     echo 'Waiting for services to start...'
                                     sleep 30
 
                                     # Verify deployment
-                                    docker-compose ps
+                                    docker compose ps
                                 "
                             """
 
-                            echo "✅ Deployment successful!"
+                            echo "✅ Remote deployment successful!"
                         }
                     } catch (Exception e) {
-                        echo "❌ Deployment failed: ${e.getMessage()}"
-                        echo "💡 For local deployment, use DEPLOY_LOCALLY=true parameter instead"
+                        echo "❌ Remote deployment failed: ${e.getMessage()}"
+                        echo ""
+                        echo "💡 For local deployment instead:"
+                        echo "   - Set SKIP_DEPLOY=true"
+                        echo "   - Set DEPLOY_LOCALLY=true"
+                        echo "   - Re-run the build"
                         currentBuild.result = 'FAILURE'
-                        error("Deployment failed: ${e.getMessage()}")
+                        error("Remote deployment failed: ${e.getMessage()}")
                     }
                 }
             }
@@ -285,7 +315,10 @@ EOF
 
         stage('Local Deploy Info') {
             when {
-                expression { params.SKIP_DEPLOY == true }
+                allOf {
+                    expression { params.SKIP_DEPLOY == true }
+                    expression { params.DEPLOY_LOCALLY == false }
+                }
             }
             steps {
                 script {
@@ -302,23 +335,27 @@ EOF
                     echo ""
                     echo "🔖 Stable tag also updated for rollback capability"
                     echo ""
-                    echo "🚀 LOCAL DEPLOYMENT (No SSH needed):"
-                    echo "   Run these commands on the Jenkins machine:"
-                    echo "   cd ${env.WORKSPACE}"
-                    echo "   export IMAGE_TAG=${env.IMAGE_TAG}"
-                    echo "   docker-compose down  # Stop old containers"
-                    echo "   docker-compose pull  # Pull new images"
-                    echo "   docker-compose up -d # Start new containers"
+                    echo "🚀 TO DEPLOY LOCALLY (No SSH needed):"
+                    echo "   Option 1 - Automatic deployment via Jenkins:"
+                    echo "      1. Re-run this build"
+                    echo "      2. Set SKIP_DEPLOY=true"
+                    echo "      3. Set DEPLOY_LOCALLY=true"
                     echo ""
-                    echo "   Or use the stable tag:"
-                    echo "   export IMAGE_TAG=stable"
-                    echo "   docker-compose up -d"
+                    echo "   Option 2 - Manual deployment on Jenkins machine:"
+                    echo "      cd ${env.WORKSPACE}"
+                    echo "      export IMAGE_TAG=${env.IMAGE_TAG}"
+                    echo "      docker compose down"
+                    echo "      docker compose pull"
+                    echo "      docker compose up -d"
                     echo ""
-                    echo "⚙️  REMOTE DEPLOYMENT (SSH required):"
-                    echo "   To deploy to remote server ${env.REMOTE_HOST}:"
-                    echo "   1. Configure SSH key access to the remote server"
+                    echo "   Option 3 - Use stable tag:"
+                    echo "      export IMAGE_TAG=stable"
+                    echo "      docker compose up -d"
+                    echo ""
+                    echo "⚙️  TO DEPLOY TO REMOTE SERVER (SSH required):"
+                    echo "   1. Configure SSH key access to ${env.REMOTE_HOST}"
                     echo "   2. Add SSH credentials to Jenkins (ID: ${env.SSH_CREDENTIAL_ID})"
-                    echo "   3. Set SKIP_DEPLOY=false in pipeline parameters"
+                    echo "   3. Set SKIP_DEPLOY=false and DEPLOY_LOCALLY=false"
                     echo "   4. Re-run the build"
                 }
             }
