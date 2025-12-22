@@ -1,157 +1,192 @@
-# E-Commerce Microservices Platform - Jenkins CI/CD
+# E-commerce Microservices CI/CD Pipeline
 
-## 🎯 Project Overview
-
-This is a fully-featured e-commerce platform built with microservices architecture, featuring automated CI/CD pipeline using Jenkins, Docker containerization, and cloud-ready deployment.
-
-### Technology Stack
-
-**Backend:**
-- Java 21 with Spring Boot 3.2.8
-- Spring Cloud (Eureka, Gateway)
-- MongoDB (Database)
-- Apache Kafka (Message Broker)
-- Maven 3.9.6
-
-**Frontend:**
-- Angular 18
-- TypeScript
-- Material Design
-
-**DevOps:**
-- Jenkins (CI/CD Automation)
-- Docker & Docker Compose
-- GitHub (Version Control)
-- Docker Hub (Container Registry)
-
-**Optional Tools:**
-- SonarQube (Code Quality Analysis)
-- JUnit (Testing)
-
----
+A complete e-commerce platform built with Spring Boot microservices and Angular frontend, featuring automated CI/CD pipeline with Jenkins, Docker containerization, and comprehensive testing.
 
 ## 🏗️ Architecture
 
-### Microservices:
-1. **Discovery Service** (Port 8761) - Eureka Server for service discovery
-2. **API Gateway** (Port 8443) - HTTPS entry point with routing and security
-3. **User Service** (Port 8081) - User management and authentication
-4. **Product Service** (Port 8082) - Product catalog management
-5. **Media Service** (Port 8083) - Image/file upload and management
-6. **Dummy Data Service** - Populates test data on startup
-7. **Frontend** (Port 4200) - Angular SPA
+### Microservices
+- **Discovery Service** (Eureka) - Service registry and discovery
+- **API Gateway** - Single entry point for all client requests
+- **User Service** - User authentication and authorization
+- **Product Service** - Product catalog and inventory management
+- **Media Service** - Image upload and management
+- **Dummy Data Service** - Test data generation
 
-### Infrastructure:
-- **MongoDB** (Port 27017) - NoSQL database
-- **Kafka** (Port 9092) - Message broker for async communication
-- **Zookeeper** (Port 2181) - Kafka coordination service
+### Frontend
+- **Angular Application** - Modern, responsive UI
+
+### Infrastructure
+- **MongoDB** - NoSQL database for all services
+- **Apache Kafka** - Event streaming platform
+- **Docker** - Containerization
+- **Jenkins** - CI/CD automation
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker Desktop or Docker Engine
-- Jenkins (running in Docker or standalone)
-- GitHub account
-- Docker Hub account
+- Docker & Docker Compose
+- Git
+- Jenkins (optional, for CI/CD)
+- Java 21 (for local development)
+- Node.js 20+ (for frontend development)
 
-### 1. Clone Repository
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/mahdikheirkhah/buy-01.git
 cd buy-01
 ```
 
-### 2. Configure Jenkins Credentials
+### 2. Deploy with Docker Compose
+```bash
+# Set the image tag (use 'stable' for latest stable version)
+export IMAGE_TAG=stable
 
-#### Docker Hub Credentials:
-1. Jenkins → Manage Jenkins → Credentials
-2. Add Credentials → Username with password
-3. **ID**: `dockerhub-credentials`
-4. **Username**: Your Docker Hub username
-5. **Password**: Docker Hub access token
+# Pull latest images
+docker compose pull
 
-#### SSH Credentials (Optional - for remote deployment):
-1. Add Credentials → SSH Username with private key
-2. **ID**: `ssh-deployment-key`
-3. **Username**: SSH user on remote server
-4. **Private Key**: Your SSH private key
+# Start all services
+docker compose up -d
 
-### 3. Create Jenkins Pipeline Job
-1. Jenkins Dashboard → New Item
-2. Enter name: `e-commerce-microservices-ci-cd`
-3. Select **Pipeline**
-4. Pipeline Definition: **Pipeline script from SCM**
-5. SCM: **Git**
-6. Repository URL: `https://github.com/mahdikheirkhah/buy-01.git`
-7. Branch: `*/main`
-8. Script Path: `Jenkinsfile`
-9. Save
+# Check status
+docker compose ps
+```
 
-### 4. Run the Pipeline
-
-**For Local Deployment (Recommended):**
-1. Click "Build with Parameters"
-2. Set:
-   - `SKIP_DEPLOY`: **true**
-   - `DEPLOY_LOCALLY`: **true**
-3. Click "Build"
-
-**For Build Only (No Deployment):**
-1. Click "Build with Parameters"
-2. Set:
-   - `SKIP_DEPLOY`: **true**
-   - `DEPLOY_LOCALLY`: **false**
-3. Click "Build"
-
-### 5. Access Application
-After successful deployment:
-- Frontend: http://localhost:4200
-- API Gateway: https://localhost:8443
-- Eureka Dashboard: http://localhost:8761
+### 3. Access the Application
+- **Frontend**: http://localhost:4200
+- **API Gateway**: https://localhost:8443
+- **Eureka Dashboard**: http://localhost:8761
+- **MongoDB**: mongodb://admin:password@localhost:27017
+- **Kafka**: localhost:9092
 
 ---
 
-## 📚 Documentation
+## 🛠️ Development Setup
 
-- **[JENKINS_DEPLOYMENT_GUIDE.md](./JENKINS_DEPLOYMENT_GUIDE.md)** - Complete deployment guide
-- **[TODO.md](./TODO.md)** - Project roadmap and pending tasks
-- **[Jenkinsfile](./Jenkinsfile)** - Pipeline configuration
-- **[docker-compose.yml](./docker-compose.yml)** - Container orchestration
+### Backend Development
+
+```bash
+cd backend
+
+# Build all services
+mvn clean install -DskipTests
+
+# Run individual service locally
+cd user-service
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+### Frontend Development
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+
+# Build for production
+npm run build
+```
 
 ---
 
-## 🎯 Jenkins Pipeline Features
+## 🔄 CI/CD Pipeline
 
-### ✅ Implemented:
-- ✅ Automated build for all microservices
+### Jenkins Pipeline Features
+- ✅ Automated builds on Git push
+- ✅ Maven build and dependency management
 - ✅ Docker image creation and publishing
-- ✅ Multi-tag strategy (build number + stable)
-- ✅ Local deployment via Jenkins
-- ✅ Remote SSH deployment support
-- ✅ Email notifications (success/failure)
-- ✅ Parameterized builds
-- ✅ Build artifact management
-- ✅ Zero-downtime deployment
-- ✅ Health checks for services
+- ✅ Automated deployment (local or remote)
+- ✅ Email notifications
 - ✅ Rollback capability
+- ✅ Optional testing and code analysis
 
-### 🔄 Optional Features:
-- Automated testing (enable with `RUN_TESTS=true`)
-- SonarQube integration (enable with `RUN_SONAR=true`)
+### Pipeline Stages
+1. **Checkout** - Pull latest code from GitHub
+2. **Build & Test Backend** - Maven build all microservices
+3. **Test Backend Services** - Run unit and integration tests (optional)
+4. **SonarQube Analysis** - Code quality analysis (optional)
+5. **Dockerize & Publish** - Build and push Docker images
+6. **Deploy** - Deploy to local or remote environment
+7. **Verify** - Health checks and smoke tests
+
+### Setup Jenkins CI/CD
+
+See [JENKINS_TROUBLESHOOTING.md](./JENKINS_TROUBLESHOOTING.md) for detailed setup instructions.
+
+#### Quick Setup
+```bash
+# Start Jenkins with Docker
+docker run -d \
+  --name jenkins-cicd \
+  --restart unless-stopped \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v jenkins_m2_cache:/root/.m2 \
+  --group-add $(stat -f '%g' /var/run/docker.sock) \
+  jenkins/jenkins:lts-jdk17
+
+# Get initial admin password
+docker exec jenkins-cicd cat /var/jenkins_home/secrets/initialAdminPassword
+```
+
+#### Configure Pipeline
+1. Create new Pipeline job in Jenkins
+2. Configure Git repository: https://github.com/mahdikheirkhah/buy-01.git
+3. Set Script Path: `Jenkinsfile`
+4. Add Docker Hub credentials (ID: `dockerhub-credentials`)
+5. Setup GitHub webhook for automatic builds
 
 ---
 
-## 🛠️ Pipeline Stages
+## 🧪 Testing
 
-1. **Checkout** - Clone code from GitHub
-2. **Build & Test Backend** - Maven build all services
-3. **Test Backend Services** (Optional) - Run unit/integration tests
-4. **SonarQube Analysis** (Optional) - Code quality scanning
-5. **Dockerize & Publish** - Build and push Docker images
-6. **Deploy Locally** (Optional) - Deploy on Jenkins machine
-7. **Deploy & Verify** (Optional) - Deploy to remote server via SSH
-8. **Local Deploy Info** - Show deployment instructions
+### Backend Tests
+```bash
+cd backend
+
+# Run all tests
+mvn test
+
+# Run tests for specific service
+cd user-service
+mvn test
+
+# Run with coverage
+mvn test jacoco:report
+```
+
+### Frontend Tests
+```bash
+cd frontend
+
+# Run unit tests
+npm test
+
+# Run e2e tests
+npm run e2e
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### Integration Tests
+```bash
+# Start test environment
+docker compose -f docker-compose.test.yml up -d
+
+# Run integration tests
+mvn verify -P integration-tests
+
+# Stop test environment
+docker compose -f docker-compose.test.yml down
+```
 
 ---
 
@@ -159,229 +194,258 @@ After successful deployment:
 
 All images are published to Docker Hub: `mahdikheirkhah/*`
 
-### Services:
-- `mahdikheirkhah/discovery-service:latest`
-- `mahdikheirkhah/api-gateway:latest`
-- `mahdikheirkhah/user-service:latest`
-- `mahdikheirkhah/product-service:latest`
-- `mahdikheirkhah/media-service:latest`
-- `mahdikheirkhah/dummy-data:latest`
-- `mahdikheirkhah/frontend:latest`
+### Available Images
+- `mahdikheirkhah/discovery-service`
+- `mahdikheirkhah/api-gateway`
+- `mahdikheirkhah/user-service`
+- `mahdikheirkhah/product-service`
+- `mahdikheirkhah/media-service`
+- `mahdikheirkhah/dummy-data`
+- `mahdikheirkhah/frontend`
 
-### Tags:
-- **Build Number** (e.g., `26`) - Specific build version
-- **stable** - Last successful deployment
+### Tags
+- `latest` - Latest build from main branch
+- `stable` - Last known stable version (for rollback)
+- `<build-number>` - Specific build version (e.g., `27`, `28`)
 
----
-
-## 🔐 Security Features
-
-- ✅ HTTPS/TLS support on API Gateway
-- ✅ MongoDB authentication
-- ✅ Jenkins credentials management
-- ✅ Docker secrets (planned)
-- ✅ CORS configuration
-- ✅ JWT authentication (in progress)
-- ✅ Rate limiting (planned)
-
----
-
-## 🧪 Testing
-
-### Unit Tests:
+### Build Images Manually
 ```bash
-# In each service directory
-mvn test
+# Build all backend services
+cd backend
+mvn clean package -DskipTests
+
+# Build frontend
+cd frontend
+docker build -t mahdikheirkhah/frontend:local .
+
+# Build specific service
+docker build -t mahdikheirkhah/user-service:local -f backend/user-service/Dockerfile backend/
 ```
 
-### Integration Tests:
-```bash
-# Run with Jenkins pipeline
-Build Parameters → RUN_TESTS: true
-```
+---
 
-### Manual Testing:
-Access Swagger UI at: `https://localhost:8443/swagger-ui.html`
+## 🔐 Security
+
+### HTTPS Configuration
+- API Gateway uses self-signed certificate for development
+- Certificate location: `backend/api-gateway/src/main/resources/keystore.p12`
+- Production: Replace with valid SSL certificate
+
+### Authentication & Authorization
+- JWT-based authentication
+- Role-based access control (ADMIN, USER, SELLER)
+- Secure password hashing with BCrypt
+
+### Security Headers
+- CORS configured for localhost development
+- CSRF protection enabled
+- Security headers via Spring Security
 
 ---
 
-## 📊 Monitoring & Logs
+## 🌍 Environment Variables
 
-### View Service Logs:
+### Backend Services
+```properties
+# MongoDB
+SPRING_DATA_MONGODB_URI=mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+
+# Kafka
+SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+
+# Eureka
+EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+
+# Profile
+SPRING_PROFILES_ACTIVE=prod
+```
+
+### Frontend
+```properties
+# API Gateway URL
+API_GATEWAY_URL=https://localhost:8443
+```
+
+### Docker Compose
 ```bash
-# All services
-docker compose logs -f
+# Image tag (set before docker compose up)
+export IMAGE_TAG=stable
 
-# Specific service
+# Docker repository
+export DOCKER_REPO=mahdikheirkhah
+```
+
+---
+
+## 📊 Monitoring & Health Checks
+
+### Health Endpoints
+- Discovery Service: http://localhost:8761/actuator/health
+- API Gateway: https://localhost:8443/actuator/health
+- User Service: http://localhost:8081/actuator/health
+- Product Service: http://localhost:8082/actuator/health
+- Media Service: http://localhost:8083/actuator/health
+
+### Service Discovery
+Access Eureka Dashboard: http://localhost:8761
+
+### Logs
+```bash
+# View logs for specific service
 docker compose logs -f user-service
 
+# View all logs
+docker compose logs -f
+
 # Last 100 lines
-docker compose logs --tail=100 product-service
-```
-
-### Service Health:
-```bash
-# Check all services
-docker compose ps
-
-# Check specific service health
-curl http://localhost:8081/actuator/health
-```
-
----
-
-## 🔄 Deployment Modes
-
-### 1. Local Deployment (Jenkins Machine)
-```
-Parameters:
-- SKIP_DEPLOY: true
-- DEPLOY_LOCALLY: true
-
-Result: Deploys to Jenkins host machine
-```
-
-### 2. Build Only
-```
-Parameters:
-- SKIP_DEPLOY: true
-- DEPLOY_LOCALLY: false
-
-Result: Builds and publishes images only
-```
-
-### 3. Remote Deployment (SSH)
-```
-Parameters:
-- SKIP_DEPLOY: false
-- DEPLOY_LOCALLY: false
-
-Result: Deploys to remote server via SSH
-Requires: SSH credentials configured
+docker compose logs --tail=100
 ```
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Issue: Jenkins build fails at Docker login
-**Solution**: Configure Docker Hub credentials in Jenkins
-- ID: `dockerhub-credentials`
+### Common Issues
 
-### Issue: SSH deployment fails
-**Solution**: Either:
-- Add SSH credentials (ID: `ssh-deployment-key`), OR
-- Use local deployment (`DEPLOY_LOCALLY=true`)
-
-### Issue: Services not starting
-**Solution**:
+#### Services not starting
 ```bash
-docker compose down
-docker compose pull
-docker compose up -d
-docker compose logs -f
+# Check service status
+docker compose ps
+
+# Check logs
+docker compose logs <service-name>
+
+# Restart specific service
+docker compose restart <service-name>
 ```
 
-### Issue: Port conflicts
-**Solution**: Stop conflicting services:
+#### Database connection issues
 ```bash
-# Check ports
-lsof -i :4200,8443,8761
+# Check MongoDB is running
+docker compose ps buy-01
 
-# Stop containers
-docker compose down
+# Test MongoDB connection
+docker exec -it buy-01 mongosh -u admin -p password --authenticationDatabase admin
 ```
 
----
-
-## 🔄 Rollback
-
-### Rollback to Stable Version:
+#### Kafka issues
 ```bash
+# Check Kafka logs
+docker compose logs kafka
+
+# List Kafka topics
+docker exec -it kafka kafka-topics --list --bootstrap-server localhost:9092
+```
+
+#### Jenkins pipeline issues
+See [JENKINS_TROUBLESHOOTING.md](./JENKINS_TROUBLESHOOTING.md) for comprehensive troubleshooting guide.
+
+### Reset Everything
+```bash
+# Stop and remove all containers
+docker compose down -v
+
+# Remove images (optional)
+docker rmi $(docker images 'mahdikheirkhah/*' -q)
+
+# Start fresh
 export IMAGE_TAG=stable
-docker compose down
-docker compose pull
-docker compose up -d
-```
-
-### Rollback to Specific Build:
-```bash
-export IMAGE_TAG=25  # Previous build number
-docker compose down
 docker compose pull
 docker compose up -d
 ```
 
 ---
 
-## 📈 Performance
+## 📝 API Documentation
 
-- **Build Time**: ~3-5 minutes (backend + frontend)
-- **Deployment Time**: ~30 seconds (local), ~60 seconds (remote)
-- **Docker Image Sizes**:
-  - Backend services: ~200-250 MB each
-  - Frontend: ~300 MB
+### Authentication Endpoints
+```
+POST /users/register     - Register new user
+POST /users/login        - Login and get JWT token
+GET  /users/profile      - Get current user profile
+PUT  /users/profile      - Update user profile
+```
+
+### Product Endpoints
+```
+GET    /products              - List all products
+GET    /products/{id}         - Get product by ID
+POST   /products              - Create new product (SELLER)
+PUT    /products/{id}         - Update product (SELLER)
+DELETE /products/{id}         - Delete product (SELLER)
+GET    /products/search?q={}  - Search products
+```
+
+### Media Endpoints
+```
+POST   /media/upload          - Upload image
+GET    /media/{id}            - Get image by ID
+DELETE /media/{id}            - Delete image
+```
+
+For complete API documentation, import Postman collection from `/docs/api-collection.json`
 
 ---
 
 ## 🤝 Contributing
 
-1. Create feature branch: `git checkout -b feature/your-feature`
-2. Commit changes: `git commit -am 'Add feature'`
-3. Push branch: `git push origin feature/your-feature`
-4. Create Pull Request
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-### Commit Convention:
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation
-- `refactor:` Code refactoring
-- `test:` Tests
-- `ci:` CI/CD changes
-
----
-
-## 📧 Contact & Support
-
-- **Maintainer**: Mohammad Kheirkhah
-- **Email**: mohammad.kheirkhah@gritlab.ax
-- **GitHub**: [@mahdikheirkhah](https://github.com/mahdikheirkhah)
+### Code Style
+- Backend: Follow Google Java Style Guide
+- Frontend: Follow Angular Style Guide
+- Use meaningful commit messages
+- Write tests for new features
 
 ---
 
 ## 📄 License
 
-This project is for educational purposes.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
-## 🎓 Learning Objectives (MR-Jenk Module)
+## 👥 Authors
 
-This project demonstrates:
-- ✅ Jenkins setup and configuration
-- ✅ CI/CD pipeline creation
-- ✅ Automated testing integration
-- ✅ Automated deployment strategies
-- ✅ Rollback mechanisms
-- ✅ Email notifications
-- ✅ Parameterized builds
-- ✅ Distributed builds capability
-- ✅ Docker integration
-- ✅ Multi-environment deployment
+- **Mohammad Kheirkhah** - *Initial work* - [mahdikheirkhah](https://github.com/mahdikheirkhah)
 
 ---
 
-## 🚀 Next Steps
+## 🙏 Acknowledgments
 
-See [TODO.md](./TODO.md) for:
-- Planned features
-- Known issues
-- Improvement areas
-- Production readiness checklist
+- Spring Boot team for excellent microservices framework
+- Netflix OSS for Eureka service discovery
+- Angular team for modern frontend framework
+- Docker for containerization platform
+- Jenkins for CI/CD automation
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: December 22, 2025  
-**Build Status**: ✅ Passing
+## 📚 Additional Resources
+
+- [Spring Boot Documentation](https://spring.io/projects/spring-boot)
+- [Spring Cloud Documentation](https://spring.io/projects/spring-cloud)
+- [Angular Documentation](https://angular.io/docs)
+- [Docker Documentation](https://docs.docker.com/)
+- [Jenkins Documentation](https://www.jenkins.io/doc/)
+- [MongoDB Documentation](https://docs.mongodb.com/)
+- [Apache Kafka Documentation](https://kafka.apache.org/documentation/)
+
+---
+
+## 📞 Support
+
+For issues, questions, or suggestions:
+- Open an issue on GitHub
+- Email: mohammad.kheirkhah@gritlab.ax
+- Check [JENKINS_TROUBLESHOOTING.md](./JENKINS_TROUBLESHOOTING.md) for CI/CD issues
+- Check [TODO.md](./TODO.md) for planned features and known issues
+
+---
+
+**Happy Coding! 🚀**
 
