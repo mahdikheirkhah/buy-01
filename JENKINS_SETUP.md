@@ -1,157 +1,290 @@
-# Jenkins Setup Guide for Local Development
+# Jenkins Docker Setup Guide
 
-## Quick Start with Docker (Recommended)
+## Overview
+This guide explains how to set up Jenkins with Docker support for the e-commerce microservices CI/CD pipeline.
 
-### 1. Start Jenkins Container
+## Prerequisites
+- Docker and Docker Compose installed on your machine
+- Sufficient disk space (at least 10GB free)
+- Port 8080 and 50000 available
+
+## Quick Start
+
+### 1. Start Jenkins with Docker Support
 
 ```bash
-cd /Users/mohammad.kheirkhah/Desktop/buy-01
-docker compose -f jenkins-docker-compose.yml up -d
+# From the project root directory
+docker compose -f docker-compose.jenkins.yml up -d
 ```
 
-### 2. Get Initial Admin Password
+This will:
+- Build a custom Jenkins image with Docker CLI and Docker Compose pre-installed
+- Create a container named `jenkins-cicd` (required by the Jenkinsfile)
+- Mount the Docker socket for Docker-in-Docker functionality
+- Create persistent volumes for Jenkins data and Maven cache
+
+### 2. Access Jenkins
+
+Open your browser and go to: http://localhost:8080
+
+### 3. Get Initial Admin Password (if needed)
+
+If this is a fresh install:
 
 ```bash
 docker exec jenkins-cicd cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 
-Copy this password - you'll need it for the web setup.
+### 4. Configure Jenkins
 
-### 3. Access Jenkins
+1. **Install suggested plugins** (if this is a fresh install)
+2. **Create admin user**
+3. **Configure credentials:**
+   - Go to: Manage Jenkins > Credentials > System > Global credentials
+   - Add the following credentials:
 
-Open your browser and go to: http://localhost:8080
+#### Docker Hub Credentials
+- **Kind**: Username with password
+- **ID**: `dockerhub-credentials`
+- **Username**: Your Docker Hub username
+- **Password**: Your Docker Hub password or access token
+- **Description**: Docker Hub Credentials
 
-- Paste the initial admin password
-- Install suggested plugins
-- Create your first admin user
-- Start using Jenkins!
+#### GitHub Credentials (if using private repo)
+- **Kind**: Username with password
+- **ID**: `github-packages-creds`
+- **Username**: Your GitHub username
+- **Password**: Your GitHub Personal Access Token
+- **Description**: GitHub Credentials
 
-### 4. Configure Jenkins for Your Project
+### 6. Configure Email Notifications (Optional but Recommended)
 
-#### A. Install Required Plugins
+#### Quick Setup for Gmail:
 
-Go to **Manage Jenkins → Plugins → Available Plugins** and install:
-- Docker Pipeline
-- Git plugin (usually pre-installed)
-- SSH Agent Plugin (for deployment)
+1. **Enable 2-Step Verification** on your Gmail account:
+   - Go to: https://myaccount.google.com/security
+   - Enable 2-Step Verification
 
-#### B. Add Docker Hub Credentials
+2. **Generate App Password**:
+   - Go to: https://myaccount.google.com/apppasswords
+   - Select app: Mail
+   - Select device: Other (Custom name) → "Jenkins"
+   - Copy the 16-character password
 
-1. Go to **Manage Jenkins → Credentials → System → Global credentials**
-2. Click **Add Credentials**
-3. Choose **Username with password**
-4. Set:
-   - **ID**: `dockerhub-creds` (must match Jenkinsfile)
-   - **Username**: `mahdikheirkhah`
-   - **Password**: Your Docker Hub Personal Access Token
-   - **Description**: Docker Hub Credentials
+3. **Configure in Jenkins**:
+   - Go to: **Manage Jenkins** → **Configure System**
+   - Scroll to **Extended E-mail Notification**:
+     ```
+     SMTP server: smtp.gmail.com
+     SMTP Port: 587
+     ☑ Use SMTP Authentication
+     User Name: your-email@gmail.com
+     Password: [Your 16-character App Password]
+     ☑ Use TLS
+     Default Recipients: your-email@gmail.com
+     ```
+   - Scroll to **E-mail Notification**:
+     ```
+     SMTP server: smtp.gmail.com
+     ☑ Use SMTP Authentication
+     User Name: your-email@gmail.com
+     Password: [Your 16-character App Password]
+     ☑ Use TLS
+     SMTP Port: 587
+     ```
+   - Click **Test configuration by sending test e-mail**
+   - Enter your email and click **Test configuration**
+   - Check your inbox (and spam folder)
 
-#### C. Create a New Pipeline Job
+4. **If test email doesn't arrive**:
+   - See [EMAIL_SETUP.md](EMAIL_SETUP.md) for detailed troubleshooting
 
-1. Click **New Item**
-2. Enter name: `ecommerce-microservices`
-3. Choose **Pipeline**
-4. Click **OK**
-5. In the **Pipeline** section:
-   - **Definition**: Pipeline script from SCM
-   - **SCM**: Git
-   - **Repository URL**: `https://github.com/mahdikheirkhah/buy-01.git`
-   - **Branch**: `*/main`
-   - **Script Path**: `Jenkinsfile`
-6. Click **Save**
+### 7. Create Jenkins Pipeline Job
 
-### 5. Run Your First Build
+1. Click "New Item"
+2. Enter name: `e-commerce-microservices-ci-cd`
+3. Select "Pipeline"
+4. Under "Pipeline":
+   - Definition: Pipeline script from SCM
+   - SCM: Git
+   - Repository URL: `https://github.com/mahdikheirkhah/buy-01.git`
+   - Credentials: Select your GitHub credentials (or leave empty for public repo)
+   - Branch: `*/main`
+   - Script Path: `Jenkinsfile`
+5. Save
 
-Click **Build Now** and watch the pipeline execute!
+### 6. Configure Email Notifications (Optional)
 
----
+1. Go to: Manage Jenkins > System
+2. Find "Extended E-mail Notification"
+3. Configure your SMTP settings:
+   - SMTP server: `smtp.gmail.com`
+   - SMTP port: `587`
+   - Use TLS
+   - Add credentials for your email
+4. Set default recipients
 
-## Alternative: Install Jenkins Directly on macOS
+## Verifying the Setup
 
-If you prefer to install Jenkins as a native service:
-
+### Check Docker Access
 ```bash
-# Install via Homebrew
-brew install jenkins-lts
-
-# Start Jenkins
-brew services start jenkins-lts
-
-# Access at http://localhost:8080
-# Get initial password:
-cat /usr/local/var/jenkins_home/secrets/initialAdminPassword
+docker exec jenkins-cicd docker --version
+docker exec jenkins-cicd docker compose version
 ```
 
----
+You should see:
+- Docker version 29.x.x or higher
+- Docker Compose version v5.x.x or higher
+
+### Check Jenkins Logs
+```bash
+docker logs jenkins-cicd -f
+```
+
+Look for: "Jenkins is fully up and running"
+
+### Test a Build
+
+1. Open your pipeline job
+2. Click "Build with Parameters"
+3. Use default parameters:
+   - BRANCH: `main`
+   - RUN_TESTS: `false` (tests require embedded MongoDB/Kafka)
+   - RUN_SONAR: `false` (unless you have SonarQube configured)
+   - SKIP_DEPLOY: `true`
+   - DEPLOY_LOCALLY: `true`
+4. Click "Build"
+
+## Architecture
+
+### Container Name
+The container MUST be named `jenkins-cicd` because the Jenkinsfile uses:
+```groovy
+docker run --rm --volumes-from jenkins-cicd ...
+```
+
+### Volumes
+- `jenkins_home`: Persists Jenkins configuration, jobs, and plugins
+- `jenkins_m2_cache`: Caches Maven dependencies to speed up builds
+- `/var/run/docker.sock`: Allows Jenkins to control the host Docker daemon
+
+### User Permissions
+Jenkins runs as `root` inside the container to have access to the Docker socket.
 
 ## Troubleshooting
 
-### Jenkins can't access Docker
+### Issue: "docker: not found"
+**Solution**: Your Jenkins container doesn't have Docker CLI installed.
+- Rebuild the Jenkins image: `docker compose -f docker-compose.jenkins.yml build`
+- Restart Jenkins: `docker compose -f docker-compose.jenkins.yml up -d`
 
-If you're using Docker-in-Docker, ensure the Jenkins container has access to the Docker socket:
-
+### Issue: "permission denied while trying to connect to Docker daemon"
+**Solution**: Docker socket permissions issue.
 ```bash
-# Already configured in jenkins-docker-compose.yml
-# The volume mount: /var/run/docker.sock:/var/run/docker.sock
+# On macOS/Linux
+ls -la /var/run/docker.sock
+# Should show: srw-rw---- 1 root docker
+
+# If needed, add jenkins to docker group
+docker exec -u root jenkins-cicd usermod -aG docker jenkins
+docker restart jenkins-cicd
 ```
 
-### Permission Issues
+### Issue: "Could not find credentials entry with ID 'dockerhub-credentials'"
+**Solution**: Add Docker Hub credentials in Jenkins:
+1. Go to: Manage Jenkins > Credentials
+2. Add "Username with password" credential
+3. ID must be: `dockerhub-credentials`
 
-If Jenkins can't execute Docker commands:
-
+### Issue: Container name is wrong
+**Solution**: The container must be named `jenkins-cicd`. Check:
 ```bash
-# Enter Jenkins container
-docker exec -it jenkins-cicd bash
-
-# Install Docker CLI inside Jenkins container
-apt-get update && apt-get install -y docker.io
-
-# Or use the jenkins/jenkins:lts-jdk11 image which includes Docker
+docker ps | grep jenkins
 ```
 
-### Build Fails on Maven
-
-The Jenkinsfile expects `./mvnw` in the project root. Make sure your Maven wrapper exists:
-
-```bash
-cd /Users/mohammad.kheirkhah/Desktop/buy-01
-ls -la mvnw  # Should exist
+If it's named differently, update docker-compose.jenkins.yml:
+```yaml
+services:
+  jenkins:
+    container_name: jenkins-cicd  # Must be this name!
 ```
 
-If not, you need to add Maven wrapper to your project.
+### Issue: Build fails at "Dockerize & Publish" stage
+**Possible causes:**
+1. Docker Hub credentials not configured
+2. Network issues
+3. Docker Hub repository doesn't exist
 
----
+**Solutions:**
+- Verify credentials are correct
+- Create repositories on Docker Hub (or set to public)
+- Check Jenkins logs for specific error
 
-## Without Jenkins (Alternative: Use deploy.sh directly)
+### Issue: "docker compose: command not found"
+**Solution**: You need Docker Compose v2 (plugin version).
+- Check: `docker compose version`
+- If you have docker-compose (v1), create an alias or install v2
 
-If you don't want to set up Jenkins right now, you can use the `deploy.sh` script directly:
+## Maintenance
 
+### Stop Jenkins
 ```bash
-cd /Users/mohammad.kheirkhah/Desktop/buy-01
-
-# Set environment variables
-export DOCKER_USERNAME=mahdikheirkhah
-export DOCKER_PASSWORD=your_docker_token_here
-export IMAGE_TAG=v1.0.0
-
-# Run deployment
-bash deploy.sh
+docker compose -f docker-compose.jenkins.yml down
 ```
 
-This achieves the same result as the Jenkins pipeline but manually.
+### Restart Jenkins
+```bash
+docker restart jenkins-cicd
+```
 
----
+### View Logs
+```bash
+docker logs jenkins-cicd -f
+```
+
+### Backup Jenkins Data
+```bash
+docker run --rm \
+  --volumes-from jenkins-cicd \
+  -v $(pwd)/backup:/backup \
+  alpine tar czf /backup/jenkins-backup-$(date +%Y%m%d).tar.gz /var/jenkins_home
+```
+
+### Restore Jenkins Data
+```bash
+docker run --rm \
+  --volumes-from jenkins-cicd \
+  -v $(pwd)/backup:/backup \
+  alpine tar xzf /backup/jenkins-backup-YYYYMMDD.tar.gz -C /
+```
+
+### Clean Up Everything (Start Fresh)
+```bash
+# WARNING: This will delete all Jenkins data!
+docker compose -f docker-compose.jenkins.yml down -v
+docker volume rm jenkins_home jenkins_m2_cache
+docker rmi jenkins-with-docker:lts
+```
+
+## Build Parameters Explained
+
+- **BRANCH**: Git branch to build (default: `main`)
+- **RUN_TESTS**: Run unit tests (requires test containers, default: `false`)
+- **RUN_SONAR**: Run SonarQube analysis (requires SonarQube server, default: `false`)
+- **SKIP_DEPLOY**: Skip deployment stage (default: `true`)
+- **DEPLOY_LOCALLY**: Deploy on Jenkins machine without SSH (default: `true`)
 
 ## Next Steps
 
-1. ✅ Choose Jenkins setup method (Docker or native)
-2. ✅ Configure credentials
-3. ✅ Create pipeline job
-4. ✅ Run first build
-5. 🔄 Set up remote deployment server (optional)
-6. 🔄 Configure SSH credentials for deployment stage
+1. Set up webhook on GitHub for automatic builds
+2. Configure SonarQube for code quality analysis
+3. Set up proper test containers for running tests
+4. Configure remote deployment with SSH keys
+5. Set up backup automation
 
----
+## References
 
-**Note**: The Jenkinsfile deployment stage requires a remote server. If you're just testing locally, you can skip that stage or modify it to deploy locally.
+- [Jenkins Docker Documentation](https://www.jenkins.io/doc/book/installing/docker/)
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [Jenkins Pipeline Syntax](https://www.jenkins.io/doc/book/pipeline/syntax/)
 
