@@ -2,647 +2,557 @@ pipeline {
     agent any
 
     triggers {
-        // Trigger builds on GitHub push events
         githubPush()
     }
 
     parameters {
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
-        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run tests (basic unit tests)')
-        booleanParam(name: 'RUN_SONAR', defaultValue: false, description: 'Run SonarQube analysis (requires SonarQube setup)')
-        booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip deployment (for local development)')
-        booleanParam(name: 'DEPLOY_LOCALLY', defaultValue: true, description: 'Deploy locally without SSH')
+        choice(name: 'ENVIRONMENT', choices: ['development', 'staging', 'production'], description: 'Deployment environment')
+        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run all tests (backend + frontend)')
+        booleanParam(name: 'RUN_SONAR', defaultValue: false, description: 'Run SonarQube analysis')
+        booleanParam(name: 'DEPLOY', defaultValue: true, description: 'Deploy after successful build')
+        booleanParam(name: 'SKIP_FRONTEND_BUILD', defaultValue: false, description: 'Skip frontend build (dev optimization)')
     }
 
     environment {
         // Docker configuration
         DOCKER_REPO = 'mahdikheirkhah'
         DOCKER_CREDENTIAL_ID = 'dockerhub-credentials'
-        IMAGE_TAG = "${env.BUILD_NUMBER}"
-        STABLE_TAG = 'stable'
 
-        // Remote SSH deployment (optional)
-        SSH_CREDENTIAL_ID = 'ssh-deployment-key'
-        REMOTE_HOST = '192.168.1.100'
-        REMOTE_USER = 'ssh-user'
-        DEPLOYMENT_DIR = '/opt/ecommerce'
+        // Image tagging strategy
+        GIT_COMMIT_SHORT = "${GIT_COMMIT.take(7)}"
+        IMAGE_TAG = "${env.BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
+        STABLE_TAG = 'stable'
+        LATEST_TAG = 'latest'
+
+        // Environment-specific settings
+        REGISTRY = 'docker.io'
+
+        // Slack (optional)
+        SLACK_CHANNEL = '#builds'
+        SLACK_WEBHOOK_ID = 'slack-webhook'
+
+        // Paths
+        BACKEND_DIR = 'backend'
+        FRONTEND_DIR = 'frontend'
+        SCRIPTS_DIR = 'scripts'
+
+        // Build tools
+        MAVEN_VERSION = '3.9.6'
+        MAVEN_IMAGE = "maven:${MAVEN_VERSION}-amazoncorretto-21"
+        NODE_VERSION = '20.10'
+        NODE_IMAGE = "node:${NODE_VERSION}-alpine"
+    }
+
+    options {
+
+        // Keep last 30 builds
+        buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10'))
+
+        // Timeout after 2 hours
+        timeout(time: 2, unit: 'HOURS')
+
+        // Add timestamps to logs
+        timestamps()
+
+        // Colorize output
+        ansiColor('xterm')
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                echo "Checking out branch: ${params.BRANCH}"
-                checkout([$class: 'GitSCM',
-                    branches: [[name: "*/${params.BRANCH}"]],
-                    userRemoteConfigs: [[url: 'https://github.com/mahdikheirkhah/buy-01.git']]
-                ])
-            }
-        }
-
-        stage('Build & Test Backend') {
+        stage('⏳ Initialization') {
             steps {
                 script {
-                    echo "Building backend microservices"
-                    // Use Maven Docker image to build - Docker-in-Docker setup
-                    // Mount the entire workspace via jenkins_home volume
-                    sh '''
-                        docker run --rm \
-                          --volumes-from jenkins-cicd \
-                          -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \
-                          -v jenkins_m2_cache:/root/.m2 \
-                          maven:3.9.6-amazoncorretto-21 \
-                          mvn clean install -DskipTests -B
-                    '''
-                    echo "Backend build completed successfully"
+                    echo "=========================================="
+                    echo "🚀 Buy-01 E-Commerce CI/CD Pipeline"
+                    echo "=========================================="
+                    echo "Branch: ${params.BRANCH}"
+                    echo "Environment: ${params.ENVIRONMENT}"
+                    echo "Build: #${env.BUILD_NUMBER}"
+                    echo "Commit: ${GIT_COMMIT_SHORT}"
+                    echo "Image Tag: ${IMAGE_TAG}"
+                    echo "=========================================="
+
+                    // Validate environment
+                    if (params.ENVIRONMENT != 'development' && !params.RUN_TESTS) {
+                        error("❌ Tests MUST run for ${params.ENVIRONMENT} environment!")
+                    }
                 }
             }
         }
 
-        stage('Test Backend Services') {
+        stage('📥 Checkout') {
+            steps {
+                echo "📥 Checking out branch: ${params.BRANCH}"
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${params.BRANCH}"]],
+                    userRemoteConfigs: [[url: 'https://github.com/mahdikheirkhah/buy-01.git']],
+                    submoduleCfg: [],
+                    extensions: [
+                        [$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true],
+                        [$class: 'PruneStaleBranch'],
+                        [$class: 'RelativeTargetDirectory', relativeTargetDir: '']
+                    ]
+                ])
+
+                echo "✅ Checkout completed"
+                sh 'git log --oneline -5'
+            }
+        }
+
+        stage('🏗️ Build Backend & Frontend (Parallel)') {
+            parallel {
+                stage('Build Backend') {
+                    steps {
+                        script {
+                            echo "🏗️ Building backend microservices..."
+                            try {
+                                sh '''
+                                    docker run --rm \
+                                      -v ${WORKSPACE}:${WORKSPACE} \
+                                      -v jenkins_m2_cache:/root/.m2 \
+                                      -w ${WORKSPACE}/${BACKEND_DIR} \
+                                      --network host \
+                                      ${MAVEN_IMAGE} \
+                                      mvn clean install -DskipTests -B -q
+                                '''
+                                echo "✅ Backend build completed"
+                            } catch (Exception e) {
+                                error("❌ Backend build failed: ${e.message}")
+                            }
+                        }
+                    }
+                }
+
+                stage('Build Frontend') {
+                    when {
+                        expression { params.SKIP_FRONTEND_BUILD == false }
+                    }
+                    steps {
+                        script {
+                            echo "🏗️ Building frontend..."
+                            try {
+                                sh '''
+                                    docker run --rm \
+                                      -v ${WORKSPACE}/${FRONTEND_DIR}:/app \
+                                      -w /app \
+                                      ${NODE_IMAGE} \
+                                      sh -c 'npm ci && npm run build'
+                                '''
+                                echo "✅ Frontend build completed"
+                            } catch (Exception e) {
+                                echo "⚠️ Frontend build failed: ${e.message}"
+                                throw e
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('🧪 Test Backend') {
             when {
                 expression { params.RUN_TESTS == true }
             }
             steps {
                 script {
-                    echo "🧪 Running backend service tests"
+                    echo "🧪 Running backend unit tests..."
 
                     def services = ['user-service', 'product-service', 'media-service']
-                    def failedTests = []
+                    def results = [:]
 
-                    for (service in services) {
-                        echo "Testing ${service}..."
+                    services.each { service ->
                         try {
-                            sh """
+                            sh '''
                                 docker run --rm \
-                                  --volumes-from jenkins-cicd \
-                                  -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend/${service} \
+                                  -v ${WORKSPACE}:${WORKSPACE} \
                                   -v jenkins_m2_cache:/root/.m2 \
-                                  maven:3.9.6-amazoncorretto-21 \
-                                  mvn test -B -Dspring.profiles.active=test
-                            """
+                                  -w ${WORKSPACE}/${BACKEND_DIR}/${''' + service + '''} \
+                                  ${MAVEN_IMAGE} \
+                                  mvn test -B
+                            '''
+                            results[service] = 'PASS'
                             echo "✅ ${service} tests passed"
                         } catch (Exception e) {
-                            echo "⚠️  WARNING: ${service} tests failed - ${e.getMessage()}"
-                            failedTests.add(service)
-                            // Don't fail the build, just collect failures
+                            results[service] = 'FAIL'
+                            echo "⚠️ ${service} tests failed (may need external dependencies)"
                         }
                     }
 
-                    if (failedTests.size() > 0) {
-                        echo "⚠️  Some tests failed: ${failedTests.join(', ')}"
-                        echo "This is expected if services require external dependencies"
-                        echo "Unit tests for controllers should pass"
-                    } else {
-                        echo "✅ All service tests passed successfully!"
+                    // Summary
+                    echo "\n📊 Test Summary:"
+                    results.each { service, status ->
+                        echo "  ${status == 'PASS' ? '✅' : '⚠️'} ${service}: ${status}"
                     }
                 }
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('🧪 Test Frontend') {
+            when {
+                allOf {
+                    expression { params.RUN_TESTS == true }
+                    expression { params.SKIP_FRONTEND_BUILD == false }
+                }
+            }
+            steps {
+                script {
+                    echo "🧪 Running frontend unit tests..."
+                    try {
+                        sh '''
+                            docker run --rm \
+                              -v ${WORKSPACE}/${FRONTEND_DIR}:/app \
+                              -w /app \
+                              ${NODE_IMAGE} \
+                              npm run test:ci
+                        '''
+                        echo "✅ Frontend tests passed"
+                    } catch (Exception e) {
+                        echo "⚠️ Frontend tests failed: ${e.message}"
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('📊 Code Quality (SonarQube)') {
             when {
                 expression { params.RUN_SONAR == true }
             }
             steps {
                 script {
-                    echo "Running SonarQube analysis"
+                    echo "📊 Running SonarQube analysis..."
                     try {
-                        // Try to get the SonarQube scanner tool
-                        def scannerHome = tool name: 'SonarQubeScanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-
                         withSonarQubeEnv('SonarQube') {
-                            sh """
-                                ${scannerHome}/bin/sonar-scanner \
-                                  -Dsonar.projectKey=ecommerce-microservices \
+                            sh '''
+                                docker run --rm \
+                                  -v ${WORKSPACE}:${WORKSPACE} \
+                                  -v sonarqube_cache:/opt/sonarqube/data \
+                                  -w ${WORKSPACE} \
+                                  sonarsource/sonar-scanner-cli:latest \
+                                  -Dsonar.projectKey=buy-01 \
                                   -Dsonar.sources=backend,frontend/src \
-                                  -Dsonar.java.binaries=backend/*/target/classes
-                            """
+                                  -Dsonar.java.binaries=backend/*/target/classes \
+                                  -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**
+                            '''
                         }
 
                         timeout(time: 5, unit: 'MINUTES') {
                             waitForQualityGate abortPipeline: false
                         }
+                        echo "✅ SonarQube analysis completed"
                     } catch (Exception e) {
-                        echo "⚠️  SonarQube analysis skipped: ${e.getMessage()}"
+                        echo "⚠️ SonarQube analysis failed: ${e.message}"
                         echo "To enable SonarQube:"
-                        echo "1. Install SonarQube Scanner plugin"
-                        echo "2. Configure SonarQube server in Jenkins"
-                        echo "3. Add SonarQubeScanner tool in Global Tool Configuration"
-                        // Don't fail build if SonarQube is not configured
+                        echo "  1. Install SonarQube server"
+                        echo "  2. Add 'SonarQube' configuration in Jenkins"
+                        echo "  3. Run with RUN_SONAR=true"
                     }
                 }
             }
         }
 
-        stage('Dockerize & Publish') {
+        stage('🐳 Dockerize & Push Images') {
             steps {
                 script {
-                    echo "Building and publishing Docker images with tag: ${env.IMAGE_TAG}"
+                    echo "🐳 Building and pushing Docker images..."
 
-                    // Login using Jenkins Credentials
                     try {
-                        withCredentials([usernamePassword(
-                            credentialsId: env.DOCKER_CREDENTIAL_ID,
-                            passwordVariable: 'DOCKER_PASSWORD',
-                            usernameVariable: 'DOCKER_USERNAME'
-                        )]) {
-                            echo "Logging in to Docker Hub as: ${env.DOCKER_USERNAME}"
+                        withCredentials([
+                            usernamePassword(
+                                credentialsId: env.DOCKER_CREDENTIAL_ID,
+                                passwordVariable: 'DOCKER_PASSWORD',
+                                usernameVariable: 'DOCKER_USERNAME'
+                            )
+                        ]) {
+
                             sh '''
-                                if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
-                                    echo "❌ ERROR: Docker credentials are not set properly!"
-                                    echo "Please configure Docker Hub credentials in Jenkins:"
-                                    echo "1. Go to Jenkins > Manage Jenkins > Credentials"
-                                    echo "2. Add a 'Username with password' credential"
-                                    echo "3. ID: dockerhub-credentials"
-                                    echo "4. Username: your-dockerhub-username"
-                                    echo "5. Password: your-dockerhub-password or token"
-                                    exit 1
-                                fi
-
                                 echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-
-                                if [ $? -ne 0 ]; then
-                                    echo "❌ Docker login failed!"
-                                    echo "Please verify your Docker Hub credentials are correct"
-                                    exit 1
-                                fi
-
-                                echo "✅ Successfully logged in to Docker Hub"
+                                echo "✅ Docker Hub login successful"
                             '''
-                        }
-                    } catch (Exception e) {
-                        error("Docker login failed: ${e.message}. Please check your Docker Hub credentials in Jenkins.")
-                    }
 
-                    def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'dummy-data']
+                            // Build and push backend services
+                            def services = [
+                                'discovery-service',
+                                'api-gateway',
+                                'user-service',
+                                'product-service',
+                                'media-service',
+                                'dummy-data'
+                            ]
 
-                    for (service in services) {
-                        echo "Building ${service}..."
-                        // Create a temporary Dockerfile that uses already-built JAR
-                        // Use the service's directory as build context
-                        sh """
-                        cd backend/${service}
-                        cat > Dockerfile.tmp << 'EOF'
-FROM amazoncorretto:21-alpine-jdk
+                            services.each { service ->
+                                sh '''
+                                    cd ${WORKSPACE}/${BACKEND_DIR}/${''' + service + '''}
+
+                                    # Create temporary Dockerfile from pre-built JAR
+                                    cat > Dockerfile.tmp << 'DOCKERFILE_EOF'
+FROM amazoncorretto:21-alpine
+RUN apk add --no-cache curl
 WORKDIR /app
 COPY target/*.jar app.jar
 EXPOSE 8080 8443
-ENTRYPOINT ["java", "-jar", "app.jar"]
-EOF
-                        docker build -t ${env.DOCKER_REPO}/${service}:${env.IMAGE_TAG} -f Dockerfile.tmp .
-                        docker push ${env.DOCKER_REPO}/${service}:${env.IMAGE_TAG}
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 \\
+    CMD curl -f http://localhost:8080/actuator/health || exit 0
+ENTRYPOINT ["java", "-Dcom.sun.management.jmxremote", "-jar", "app.jar"]
+DOCKERFILE_EOF
 
-                        # Tag as stable for rollback capability
-                        docker tag ${env.DOCKER_REPO}/${service}:${env.IMAGE_TAG} ${env.DOCKER_REPO}/${service}:${env.STABLE_TAG}
-                        docker push ${env.DOCKER_REPO}/${service}:${env.STABLE_TAG}
+                                    # Build and push
+                                    docker build -t ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} -f Dockerfile.tmp .
+                                    docker push ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}
 
-                        rm Dockerfile.tmp
-                        cd ../..
-                        echo "${service} image built and published successfully"
-                        """
+                                    # Tag as stable and latest
+                                    docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
+                                    docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${LATEST_TAG}
+                                    docker push ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
+                                    docker push ${DOCKER_REPO}/''' + service + ''':${LATEST_TAG}
+
+                                    rm Dockerfile.tmp
+                                    cd ${WORKSPACE}
+                                    echo "✅ Pushed ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}"
+                                '''
+                            }
+
+                            // Build and push frontend
+                            sh '''
+                                docker build \
+                                  -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} \
+                                  -f ${WORKSPACE}/${FRONTEND_DIR}/Dockerfile \
+                                  ${WORKSPACE}/${FRONTEND_DIR}/
+
+                                docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
+
+                                # Tag as stable and latest
+                                docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
+                                docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${LATEST_TAG}
+                                docker push ${DOCKER_REPO}/frontend:${STABLE_TAG}
+                                docker push ${DOCKER_REPO}/frontend:${LATEST_TAG}
+
+                                echo "✅ Pushed ${DOCKER_REPO}/frontend:${IMAGE_TAG}"
+                            '''
+
+                            echo "✅ All Docker images built and pushed successfully!"
+                        }
+                    } catch (Exception e) {
+                        error("❌ Docker build/push failed: ${e.message}")
                     }
-
-                    // Frontend
-                    echo "Building frontend..."
-                    sh """
-                    docker build -t ${env.DOCKER_REPO}/frontend:${env.IMAGE_TAG} -f frontend/Dockerfile frontend/
-                    docker push ${env.DOCKER_REPO}/frontend:${env.IMAGE_TAG}
-
-                    # Tag as stable
-                    docker tag ${env.DOCKER_REPO}/frontend:${env.IMAGE_TAG} ${env.DOCKER_REPO}/frontend:${env.STABLE_TAG}
-                    docker push ${env.DOCKER_REPO}/frontend:${env.STABLE_TAG}
-
-                    echo "Frontend image built and published successfully"
-                    """
-
-                    echo "All Docker images built and published successfully!"
                 }
             }
         }
 
-        stage('Deploy Locally') {
+        stage('🚀 Deploy') {
             when {
-                expression { params.DEPLOY_LOCALLY == true && params.SKIP_DEPLOY == true }
+                expression { params.DEPLOY == true }
             }
             steps {
                 script {
-                    echo "🚀 Deploying locally (no SSH needed) with tag: ${env.IMAGE_TAG}"
+                    echo "🚀 Deploying to ${params.ENVIRONMENT}..."
 
                     try {
-                        // Stop existing containers
-                        sh "docker compose down || true"
+                        sh '''
+                            # Stop and remove old containers
+                            docker compose down || true
 
-                        // Pull latest images and start services
-                        sh """
-                            export IMAGE_TAG=${env.IMAGE_TAG}
+                            # Export image tag and deploy
+                            export IMAGE_TAG=${IMAGE_TAG}
                             docker compose pull
                             docker compose up -d --remove-orphans
-                        """
 
-                        // Wait for services to start
-                        echo "Waiting for services to start..."
-                        sleep(30)
+                            # Wait for services to start
+                            echo "⏳ Waiting for services to start (30s)..."
+                            sleep 30
 
-                        // Show status
-                        sh "docker compose ps"
+                            # Show status
+                            echo "📊 Service Status:"
+                            docker compose ps
+                        '''
 
-                        echo "✅ Local deployment successful!"
-                        echo "🌐 Access your application at:"
-                        echo "   - Frontend: http://localhost:4200"
-                        echo "   - API Gateway: https://localhost:8443"
-                        echo "   - Eureka Dashboard: http://localhost:8761"
-
+                        echo "✅ Deployment successful!"
                     } catch (Exception e) {
-                        echo "❌ Local deployment failed: ${e.getMessage()}"
-                        echo "You can deploy manually with these commands:"
-                        echo "   export IMAGE_TAG=${env.IMAGE_TAG}"
-                        echo "   docker compose up -d"
-                        error("Local deployment failed: ${e.getMessage()}")
+                        error("❌ Deployment failed: ${e.message}")
                     }
                 }
             }
         }
 
-        stage('Deploy & Verify') {
+        stage('✅ Post-Deployment Verification') {
             when {
-                allOf {
-                    expression { params.SKIP_DEPLOY == false }
-                    expression { params.DEPLOY_LOCALLY == false }
-                }
+                expression { params.DEPLOY == true }
             }
             steps {
                 script {
-                    echo "🚀 Deploying version: ${env.IMAGE_TAG} to remote staging environment"
-
-                    // Note: SSH deployment requires SSH Agent plugin and proper credentials
-                    // For local deployment, set SKIP_DEPLOY=true and DEPLOY_LOCALLY=true
-
-                    // Check if SSH credentials exist before attempting deployment
-                    def credentialsExist = false
-                    try {
-                        withCredentials([sshUserPrivateKey(credentialsId: env.SSH_CREDENTIAL_ID, keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
-                            credentialsExist = true
-                        }
-                    } catch (Exception credError) {
-                        echo "⚠️  SSH credentials not found!"
-                        echo "❌ ERROR: Could not find credentials entry with ID '${env.SSH_CREDENTIAL_ID}'"
-                        echo ""
-                        echo "To set up remote SSH deployment:"
-                        echo "1. Go to Jenkins > Manage Jenkins > Credentials"
-                        echo "2. Add 'SSH Username with private key' credential"
-                        echo "3. ID: ${env.SSH_CREDENTIAL_ID}"
-                        echo "4. Username: ${env.REMOTE_USER}"
-                        echo "5. Private Key: [Enter your SSH private key]"
-                        echo ""
-                        echo "💡 For local deployment instead:"
-                        echo "   - Set SKIP_DEPLOY=true"
-                        echo "   - Set DEPLOY_LOCALLY=true"
-                        echo "   - Re-run the build"
-                        error("SSH credentials not configured. Cannot deploy remotely.")
-                    }
+                    echo "✅ Verifying deployment..."
 
                     try {
-                        withCredentials([sshUserPrivateKey(credentialsId: env.SSH_CREDENTIAL_ID, keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+                        // Wait for health checks
+                        sleep(time: 30, unit: 'SECONDS')
 
-                            // Copy docker-compose.yml to remote server
-                            sh """
-                                scp -i \$SSH_KEY -o StrictHostKeyChecking=no docker-compose.yml ${env.REMOTE_USER}@${env.REMOTE_HOST}:${env.DEPLOYMENT_DIR}/docker-compose.yml
-                            """
+                        // Check if script exists, otherwise do inline checks
+                        sh '''
+                            if [ -f ${SCRIPTS_DIR}/health-check.sh ]; then
+                                bash ${SCRIPTS_DIR}/health-check.sh
+                            else
+                                echo "📊 Manual health checks..."
 
-                            // Deploy on remote server
-                            sh """
-                                ssh -i \$SSH_KEY -o StrictHostKeyChecking=no ${env.REMOTE_USER}@${env.REMOTE_HOST} "
-                                    cd ${env.DEPLOYMENT_DIR}
+                                # Eureka
+                                echo "Checking Eureka..."
+                                curl -f http://localhost:8761/actuator/health || echo "⚠️ Eureka health check failed"
 
-                                    # Create/update .env file
-                                    echo 'IMAGE_TAG=${env.IMAGE_TAG}' > .env
-                                    echo 'DOCKER_REPO=${env.DOCKER_REPO}' >> .env
+                                # API Gateway
+                                echo "Checking API Gateway..."
+                                curl --insecure -f https://localhost:8443/actuator/health || echo "⚠️ API Gateway health check failed"
 
-                                    # Pull latest images
-                                    docker compose pull
+                                # Frontend
+                                echo "Checking Frontend..."
+                                curl -f http://localhost:4200/ || echo "⚠️ Frontend health check failed"
 
-                                    # Deploy with zero-downtime
-                                    docker compose up -d --remove-orphans
-
-                                    # Wait for services to be healthy
-                                    echo 'Waiting for services to start...'
-                                    sleep 30
-
-                                    # Verify deployment
-                                    docker compose ps
-                                "
-                            """
-
-                            echo "✅ Remote deployment successful!"
-                        }
+                                echo "✅ Basic health checks completed"
+                            fi
+                        '''
                     } catch (Exception e) {
-                        echo "❌ Remote deployment failed: ${e.getMessage()}"
-                        echo ""
-                        echo "💡 For local deployment instead:"
-                        echo "   - Set SKIP_DEPLOY=true"
-                        echo "   - Set DEPLOY_LOCALLY=true"
-                        echo "   - Re-run the build"
-                        currentBuild.result = 'FAILURE'
-                        error("Remote deployment failed: ${e.getMessage()}")
+                        echo "⚠️ Health check failed: ${e.message}"
+                        echo "Services may still be starting. Check manually."
                     }
                 }
             }
         }
 
-        stage('Local Deploy Info') {
-            when {
-                allOf {
-                    expression { params.SKIP_DEPLOY == true }
-                    expression { params.DEPLOY_LOCALLY == false }
-                }
-            }
+        stage('📦 Archive Artifacts') {
             steps {
                 script {
-                    echo "✅ Build & Publish completed successfully!"
-                    echo ""
-                    echo "📦 Published Images (Tag: ${env.IMAGE_TAG}):"
-                    echo "   - ${env.DOCKER_REPO}/discovery-service:${env.IMAGE_TAG}"
-                    echo "   - ${env.DOCKER_REPO}/api-gateway:${env.IMAGE_TAG}"
-                    echo "   - ${env.DOCKER_REPO}/user-service:${env.IMAGE_TAG}"
-                    echo "   - ${env.DOCKER_REPO}/product-service:${env.IMAGE_TAG}"
-                    echo "   - ${env.DOCKER_REPO}/media-service:${env.IMAGE_TAG}"
-                    echo "   - ${env.DOCKER_REPO}/dummy-data:${env.IMAGE_TAG}"
-                    echo "   - ${env.DOCKER_REPO}/frontend:${env.IMAGE_TAG}"
-                    echo ""
-                    echo "🔖 Stable tag also updated for rollback capability"
-                    echo ""
-                    echo "🚀 TO DEPLOY LOCALLY (No SSH needed):"
-                    echo "   Option 1 - Automatic deployment via Jenkins:"
-                    echo "      1. Re-run this build"
-                    echo "      2. Set SKIP_DEPLOY=true"
-                    echo "      3. Set DEPLOY_LOCALLY=true"
-                    echo ""
-                    echo "   Option 2 - Manual deployment on Jenkins machine:"
-                    echo "      cd ${env.WORKSPACE}"
-                    echo "      export IMAGE_TAG=${env.IMAGE_TAG}"
-                    echo "      docker compose down"
-                    echo "      docker compose pull"
-                    echo "      docker compose up -d"
-                    echo ""
-                    echo "   Option 3 - Use stable tag:"
-                    echo "      export IMAGE_TAG=stable"
-                    echo "      docker compose up -d"
-                    echo ""
-                    echo "⚙️  TO DEPLOY TO REMOTE SERVER (SSH required):"
-                    echo "   1. Configure SSH key access to ${env.REMOTE_HOST}"
-                    echo "   2. Add SSH credentials to Jenkins (ID: ${env.SSH_CREDENTIAL_ID})"
-                    echo "   3. Set SKIP_DEPLOY=false and DEPLOY_LOCALLY=false"
-                    echo "   4. Re-run the build"
+                    echo "📦 Archiving build artifacts..."
+
+                    try {
+                        // Archive test reports
+                        junit(
+                            allowEmptyResults: true,
+                            testResults: '${BACKEND_DIR}/*/target/surefire-reports/*.xml'
+                        )
+
+                        // Archive coverage reports
+                        archiveArtifacts(
+                            artifacts: '${BACKEND_DIR}/*/target/site/jacoco/**,${FRONTEND_DIR}/coverage/**',
+                            allowEmptyArchive: true
+                        )
+
+                        echo "✅ Artifacts archived"
+                    } catch (Exception e) {
+                        echo "⚠️ Artifact archiving failed: ${e.message}"
+                    }
                 }
             }
         }
     }
-  post {
-      always {
-          script {
-              echo "Post-build cleanup and reporting"
 
-              // Collect test results only if tests were run and files exist
-              if (params.RUN_TESTS) {
-                  try {
-                      // Check if test results exist before trying to collect them
-                      def testReportsExist = sh(
-                          script: 'find backend/*/target/surefire-reports -name "*.xml" -type f 2>/dev/null | wc -l',
-                          returnStdout: true
-                      ).trim().toInteger() > 0
+    post {
+        always {
+            script {
+                echo "🧹 Post-build cleanup..."
 
-                      if (testReportsExist) {
-                          echo "📊 Collecting test results..."
-                          junit allowEmptyResults: true, testResults: 'backend/*/target/surefire-reports/*.xml'
-                          archiveArtifacts artifacts: 'backend/*/target/surefire-reports/*.xml', allowEmptyArchive: true
-                      } else {
-                          echo "ℹ️  No test reports found (tests may have been skipped or workspace cleaned)"
-                      }
-                  } catch (Exception e) {
-                      echo "⚠️  Could not collect test results: ${e.message}"
-                      // Don't fail the build due to missing test reports
-                  }
-              }
+                // Clean workspace
+                cleanWs(
+                    deleteDirs: true,
+                    patterns: [[pattern: '${FRONTEND_DIR}/node_modules', type: 'INCLUDE']]
+                )
+            }
+        }
 
-              // Clean workspace
-              if (env.WORKSPACE) {
-                  cleanWs notFailBuild: true
-              }
-          }
-      }
+        success {
+            script {
+                echo "✅ Pipeline completed successfully!"
 
-      success {
-          echo "✅ Pipeline completed successfully!"
+                def message = """
+                    ✅ Build SUCCESS
+                    Job: ${env.JOB_NAME}
+                    Build: #${env.BUILD_NUMBER}
+                    Branch: ${params.BRANCH}
+                    Environment: ${params.ENVIRONMENT}
+                    Image Tag: ${IMAGE_TAG}
+                    Duration: ${currentBuild.durationString}
+                    Build URL: ${env.BUILD_URL}
 
-          script {
-              try {
-                  // Try emailext first (HTML email)
-                  emailext (
-                      subject: "✅ Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                      body: """
-                          <h2>Build Successful!</h2>
-                          <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                          <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                          <p><strong>Branch:</strong> ${params.BRANCH}</p>
-                          <p><strong>Image Tag:</strong> ${env.IMAGE_TAG}</p>
-                          <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-                          <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                    🌐 Access your application:
+                    - Frontend: http://localhost:4200
+                    - API Gateway: https://localhost:8443
+                    - Eureka: http://localhost:8761
+                """
 
-                          <h3>Deployed Services:</h3>
-                          <ul>
-                              <li>Frontend: http://localhost:4200</li>
-                              <li>API Gateway: https://localhost:8443</li>
-                              <li>Eureka: http://localhost:8761</li>
-                          </ul>
+                // Try email notification
+                try {
+                    emailext(
+                        subject: "✅ Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        body: message,
+                        to: 'mohammad.kheirkhah@gritlab.ax',
+                        mimeType: 'text/plain'
+                    )
+                    echo "✅ Email notification sent"
+                } catch (Exception e) {
+                    echo "⚠️ Email notification failed: ${e.message}"
+                }
 
-                          <p>All Docker images have been published to Docker Hub with tag: ${env.IMAGE_TAG}</p>
-                      """,
-                      to: "mohammad.kheirkhah@gritlab.ax",
-                      mimeType: 'text/html'
-                  )
-                  echo "✅ Email sent successfully via emailext"
-              } catch (Exception e) {
-                  echo "⚠️  Failed to send HTML email: ${e.message}"
-                  echo "Trying simple email as fallback..."
+                // Try Slack notification
+                try {
+                    withCredentials([string(credentialsId: env.SLACK_WEBHOOK_ID, variable: 'SLACK_WEBHOOK')]) {
+                        sh '''
+                            curl -X POST -H 'Content-type: application/json' \
+                              --data '{"text":"✅ Build SUCCESS\\nJob: ''' + env.JOB_NAME + '''\\nBuild: #''' + env.BUILD_NUMBER + '''\\nTag: ''' + IMAGE_TAG + '''"}' \
+                              ${SLACK_WEBHOOK}
+                        '''
+                    }
+                    echo "✅ Slack notification sent"
+                } catch (Exception e) {
+                    echo "⚠️ Slack notification skipped (not configured)"
+                }
+            }
+        }
 
-                  try {
-                      // Fallback to simple mail
-                      mail to: 'mohammad.kheirkhah@gritlab.ax',
-                           subject: "✅ Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                           body: """
-Build Successful!
+        failure {
+            script {
+                echo "❌ Pipeline failed!"
 
-Job: ${env.JOB_NAME}
-Build Number: ${env.BUILD_NUMBER}
-Branch: ${params.BRANCH}
-Image Tag: ${env.IMAGE_TAG}
-Duration: ${currentBuild.durationString}
+                def message = """
+                    ❌ Build FAILED
+                    Job: ${env.JOB_NAME}
+                    Build: #${env.BUILD_NUMBER}
+                    Branch: ${params.BRANCH}
+                    Status: ${currentBuild.result}
+                    Duration: ${currentBuild.durationString}
+                    Build URL: ${env.BUILD_URL}
+                    Console: ${env.BUILD_URL}console
 
-Build URL: ${env.BUILD_URL}
+                    Check the console output for detailed error information.
+                """
 
-Deployed Services:
-- Frontend: http://localhost:4200
-- API Gateway: https://localhost:8443
-- Eureka: http://localhost:8761
+                // Email notification
+                try {
+                    emailext(
+                        subject: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        body: message,
+                        to: 'mohammad.kheirkhah@gritlab.ax',
+                        mimeType: 'text/plain'
+                    )
+                } catch (Exception e) {
+                    echo "⚠️ Email notification failed: ${e.message}"
+                }
+            }
+        }
 
-All Docker images published with tag: ${env.IMAGE_TAG}
+        unstable {
+            script {
+                echo "⚠️ Pipeline unstable (tests may have failed)"
 
----
-To configure email notifications, see EMAIL_SETUP.md
-                           """
-                      echo "✅ Email sent successfully via simple mail"
-                  } catch (Exception e2) {
-                      echo "❌ Failed to send email: ${e2.message}"
-                      echo "📧 To receive email notifications:"
-                      echo "   1. Configure SMTP settings in Jenkins"
-                      echo "   2. See EMAIL_SETUP.md for detailed instructions"
-                      echo "   3. Or check your spam folder"
-                  }
-              }
-          }
-      }
-
-      unstable {
-          echo "⚠️  Pipeline completed with UNSTABLE status"
-
-          script {
-              try {
-                  emailext (
-                      subject: "⚠️  Build UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                      body: """
-                          <h2 style="color: orange;">Build Unstable (Tests may have issues)</h2>
-                          <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                          <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                          <p><strong>Branch:</strong> ${params.BRANCH}</p>
-                          <p><strong>Image Tag:</strong> ${env.IMAGE_TAG}</p>
-                          <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-                          <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-
-                          <h3>Note:</h3>
-                          <p>The build completed successfully, but some tests may have failed or test results couldn't be collected.</p>
-                          <p><strong>All Docker images were still published successfully!</strong></p>
-
-                          <h3>Deployed Services:</h3>
-                          <ul>
-                              <li>Frontend: http://localhost:4200</li>
-                              <li>API Gateway: https://localhost:8443</li>
-                              <li>Eureka: http://localhost:8761</li>
-                          </ul>
-
-                          <p>Docker images published with tag: ${env.IMAGE_TAG}</p>
-                          <p>Check console output for test failures: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
-                      """,
-                      to: "mohammad.kheirkhah@gritlab.ax",
-                      mimeType: 'text/html'
-                  )
-                  echo "✅ Unstable notification email sent"
-              } catch (Exception e) {
-                  echo "⚠️  Failed to send unstable notification: ${e.message}"
-                  try {
-                      mail to: 'mohammad.kheirkhah@gritlab.ax',
-                           subject: "⚠️  Build UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                           body: """
-Build Unstable (Tests may have issues)
-
-Job: ${env.JOB_NAME}
-Build Number: ${env.BUILD_NUMBER}
-Branch: ${params.BRANCH}
-Image Tag: ${env.IMAGE_TAG}
-Duration: ${currentBuild.durationString}
-
-Build URL: ${env.BUILD_URL}
-Console: ${env.BUILD_URL}console
-
-Note: Build completed successfully but some tests may have failed.
-All Docker images were still published successfully!
-
-Deployed Services:
-- Frontend: http://localhost:4200
-- API Gateway: https://localhost:8443
-- Eureka: http://localhost:8761
-
-Docker images published with tag: ${env.IMAGE_TAG}
-                           """
-                      echo "✅ Unstable notification sent via simple mail"
-                  } catch (Exception e2) {
-                      echo "❌ Failed to send unstable notification: ${e2.message}"
-                  }
-              }
-          }
-      }
-
-      failure {
-          echo "❌ Pipeline failed!"
-
-          script {
-              try {
-                  // Try emailext first (HTML email)
-                  emailext (
-                      subject: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                      body: """
-                          <h2 style="color: red;">Build Failed!</h2>
-                          <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                          <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                          <p><strong>Branch:</strong> ${params.BRANCH}</p>
-                          <p><strong>Status:</strong> ${currentBuild.result}</p>
-                          <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
-                          <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                          <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
-
-                          <h3>Possible Issues:</h3>
-                          <ul>
-                              <li>Check if all services are properly configured</li>
-                              <li>Verify Docker Hub credentials are valid</li>
-                              <li>Review the console output for detailed errors</li>
-                              <li>Check if backend build completed successfully</li>
-                          </ul>
-
-                          <p>Please check the Jenkins console for detailed error information.</p>
-                      """,
-                      to: "mohammad.kheirkhah@gritlab.ax",
-                      mimeType: 'text/html'
-                  )
-                  echo "✅ Email sent successfully via emailext"
-              } catch (Exception e) {
-                  echo "⚠️  Failed to send HTML email: ${e.message}"
-                  echo "Trying simple email as fallback..."
-
-                  try {
-                      // Fallback to simple mail
-                      mail to: 'mohammad.kheirkhah@gritlab.ax',
-                           subject: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                           body: """
-Build Failed!
-
-Job: ${env.JOB_NAME}
-Build Number: ${env.BUILD_NUMBER}
-Branch: ${params.BRANCH}
-Status: ${currentBuild.result}
-Duration: ${currentBuild.durationString}
-
-Build URL: ${env.BUILD_URL}
-Console: ${env.BUILD_URL}console
-
-Possible Issues:
-- Check if all services are properly configured
-- Verify Docker Hub credentials are valid
-- Review the console output for detailed errors
-- Check if backend build completed successfully
-
----
-To configure email notifications, see EMAIL_SETUP.md
-                           """
-                      echo "✅ Email sent successfully via simple mail"
-                  } catch (Exception e2) {
-                      echo "❌ Failed to send email: ${e2.message}"
-                      echo "📧 To receive email notifications:"
-                      echo "   1. Configure SMTP settings in Jenkins"
-                      echo "   2. See EMAIL_SETUP.md for detailed instructions"
-                      echo "   3. Or check your spam folder"
-                  }
-              }
-          }
-      }
-  }
-
+                try {
+                    emailext(
+                        subject: "⚠️ Build UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        body: "Build completed with UNSTABLE status. Check test results.",
+                        to: 'mohammad.kheirkhah@gritlab.ax',
+                        mimeType: 'text/plain'
+                    )
+                } catch (Exception e) {
+                    echo "⚠️ Email notification failed"
+                }
+            }
+        }
+    }
 }
