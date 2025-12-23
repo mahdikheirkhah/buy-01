@@ -24,7 +24,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.core.ParameterizedTypeReference;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -140,21 +139,18 @@ public class ProductService {
     private Page<ProductCardDTO> convertToCardDTOPage(Page<Product> productPage, String sellerId) {
         return productPage.map(product -> {
 
-            // 1. Logic for createdByMe
-            boolean isCreator = (sellerId != null && product.getSellerID().equals(sellerId));
+            boolean isCreator = (product.getSellerID().equals(sellerId));
 
-            // 2. Logic for limiting images (NOW calls Media Service)
-            List<String> limitedImages = getLimitedImageUrls(product.getId(), 3); // Call new helper
+            List<String> limitedImages = getLimitedImageUrls(product.getId(),3);
 
-            // 3. Create the DTO
             return new ProductCardDTO(
                     product.getId(),
                     product.getName(),
-                    product.getDescription(), // You might want to truncate this
+                    product.getDescription(),
                     product.getPrice(),
                     product.getQuantity(),
                     isCreator,
-                    limitedImages // Pass in the new list of URLs
+                    limitedImages
             );
         });
     }
