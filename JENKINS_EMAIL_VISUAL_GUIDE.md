@@ -1,5 +1,50 @@
 # Jenkins Gmail Configuration - Visual Guide
 
+## ⚡ QUICK FIX FOR YOUR CURRENT SETUP
+
+### What You Need to Change RIGHT NOW:
+
+**In Extended E-mail Notification:**
+```
+✅ SMTP server: smtp.gmail.com (CORRECT)
+✅ SMTP Port: 465 (CORRECT)
+✅ Credentials: Added (CORRECT)
+✅ Use SSL: ☑ Checked (CORRECT)
+❌ Use TLS: ☐ UNCHECK THIS! (Currently wrong if checked)
+✅ Default Recipients: mohammad.kheirkhah@gritlab.ax (CORRECT)
+```
+
+**In E-mail Notification (scroll down to this section):**
+```
+✅ SMTP server: smtp.gmail.com (CORRECT)
+
+Then click "Advanced" button and configure:
+☑ Use SMTP Authentication ← MUST BE CHECKED!
+   User Name: mahdikheirkhah060@gmail.com
+   Password: [Your 16-character Gmail App Password]
+   
+☑ Use SSL ← MUST BE CHECKED!
+☐ Use TLS ← MUST BE UNCHECKED!
+   SMTP Port: 465
+   Reply-To Address: mohammad.kheirkhah@gritlab.ax
+   Charset: UTF-8
+```
+
+**Then TEST IT:**
+```
+In E-mail Notification section, scroll down:
+☑ Test configuration by sending test e-mail
+   Test e-mail recipient: mohammad.kheirkhah@gritlab.ax
+   [Test configuration] ← CLICK THIS!
+```
+
+**Expected Result:**
+```
+✅ "Email was successfully sent"
+```
+
+---
+
 ## 🎯 Quick Visual Reference
 
 ### Where to Configure:
