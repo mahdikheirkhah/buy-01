@@ -2,7 +2,6 @@ spring:
   data:
     mongodb:
       # Embedded MongoDB will auto-configure on a random port
-      # No need to specify URI - Flapdoodle will handle it
       auto-index-creation: true
 
   kafka:
@@ -19,7 +18,6 @@ spring:
 
   autoconfigure:
     exclude:
-      # Disable Kafka and Eureka for simple unit tests
       - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
       - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
       - org.springframework.cloud.netflix.eureka.loadbalancer.LoadBalancerEurekaAutoConfiguration
@@ -36,13 +34,18 @@ eureka:
     register-with-eureka: false
     fetch-registry: false
 
-# Disable actuator endpoints for tests
 management:
   endpoints:
     enabled-by-default: false
   health:
     defaults:
       enabled: false
+
+
+# Media service specific config
+media:
+  upload:
+    dir: /tmp/test-uploads
 
 
 
