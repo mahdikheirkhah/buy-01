@@ -118,12 +118,18 @@
 ✅ User Service               - Healthy
 ✅ Product Service            - Healthy
 ✅ Media Service              - Healthy
-✅ Dummy Data Service         - Running
+✅ Dummy Data Service         - Running ⚡ FIXED (Dec 23, 2025)
 ✅ MongoDB                    - Port 27017 (Healthy)
-✅ Kafka + Zookeeper          - Running
+✅ Kafka + Zookeeper          - Running with healthcheck
 ✅ SonarQube                  - Port 9000 (Healthy)
 ✅ Jenkins                    - Port 8080
 ```
+
+**Recent Fix (Dec 23, 2025):**
+- ✅ Fixed dummy-data startup race condition with Kafka
+- ✅ Added Kafka healthcheck for proper initialization
+- ✅ Service now starts reliably on first run
+- ✅ See [DUMMY_DATA_FIX.md](DUMMY_DATA_FIX.md) for details
 
 ### CI/CD Pipeline ✅
 ```
