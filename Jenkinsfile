@@ -107,40 +107,46 @@ pipeline {
                         script {
                             echo "🏗️ Building backend microservices..."
                             try {
-                                sh '''
-                                    # Check if parent pom.xml exists
-                                    if [ -f ${WORKSPACE}/${BACKEND_DIR}/pom.xml ]; then
-                                        echo "Found parent pom.xml in backend/, building all services..."
-                                        docker run --rm \
-                                          -v ${WORKSPACE}:${WORKSPACE} \
-                                          -v jenkins_m2_cache:/root/.m2 \
-                                          -w ${WORKSPACE}/${BACKEND_DIR} \
-                                          --network host \
-                                          ${MAVEN_IMAGE} \
-                                          mvn clean install -DskipTests -B -q
-                                    else
-                                        echo "No parent pom.xml found, building services individually..."
+                                sh '''#!/bin/bash
+set -e
 
-                                        # Build each service
-                                        SERVICES=("discovery-service" "api-gateway" "user-service" "product-service" "media-service" "dummy-data")
+# Debug: Show what we're working with
+echo "Workspace: ${WORKSPACE}"
+echo "Backend dir: ${WORKSPACE}/${BACKEND_DIR}"
+ls -la ${WORKSPACE}/${BACKEND_DIR} | head -20
 
-                                        for service in "${SERVICES[@]}"; do
-                                            if [ -d ${WORKSPACE}/${BACKEND_DIR}/$service ]; then
-                                                echo "Building $service..."
-                                                docker run --rm \
-                                                  -v ${WORKSPACE}:${WORKSPACE} \
-                                                  -v jenkins_m2_cache:/root/.m2 \
-                                                  -w ${WORKSPACE}/${BACKEND_DIR}/$service \
-                                                  --network host \
-                                                  ${MAVEN_IMAGE} \
-                                                  mvn clean install -DskipTests -B -q
-                                                echo "✅ Built $service"
-                                            else
-                                                echo "⚠️ Service directory not found: $service"
-                                            fi
-                                        done
-                                    fi
-                                '''
+# Check if parent pom.xml exists
+if [ -f ${WORKSPACE}/${BACKEND_DIR}/pom.xml ]; then
+    echo "Found parent pom.xml in backend/, building all services..."
+    docker run --rm \\
+      -v ${WORKSPACE}:${WORKSPACE} \\
+      -v jenkins_m2_cache:/root/.m2 \\
+      -w ${WORKSPACE}/${BACKEND_DIR} \\
+      --network host \\
+      ${MAVEN_IMAGE} \\
+      mvn clean install -DskipTests -B -q
+else
+    echo "No parent pom.xml found, building services individually..."
+
+    # Build each service
+    for service in discovery-service api-gateway user-service product-service media-service dummy-data; do
+        SERVICE_PATH="${WORKSPACE}/${BACKEND_DIR}/$service"
+        if [ -d "$SERVICE_PATH" ]; then
+            echo "Building $service..."
+            docker run --rm \\
+              -v ${WORKSPACE}:${WORKSPACE} \\
+              -v jenkins_m2_cache:/root/.m2 \\
+              -w "$SERVICE_PATH" \\
+              --network host \\
+              ${MAVEN_IMAGE} \\
+              mvn clean install -DskipTests -B -q
+            echo "✅ Built $service"
+        else
+            echo "⚠️ Service directory not found: $SERVICE_PATH"
+        fi
+    done
+fi
+'''
                                 echo "✅ Backend build completed"
                             } catch (Exception e) {
                                 error("❌ Backend build failed: ${e.message}")
@@ -157,13 +163,37 @@ pipeline {
                         script {
                             echo "🏗️ Building frontend..."
                             try {
-                                sh '''
-                                    docker run --rm \
-                                      -v ${WORKSPACE}/${FRONTEND_DIR}:/app \
-                                      -w /app \
-                                      ${NODE_IMAGE} \
-                                      sh -c 'npm install --legacy-peer-deps && npm run build'
-                                '''
+                                sh '''#!/bin/bash
+set -e
+
+FRONTEND_PATH="${WORKSPACE}/${FRONTEND_DIR}"
+
+echo "Frontend path: $FRONTEND_PATH"
+echo "Contents of frontend directory:"
+ls -la "$FRONTEND_PATH" | head -20
+
+# Check if package.json exists
+if [ ! -f "$FRONTEND_PATH/package.json" ]; then
+    echo "❌ ERROR: package.json not found in $FRONTEND_PATH"
+    exit 1
+fi
+
+echo "Found package.json, proceeding with build..."
+
+# Build frontend using Docker
+docker run --rm \\
+  -v "$FRONTEND_PATH":/app \\
+  -w /app \\
+  ${NODE_IMAGE} \\
+  sh -c "npm install --legacy-peer-deps && npm run build"
+
+echo "Checking dist directory..."
+if [ -d "$FRONTEND_PATH/dist" ]; then
+    echo "✅ Frontend dist directory created successfully"
+else
+    echo "⚠️ Warning: dist directory not found after build"
+fi
+'''
                                 echo "✅ Frontend build completed"
                             } catch (Exception e) {
                                 echo "⚠️ Frontend build failed: ${e.message}"
@@ -188,16 +218,16 @@ pipeline {
 
                     services.each { service ->
                         try {
-                            sh '''
-                                if [ -d ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' ]; then
-                                    docker run --rm \
-                                      -v ${WORKSPACE}:${WORKSPACE} \
-                                      -v jenkins_m2_cache:/root/.m2 \
-                                      -w ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' \
-                                      ${MAVEN_IMAGE} \
-                                      mvn test -B -DskipTests || echo "Tests skipped or no test profile configured"
-                                fi
-                            '''
+                            sh '''#!/bin/bash
+if [ -d ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' ]; then
+    docker run --rm \\
+      -v ${WORKSPACE}:${WORKSPACE} \\
+      -v jenkins_m2_cache:/root/.m2 \\
+      -w ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' \\
+      ${MAVEN_IMAGE} \\
+      mvn test -B -DskipTests || echo "Tests skipped or no test profile configured"
+fi
+'''
                             results[service] = 'PASS'
                             echo "✅ ${service} tests passed"
                         } catch (Exception e) {
@@ -226,14 +256,14 @@ pipeline {
                 script {
                     echo "🧪 Running frontend unit tests..."
                     try {
-                        sh '''
-                            docker run --rm \
-                              -v ${WORKSPACE}/${FRONTEND_DIR}:/app \
-                              -w /app \
-                              ${NODE_IMAGE} \
-                              npm test -- --watch=false --browsers=ChromeHeadless --code-coverage 2>&1 || \
-                              echo "⚠️ Frontend tests skipped (may require Chrome)"
-                        '''
+                        sh '''#!/bin/bash
+docker run --rm \\
+  -v ${WORKSPACE}/${FRONTEND_DIR}:/app \\
+  -w /app \\
+  ${NODE_IMAGE} \\
+  npm test -- --watch=false --browsers=ChromeHeadless --code-coverage 2>&1 || \\
+  echo "⚠️ Frontend tests skipped (may require Chrome)"
+'''
                         echo "✅ Frontend tests completed"
                     } catch (Exception e) {
                         echo "⚠️ Frontend tests skipped: ${e.message}"
@@ -252,17 +282,17 @@ pipeline {
                     echo "📊 Running SonarQube analysis..."
                     try {
                         withSonarQubeEnv('SonarQube') {
-                            sh '''
-                                docker run --rm \
-                                  -v ${WORKSPACE}:${WORKSPACE} \
-                                  -w ${WORKSPACE} \
-                                  sonarsource/sonar-scanner-cli:latest \
-                                  -Dsonar.projectKey=buy-01 \
-                                  -Dsonar.sources=backend,frontend/src \
-                                  -Dsonar.java.binaries=backend/*/target/classes \
-                                  -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/** || \
-                                  echo "⚠️ SonarQube analysis skipped (not configured)"
-                            '''
+                            sh '''#!/bin/bash
+docker run --rm \\
+  -v ${WORKSPACE}:${WORKSPACE} \\
+  -w ${WORKSPACE} \\
+  sonarsource/sonar-scanner-cli:latest \\
+  -Dsonar.projectKey=buy-01 \\
+  -Dsonar.sources=backend,frontend/src \\
+  -Dsonar.java.binaries=backend/*/target/classes \\
+  -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/** || \\
+  echo "⚠️ SonarQube analysis skipped (not configured)"
+'''
                         }
                         echo "✅ SonarQube analysis completed"
                     } catch (Exception e) {
@@ -290,10 +320,10 @@ pipeline {
                             )
                         ]) {
 
-                            sh '''
-                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                                echo "✅ Docker Hub login successful"
-                            '''
+                            sh '''#!/bin/bash
+echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+echo "✅ Docker Hub login successful"
+'''
 
                             // Build and push backend services
                             def services = [
@@ -306,12 +336,12 @@ pipeline {
                             ]
 
                             services.each { service ->
-                                sh '''
-                                    if [ -d ${WORKSPACE}/${BACKEND_DIR}/''' + service + '''/target ]; then
-                                        cd ${WORKSPACE}/${BACKEND_DIR}/''' + service + '''
+                                sh '''#!/bin/bash
+if [ -d ${WORKSPACE}/${BACKEND_DIR}/''' + service + '''/target ]; then
+    cd ${WORKSPACE}/${BACKEND_DIR}/''' + service + '''
 
-                                        # Create temporary Dockerfile from pre-built JAR
-                                        cat > Dockerfile.tmp << 'DOCKERFILE_EOF'
+    # Create temporary Dockerfile from pre-built JAR
+    cat > Dockerfile.tmp << 'DOCKERFILE_EOF'
 FROM amazoncorretto:21-alpine
 RUN apk add --no-cache curl
 WORKDIR /app
@@ -322,46 +352,46 @@ HEALTHCHECK --interval=10s --timeout=5s --retries=5 \\
 ENTRYPOINT ["java", "-Dcom.sun.management.jmxremote", "-jar", "app.jar"]
 DOCKERFILE_EOF
 
-                                        # Build and push
-                                        docker build -t ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} -f Dockerfile.tmp .
-                                        docker push ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}
+    # Build and push
+    docker build -t ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} -f Dockerfile.tmp .
+    docker push ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}
 
-                                        # Tag as stable and latest
-                                        docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
-                                        docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${LATEST_TAG}
-                                        docker push ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
-                                        docker push ${DOCKER_REPO}/''' + service + ''':${LATEST_TAG}
+    # Tag as stable and latest
+    docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
+    docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${LATEST_TAG}
+    docker push ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
+    docker push ${DOCKER_REPO}/''' + service + ''':${LATEST_TAG}
 
-                                        rm Dockerfile.tmp
-                                        cd ${WORKSPACE}
-                                        echo "✅ Pushed ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}"
-                                    else
-                                        echo "⚠️ Skipping ''' + service + ''' (not built)"
-                                    fi
-                                '''
+    rm Dockerfile.tmp
+    cd ${WORKSPACE}
+    echo "✅ Pushed ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}"
+else
+    echo "⚠️ Skipping ''' + service + ''' (not built)"
+fi
+'''
                             }
 
                             // Build and push frontend
-                            sh '''
-                                if [ -d ${WORKSPACE}/${FRONTEND_DIR}/dist ]; then
-                                    docker build \
-                                      -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} \
-                                      -f ${WORKSPACE}/${FRONTEND_DIR}/Dockerfile \
-                                      ${WORKSPACE}/${FRONTEND_DIR}/
+                            sh '''#!/bin/bash
+if [ -d ${WORKSPACE}/${FRONTEND_DIR}/dist ]; then
+    docker build \\
+      -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} \\
+      -f ${WORKSPACE}/${FRONTEND_DIR}/Dockerfile \\
+      ${WORKSPACE}/${FRONTEND_DIR}/
 
-                                    docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
+    docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
 
-                                    # Tag as stable and latest
-                                    docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
-                                    docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${LATEST_TAG}
-                                    docker push ${DOCKER_REPO}/frontend:${STABLE_TAG}
-                                    docker push ${DOCKER_REPO}/frontend:${LATEST_TAG}
+    # Tag as stable and latest
+    docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
+    docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${LATEST_TAG}
+    docker push ${DOCKER_REPO}/frontend:${STABLE_TAG}
+    docker push ${DOCKER_REPO}/frontend:${LATEST_TAG}
 
-                                    echo "✅ Pushed ${DOCKER_REPO}/frontend:${IMAGE_TAG}"
-                                else
-                                    echo "⚠️ Frontend dist not found (skipping)"
-                                fi
-                            '''
+    echo "✅ Pushed ${DOCKER_REPO}/frontend:${IMAGE_TAG}"
+else
+    echo "⚠️ Frontend dist not found (skipping)"
+fi
+'''
 
                             echo "✅ Docker images processing completed!"
                         }
@@ -382,23 +412,23 @@ DOCKERFILE_EOF
                     echo "🚀 Deploying to ${params.ENVIRONMENT}..."
 
                     try {
-                        sh '''
-                            # Stop and remove old containers
-                            docker compose down || true
+                        sh '''#!/bin/bash
+# Stop and remove old containers
+docker compose down || true
 
-                            # Export image tag and deploy
-                            export IMAGE_TAG=${IMAGE_TAG}
-                            docker compose pull || echo "⚠️ Some images may not exist"
-                            docker compose up -d --remove-orphans
+# Export image tag and deploy
+export IMAGE_TAG=${IMAGE_TAG}
+docker compose pull || echo "⚠️ Some images may not exist"
+docker compose up -d --remove-orphans
 
-                            # Wait for services to start
-                            echo "⏳ Waiting for services to start (30s)..."
-                            sleep 30
+# Wait for services to start
+echo "⏳ Waiting for services to start (30s)..."
+sleep 30
 
-                            # Show status
-                            echo "📊 Service Status:"
-                            docker compose ps
-                        '''
+# Show status
+echo "📊 Service Status:"
+docker compose ps
+'''
 
                         echo "✅ Deployment successful!"
                     } catch (Exception e) {
@@ -420,23 +450,23 @@ DOCKERFILE_EOF
                         // Wait for health checks
                         sleep(time: 15, unit: 'SECONDS')
 
-                        sh '''
-                            echo "📊 Manual health checks..."
+                        sh '''#!/bin/bash
+echo "📊 Manual health checks..."
 
-                            # Eureka
-                            echo "Checking Eureka..."
-                            curl -f http://localhost:8761/actuator/health || echo "⚠️ Eureka health check not available yet"
+# Eureka
+echo "Checking Eureka..."
+curl -f http://localhost:8761/actuator/health || echo "⚠️ Eureka health check not available yet"
 
-                            # API Gateway
-                            echo "Checking API Gateway..."
-                            curl --insecure -f https://localhost:8443/actuator/health || echo "⚠️ API Gateway health check not available yet"
+# API Gateway
+echo "Checking API Gateway..."
+curl --insecure -f https://localhost:8443/actuator/health || echo "⚠️ API Gateway health check not available yet"
 
-                            # Frontend
-                            echo "Checking Frontend..."
-                            curl -f http://localhost:4200/ || echo "⚠️ Frontend health check not available yet"
+# Frontend
+echo "Checking Frontend..."
+curl -f http://localhost:4200/ || echo "⚠️ Frontend health check not available yet"
 
-                            echo "✅ Basic health checks completed"
-                        '''
+echo "✅ Basic health checks completed"
+'''
                     } catch (Exception e) {
                         echo "⚠️ Health check had issues: ${e.message}"
                         echo "Services may still be starting. Check manually after a few seconds."
@@ -452,13 +482,13 @@ DOCKERFILE_EOF
 
                     try {
                         // Archive test reports if they exist
-                        sh '''
-                            if find ${BACKEND_DIR}/*/target/surefire-reports -name "*.xml" 2>/dev/null | grep -q .; then
-                                echo "Found test reports, archiving..."
-                            else
-                                echo "No test reports found (tests may have been skipped)"
-                            fi
-                        '''
+                        sh '''#!/bin/bash
+if find ${BACKEND_DIR}/*/target/surefire-reports -name "*.xml" 2>/dev/null | grep -q .; then
+    echo "Found test reports, archiving..."
+else
+    echo "No test reports found (tests may have been skipped)"
+fi
+'''
 
                         junit(
                             allowEmptyResults: true,
