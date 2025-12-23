@@ -399,10 +399,26 @@ EOF
           script {
               echo "Post-build cleanup and reporting"
 
-              // Collect test results
+              // Collect test results only if tests were run and files exist
               if (params.RUN_TESTS) {
-                  junit allowEmptyResults: true, testResults: 'backend/*/target/surefire-reports/*.xml'
-                  archiveArtifacts artifacts: 'backend/*/target/surefire-reports/*.xml', allowEmptyArchive: true
+                  try {
+                      // Check if test results exist before trying to collect them
+                      def testReportsExist = sh(
+                          script: 'find backend/*/target/surefire-reports -name "*.xml" -type f 2>/dev/null | wc -l',
+                          returnStdout: true
+                      ).trim().toInteger() > 0
+
+                      if (testReportsExist) {
+                          echo "📊 Collecting test results..."
+                          junit allowEmptyResults: true, testResults: 'backend/*/target/surefire-reports/*.xml'
+                          archiveArtifacts artifacts: 'backend/*/target/surefire-reports/*.xml', allowEmptyArchive: true
+                      } else {
+                          echo "ℹ️  No test reports found (tests may have been skipped or workspace cleaned)"
+                      }
+                  } catch (Exception e) {
+                      echo "⚠️  Could not collect test results: ${e.message}"
+                      // Don't fail the build due to missing test reports
+                  }
               }
 
               // Clean workspace
@@ -478,6 +494,75 @@ To configure email notifications, see EMAIL_SETUP.md
                       echo "   1. Configure SMTP settings in Jenkins"
                       echo "   2. See EMAIL_SETUP.md for detailed instructions"
                       echo "   3. Or check your spam folder"
+                  }
+              }
+          }
+      }
+
+      unstable {
+          echo "⚠️  Pipeline completed with UNSTABLE status"
+
+          script {
+              try {
+                  emailext (
+                      subject: "⚠️  Build UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                      body: """
+                          <h2 style="color: orange;">Build Unstable (Tests may have issues)</h2>
+                          <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                          <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                          <p><strong>Branch:</strong> ${params.BRANCH}</p>
+                          <p><strong>Image Tag:</strong> ${env.IMAGE_TAG}</p>
+                          <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                          <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+
+                          <h3>Note:</h3>
+                          <p>The build completed successfully, but some tests may have failed or test results couldn't be collected.</p>
+                          <p><strong>All Docker images were still published successfully!</strong></p>
+
+                          <h3>Deployed Services:</h3>
+                          <ul>
+                              <li>Frontend: http://localhost:4200</li>
+                              <li>API Gateway: https://localhost:8443</li>
+                              <li>Eureka: http://localhost:8761</li>
+                          </ul>
+
+                          <p>Docker images published with tag: ${env.IMAGE_TAG}</p>
+                          <p>Check console output for test failures: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
+                      """,
+                      to: "mohammad.kheirkhah@gritlab.ax",
+                      mimeType: 'text/html'
+                  )
+                  echo "✅ Unstable notification email sent"
+              } catch (Exception e) {
+                  echo "⚠️  Failed to send unstable notification: ${e.message}"
+                  try {
+                      mail to: 'mohammad.kheirkhah@gritlab.ax',
+                           subject: "⚠️  Build UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                           body: """
+Build Unstable (Tests may have issues)
+
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+Branch: ${params.BRANCH}
+Image Tag: ${env.IMAGE_TAG}
+Duration: ${currentBuild.durationString}
+
+Build URL: ${env.BUILD_URL}
+Console: ${env.BUILD_URL}console
+
+Note: Build completed successfully but some tests may have failed.
+All Docker images were still published successfully!
+
+Deployed Services:
+- Frontend: http://localhost:4200
+- API Gateway: https://localhost:8443
+- Eureka: http://localhost:8761
+
+Docker images published with tag: ${env.IMAGE_TAG}
+                           """
+                      echo "✅ Unstable notification sent via simple mail"
+                  } catch (Exception e2) {
+                      echo "❌ Failed to send unstable notification: ${e2.message}"
                   }
               }
           }
