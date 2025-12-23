@@ -21,6 +21,12 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:29092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - BACKEND
 
@@ -178,9 +184,19 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       APP_API_GATEWAY_URL: https://api-gateway:8443
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       api-gateway:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      media-service:
+        condition: service_healthy
+    restart: on-failure:5
     networks:
       - BACKEND
 

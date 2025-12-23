@@ -335,8 +335,22 @@ docker exec -it buy-01 mongosh -u admin -p password --authenticationDatabase adm
 # Check Kafka logs
 docker compose logs kafka
 
+# Check Kafka health
+docker compose ps kafka  # Should show "healthy"
+
 # List Kafka topics
 docker exec -it kafka kafka-topics --list --bootstrap-server localhost:9092
+```
+
+**dummy-data service fails on first run?**
+- **Fixed!** The service now waits for Kafka to be fully ready
+- Kafka healthcheck ensures proper initialization
+- Auto-restart policy handles transient failures
+- See [DUMMY_DATA_FIX.md](./DUMMY_DATA_FIX.md) for details
+
+**To verify the fix:**
+```bash
+./test-dummy-data-fix.sh
 ```
 
 #### Jenkins pipeline issues
