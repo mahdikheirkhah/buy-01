@@ -1,23 +1,33 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { Router, ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
+import { SidenavComponent } from './sidenav';
+import { AuthService } from '../../services/auth';
 
-import { Sidenav } from './sidenav';
-
-describe('Sidenav', () => {
-  let component: Sidenav;
-  let fixture: ComponentFixture<Sidenav>;
+describe('SidenavComponent', () => {
+  let component: SidenavComponent;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [Sidenav]
-    })
-    .compileComponents();
+    const authServiceMock = jasmine.createSpyObj('AuthService', ['logout']);
+    authServiceMock.currentUser$ = of(null);
+    const routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
-    fixture = TestBed.createComponent(Sidenav);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    await TestBed.configureTestingModule({
+      imports: [SidenavComponent, HttpClientTestingModule],
+      providers: [
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: Router, useValue: routerMock },
+        { provide: ActivatedRoute, useValue: { snapshot: { params: {} } } }
+      ],
+      schemas: [NO_ERRORS_SCHEMA]
+    }).compileComponents();
   });
 
   it('should create', () => {
+    const fixture = TestBed.createComponent(SidenavComponent);
+    component = fixture.componentInstance;
     expect(component).toBeTruthy();
   });
 });

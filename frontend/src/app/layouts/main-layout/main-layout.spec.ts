@@ -1,23 +1,32 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 import { MainLayout } from './main-layout';
+import { AuthService } from '../../services/auth';
 
 describe('MainLayout', () => {
   let component: MainLayout;
-  let fixture: ComponentFixture<MainLayout>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [MainLayout]
-    })
-    .compileComponents();
+    const authServiceMock = jasmine.createSpyObj('AuthService', ['init']);
+    authServiceMock.currentUser$ = of(null);
+    authServiceMock.init.and.returnValue(of({}));
 
-    fixture = TestBed.createComponent(MainLayout);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    await TestBed.configureTestingModule({
+      imports: [MainLayout, HttpClientTestingModule],
+      providers: [
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: ActivatedRoute, useValue: { snapshot: { params: {} } } }
+      ],
+      schemas: [NO_ERRORS_SCHEMA]
+    }).compileComponents();
   });
 
   it('should create', () => {
+    const fixture = TestBed.createComponent(MainLayout);
+    component = fixture.componentInstance;
     expect(component).toBeTruthy();
   });
 });
