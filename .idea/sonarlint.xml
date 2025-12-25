@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="InspectionProjectConfiguration">
+    <option name="PROJECT_PROFILE" value="Default" />
+    <option name="USE_PROJECT_PROFILE" value="true" />
+    <version value="1.0" />
+  </component>
+  <component name="SonarLintProjectConfiguration">
+    <option name="bindingEnabled" value="true" />
+    <option name="connectionName" value="SonarQube Local" />
+    <option name="projectKey" value="buy-01-backend" />
+  </component>
+</project>
+

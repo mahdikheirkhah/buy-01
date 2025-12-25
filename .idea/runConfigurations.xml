@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RunConfigurationProducerService">
+    <option name="ignoredProducers">
+      <set>
+        <option value="com.intellij.codeInsight.daemon.impl.quickfix.SuppressQuickFixActionBase" />
+      </set>
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration name="SonarQube Analysis - Backend" type="MavenRunConfigurationType" factoryName="Maven">
+      <MavenSettings>
+        <option name="myGeneralSettings" />
+        <option name="myRunnerSettings" />
+        <option name="EnvironmentElementsPanel.selectedTabIndex" value="0" />
+      </MavenSettings>
+      <method v="2" />
+      <option name="NAME" value="SonarQube Analysis - Backend" />
+      <option name="PROGRAM_PARAMETERS" value="sonar:sonar -Dsonar.projectKey=buy-01-backend -Dsonar.host.url=http://localhost:9000 -Dsonar.login=admin" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend" />
+      <option name="MODULE_NAME" value="buy-01" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Backend Unit Tests" type="MavenRunConfigurationType" factoryName="Maven">
+      <MavenSettings>
+        <option name="myGeneralSettings" />
+        <option name="myRunnerSettings" />
+        <option name="EnvironmentElementsPanel.selectedTabIndex" value="0" />
+      </MavenSettings>
+      <method v="2" />
+      <option name="NAME" value="Backend Unit Tests" />
+      <option name="PROGRAM_PARAMETERS" value="test -B -Dtest=*UnitTest" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend" />
+      <option name="MODULE_NAME" value="buy-01" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Backend Integration Tests" type="MavenRunConfigurationType" factoryName="Maven">
+      <MavenSettings>
+        <option name="myGeneralSettings" />
+        <option name="myRunnerSettings" />
+        <option name="EnvironmentElementsPanel.selectedTabIndex" value="0" />
+      </MavenSettings>
+      <method v="2" />
+      <option name="NAME" value="Backend Integration Tests" />
+      <option name="PROGRAM_PARAMETERS" value="test -B -Dtest=*IntegrationTest" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend" />
+      <option name="MODULE_NAME" value="buy-01" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Maven.SonarQube Analysis - Backend" />
+      <item itemvalue="Maven.Backend Unit Tests" />
+      <item itemvalue="Maven.Backend Integration Tests" />
+    </list>
+  </component>
+</project>
+
