@@ -86,7 +86,7 @@ pipeline {
                               -v jenkins_m2_cache:/root/.m2 \\
                               -w ${WORKSPACE} \\
                               ${MAVEN_IMAGE} \\
-                              mvn -f ${BACKEND_DIR}/pom.xml clean install -DskipTests -B -q
+                              mvn clean install -DskipTests -B -q
 
                             echo "✅ Backend build completed"
                         '''
