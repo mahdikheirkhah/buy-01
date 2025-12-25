@@ -82,9 +82,9 @@ pipeline {
                     try {
                         sh '''
                             docker run --rm \\
-                              -v ${WORKSPACE}:${WORKSPACE} \\
+                              --volumes-from jenkins-cicd \\
+                              -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
                               -v jenkins_m2_cache:/root/.m2 \\
-                              -w ${WORKSPACE}/backend \\
                               ${MAVEN_IMAGE} \\
                               mvn clean install -DskipTests -B -q
 
@@ -148,11 +148,11 @@ pipeline {
                         try {
                             echo "Testing ${service}..."
                             sh '''
-                                if [ -d ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' ]; then
+                                if [ -d /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend/''' + service + ''' ]; then
                                     docker run --rm \\
-                                      -v ${WORKSPACE}:${WORKSPACE} \\
+                                      --volumes-from jenkins-cicd \\
                                       -v jenkins_m2_cache:/root/.m2 \\
-                                      -w ${WORKSPACE}/${BACKEND_DIR} \\
+                                      -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
                                       ${MAVEN_IMAGE} \\
                                       mvn test -B -Dtest=*UnitTest -pl ''' + service + '''
 
@@ -188,11 +188,11 @@ pipeline {
                         try {
                             echo "Integration tests for ${service}..."
                             sh '''
-                                if [ -d ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' ]; then
+                                if [ -d /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend/''' + service + ''' ]; then
                                     docker run --rm \\
-                                      -v ${WORKSPACE}:${WORKSPACE} \\
+                                      --volumes-from jenkins-cicd \\
                                       -v jenkins_m2_cache:/root/.m2 \\
-                                      -w ${WORKSPACE}/${BACKEND_DIR} \\
+                                      -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
                                       ${MAVEN_IMAGE} \\
                                       mvn test -B -Dtest=*IntegrationTest -pl ''' + service + '''
 
@@ -220,11 +220,10 @@ pipeline {
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                             // Backend Analysis
                             sh '''
-                                cd ${WORKSPACE}/${BACKEND_DIR}
                                 docker run --rm \\
-                                  -v ${WORKSPACE}:${WORKSPACE} \\
+                                  --volumes-from jenkins-cicd \\
                                   -v jenkins_m2_cache:/root/.m2 \\
-                                  -w ${WORKSPACE}/${BACKEND_DIR} \\
+                                  -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
                                   --network host \\
                                   ${MAVEN_IMAGE} \\
                                   mvn sonar:sonar \\
