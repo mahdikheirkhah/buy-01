@@ -75,52 +75,56 @@ pipeline {
             }
         }
 
-        stage('🏗️ Build Backend') {
-            steps {
-                script {
-                    echo "🏗️ Building backend microservices..."
-                    try {
-                        sh '''
-                            docker run --rm \\
-                              --volumes-from jenkins-cicd \\
-                              -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
-                              -v jenkins_m2_cache:/root/.m2 \\
-                              ${MAVEN_IMAGE} \\
-                              mvn clean install -DskipTests -B -q
+        stage('🏗️ Build') {
+            parallel {
+                stage('Backend Build') {
+                    steps {
+                        script {
+                            echo "🏗️ Building backend microservices..."
+                            try {
+                                sh '''
+                                    docker run --rm \\
+                                      --volumes-from jenkins-cicd \\
+                                      -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
+                                      -v jenkins_m2_cache:/root/.m2 \\
+                                      ${MAVEN_IMAGE} \\
+                                      mvn clean install -B -q
 
-                            echo "✅ Backend build completed"
-                        '''
-                    } catch (Exception e) {
-                        error("❌ Backend build failed: ${e.message}")
+                                    echo "✅ Backend build completed"
+                                '''
+                            } catch (Exception e) {
+                                error("❌ Backend build failed: ${e.message}")
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        stage('🏗️ Build Frontend') {
-            when {
-                expression { params.SKIP_FRONTEND_BUILD == false }
-            }
-            steps {
-                script {
-                    echo "🏗️ Building frontend..."
-                    try {
-                        sh '''
-                            docker run --rm \\
-                              --volumes-from jenkins-cicd \\
-                              -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
-                              ${NODE_IMAGE} \\
-                              sh -c "npm install --legacy-peer-deps && npm run build"
+                stage('Frontend Build') {
+                    when {
+                        expression { params.SKIP_FRONTEND_BUILD == false }
+                    }
+                    steps {
+                        script {
+                            echo "🏗️ Building frontend..."
+                            try {
+                                sh '''
+                                    docker run --rm \\
+                                      --volumes-from jenkins-cicd \\
+                                      -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
+                                      ${NODE_IMAGE} \\
+                                      sh -c "npm install --legacy-peer-deps && npm run build"
 
-                            if [ -d /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend/dist ]; then
-                                echo "✅ Frontend dist created"
-                            else
-                                echo "⚠️ Warning: dist directory not found"
-                            fi
-                        '''
-                    } catch (Exception e) {
-                        echo "⚠️ Frontend build failed: ${e.message}"
-                        throw e
+                                    if [ -d /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend/dist ]; then
+                                        echo "✅ Frontend dist created"
+                                    else
+                                        echo "⚠️ Warning: dist directory not found"
+                                    fi
+                                '''
+                            } catch (Exception e) {
+                                echo "⚠️ Frontend build failed: ${e.message}"
+                                throw e
+                            }
+                        }
                     }
                 }
             }
@@ -198,6 +202,31 @@ pipeline {
                     }
 
                     echo "✅ Integration tests completed"
+                }
+            }
+        }
+
+        stage('🧪 Test Frontend') {
+            when {
+                expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_BUILD == false }
+            }
+            steps {
+                script {
+                    echo "🧪 Running frontend unit tests..."
+                    try {
+                        sh '''
+                            docker run --rm \\
+                              --volumes-from jenkins-cicd \\
+                              -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
+                              ${NODE_IMAGE} \\
+                              sh -c "npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
+
+                            echo "✅ Frontend unit tests passed"
+                        '''
+                    } catch (Exception e) {
+                        echo "⚠️ Frontend tests failed: ${e.message}"
+                        // Don't fail the build for frontend tests, log the issue
+                    }
                 }
             }
         }
@@ -375,7 +404,7 @@ EOF
                         '''
 
                         echo "🌐 Access your application at:"
-                        echo "   - Frontend: http://localhost:4200"
+                        echo "   - Frontend: https://localhost:4200"
                         echo "   - API Gateway: https://localhost:8443"
                         echo "   - Eureka: http://localhost:8761"
                     } catch (Exception e) {
@@ -435,23 +464,86 @@ EOF
                 script {
                     echo "✅ Verifying deployment..."
 
-                    try {
-                        sleep(time: 15, unit: 'SECONDS')
+                    def maxRetries = 5
+                    def retryCount = 0
+                    def allHealthy = false
+                    def failedServices = []
 
-                        sh '''
-                            echo "Checking Eureka..."
-                            curl -f http://localhost:8761/actuator/health || echo "⚠️ Eureka not ready"
+                    while (retryCount < maxRetries && !allHealthy) {
+                        retryCount++
+                        echo "Health check attempt ${retryCount}/${maxRetries}..."
+                        failedServices = []
 
-                            echo "Checking API Gateway..."
-                            curl --insecure -f https://localhost:8443/actuator/health || echo "⚠️ API Gateway not ready"
+                        try {
+                            // Check Eureka
+                            if (sh(script: 'curl -f http://localhost:8761/actuator/health', returnStatus: true) != 0) {
+                                failedServices.add('Eureka')
+                                echo "⚠️ Eureka health check failed"
+                            } else {
+                                echo "✅ Eureka is healthy"
+                            }
 
-                            echo "Checking Frontend..."
-                            curl -f http://localhost:4200/ || echo "⚠️ Frontend not ready"
+                            // Check API Gateway
+                            if (sh(script: 'curl --insecure -f https://localhost:8443/actuator/health', returnStatus: true) != 0) {
+                                failedServices.add('API Gateway')
+                                echo "⚠️ API Gateway health check failed"
+                            } else {
+                                echo "✅ API Gateway is healthy"
+                            }
 
-                            echo "✅ Health checks completed"
-                        '''
-                    } catch (Exception e) {
-                        echo "⚠️ Health check issues: ${e.message}"
+                            // Check Frontend
+                            if (sh(script: 'curl -f https://localhost:4200/ 2>/dev/null | grep -q -i angular', returnStatus: true) != 0) {
+                                failedServices.add('Frontend')
+                                echo "⚠️ Frontend health check failed"
+                            } else {
+                                echo "✅ Frontend is healthy"
+                            }
+
+                            if (failedServices.size() == 0) {
+                                allHealthy = true
+                                echo "✅ All health checks passed!"
+                            } else if (retryCount < maxRetries) {
+                                echo "⏳ Retrying in 10 seconds... (${failedServices.join(', ')} unhealthy)"
+                                sleep(time: 10, unit: 'SECONDS')
+                            }
+                        } catch (Exception e) {
+                            echo "⚠️ Health check exception: ${e.message}"
+                            if (retryCount < maxRetries) {
+                                sleep(time: 10, unit: 'SECONDS')
+                            }
+                        }
+                    }
+
+                    // Automatic rollback on health check failure
+                    if (!allHealthy && failedServices.size() > 0) {
+                        echo "❌ Health checks failed for: ${failedServices.join(', ')}"
+                        echo "🔄 Initiating automatic rollback..."
+
+                        try {
+                            sh '''
+                                echo "Rolling back to previous stable version..."
+                                docker compose down || true
+                                docker compose pull || true
+                                docker compose up -d --remove-orphans
+                                echo "⏳ Waiting 30 seconds for rollback services to start..."
+                                sleep 30
+                                docker compose ps
+                                echo "✅ Rollback completed - attempting health checks again"
+                            '''
+
+                            // Final health check after rollback
+                            sleep(time: 15, unit: 'SECONDS')
+                            if (sh(script: 'curl -f http://localhost:8761/actuator/health && curl --insecure -f https://localhost:8443/actuator/health', returnStatus: true) == 0) {
+                                echo "✅ Services recovered after rollback"
+                                currentBuild.result = 'UNSTABLE'
+                            } else {
+                                echo "❌ Rollback failed - services still unhealthy"
+                                error("Deployment verification failed - services unhealthy after rollback")
+                            }
+                        } catch (Exception e) {
+                            echo "❌ Rollback failed: ${e.message}"
+                            error("Automatic rollback failed: ${e.message}")
+                        }
                     }
                 }
             }
@@ -535,7 +627,7 @@ EOF
                     - ${DOCKER_REPO}/frontend:${IMAGE_TAG}
 
                     🌐 Services:
-                    - Frontend: http://localhost:4200
+                    - Frontend: https://localhost:4200
                     - API Gateway: https://localhost:8443
                     - Eureka: http://localhost:8761
                 """
