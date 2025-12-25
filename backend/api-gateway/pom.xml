@@ -21,6 +21,13 @@
     </properties>
 
     <dependencies>
+        <!-- Common module (shared exceptions, utilities, filters) -->
+        <dependency>
+            <groupId>com.backend</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring Cloud Gateway -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
