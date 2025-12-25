@@ -84,7 +84,7 @@ pipeline {
                             docker run --rm \\
                               -v ${WORKSPACE}:${WORKSPACE} \\
                               -v jenkins_m2_cache:/root/.m2 \\
-                              -w ${WORKSPACE} \\
+                              -w ${WORKSPACE}/backend \\
                               ${MAVEN_IMAGE} \\
                               mvn clean install -DskipTests -B -q
 
@@ -152,9 +152,9 @@ pipeline {
                                     docker run --rm \\
                                       -v ${WORKSPACE}:${WORKSPACE} \\
                                       -v jenkins_m2_cache:/root/.m2 \\
-                                      -w ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' \\
+                                      -w ${WORKSPACE}/${BACKEND_DIR} \\
                                       ${MAVEN_IMAGE} \\
-                                      mvn test -B -Dtest=*UnitTest
+                                      mvn test -B -Dtest=*UnitTest -pl ''' + service + '''
 
                                     echo "✅ ''' + service + ''' unit tests passed"
                                 fi
@@ -192,9 +192,9 @@ pipeline {
                                     docker run --rm \\
                                       -v ${WORKSPACE}:${WORKSPACE} \\
                                       -v jenkins_m2_cache:/root/.m2 \\
-                                      -w ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' \\
+                                      -w ${WORKSPACE}/${BACKEND_DIR} \\
                                       ${MAVEN_IMAGE} \\
-                                      mvn test -B -Dtest=*IntegrationTest
+                                      mvn test -B -Dtest=*IntegrationTest -pl ''' + service + '''
 
                                     echo "✅ ''' + service + ''' integration tests passed"
                                 fi
