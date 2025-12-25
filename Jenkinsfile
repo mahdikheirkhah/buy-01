@@ -8,7 +8,7 @@ pipeline {
     parameters {
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
         booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run unit tests')
-        booleanParam(name: 'RUN_INTEGRATION_TESTS', defaultValue: false, description: 'Run integration tests (slower, requires Docker)')
+        booleanParam(name: 'RUN_INTEGRATION_TESTS', defaultValue: true, description: 'Run integration tests (slower, requires Docker)')
         booleanParam(name: 'RUN_SONAR', defaultValue: false, description: 'Run SonarQube analysis')
         booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip deployment')
         booleanParam(name: 'DEPLOY_LOCALLY', defaultValue: true, description: 'Deploy locally without SSH')
