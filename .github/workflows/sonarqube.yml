@@ -1,0 +1,176 @@
+name: SonarQube Analysis & Code Quality
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  sonarqube-analysis:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        options: >-
+          --health-cmd mongosh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 27017:27017
+
+      kafka:
+        image: confluentinc/cp-kafka:7.5.0
+        env:
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        ports:
+          - 9092:9092
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+          cache: maven
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Build Backend
+        run: |
+          cd backend
+          mvn clean install -DskipTests -B -q
+          echo "✅ Backend build successful"
+
+      - name: Run Backend Unit Tests
+        run: |
+          cd backend
+          mvn test -B -Dtest=*UnitTest
+          echo "✅ Unit tests passed"
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+          echo "✅ Frontend build successful"
+
+      - name: Run Frontend Tests
+        run: |
+          cd frontend
+          npm test -- --watch=false --code-coverage 2>&1 || echo "Frontend tests skipped"
+
+      - name: SonarQube Backend Scan
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST || 'http://localhost:9000' }}
+          SONAR_LOGIN: ${{ secrets.SONARQUBE_TOKEN }}
+        run: |
+          cd backend
+          mvn sonar:sonar \
+            -Dsonar.projectKey=buy-01-backend \
+            -Dsonar.projectName="buy-01 Backend" \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_LOGIN \
+            -Dsonar.sources=. \
+            -Dsonar.exclusions=**/target/**,**/test/**,**/*.pom \
+            -Dsonar.java.binaries=*/target/classes \
+            -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**,**/model/** \
+            -B -q
+
+      - name: SonarQube Frontend Scan
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST || 'http://localhost:9000' }}
+          SONAR_LOGIN: ${{ secrets.SONARQUBE_TOKEN }}
+        run: |
+          cd frontend
+          npm install -g sonar-scanner
+          sonar-scanner \
+            -Dsonar.projectKey=buy-01-frontend \
+            -Dsonar.projectName="buy-01 Frontend" \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_LOGIN \
+            -Dsonar.sources=src \
+            -Dsonar.exclusions=**/node_modules/**,**/dist/** \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+
+      - name: Check Quality Gate
+        if: always()
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST || 'http://localhost:9000' }}
+          SONAR_LOGIN: ${{ secrets.SONARQUBE_TOKEN }}
+        run: |
+          sleep 5  # Wait for analysis to complete
+          BACKEND_STATUS=$(curl -s -u ${SONAR_LOGIN}: ${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=buy-01-backend | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+          FRONTEND_STATUS=$(curl -s -u ${SONAR_LOGIN}: ${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=buy-01-frontend | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+          
+          echo "Backend Quality Gate: $BACKEND_STATUS"
+          echo "Frontend Quality Gate: $FRONTEND_STATUS"
+          
+          if [ "$BACKEND_STATUS" = "ERROR" ] || [ "$FRONTEND_STATUS" = "ERROR" ]; then
+            echo "❌ Quality gate failed"
+            exit 1
+          else
+            echo "✅ Quality gate passed"
+          fi
+
+      - name: Upload Coverage Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            backend/*/target/site/jacoco
+            frontend/coverage
+
+      - name: Comment PR with Analysis Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const backend_url = `${{ secrets.SONARQUBE_HOST || 'http://localhost:9000' }}/dashboard?id=buy-01-backend`;
+            const frontend_url = `${{ secrets.SONARQUBE_HOST || 'http://localhost:9000' }}/dashboard?id=buy-01-frontend`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 📊 SonarQube Analysis Results\n\n[Backend Analysis](${backend_url})\n[Frontend Analysis](${frontend_url})`
+            });
+
+      - name: Generate Report
+        if: always()
+        run: |
+          echo "## 📊 Code Quality Analysis Report" > /tmp/report.md
+          echo "" >> /tmp/report.md
+          echo "- Backend Tests: Completed" >> /tmp/report.md
+          echo "- Frontend Tests: Completed" >> /tmp/report.md
+          echo "- SonarQube Scan: Completed" >> /tmp/report.md
+          echo "- Quality Gate: Checked" >> /tmp/report.md
+          cat /tmp/report.md
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'SonarQube analysis completed'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+

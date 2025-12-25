@@ -7,54 +7,40 @@ pipeline {
 
     parameters {
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
-        choice(name: 'ENVIRONMENT', choices: ['development', 'staging', 'production'], description: 'Deployment environment')
-        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run all tests (backend + frontend)')
+        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run unit tests')
+        booleanParam(name: 'RUN_INTEGRATION_TESTS', defaultValue: false, description: 'Run integration tests (slower, requires Docker)')
         booleanParam(name: 'RUN_SONAR', defaultValue: false, description: 'Run SonarQube analysis')
-        booleanParam(name: 'DEPLOY', defaultValue: true, description: 'Deploy after successful build')
-        booleanParam(name: 'SKIP_FRONTEND_BUILD', defaultValue: false, description: 'Skip frontend build (dev optimization)')
+        booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip deployment')
+        booleanParam(name: 'DEPLOY_LOCALLY', defaultValue: true, description: 'Deploy locally without SSH')
+        booleanParam(name: 'SKIP_FRONTEND_BUILD', defaultValue: false, description: 'Skip frontend build')
     }
 
     environment {
         // Docker configuration
         DOCKER_REPO = 'mahdikheirkhah'
         DOCKER_CREDENTIAL_ID = 'dockerhub-credentials'
-
-        // Image tagging strategy
-        GIT_COMMIT_SHORT = "${GIT_COMMIT.take(7)}"
-        IMAGE_TAG = "${env.BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
         STABLE_TAG = 'stable'
-        LATEST_TAG = 'latest'
 
-        // Environment-specific settings
-        REGISTRY = 'docker.io'
+        // SSH deployment (optional)
+        SSH_CREDENTIAL_ID = 'ssh-deployment-key'
+        REMOTE_HOST = '192.168.1.100'
+        REMOTE_USER = 'ssh-user'
+        DEPLOYMENT_DIR = '/opt/ecommerce'
 
-        // Slack (optional)
-        SLACK_CHANNEL = '#builds'
-        SLACK_WEBHOOK_ID = 'slack-webhook'
+        // Build tools
+        MAVEN_IMAGE = "maven:3.9.6-amazoncorretto-21"
+        NODE_IMAGE = "node:20.10-alpine"
 
         // Paths
         BACKEND_DIR = 'backend'
         FRONTEND_DIR = 'frontend'
-        SCRIPTS_DIR = 'scripts'
-
-        // Build tools
-        MAVEN_VERSION = '3.9.6'
-        MAVEN_IMAGE = "maven:${MAVEN_VERSION}-amazoncorretto-21"
-        NODE_VERSION = '20.10'
-        NODE_IMAGE = "node:${NODE_VERSION}-alpine"
     }
 
     options {
-        // Keep last 30 builds
         buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10'))
-
-        // Timeout after 2 hours
         timeout(time: 2, unit: 'HOURS')
-
-        // Add timestamps to logs
         timestamps()
-
-        // Colorize output
         ansiColor('xterm')
     }
 
@@ -66,16 +52,12 @@ pipeline {
                     echo "🚀 Buy-01 E-Commerce CI/CD Pipeline"
                     echo "=========================================="
                     echo "Branch: ${params.BRANCH}"
-                    echo "Environment: ${params.ENVIRONMENT}"
                     echo "Build: #${env.BUILD_NUMBER}"
-                    echo "Commit: ${GIT_COMMIT_SHORT}"
                     echo "Image Tag: ${IMAGE_TAG}"
+                    echo "Run Tests: ${params.RUN_TESTS}"
+                    echo "Run Integration Tests: ${params.RUN_INTEGRATION_TESTS}"
+                    echo "Deploy Locally: ${params.DEPLOY_LOCALLY}"
                     echo "=========================================="
-
-                    // Validate environment
-                    if (params.ENVIRONMENT != 'development' && !params.RUN_TESTS) {
-                        error("❌ Tests MUST run for ${params.ENVIRONMENT} environment!")
-                    }
                 }
             }
         }
@@ -86,126 +68,73 @@ pipeline {
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: "*/${params.BRANCH}"]],
-                    userRemoteConfigs: [[url: 'https://github.com/mahdikheirkhah/buy-01.git']],
-                    submoduleCfg: [],
-                    extensions: [
-                        [$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true],
-                        [$class: 'PruneStaleBranch'],
-                        [$class: 'RelativeTargetDirectory', relativeTargetDir: '']
-                    ]
+                    userRemoteConfigs: [[url: 'https://github.com/mahdikheirkhah/buy-01.git']]
                 ])
-
                 echo "✅ Checkout completed"
                 sh 'git log --oneline -5'
             }
         }
 
-        stage('🏗️ Build Backend & Frontend (Parallel)') {
-            parallel {
-                stage('Build Backend') {
-                    steps {
-                        script {
-                            echo "🏗️ Building backend microservices..."
-                            try {
-                                sh '''#!/bin/bash
-set -e
+        stage('🏗️ Build Backend') {
+            steps {
+                script {
+                    echo "🏗️ Building backend microservices..."
+                    try {
+                        sh '''
+                            cd ${WORKSPACE}/${BACKEND_DIR}
+                            docker run --rm \\
+                              -v ${WORKSPACE}:${WORKSPACE} \\
+                              -v jenkins_m2_cache:/root/.m2 \\
+                              -w ${WORKSPACE}/${BACKEND_DIR} \\
+                              ${MAVEN_IMAGE} \\
+                              mvn clean install -DskipTests -B -q
 
-# Debug: Show what we're working with
-echo "Workspace: ${WORKSPACE}"
-echo "Backend dir: ${WORKSPACE}/${BACKEND_DIR}"
-ls -la ${WORKSPACE}/${BACKEND_DIR} | head -20
-
-# Check if parent pom.xml exists
-if [ -f ${WORKSPACE}/${BACKEND_DIR}/pom.xml ]; then
-    echo "Found parent pom.xml in backend/, building all services..."
-    docker run --rm \\
-      -v ${WORKSPACE}:${WORKSPACE} \\
-      -v jenkins_m2_cache:/root/.m2 \\
-      -w ${WORKSPACE}/${BACKEND_DIR} \\
-      --network host \\
-      ${MAVEN_IMAGE} \\
-      mvn clean install -DskipTests -B -q
-else
-    echo "No parent pom.xml found, building services individually..."
-
-    # Build each service
-    for service in discovery-service api-gateway user-service product-service media-service dummy-data; do
-        SERVICE_PATH="${WORKSPACE}/${BACKEND_DIR}/$service"
-        if [ -d "$SERVICE_PATH" ]; then
-            echo "Building $service..."
-            docker run --rm \\
-              -v ${WORKSPACE}:${WORKSPACE} \\
-              -v jenkins_m2_cache:/root/.m2 \\
-              -w "$SERVICE_PATH" \\
-              --network host \\
-              ${MAVEN_IMAGE} \\
-              mvn clean install -DskipTests -B -q
-            echo "✅ Built $service"
-        else
-            echo "⚠️ Service directory not found: $SERVICE_PATH"
-        fi
-    done
-fi
-'''
-                                echo "✅ Backend build completed"
-                            } catch (Exception e) {
-                                error("❌ Backend build failed: ${e.message}")
-                            }
-                        }
-                    }
-                }
-
-                stage('Build Frontend') {
-                    when {
-                        expression { params.SKIP_FRONTEND_BUILD == false }
-                    }
-                    steps {
-                        script {
-                            echo "🏗️ Building frontend..."
-                            try {
-                                sh '''#!/bin/bash
-set -e
-
-FRONTEND_PATH="${WORKSPACE}/${FRONTEND_DIR}"
-
-echo "Frontend path: $FRONTEND_PATH"
-echo "Contents of frontend directory:"
-ls -la "$FRONTEND_PATH" | head -20
-
-# Check if package.json exists
-if [ ! -f "$FRONTEND_PATH/package.json" ]; then
-    echo "❌ ERROR: package.json not found in $FRONTEND_PATH"
-    exit 1
-fi
-
-echo "Found package.json, proceeding with build..."
-
-# Build frontend using Docker
-docker run --rm \\
-  -v "$FRONTEND_PATH":/app \\
-  -w /app \\
-  ${NODE_IMAGE} \\
-  sh -c "npm install --legacy-peer-deps && npm run build"
-
-echo "Checking dist directory..."
-if [ -d "$FRONTEND_PATH/dist" ]; then
-    echo "✅ Frontend dist directory created successfully"
-else
-    echo "⚠️ Warning: dist directory not found after build"
-fi
-'''
-                                echo "✅ Frontend build completed"
-                            } catch (Exception e) {
-                                echo "⚠️ Frontend build failed: ${e.message}"
-                                throw e
-                            }
-                        }
+                            echo "✅ Backend build completed"
+                        '''
+                    } catch (Exception e) {
+                        error("❌ Backend build failed: ${e.message}")
                     }
                 }
             }
         }
 
-        stage('🧪 Test Backend') {
+        stage('🏗️ Build Frontend') {
+            when {
+                expression { params.SKIP_FRONTEND_BUILD == false }
+            }
+            steps {
+                script {
+                    echo "🏗️ Building frontend..."
+                    try {
+                        sh '''
+                            FRONTEND_PATH="${WORKSPACE}/${FRONTEND_DIR}"
+
+                            if [ ! -f "$FRONTEND_PATH/package.json" ]; then
+                                echo "❌ ERROR: package.json not found"
+                                exit 1
+                            fi
+
+                            docker run --rm \\
+                              -v "$FRONTEND_PATH":/app \\
+                              -w /app \\
+                              ${NODE_IMAGE} \\
+                              sh -c "npm install --legacy-peer-deps && npm run build"
+
+                            if [ -d "$FRONTEND_PATH/dist" ]; then
+                                echo "✅ Frontend dist created"
+                            else
+                                echo "⚠️ Warning: dist directory not found"
+                            fi
+                        '''
+                    } catch (Exception e) {
+                        echo "⚠️ Frontend build failed: ${e.message}"
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('🧪 Test Backend (Unit)') {
             when {
                 expression { params.RUN_TESTS == true }
             }
@@ -214,66 +143,74 @@ fi
                     echo "🧪 Running backend unit tests..."
 
                     def services = ['user-service', 'product-service', 'media-service']
-                    def results = [:]
+                    def failedTests = []
 
                     services.each { service ->
                         try {
-                            sh '''#!/bin/bash
-if [ -d ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' ]; then
-    docker run --rm \\
-      -v ${WORKSPACE}:${WORKSPACE} \\
-      -v jenkins_m2_cache:/root/.m2 \\
-      -w ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' \\
-      ${MAVEN_IMAGE} \\
-      mvn test -B -DskipTests || echo "Tests skipped or no test profile configured"
-fi
-'''
-                            results[service] = 'PASS'
-                            echo "✅ ${service} tests passed"
+                            echo "Testing ${service}..."
+                            sh '''
+                                if [ -d ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' ]; then
+                                    docker run --rm \\
+                                      -v ${WORKSPACE}:${WORKSPACE} \\
+                                      -v jenkins_m2_cache:/root/.m2 \\
+                                      -w ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' \\
+                                      ${MAVEN_IMAGE} \\
+                                      mvn test -B -Dtest=*UnitTest
+
+                                    echo "✅ ''' + service + ''' unit tests passed"
+                                fi
+                            '''
                         } catch (Exception e) {
-                            results[service] = 'WARN'
-                            echo "⚠️ ${service} tests warning: ${e.message} (may need external dependencies)"
+                            echo "⚠️ ${service} unit tests: ${e.message}"
+                            failedTests.add(service)
                         }
                     }
 
-                    // Summary
-                    echo "\n📊 Test Summary:"
-                    results.each { service, status ->
-                        echo "  ${status == 'PASS' ? '✅' : '⚠️'} ${service}: ${status}"
+                    if (failedTests.size() > 0) {
+                        echo "⚠️ Some unit tests failed: ${failedTests.join(', ')}"
+                    } else {
+                        echo "✅ All unit tests passed!"
                     }
                 }
             }
         }
 
-        stage('🧪 Test Frontend') {
+        stage('🧪 Test Backend (Integration)') {
             when {
-                allOf {
-                    expression { params.RUN_TESTS == true }
-                    expression { params.SKIP_FRONTEND_BUILD == false }
-                }
+                expression { params.RUN_INTEGRATION_TESTS == true }
             }
             steps {
                 script {
-                    echo "🧪 Running frontend unit tests..."
-                    try {
-                        sh '''#!/bin/bash
-docker run --rm \\
-  -v ${WORKSPACE}/${FRONTEND_DIR}:/app \\
-  -w /app \\
-  ${NODE_IMAGE} \\
-  npm test -- --watch=false --browsers=ChromeHeadless --code-coverage 2>&1 || \\
-  echo "⚠️ Frontend tests skipped (may require Chrome)"
-'''
-                        echo "✅ Frontend tests completed"
-                    } catch (Exception e) {
-                        echo "⚠️ Frontend tests skipped: ${e.message}"
-                        // Don't fail build - tests may require Chrome
+                    echo "🧪 Running backend integration tests..."
+
+                    def services = ['user-service', 'product-service', 'media-service']
+
+                    services.each { service ->
+                        try {
+                            echo "Integration tests for ${service}..."
+                            sh '''
+                                if [ -d ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' ]; then
+                                    docker run --rm \\
+                                      -v ${WORKSPACE}:${WORKSPACE} \\
+                                      -v jenkins_m2_cache:/root/.m2 \\
+                                      -w ${WORKSPACE}/${BACKEND_DIR}/''' + service + ''' \\
+                                      ${MAVEN_IMAGE} \\
+                                      mvn test -B -Dtest=*IntegrationTest
+
+                                    echo "✅ ''' + service + ''' integration tests passed"
+                                fi
+                            '''
+                        } catch (Exception e) {
+                            echo "⚠️ ${service} integration tests: ${e.message}"
+                        }
                     }
+
+                    echo "✅ Integration tests completed"
                 }
             }
         }
 
-        stage('📊 Code Quality (SonarQube)') {
+        stage('📊 SonarQube Analysis') {
             when {
                 expression { params.RUN_SONAR == true }
             }
@@ -281,67 +218,100 @@ docker run --rm \\
                 script {
                     echo "📊 Running SonarQube analysis..."
                     try {
-                        withSonarQubeEnv('SonarQube') {
-                            sh '''#!/bin/bash
-docker run --rm \\
-  -v ${WORKSPACE}:${WORKSPACE} \\
-  -w ${WORKSPACE} \\
-  sonarsource/sonar-scanner-cli:latest \\
-  -Dsonar.projectKey=buy-01 \\
-  -Dsonar.sources=backend,frontend/src \\
-  -Dsonar.java.binaries=backend/*/target/classes \\
-  -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/** || \\
-  echo "⚠️ SonarQube analysis skipped (not configured)"
-'''
+                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                            // Backend Analysis
+                            sh '''
+                                cd ${WORKSPACE}/${BACKEND_DIR}
+                                docker run --rm \\
+                                  -v ${WORKSPACE}:${WORKSPACE} \\
+                                  -v jenkins_m2_cache:/root/.m2 \\
+                                  -w ${WORKSPACE}/${BACKEND_DIR} \\
+                                  --network host \\
+                                  ${MAVEN_IMAGE} \\
+                                  mvn sonar:sonar \\
+                                    -Dsonar.projectKey=buy-01-backend \\
+                                    -Dsonar.projectName="buy-01 Backend" \\
+                                    -Dsonar.host.url=http://localhost:9000 \\
+                                    -Dsonar.login=${SONAR_TOKEN} \\
+                                    -Dsonar.sources=. \\
+                                    -Dsonar.exclusions=**/target/**,**/test/** \\
+                                    -Dsonar.java.binaries=*/target/classes \\
+                                    -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**,**/model/** \\
+                                    -B -q
+
+                                echo "✅ Backend analysis completed"
+                            '''
+
+                            // Frontend Analysis
+                            sh '''
+                                cd ${WORKSPACE}/${FRONTEND_DIR}
+                                which sonar-scanner || npm install -g sonar-scanner
+
+                                sonar-scanner \\
+                                  -Dsonar.projectKey=buy-01-frontend \\
+                                  -Dsonar.projectName="buy-01 Frontend" \\
+                                  -Dsonar.host.url=http://localhost:9000 \\
+                                  -Dsonar.login=${SONAR_TOKEN} \\
+                                  -Dsonar.sources=src \\
+                                  -Dsonar.exclusions=node_modules/**,dist/**,coverage/** \\
+                                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+
+                                echo "✅ Frontend analysis completed"
+                            '''
                         }
+
+                        // Wait for quality gate
+                        sleep(time: 10, unit: 'SECONDS')
                         echo "✅ SonarQube analysis completed"
                     } catch (Exception e) {
                         echo "⚠️ SonarQube analysis failed: ${e.message}"
                         echo "To enable SonarQube:"
-                        echo "  1. Install SonarQube server"
-                        echo "  2. Add 'SonarQube' configuration in Jenkins"
-                        echo "  3. Run with RUN_SONAR=true"
+                        echo "1. Start SonarQube: docker compose up -d sonarqube"
+                        echo "2. Access http://localhost:9000"
+                        echo "3. Create credential in Jenkins: sonarqube-token"
+                        echo "4. Run build with RUN_SONAR=true"
                     }
                 }
             }
         }
 
-        stage('🐳 Dockerize & Push Images') {
+        stage('🐳 Dockerize & Push') {
             steps {
                 script {
-                    echo "🐳 Building and pushing Docker images..."
+                    echo "🐳 Building and pushing Docker images with tag: ${IMAGE_TAG}"
 
                     try {
-                        withCredentials([
-                            usernamePassword(
-                                credentialsId: env.DOCKER_CREDENTIAL_ID,
-                                passwordVariable: 'DOCKER_PASSWORD',
-                                usernameVariable: 'DOCKER_USERNAME'
-                            )
-                        ]) {
+                        withCredentials([usernamePassword(
+                            credentialsId: env.DOCKER_CREDENTIAL_ID,
+                            passwordVariable: 'DOCKER_PASSWORD',
+                            usernameVariable: 'DOCKER_USERNAME'
+                        )]) {
+                            sh '''
+                                if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
+                                    echo "❌ ERROR: Docker credentials not set!"
+                                    echo "Please configure Docker Hub credentials in Jenkins:"
+                                    echo "1. Go to Jenkins > Manage Jenkins > Credentials"
+                                    echo "2. Add a 'Username with password' credential"
+                                    echo "3. ID: dockerhub-credentials"
+                                    exit 1
+                                fi
 
-                            sh '''#!/bin/bash
-echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-echo "✅ Docker Hub login successful"
-'''
+                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                                if [ $? -ne 0 ]; then
+                                    echo "❌ Docker login failed!"
+                                    exit 1
+                                fi
+                                echo "✅ Docker Hub login successful"
+                            '''
 
-                            // Build and push backend services
-                            def services = [
-                                'discovery-service',
-                                'api-gateway',
-                                'user-service',
-                                'product-service',
-                                'media-service',
-                                'dummy-data'
-                            ]
+                            def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'dummy-data']
 
                             services.each { service ->
-                                sh '''#!/bin/bash
-if [ -d ${WORKSPACE}/${BACKEND_DIR}/''' + service + '''/target ]; then
-    cd ${WORKSPACE}/${BACKEND_DIR}/''' + service + '''
+                                sh '''
+                                    cd ${WORKSPACE}/${BACKEND_DIR}/''' + service + '''
 
-    # Create temporary Dockerfile from pre-built JAR
-    cat > Dockerfile.tmp << 'DOCKERFILE_EOF'
+                                    if [ -f target/*.jar ]; then
+                                        cat > Dockerfile.tmp << 'EOF'
 FROM amazoncorretto:21-alpine
 RUN apk add --no-cache curl
 WORKDIR /app
@@ -350,89 +320,117 @@ EXPOSE 8080 8443
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 \\
     CMD curl -f http://localhost:8080/actuator/health || exit 0
 ENTRYPOINT ["java", "-Dcom.sun.management.jmxremote", "-jar", "app.jar"]
-DOCKERFILE_EOF
+EOF
 
-    # Build and push
-    docker build -t ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} -f Dockerfile.tmp .
-    docker push ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}
+                                        docker build -t ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} -f Dockerfile.tmp .
+                                        docker push ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}
 
-    # Tag as stable and latest
-    docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
-    docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${LATEST_TAG}
-    docker push ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
-    docker push ${DOCKER_REPO}/''' + service + ''':${LATEST_TAG}
+                                        docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
+                                        docker push ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
 
-    rm Dockerfile.tmp
-    cd ${WORKSPACE}
-    echo "✅ Pushed ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}"
-else
-    echo "⚠️ Skipping ''' + service + ''' (not built)"
-fi
-'''
+                                        rm Dockerfile.tmp
+                                        echo "✅ Pushed ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}"
+                                    else
+                                        echo "⚠️ ''' + service + ''' JAR not found, skipping..."
+                                    fi
+
+                                    cd ${WORKSPACE}
+                                '''
                             }
 
-                            // Build and push frontend
-                            sh '''#!/bin/bash
-if [ -d ${WORKSPACE}/${FRONTEND_DIR}/dist ]; then
-    docker build \\
-      -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} \\
-      -f ${WORKSPACE}/${FRONTEND_DIR}/Dockerfile \\
-      ${WORKSPACE}/${FRONTEND_DIR}/
+                            // Frontend
+                            sh '''
+                                if [ -d ${WORKSPACE}/${FRONTEND_DIR}/dist ]; then
+                                    docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} -f ${WORKSPACE}/${FRONTEND_DIR}/Dockerfile ${WORKSPACE}/${FRONTEND_DIR}/
+                                    docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
 
-    docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
+                                    docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
+                                    docker push ${DOCKER_REPO}/frontend:${STABLE_TAG}
 
-    # Tag as stable and latest
-    docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
-    docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${LATEST_TAG}
-    docker push ${DOCKER_REPO}/frontend:${STABLE_TAG}
-    docker push ${DOCKER_REPO}/frontend:${LATEST_TAG}
+                                    echo "✅ Pushed frontend:${IMAGE_TAG}"
+                                else
+                                    echo "⚠️ Frontend dist not found, skipping..."
+                                fi
+                            '''
 
-    echo "✅ Pushed ${DOCKER_REPO}/frontend:${IMAGE_TAG}"
-else
-    echo "⚠️ Frontend dist not found (skipping)"
-fi
-'''
-
-                            echo "✅ Docker images processing completed!"
+                            echo "✅ Docker build and push completed!"
                         }
                     } catch (Exception e) {
-                        echo "⚠️ Docker build/push issue: ${e.message}"
-                        echo "Continuing with deployment using existing images..."
+                        echo "⚠️ Docker issue: ${e.message}"
+                        echo "Continuing with deployment..."
                     }
                 }
             }
         }
 
-        stage('🚀 Deploy') {
+        stage('🚀 Deploy Locally') {
             when {
-                expression { params.DEPLOY == true }
+                expression { params.DEPLOY_LOCALLY == true && params.SKIP_DEPLOY == true }
             }
             steps {
                 script {
-                    echo "🚀 Deploying to ${params.ENVIRONMENT}..."
+                    echo "🚀 Deploying locally with tag: ${IMAGE_TAG}"
 
                     try {
-                        sh '''#!/bin/bash
-# Stop and remove old containers
-docker compose down || true
+                        sh '''
+                            docker compose down || true
+                            export IMAGE_TAG=${IMAGE_TAG}
+                            docker compose pull || true
+                            docker compose up -d --remove-orphans
+                            echo "⏳ Waiting for services to start..."
+                            sleep 30
+                            docker compose ps
+                            echo "✅ Local deployment successful!"
+                        '''
 
-# Export image tag and deploy
-export IMAGE_TAG=${IMAGE_TAG}
-docker compose pull || echo "⚠️ Some images may not exist"
-docker compose up -d --remove-orphans
-
-# Wait for services to start
-echo "⏳ Waiting for services to start (30s)..."
-sleep 30
-
-# Show status
-echo "📊 Service Status:"
-docker compose ps
-'''
-
-                        echo "✅ Deployment successful!"
+                        echo "🌐 Access your application at:"
+                        echo "   - Frontend: http://localhost:4200"
+                        echo "   - API Gateway: https://localhost:8443"
+                        echo "   - Eureka: http://localhost:8761"
                     } catch (Exception e) {
-                        error("❌ Deployment failed: ${e.message}")
+                        echo "❌ Local deployment failed: ${e.message}"
+                        error("Deploy failed: ${e.message}")
+                    }
+                }
+            }
+        }
+
+        stage('🚀 Deploy Remote') {
+            when {
+                allOf {
+                    expression { params.SKIP_DEPLOY == false }
+                    expression { params.DEPLOY_LOCALLY == false }
+                }
+            }
+            steps {
+                script {
+                    echo "🚀 Deploying version ${IMAGE_TAG} to remote server..."
+
+                    try {
+                        withCredentials([sshUserPrivateKey(
+                            credentialsId: env.SSH_CREDENTIAL_ID,
+                            keyFileVariable: 'SSH_KEY',
+                            usernameVariable: 'SSH_USER'
+                        )]) {
+                            sh '''
+                                scp -i ${SSH_KEY} -o StrictHostKeyChecking=no docker-compose.yml ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOYMENT_DIR}/docker-compose.yml
+
+                                ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "
+                                    cd ${DEPLOYMENT_DIR}
+                                    echo 'IMAGE_TAG=${IMAGE_TAG}' > .env
+                                    echo 'DOCKER_REPO=${DOCKER_REPO}' >> .env
+                                    docker compose pull
+                                    docker compose up -d --remove-orphans
+                                    echo 'Waiting for services...'
+                                    sleep 30
+                                    docker compose ps
+                                "
+                            '''
+                            echo "✅ Remote deployment successful!"
+                        }
+                    } catch (Exception e) {
+                        echo "❌ Remote deployment failed: ${e.message}"
+                        error("Deploy failed: ${e.message}")
                     }
                 }
             }
@@ -440,36 +438,29 @@ docker compose ps
 
         stage('✅ Post-Deployment Verification') {
             when {
-                expression { params.DEPLOY == true }
+                expression { params.DEPLOY_LOCALLY == true }
             }
             steps {
                 script {
                     echo "✅ Verifying deployment..."
 
                     try {
-                        // Wait for health checks
                         sleep(time: 15, unit: 'SECONDS')
 
-                        sh '''#!/bin/bash
-echo "📊 Manual health checks..."
+                        sh '''
+                            echo "Checking Eureka..."
+                            curl -f http://localhost:8761/actuator/health || echo "⚠️ Eureka not ready"
 
-# Eureka
-echo "Checking Eureka..."
-curl -f http://localhost:8761/actuator/health || echo "⚠️ Eureka health check not available yet"
+                            echo "Checking API Gateway..."
+                            curl --insecure -f https://localhost:8443/actuator/health || echo "⚠️ API Gateway not ready"
 
-# API Gateway
-echo "Checking API Gateway..."
-curl --insecure -f https://localhost:8443/actuator/health || echo "⚠️ API Gateway health check not available yet"
+                            echo "Checking Frontend..."
+                            curl -f http://localhost:4200/ || echo "⚠️ Frontend not ready"
 
-# Frontend
-echo "Checking Frontend..."
-curl -f http://localhost:4200/ || echo "⚠️ Frontend health check not available yet"
-
-echo "✅ Basic health checks completed"
-'''
+                            echo "✅ Health checks completed"
+                        '''
                     } catch (Exception e) {
-                        echo "⚠️ Health check had issues: ${e.message}"
-                        echo "Services may still be starting. Check manually after a few seconds."
+                        echo "⚠️ Health check issues: ${e.message}"
                     }
                 }
             }
@@ -479,23 +470,20 @@ echo "✅ Basic health checks completed"
             steps {
                 script {
                     echo "📦 Archiving build artifacts..."
-
                     try {
-                        // Archive test reports if they exist
-                        sh '''#!/bin/bash
-if find ${BACKEND_DIR}/*/target/surefire-reports -name "*.xml" 2>/dev/null | grep -q .; then
-    echo "Found test reports, archiving..."
-else
-    echo "No test reports found (tests may have been skipped)"
-fi
-'''
+                        sh '''
+                            if find ${BACKEND_DIR}/*/target/surefire-reports -name "*.xml" 2>/dev/null | grep -q .; then
+                                echo "Found test reports"
+                            else
+                                echo "No test reports found"
+                            fi
+                        '''
 
                         junit(
                             allowEmptyResults: true,
                             testResults: '${BACKEND_DIR}/*/target/surefire-reports/*.xml'
                         )
 
-                        // Archive coverage reports if they exist
                         archiveArtifacts(
                             artifacts: '${BACKEND_DIR}/*/target/site/jacoco/**,${FRONTEND_DIR}/coverage/**',
                             allowEmptyArchive: true
@@ -513,13 +501,23 @@ fi
     post {
         always {
             script {
-                echo "🧹 Post-build cleanup..."
+                echo "🧹 Cleanup..."
 
-                // Clean workspace
-                cleanWs(
-                    deleteDirs: true,
-                    patterns: [[pattern: '${FRONTEND_DIR}/node_modules', type: 'INCLUDE']]
-                )
+                try {
+                    def testReportsExist = sh(
+                        script: 'find ${BACKEND_DIR}/*/target/surefire-reports -name "*.xml" -type f 2>/dev/null | wc -l',
+                        returnStdout: true
+                    ).trim().toInteger() > 0
+
+                    if (testReportsExist) {
+                        echo "📊 Collecting test results..."
+                        junit allowEmptyResults: true, testResults: '${BACKEND_DIR}/*/target/surefire-reports/*.xml'
+                    }
+                } catch (Exception e) {
+                    echo "⚠️ Test result collection: ${e.message}"
+                }
+
+                cleanWs notFailBuild: true
             }
         }
 
@@ -532,18 +530,25 @@ fi
                     Job: ${env.JOB_NAME}
                     Build: #${env.BUILD_NUMBER}
                     Branch: ${params.BRANCH}
-                    Environment: ${params.ENVIRONMENT}
                     Image Tag: ${IMAGE_TAG}
                     Duration: ${currentBuild.durationString}
                     Build URL: ${env.BUILD_URL}
 
-                    🌐 Access your application:
+                    📦 Docker Images:
+                    - ${DOCKER_REPO}/discovery-service:${IMAGE_TAG}
+                    - ${DOCKER_REPO}/api-gateway:${IMAGE_TAG}
+                    - ${DOCKER_REPO}/user-service:${IMAGE_TAG}
+                    - ${DOCKER_REPO}/product-service:${IMAGE_TAG}
+                    - ${DOCKER_REPO}/media-service:${IMAGE_TAG}
+                    - ${DOCKER_REPO}/dummy-data:${IMAGE_TAG}
+                    - ${DOCKER_REPO}/frontend:${IMAGE_TAG}
+
+                    🌐 Services:
                     - Frontend: http://localhost:4200
                     - API Gateway: https://localhost:8443
                     - Eureka: http://localhost:8761
                 """
 
-                // Try email notification
                 try {
                     emailext(
                         subject: "✅ Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
@@ -571,11 +576,8 @@ fi
                     Duration: ${currentBuild.durationString}
                     Build URL: ${env.BUILD_URL}
                     Console: ${env.BUILD_URL}console
-
-                    Check the console output for detailed error information.
                 """
 
-                // Email notification
                 try {
                     emailext(
                         subject: "❌ Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",

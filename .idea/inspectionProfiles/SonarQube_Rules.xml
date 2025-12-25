@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inspections profile_name="SonarQube Rules" version="1.0">
+  <option name="myName" value="SonarQube Rules" />
+  <option name="myLocal" value="false" />
+  <inspection_tool class="AlibabaAbstractMethodOrInterfaceMethodMustUseJavadocInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaClassMustHaveAuthorInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaCommentsMustBeJavaDocFormatInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaConstantFieldShouldBeUpperCaseInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaCountDownShouldInZeroCheckInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaEnumConstantsMustHaveCommentInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaExceptionClassShouldEndWithExceptionInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaIbatisMethodQueryForListInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaIbatisVariableTypeInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaLambdaExpressionNeedParenthesesInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaLowerCamelCaseVariableNamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaMapWithoutDefaultValueInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaMethodReturnsShouldUseValueObjectInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaMethodTooLongInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaPackageNamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaPojoMustOverrideToStringInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaPojoMustImplementSerializableInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaRemoveCommentedCodeInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaServiceOrDaoClassShouldStartWithBaseServiceOrDaoInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaStringConcat" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaTestClassShouldEndWithTestNamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaUndefinedMagicConstantInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaUnsupportedExceptionWithModifyAsFunctionArgumentInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaUseQuietReferenceExtractionInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaVariableNamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AlibabaWrapperTypeEqualityInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AndroidLintMissingSuperCall" enabled="true" level="ERROR" enabled_by_default="true" />
+  <inspection_tool class="AssignmentToMethodParameter" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="AvoidNestedConditionals" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="AvoidStarImport" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="BooleanMethodIsAlwaysInverted" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="BoundedWildcard" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="CallToSimpleGetterInLoop" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="CanBeFinal" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="CatchMayIgnoreException" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="ClassWithoutLogger" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="ClassWithoutNoArgConstructor" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="CommentedOutCode" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="CyclomaticComplexity" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="DeadCode" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="DiffersFromDeclaredType" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="DuplicateStringLiteralInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="EmptyMethod" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="EmptyStatementBody" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="EqualsAndHashcode" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="EqualsWhichDoesntCheckParameterClass" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="ExceptionCaught" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="ExceptionNameDoesntEndWithException" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="FieldHidesSuperclassField" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="FieldMayBeFinal" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="FinalizeCalledExplicitly" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="FinalizeNotProtected" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="FinalStaticMethod" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="FinalizeDoesntCallSuperFinalize" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="IdempotentInstanceof" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="InappropriateHeavyweightUsage" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="InconsistentComparison" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="InconsistentHashAndEquals" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="InfiniteLoopStatement" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="InheritanceInUtilityClass" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="InstantiatingObjectsWithClasses" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="InterfaceNeverImplemented" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="LocalCanBeFinal" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="MethodMayBeStatic" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="MethodNameSameAsParentName" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="MethodParameterOfConcreteClass" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="MethodReturnAlwaysIgnored" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="MissingOverrideAnnotation" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="MissingSerialVersionUID" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="MultipleStringLiterals" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="NegativelyNamedBooleanVariable" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="NullArgumentToVariableArgMethod" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="NullableProblem" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="ObjectEquality" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="OneStatementPerLine" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="OptionalGetWithoutIsPresent" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="OverlyBroadCatchBlock" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="OverlyComplexArithmeticExpression" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="OverlyComplexBooleanExpression" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="OverlyComplexClass" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="OverlyComplexMethod" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="OverlyLongLambda" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="OverlyLongMethod" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="PackageNamingConvention" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="ParameterPackage" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="ProtectedMemberInFinalClass" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="PublicField" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="PublicMethodWithoutLogging" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="RawUseOfParameterizedClass" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="RedundantAbstractMethod" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="RedundantModifier" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="RedundantThrows" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="RefusedBequest" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="ReturnOfThis" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="ReturnValueIgnored" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="SetReplaceableByEnumSet" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="SimplifyBooleanExpression" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="SimplifyBooleanReturn" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="SimplifyConstantMathCall" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="SimplifyStreamApiCallChains" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="SingleCharacterStringConcatenation" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="StringBufferReplaceableByString" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="StringConcatenationInLoop" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="StringConcatenationMissingWhitespace" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="SwitchStatementDensity" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="TemplateLanguageInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="TooManyFields" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="TooManyMethods" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="TooManyParametersInMethodOverride" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="TypeMayBeWeakened" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="UnnecessaryLocalVariable" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="UnnecessaryThis" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="UnusedImport" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="UnusedLabel" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="UnusedReturnValue" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="UselessCommentDetector" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="UselessJUnitTestCase" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="UtilityClass" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="VariableArgumentMethod" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="VariableHidingMemberVariable" enabled="true" level="WARNING" enabled_by_default="true" />
+  <inspection_tool class="VariableNamingConvention" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="VariableTypeCanBeExplicit" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="WeakenedAccess" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  <inspection_tool class="WhileLoopSpinsOnField" enabled="true" level="WARNING" enabled_by_default="true" />
+</inspections>
+

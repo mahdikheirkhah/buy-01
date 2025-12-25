@@ -1,3 +1,34 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+  "sonarlint.ls.javaHome": "/usr/lib/jvm/java-21-openjdk",
+  "sonarlint.connectedMode.servers": [
+    {
+      "connectionId": "sonarqube-local",
+      "serverUrl": "http://localhost:9000",
+      "token": "replace-with-your-sonarqube-token"
+    }
+  ],
+  "sonarlint.connectedMode.project": "buy-01-backend",
+  "sonarlint.showDescriptionInHovers": true,
+  "sonarlint.showAnalysisProgress": true,
+  "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
+  "editor.formatOnSave": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "[java]": {
+    "editor.defaultFormatter": "redhat.java",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true,
+      "source.organizeImports": true
+    }
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features",
+    "editor.formatOnSave": true
+  }
 }
+
