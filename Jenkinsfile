@@ -29,7 +29,7 @@ pipeline {
         DEPLOYMENT_DIR = '/opt/ecommerce'
 
         // Build tools
-        MAVEN_IMAGE = "maven:3.9.6-amazoncorretto-21"
+        MAVEN_IMAGE = "maven:3.9.6-amazoncorretto-17"
         NODE_IMAGE = "node:22-alpine"
 
         // Paths
