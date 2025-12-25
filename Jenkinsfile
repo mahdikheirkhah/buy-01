@@ -106,20 +106,13 @@ pipeline {
                     echo "🏗️ Building frontend..."
                     try {
                         sh '''
-                            FRONTEND_PATH="${WORKSPACE}/${FRONTEND_DIR}"
-
-                            if [ ! -f "$FRONTEND_PATH/package.json" ]; then
-                                echo "❌ ERROR: package.json not found"
-                                exit 1
-                            fi
-
                             docker run --rm \\
-                              -v "$FRONTEND_PATH":/app \\
-                              -w /app \\
+                              --volumes-from jenkins-cicd \\
+                              -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
                               ${NODE_IMAGE} \\
                               sh -c "npm install --legacy-peer-deps && npm run build"
 
-                            if [ -d "$FRONTEND_PATH/dist" ]; then
+                            if [ -d /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend/dist ]; then
                                 echo "✅ Frontend dist created"
                             else
                                 echo "⚠️ Warning: dist directory not found"
@@ -338,8 +331,8 @@ EOF
 
                             // Frontend
                             sh '''
-                                if [ -d ${WORKSPACE}/${FRONTEND_DIR}/dist ]; then
-                                    docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} -f ${WORKSPACE}/${FRONTEND_DIR}/Dockerfile ${WORKSPACE}/${FRONTEND_DIR}/
+                                if [ -d /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend/dist ]; then
+                                    docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} -f /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend/Dockerfile /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend/
                                     docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
 
                                     docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
