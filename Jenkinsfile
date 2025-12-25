@@ -87,6 +87,8 @@ pipeline {
                                       --volumes-from jenkins-cicd \\
                                       -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
                                       -v jenkins_m2_cache:/root/.m2 \\
+                                      -v /var/run/docker.sock:/var/run/docker.sock \\
+                                      -e TESTCONTAINERS_RYUK_DISABLED=true \\
                                       --network host \\
                                       ${MAVEN_IMAGE} \\
                                       mvn clean install -B -q
