@@ -81,13 +81,12 @@ pipeline {
                     echo "🏗️ Building backend microservices..."
                     try {
                         sh '''
-                            cd ${WORKSPACE}/${BACKEND_DIR}
                             docker run --rm \\
                               -v ${WORKSPACE}:${WORKSPACE} \\
                               -v jenkins_m2_cache:/root/.m2 \\
-                              -w ${WORKSPACE}/${BACKEND_DIR} \\
+                              -w ${WORKSPACE} \\
                               ${MAVEN_IMAGE} \\
-                              mvn clean install -DskipTests -B -q
+                              mvn -f ${BACKEND_DIR}/pom.xml clean install -DskipTests -B -q
 
                             echo "✅ Backend build completed"
                         '''
