@@ -486,16 +486,16 @@ EOF
                                 echo "✅ Eureka is healthy"
                             }
 
-                            // Check API Gateway (using docker exec)
-                            if (sh(script: 'docker exec api-gateway curl -s http://localhost:8443/actuator/health | grep -q UP', returnStatus: true) != 0) {
+                            // Check API Gateway (using docker exec, -k ignores self-signed cert issues)
+                            if (sh(script: 'docker exec api-gateway curl -sk https://localhost:8443/actuator/health | grep -q UP', returnStatus: true) != 0) {
                                 failedServices.add('API Gateway')
                                 echo "⚠️ API Gateway health check failed"
                             } else {
                                 echo "✅ API Gateway is healthy"
                             }
 
-                            // Check Frontend (using docker exec)
-                            if (sh(script: 'docker exec frontend curl -s http://localhost:3000 2>/dev/null | grep -q -i angular', returnStatus: true) != 0) {
+                            // Check Frontend (using docker exec, -k ignores self-signed cert)
+                            if (sh(script: 'docker exec frontend curl -sk https://localhost:4200 2>/dev/null | grep -q -i angular', returnStatus: true) != 0) {
                                 failedServices.add('Frontend')
                                 echo "⚠️ Frontend health check failed"
                             } else {
@@ -536,7 +536,7 @@ EOF
 
                             // Final health check after rollback
                             sleep(time: 15, unit: 'SECONDS')
-                            if (sh(script: 'docker exec discovery-service curl -s http://localhost:8761/actuator/health | grep -q UP && docker exec api-gateway curl -s http://localhost:8443/actuator/health | grep -q UP', returnStatus: true) == 0) {
+                            if (sh(script: 'docker exec discovery-service curl -s http://localhost:8761/actuator/health | grep -q UP && docker exec api-gateway curl -sk https://localhost:8443/actuator/health | grep -q UP', returnStatus: true) == 0) {
                                 echo "✅ Services recovered after rollback"
                                 currentBuild.result = 'UNSTABLE'
                             } else {
