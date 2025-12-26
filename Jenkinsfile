@@ -222,8 +222,8 @@ pipeline {
                         docker run --rm \\
                           --volumes-from jenkins-cicd \\
                           -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
-                          node:22 \\
-                          bash -c "apt-get update && apt-get install -y chromium && npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
+                          node:22 sh -c \\
+                          "apt-get update && apt-get install -y chromium && npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
 
                         echo "✅ Frontend unit tests passed"
                     '''
