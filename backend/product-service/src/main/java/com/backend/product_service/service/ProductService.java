@@ -1,16 +1,16 @@
 package com.backend.product_service.service;
 
-import com.backend.common.dto.MediaUploadResponseDTO;
-import com.backend.common.exception.CustomException;
-import com.backend.common.dto.InfoUserDTO;
-import com.backend.product_service.dto.CreateProductDTO;
-import com.backend.product_service.dto.ProductCardDTO;
-import com.backend.product_service.dto.ProductDTO;
-import com.backend.product_service.dto.UpdateProductDTO;
-import com.backend.product_service.model.Product;
-import com.backend.product_service.repository.ProductRepository;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -20,16 +20,16 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.core.ParameterizedTypeReference;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-import static io.jsonwebtoken.Jwts.header;
+import com.backend.common.dto.InfoUserDTO;
+import com.backend.common.dto.MediaUploadResponseDTO;
+import com.backend.common.exception.CustomException;
+import com.backend.product_service.dto.CreateProductDTO;
+import com.backend.product_service.dto.ProductCardDTO;
+import com.backend.product_service.dto.ProductDTO;
+import com.backend.product_service.dto.UpdateProductDTO;
+import com.backend.product_service.model.Product;
+import com.backend.product_service.repository.ProductRepository;
 
 @Service
 public class ProductService {
@@ -39,12 +39,14 @@ public class ProductService {
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Autowired
-    public ProductService(ProductRepository productRepository,  ProductMapper productMapper, WebClient.Builder webClientBuilder, KafkaTemplate<String, String> kafkaTemplate) {
+    public ProductService(ProductRepository productRepository, ProductMapper productMapper,
+            WebClient.Builder webClientBuilder, KafkaTemplate<String, String> kafkaTemplate) {
         this.productMapper = productMapper;
         this.productRepository = productRepository;
         this.webClientBuilder = webClientBuilder;
         this.kafkaTemplate = kafkaTemplate;
     }
+
     public ProductDTO getProductByProductID(String productID) {
         Product product = productRepository.findById(productID)
                 .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
@@ -65,7 +67,7 @@ public class ProductService {
         return productRepository.findAll();
     }
 
-    public UpdateProductDTO updateProduct(String productId, String sellerId ,UpdateProductDTO productDto) {
+    public UpdateProductDTO updateProduct(String productId, String sellerId, UpdateProductDTO productDto) {
         Product existingProduct = checkProduct(productId, sellerId);
         productMapper.updateProductFromDto(productDto, existingProduct);
         Product savedProduct = productRepository.save(existingProduct);
@@ -76,6 +78,7 @@ public class ProductService {
                 .quantity(savedProduct.getQuantity())
                 .build();
     }
+
     public void DeleteProductsOfUser(String sellerId) {
         List<Product> products = productRepository.findAllBySellerID(sellerId);
         if (products.isEmpty()) {
@@ -86,18 +89,21 @@ public class ProductService {
             productRepository.delete(product);
         }
     }
+
     public void deleteProduct(String productId, String sellerId) {
         Product existingProduct = checkProduct(productId, sellerId);
         kafkaTemplate.send("product-deleted-topic", productId);
         productRepository.delete(existingProduct);
     }
+
     public void deleteProductMedia(String productId, String sellerId, String mediaId) {
         Product existingProduct = checkProduct(productId, sellerId);
         deleteMedia(mediaId);
     }
 
     public ProductDTO getProductWithDetail(String productId, String userId) {
-        Product product = productRepository.findById(productId).orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
         if (product == null) {
             return null;
         }
@@ -109,19 +115,23 @@ public class ProductService {
         productDTO.setCreatedByMe(product.getSellerID().equals(userId));
         return productDTO;
     }
-    public List<ProductDTO> getAllProductsWithEmail(String email) {
-         InfoUserDTO seller = getSellerInfoWithEmail(email);
-         List<Product> products = productRepository.findAllBySellerID(seller.getId());
-         if (products.isEmpty()) {
-             return Collections.emptyList();
-         }
-         List<ProductDTO> result;
-         result = appendSellersToProduct(products,Collections.singletonList(seller));
-         for (ProductDTO productDTO : result) {
-             productDTO.setMedia(getMedia(productDTO.getProductId()));
 
-         }
-         return result;
+    public List<ProductDTO> getAllProductsWithEmail(String email) {
+        InfoUserDTO seller = getSellerInfoWithEmail(email);
+        if (seller == null) {
+            throw new CustomException("Seller not found", HttpStatus.NOT_FOUND);
+        }
+        List<Product> products = productRepository.findAllBySellerID(seller.getId());
+        if (products.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<ProductDTO> result;
+        result = appendSellersToProduct(products, Collections.singletonList(seller));
+        for (ProductDTO productDTO : result) {
+            productDTO.setMedia(getMedia(productDTO.getProductId()));
+
+        }
+        return result;
     }
 
     // --- New Method 1: Get ALL products (for Home page) ---
@@ -130,7 +140,8 @@ public class ProductService {
         return convertToCardDTOPage(productPage, sellerId);
     }
 
-    // --- New Method 2: Get products for a specific seller (for My Products page) ---
+    // --- New Method 2: Get products for a specific seller (for My Products page)
+    // ---
     public Page<ProductCardDTO> getMyProducts(Pageable pageable, String sellerId) {
         Page<Product> productPage = productRepository.findBySellerID(sellerId, pageable);
         return convertToCardDTOPage(productPage, sellerId);
@@ -141,7 +152,7 @@ public class ProductService {
 
             boolean isCreator = (product.getSellerID().equals(sellerId));
 
-            List<String> limitedImages = getLimitedImageUrls(product.getId(),3);
+            List<String> limitedImages = getLimitedImageUrls(product.getId(), 3);
 
             return new ProductCardDTO(
                     product.getId(),
@@ -150,8 +161,7 @@ public class ProductService {
                     product.getPrice(),
                     product.getQuantity(),
                     isCreator,
-                    limitedImages
-            );
+                    limitedImages);
         });
     }
 
@@ -161,7 +171,8 @@ public class ProductService {
     private List<String> getLimitedImageUrls(String productId, int limit) {
         try {
             // This is the correct type for deserializing a generic list
-            ParameterizedTypeReference<List<String>> listType = new ParameterizedTypeReference<>() {};
+            ParameterizedTypeReference<List<String>> listType = new ParameterizedTypeReference<>() {
+            };
 
             return webClientBuilder.build().get()
                     .uri(uriBuilder -> uriBuilder
@@ -169,8 +180,7 @@ public class ProductService {
                             .host("MEDIA-SERVICE")
                             .path("/api/media/product/{productId}/urls")
                             .queryParam("limit", limit)
-                            .build(productId)
-                    )
+                            .build(productId))
                     .retrieve()
                     // ✅ THE FIX: Deserialize directly into a List<String>
                     .bodyToMono(listType)
@@ -180,19 +190,19 @@ public class ProductService {
             return List.of();
         }
     }
-//    public List<ProductDTO> getAllProductsWithSellerID(String sellerId) {
-//        Product product = productRepository.findBySellerID(sellerId);
-//        if (product == null) {
-//            return null;
-//        }
-//        ProductDTO result;
-//        InfoUserDTO seller = getSellersInfo(sellerId);
-//            getMedia(.getProductId());
-//
-//        return result;
-//    }
+    // public List<ProductDTO> getAllProductsWithSellerID(String sellerId) {
+    // Product product = productRepository.findBySellerID(sellerId);
+    // if (product == null) {
+    // return null;
+    // }
+    // ProductDTO result;
+    // InfoUserDTO seller = getSellersInfo(sellerId);
+    // getMedia(.getProductId());
+    //
+    // return result;
+    // }
 
-    private List<ProductDTO> appendSellersToProduct(List<Product> products,List<InfoUserDTO>  sellers) {
+    private List<ProductDTO> appendSellersToProduct(List<Product> products, List<InfoUserDTO> sellers) {
         assert sellers != null;
         Map<String, InfoUserDTO> sellerMap = sellers.stream()
                 .collect(Collectors.toMap(InfoUserDTO::getId, user -> user));
@@ -202,6 +212,7 @@ public class ProductService {
             return new ProductDTO(product, seller, null);
         }).collect(Collectors.toList());
     }
+
     public Product createProduct(String sellerId, CreateProductDTO productDto) {
         Product product = productDto.toProduct();
         if (checkId(sellerId)) {
@@ -213,7 +224,7 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    public void createImage(MultipartFile file, String productId, String sellerId, String role)  {
+    public void createImage(MultipartFile file, String productId, String sellerId, String role) {
         if (file == null || file.isEmpty()) {
             return;
         }
@@ -223,6 +234,7 @@ public class ProductService {
 
         saveProductImage(file, productId, role);
     }
+
     public String saveProductImage(MultipartFile image, String productId, String role) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
@@ -257,6 +269,7 @@ public class ProductService {
         }
         return mediaResponse.getFileUrl();
     }
+
     private InfoUserDTO getSellersInfo(String sellerId) {
         return webClientBuilder.build().get()
                 .uri("https://USER-SERVICE/api/users/seller?id={sellerId}", sellerId) // Use URI variable
@@ -264,6 +277,7 @@ public class ProductService {
                 .bodyToMono(InfoUserDTO.class) // ✅ FIX: Expect a single object
                 .block();
     }
+
     private InfoUserDTO getSellerInfoWithEmail(String email) {
         return webClientBuilder.build().get()
                 .uri("https://USER-SERVICE/api/users/email?email=" + email)
@@ -280,10 +294,11 @@ public class ProductService {
                 .collectList()
                 .block();
     }
+
     private String deleteMedia(String mediaId) {
         System.out.println("sending the delete request");
         return webClientBuilder.build().delete()
-                .uri("https://MEDIA-SERVICE/api/media/{mediaId}",mediaId)
+                .uri("https://MEDIA-SERVICE/api/media/{mediaId}", mediaId)
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
@@ -292,6 +307,7 @@ public class ProductService {
     private boolean checkId(String id) {
         return id == null || id.isBlank();
     }
+
     private Product checkProduct(String productId, String sellerId) {
         if (checkId(productId)) {
             throw new CustomException("Seller ID is null", HttpStatus.UNAUTHORIZED);
