@@ -10,5 +10,15 @@
     <option name="connectionName" value="SonarQube Local" />
     <option name="projectKey" value="buy-01-backend" />
   </component>
+  <component name="SonarLintServersConfiguration">
+    <servers>
+      <server>
+        <id>sonarqube-local</id>
+        <name>SonarQube Local</name>
+        <url>http://localhost:9000</url>
+        <token>sqa_98d53844dcf675266c1b023f1c2cf4dce7f01af4</token>
+        <serverType>SONARQUBE</serverType>
+      </server>
+    </servers>
+  </component>
 </project>
-
