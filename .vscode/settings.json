@@ -10,8 +10,28 @@
   "sonarlint.connectedMode.projects": {
     "sonarqube-local": [
       {
-        "projectKey": "buy-01-backend",
-        "baseDirUri": "file://${workspaceFolder}/backend"
+        "projectKey": "buy-01-backend:common",
+        "baseDirUri": "file://${workspaceFolder}/backend/common"
+      },
+      {
+        "projectKey": "buy-01-backend:discovery-service",
+        "baseDirUri": "file://${workspaceFolder}/backend/discovery-service"
+      },
+      {
+        "projectKey": "buy-01-backend:api-gateway",
+        "baseDirUri": "file://${workspaceFolder}/backend/api-gateway"
+      },
+      {
+        "projectKey": "buy-01-backend:user-service",
+        "baseDirUri": "file://${workspaceFolder}/backend/user-service"
+      },
+      {
+        "projectKey": "buy-01-backend:product-service",
+        "baseDirUri": "file://${workspaceFolder}/backend/product-service"
+      },
+      {
+        "projectKey": "buy-01-backend:media-service",
+        "baseDirUri": "file://${workspaceFolder}/backend/media-service"
       },
       {
         "projectKey": "buy-01-frontend",
@@ -21,6 +41,7 @@
   },
   "sonarlint.showDescriptionInHovers": true,
   "sonarlint.showAnalysisProgress": true,
+  "sonarlint.output.showVerboseLogs": true,
   "editor.formatOnSave": true,
   "eslint.validate": [
     "javascript",
