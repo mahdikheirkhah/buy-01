@@ -223,8 +223,8 @@ pipeline {
                             docker run --rm \\
                               --volumes-from jenkins-cicd \\
                               -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
-                              ${NODE_IMAGE} \\
-                              sh -c "npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
+                              node:22 \\
+                              sh -c "apt-get update && apt-get install -y chromium-browser && npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
 
                             echo "✅ Frontend unit tests passed"
                         '''
@@ -259,7 +259,7 @@ pipeline {
                                     -Dsonar.host.url=http://localhost:9000 \\
                                     -Dsonar.login=${SONAR_TOKEN} \\
                                     -Dsonar.sources=. \\
-                                    -Dsonar.exclusions=**/target/**,**/test/** \\
+                                    -Dsonar.exclusions=**/target/**,src/test/**,**/test/** \\
                                     -Dsonar.java.binaries=*/target/classes \\
                                     -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**,**/model/** \\
                                     -B -q
