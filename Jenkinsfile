@@ -218,84 +218,107 @@ pipeline {
             steps {
                 script {
                     echo "🧪 Running frontend unit tests..."
+                    sh '''
+                        docker run --rm \\
+                          --volumes-from jenkins-cicd \\
+                          -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
+                          node:22 \\
+                          sh -c "apt-get update && apt-get install -y chromium && npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
+
+                        echo "✅ Frontend unit tests passed"
+                    '''
+                }
+            }
+        }
+
+        stage('� Start SonarQube') {
+            when {
+                expression { params.RUN_SONAR == true }
+            }
+            steps {
+                script {
+                    echo "🚀 Starting SonarQube service..."
                     try {
                         sh '''
-                            docker run --rm \\
-                              --volumes-from jenkins-cicd \\
-                              -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
-                              node:22 \\
-                              sh -c "apt-get update && apt-get install -y chromium-browser && npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
-
-                            echo "✅ Frontend unit tests passed"
+                            # Check if SonarQube is already running
+                            if docker ps | grep -q sonarqube; then
+                                echo "✅ SonarQube is already running"
+                            else
+                                echo "🔄 Starting SonarQube..."
+                                docker compose up -d sonarqube
+                                echo "⏳ Waiting for SonarQube to be ready (up to 60 seconds)..."
+                                
+                                # Wait for SonarQube to be healthy
+                                for i in {1..60}; do
+                                    if curl -s http://localhost:9000/api/system/status | grep -q '"status":"UP"'; then
+                                        echo "✅ SonarQube is ready!"
+                                        break
+                                    fi
+                                    echo "⏳ Waiting... ($i/60)"
+                                    sleep 1
+                                done
+                            fi
                         '''
                     } catch (Exception e) {
-                        echo "⚠️ Frontend tests failed: ${e.message}"
-                        // Don't fail the build for frontend tests, log the issue
+                        echo "⚠️ Warning: Could not start SonarQube: ${e.message}"
+                        echo "Make sure docker-compose.yml has sonarqube service configured"
+                        throw e
                     }
                 }
             }
         }
 
-        stage('📊 SonarQube Analysis') {
+        stage('�📊 SonarQube Analysis') {
             when {
                 expression { params.RUN_SONAR == true }
             }
             steps {
                 script {
                     echo "📊 Running SonarQube analysis..."
-                    try {
-                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                            // Backend Analysis
-                            sh '''
-                                docker run --rm \\
-                                  --volumes-from jenkins-cicd \\
-                                  -v jenkins_m2_cache:/root/.m2 \\
-                                  -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
-                                  --network host \\
-                                  ${MAVEN_IMAGE} \\
-                                  mvn sonar:sonar \\
-                                    -Dsonar.projectKey=buy-01-backend \\
-                                    -Dsonar.projectName="buy-01 Backend" \\
-                                    -Dsonar.host.url=http://localhost:9000 \\
-                                    -Dsonar.login=${SONAR_TOKEN} \\
-                                    -Dsonar.sources=. \\
-                                    -Dsonar.exclusions=**/target/**,src/test/**,**/test/** \\
-                                    -Dsonar.java.binaries=*/target/classes \\
-                                    -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**,**/model/** \\
-                                    -B -q
+                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                        // Backend Analysis
+                        sh '''
+                            docker run --rm \\
+                              --volumes-from jenkins-cicd \\
+                              -v jenkins_m2_cache:/root/.m2 \\
+                              -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
+                              --network host \\
+                              ${MAVEN_IMAGE} \\
+                              mvn sonar:sonar \\
+                                -Dsonar.projectKey=buy-01-backend \\
+                                -Dsonar.projectName="buy-01 Backend" \\
+                                -Dsonar.host.url=http://localhost:9000 \\
+                                -Dsonar.login=${SONAR_TOKEN} \\
+                                -Dsonar.sources=. \\
+                                -Dsonar.exclusions="**/target/**,**/test/**,**/*Test.java,**/*Tests.java" \\
+                                -Dsonar.java.binaries=*/target/classes \\
+                                -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**,**/model/** \\
+                                -B -q
 
-                                echo "✅ Backend analysis completed"
-                            '''
+                            echo "✅ Backend analysis completed"
+                        '''
 
-                            // Frontend Analysis
-                            sh '''
-                                cd ${WORKSPACE}/${FRONTEND_DIR}
-                                which sonar-scanner || npm install -g sonar-scanner
+                        // Frontend Analysis
+                        sh '''
+                            cd ${WORKSPACE}/${FRONTEND_DIR}
+                            which sonar-scanner || npm install -g sonar-scanner
 
-                                sonar-scanner \\
-                                  -Dsonar.projectKey=buy-01-frontend \\
-                                  -Dsonar.projectName="buy-01 Frontend" \\
-                                  -Dsonar.host.url=http://localhost:9000 \\
-                                  -Dsonar.login=${SONAR_TOKEN} \\
-                                  -Dsonar.sources=src \\
-                                  -Dsonar.exclusions=node_modules/**,dist/**,coverage/** \\
-                                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                            sonar-scanner \\
+                              -Dsonar.projectKey=buy-01-frontend \\
+                              -Dsonar.projectName="buy-01 Frontend" \\
+                              -Dsonar.host.url=http://localhost:9000 \\
+                              -Dsonar.login=${SONAR_TOKEN} \\
+                              -Dsonar.sources=src \\
+                              -Dsonar.exclusions=node_modules/**,dist/**,coverage/**,**/*.spec.ts \\
+                              -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
-                                echo "✅ Frontend analysis completed"
-                            '''
-                        }
-
-                        // Wait for quality gate
-                        sleep(time: 10, unit: 'SECONDS')
-                        echo "✅ SonarQube analysis completed"
-                    } catch (Exception e) {
-                        echo "⚠️ SonarQube analysis failed: ${e.message}"
-                        echo "To enable SonarQube:"
-                        echo "1. Start SonarQube: docker compose up -d sonarqube"
-                        echo "2. Access http://localhost:9000"
-                        echo "3. Create credential in Jenkins: sonarqube-token"
-                        echo "4. Run build with RUN_SONAR=true"
+                            echo "✅ Frontend analysis completed"
+                        '''
                     }
+
+                    // Wait for quality gate
+                    sleep(time: 10, unit: 'SECONDS')
+                    echo "✅ SonarQube analysis completed"
                 }
             }
         }
