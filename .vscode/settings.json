@@ -42,6 +42,7 @@
   "sonarlint.showDescriptionInHovers": true,
   "sonarlint.showAnalysisProgress": true,
   "sonarlint.output.showVerboseLogs": true,
+  "sonarlint.ls.nodeHome": "/usr/local/bin/node",
   "editor.formatOnSave": true,
   "eslint.validate": [
     "javascript",
@@ -61,5 +62,9 @@
     "editor.defaultFormatter": "vscode.typescript-language-features",
     "editor.formatOnSave": true
   },
-  "java.compile.nullAnalysis.mode": "automatic"
+  "java.compile.nullAnalysis.mode": "automatic",
+  "sonarlint.connectedMode.project": {
+    "connectionId": "http-localhost-9000-",
+    "projectKey": "buy-01-frontend"
+  }
 }

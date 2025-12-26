@@ -28,6 +28,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.util.*;
 import org.springframework.core.io.ByteArrayResource;
 import java.io.IOException;
+
 @Service
 public class UserService implements UserDetailsService {
     @org.springframework.beans.factory.annotation.Value("${jwt.expiration}")
@@ -38,8 +39,12 @@ public class UserService implements UserDetailsService {
     private final WebClient.Builder webClientBuilder;
     private final UserMapper userMapper;
     private final JwtUtil jwtUtil;
+    private static final String msg_not_auth = "Not Authorized";
+
     @Autowired
-    public UserService(UserRepository userRepository, KafkaTemplate<String, String> kafkaTemplate,  PasswordEncoder passwordEncoder, WebClient.Builder webClientBuilder,  JwtUtil jwtUtil,  UserMapper userMapper) {
+    public UserService(UserRepository userRepository, KafkaTemplate<String, String> kafkaTemplate,
+            PasswordEncoder passwordEncoder, WebClient.Builder webClientBuilder, JwtUtil jwtUtil,
+            UserMapper userMapper) {
         this.userRepository = userRepository;
         this.kafkaTemplate = kafkaTemplate;
         this.passwordEncoder = passwordEncoder;
@@ -52,7 +57,7 @@ public class UserService implements UserDetailsService {
         if (checkUserExistence(user.getEmail()).isPresent()) {
             throw new CustomException("User already exists please go to the login page", HttpStatus.BAD_REQUEST);
         }
-        if (user.getRole() == null){
+        if (user.getRole() == null) {
             user.setRole(Role.CLIENT);
         }
 
@@ -63,13 +68,14 @@ public class UserService implements UserDetailsService {
 
     private Optional<User> checkUserExistence(String email) {
 
-        return  userRepository.findByEmail(email);
+        return userRepository.findByEmail(email);
     }
+
     public InfoUserDTO getMe(String Id) {
         User user = userRepository.findById(Id)
-                .orElseThrow(()-> new CustomException("Not Authorized", HttpStatus.FORBIDDEN));
+                .orElseThrow(() -> new CustomException(msg_not_auth, HttpStatus.FORBIDDEN));
 
-        return  InfoUserDTO
+        return InfoUserDTO
                 .builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -79,22 +85,26 @@ public class UserService implements UserDetailsService {
                 .avatarUrl(user.getAvatarUrl())
                 .build();
     }
-    private boolean checkPassword(String firstPassword, String secondPassword){
+
+    private boolean checkPassword(String firstPassword, String secondPassword) {
         return !passwordEncoder.matches(firstPassword, secondPassword);
     }
+
     public void AvatarUpdate(String userID, MultipartFile avatarFile) {
         User user = userRepository.findById(userID)
-                .orElseThrow(()-> new CustomException("Not Authorized", HttpStatus.FORBIDDEN));
+                .orElseThrow(() -> new CustomException(msg_not_auth, HttpStatus.FORBIDDEN));
         kafkaSendDeleteAvatar(user.getAvatarUrl());
         user.setAvatarUrl(checkAvatarFile(user.getRole(), avatarFile));
         userRepository.save(user);
     }
-    private String checkAvatarFile(Role role, MultipartFile avatarFile){
-         if (role.equals(Role.SELLER) && avatarFile != null && !avatarFile.isEmpty()) {
-             return saveAvatar(avatarFile);
+
+    private String checkAvatarFile(Role role, MultipartFile avatarFile) {
+        if (role.equals(Role.SELLER) && avatarFile != null && !avatarFile.isEmpty()) {
+            return saveAvatar(avatarFile);
         }
         return null;
     }
+
     private String saveAvatar(MultipartFile avatarFile) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
@@ -130,17 +140,20 @@ public class UserService implements UserDetailsService {
 
     public User loginUser(loginUserDTO loginUserDTO) {
         User user = checkUserExistence(loginUserDTO.getEmail())
-                .orElseThrow(()->new CustomException("wrong email or password", HttpStatus.BAD_REQUEST));
-        if (checkPassword(loginUserDTO.getPassword(), user.getPassword())){
+                .orElseThrow(() -> new CustomException("wrong email or password", HttpStatus.BAD_REQUEST));
+        if (checkPassword(loginUserDTO.getPassword(), user.getPassword())) {
             throw new CustomException("wrong email or password", HttpStatus.BAD_REQUEST);
         }
         return user;
     }
-    public record UserUpdateResult(boolean newJwtNeeded, String userEmail) {}
+
+    public record UserUpdateResult(boolean newJwtNeeded, String userEmail) {
+    }
+
     public UserUpdateResult updateUserInfo(String userID, updateUserDTO userUpdatedInfo) {
 
         User user = userRepository.findById(userID)
-                .orElseThrow(() -> new CustomException("Not Authorized", HttpStatus.FORBIDDEN));
+                .orElseThrow(() -> new CustomException(msg_not_auth, HttpStatus.FORBIDDEN));
 
         boolean newJwt = false;
 
@@ -160,11 +173,13 @@ public class UserService implements UserDetailsService {
         boolean isPasswordChange = userUpdatedInfo.getNewPassword() != null &&
                 !userUpdatedInfo.getNewPassword().isBlank();
 
-        // If they are changing *either* email or password, they MUST provide the correct current password
+        // If they are changing *either* email or password, they MUST provide the
+        // correct current password
         if (isEmailChange || isPasswordChange) {
 
             // Check if current password was provided or is correct
-            if (userUpdatedInfo.getCurrentPassword() == null || checkPassword(userUpdatedInfo.getCurrentPassword(), user.getPassword())) {
+            if (userUpdatedInfo.getCurrentPassword() == null
+                    || checkPassword(userUpdatedInfo.getCurrentPassword(), user.getPassword())) {
                 throw new CustomException("Invalid current password", HttpStatus.FORBIDDEN);
             }
 
@@ -184,6 +199,7 @@ public class UserService implements UserDetailsService {
         // Always return the user's *final* email, in case it was changed
         return new UserUpdateResult(newJwt, user.getEmail());
     }
+
     public void updateUser(updateUserDTO userForm, String loggedInUserId, String userEmail, MultipartFile avatarFile) {
         User user = checkUpdateUser(loggedInUserId, userEmail);
         String oldAvatarUrl = user.getAvatarUrl();
@@ -210,22 +226,23 @@ public class UserService implements UserDetailsService {
         );
     }
 
-    private User checkUpdateUser(String loggedInUserId, String userEmail){
-        User loggedInUser = userRepository.findById(loggedInUserId).
-                orElseThrow(()-> new CustomException ("User not found with id: ", HttpStatus.FORBIDDEN));
+    private User checkUpdateUser(String loggedInUserId, String userEmail) {
+        User loggedInUser = userRepository.findById(loggedInUserId)
+                .orElseThrow(() -> new CustomException("User not found with id: ", HttpStatus.FORBIDDEN));
         User updatesUser = userRepository.findByEmail(userEmail)
-                .orElseThrow(()-> new CustomException ("User not found with email: ", HttpStatus.FORBIDDEN));
-        if (!updatesUser.getId().equals(loggedInUser.getId())){
-            throw new CustomException ("Access Denied", HttpStatus.FORBIDDEN);
+                .orElseThrow(() -> new CustomException("User not found with email: ", HttpStatus.FORBIDDEN));
+        if (!updatesUser.getId().equals(loggedInUser.getId())) {
+            throw new CustomException("Access Denied", HttpStatus.FORBIDDEN);
         }
         return loggedInUser;
     }
 
     public InfoUserDTO getUserById(String id) {
         if (id == null || id.isBlank()) {
-            throw new CustomException ("User not found with ids", HttpStatus.NOT_FOUND);
+            throw new CustomException("User not found with ids", HttpStatus.NOT_FOUND);
         }
-        User user = userRepository.findById(id).orElseThrow(()-> new CustomException ("User not found with id: ", HttpStatus.NOT_FOUND));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new CustomException("User not found with id: ", HttpStatus.NOT_FOUND));
         return InfoUserDTO
                 .builder()
                 .id(user.getId())
@@ -235,9 +252,10 @@ public class UserService implements UserDetailsService {
                 .avatarUrl(user.getAvatarUrl())
                 .build();
     }
+
     public InfoUserDTO getUserByEmail(String email) {
-        User user = checkUserExistence(email).
-                orElseThrow(()->new CustomException ("User not found with email: " + email,  HttpStatus.NOT_FOUND));
+        User user = checkUserExistence(email)
+                .orElseThrow(() -> new CustomException("User not found with email: " + email, HttpStatus.NOT_FOUND));
         return InfoUserDTO.builder()
                 .id(user.getId())
                 .firstName(user.getFirstName())
@@ -246,42 +264,48 @@ public class UserService implements UserDetailsService {
                 .avatarUrl(user.getAvatarUrl())
                 .build();
     }
+
     public void deleteUser(String id, String password) {
         User user = userRepository.findById(id)
-                .orElseThrow(()-> new CustomException ("Access denied " , HttpStatus.FORBIDDEN));
-        if(checkPassword(password, user.getPassword())){
-            throw new CustomException ("Wrong password", HttpStatus.BAD_REQUEST);
+                .orElseThrow(() -> new CustomException("Access denied ", HttpStatus.FORBIDDEN));
+        if (checkPassword(password, user.getPassword())) {
+            throw new CustomException("Wrong password", HttpStatus.BAD_REQUEST);
         }
-        if (user.getRole().equals(Role.SELLER)){
+        if (user.getRole().equals(Role.SELLER)) {
             kafkaTemplate.send("user-deleted-topic", id);
             kafkaSendDeleteAvatar(user.getAvatarUrl());
         }
         userRepository.deleteById(user.getId());
     }
-    public void deleteAvatar(String sellerId){
+
+    public void deleteAvatar(String sellerId) {
         User user = userRepository.findById(sellerId)
-                .orElseThrow(()-> new CustomException ("Access denied " , HttpStatus.FORBIDDEN));
+                .orElseThrow(() -> new CustomException("Access denied ", HttpStatus.FORBIDDEN));
         kafkaSendDeleteAvatar(user.getAvatarUrl());
         user.setAvatarUrl(null);
         userRepository.save(user);
     }
-    private void kafkaSendDeleteAvatar(String avatarUrl){
-        if(avatarUrl != null){
+
+    private void kafkaSendDeleteAvatar(String avatarUrl) {
+        if (avatarUrl != null) {
             kafkaTemplate.send("user-avatar-deleted-topic", avatarUrl);
         }
     }
+
     public Cookie generateCookie(String email) {
         User user = userRepository.findByEmail(email)
-                        .orElseThrow(()-> new CustomException("can not find the User", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException("can not find the User", HttpStatus.NOT_FOUND));
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
         claims.put("role", user.getRole());
         String jwt = jwtUtil.generateToken(claims, user.getEmail());
         return createCookie(jwt, 24 * 60 * 60);
     }
+
     public Cookie generateEmptyCookie() {
-        return createCookie(null, 0 );
+        return createCookie(null, 0);
     }
+
     public Cookie createCookie(String token, int maxAge) {
         Cookie jwtCookie = new Cookie("jwt", token);
         // jwtCookie.setHttpOnly(true); // <-- Comment out or remove this line

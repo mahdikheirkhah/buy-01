@@ -190,7 +190,7 @@ class ProductServiceIntegrationTest {
 
         assertThat(saved).isNotNull();
         assertThat(saved.getPrice()).isEqualTo(0.01);
-        assertThat(saved.getQuantity()).isEqualTo(0);
+        assertThat(saved.getQuantity()).isZero();
     }
 
     @Test
