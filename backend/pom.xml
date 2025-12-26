@@ -33,8 +33,6 @@
         <server.ssl.key-store-password>changeit</server.ssl.key-store-password>
         <server.ssl.key-store-type>PKCS12</server.ssl.key-store-type>
         <server.ssl.trust-store-password>changeit</server.ssl.trust-store-password>
-        <sonar.projectKey>buy-01-backend-parent</sonar.projectKey>
-        <sonar.host.url>http://localhost:9000</sonar.host.url>
     </properties>
 
     <dependencyManagement>
