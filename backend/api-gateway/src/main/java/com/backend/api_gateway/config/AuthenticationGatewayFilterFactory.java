@@ -1,30 +1,35 @@
 package com.backend.api_gateway.config;
 
-import com.backend.api_gateway.util.JwtUtil;
-import com.backend.api_gateway.exception.CustomException;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.server.ServerWebExchange;
+
+import com.backend.api_gateway.exception.CustomException;
+import com.backend.api_gateway.util.JwtUtil;
+
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 @Component
-public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFactory<AuthenticationGatewayFilterFactory.Config> {
+public class AuthenticationGatewayFilterFactory
+        extends AbstractGatewayFilterFactory<AuthenticationGatewayFilterFactory.Config> {
 
     private final JwtUtil jwtUtil;
 
-    // Although defined, we only use this for reference; deep type validation is difficult
+    // Although defined, we only use this for reference; deep type validation is
+    // difficult
     // at the gateway level without consuming the request body.
     private static final List<String> ALLOWED_IMAGE_TYPES = List.of(
-            "image/jpeg", "image/png", "image/gif", "image/webp"
-    );
-    private static final long MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+            "image/jpeg", "image/png", "image/gif", "image/webp");
+    private static final long MAX_FILE_SIZE = 2L * 1024 * 1024; // 2 MB
 
     @Autowired
     public AuthenticationGatewayFilterFactory(JwtUtil jwtUtil) {
@@ -84,12 +89,14 @@ public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFac
                         "Expected multipart/form-data.", HttpStatus.BAD_REQUEST));
             }
 
-            // NOTE: The previous attempt to extract the file's specific content type (image/jpeg)
+            // NOTE: The previous attempt to extract the file's specific content type
+            // (image/jpeg)
             // from headers at the gateway level was flawed. We now rely on the downstream
             // Media Service to perform the deep file type validation.
 
             return Mono.just(true);
-        }).switchIfEmpty(Mono.error(new CustomException("Request body is empty or not form data.", HttpStatus.BAD_REQUEST)));
+        }).switchIfEmpty(
+                Mono.error(new CustomException("Request body is empty or not form data.", HttpStatus.BAD_REQUEST)));
     }
 
     // The flawed extractFileContentType method has been removed.
@@ -98,12 +105,11 @@ public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFac
     // AUTHENTICATION & HEADER FORWARDING
     // ────────────────────────────────────────────────────────────────
     private Mono<Void> authenticateAndForward(ServerWebExchange exchange,
-                                              org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
+            org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
 
-        String token = request.getCookies().getFirst("jwt") != null
-                ? request.getCookies().getFirst("jwt").getValue()
-                : null;
+        var jwtCookie = request.getCookies().getFirst("jwt");
+        String token = jwtCookie != null ? jwtCookie.getValue() : null;
 
         if (token == null) {
             return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing JWT token"));
@@ -126,5 +132,6 @@ public class AuthenticationGatewayFilterFactory extends AbstractGatewayFilterFac
         return chain.filter(exchange.mutate().request(modifiedRequest).build());
     }
 
-    public static class Config {}
+    public static class Config {
+    }
 }
