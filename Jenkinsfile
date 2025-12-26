@@ -114,8 +114,11 @@ pipeline {
                                     docker run --rm \\
                                       --volumes-from jenkins-cicd \\
                                       -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
+                                      -e NODE_OPTIONS="--max_old_space_size=4096" \\
+                                      --memory=6g \\
+                                      --memory-swap=6g \\
                                       ${NODE_IMAGE} \\
-                                      sh -c "npm install --legacy-peer-deps && npm run build"
+                                      sh -c "npm install --legacy-peer-deps && npm run build -- --configuration production --optimization=true"
 
                                     if [ -d /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend/dist ]; then
                                         echo "✅ Frontend dist created"
