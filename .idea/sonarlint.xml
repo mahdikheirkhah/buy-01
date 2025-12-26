@@ -18,6 +18,7 @@
         <url>http://localhost:9000</url>
         <token>sqa_98d53844dcf675266c1b023f1c2cf4dce7f01af4</token>
         <serverType>SONARQUBE</serverType>
+        <enableProxy>false</enableProxy>
       </server>
     </servers>
   </component>

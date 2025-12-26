@@ -1,5 +1,5 @@
 {
-  "sonarlint.ls.javaHome": "/usr/lib/jvm/java-21-openjdk",
+  "sonarlint.ls.javaHome": "/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home",
   "sonarlint.connectedMode.servers": [
     {
       "connectionId": "sonarqube-local",
@@ -7,13 +7,20 @@
       "token": "sqa_98d53844dcf675266c1b023f1c2cf4dce7f01af4"
     }
   ],
-  "sonarlint.connectedMode.project": {
-    "projectKey": "buy-01-backend",
-    "connectionId": "sonarqube-local"
+  "sonarlint.connectedMode.projects": {
+    "sonarqube-local": [
+      {
+        "projectKey": "buy-01-backend",
+        "baseDirUri": "file://${workspaceFolder}/backend"
+      },
+      {
+        "projectKey": "buy-01-frontend",
+        "baseDirUri": "file://${workspaceFolder}/frontend"
+      }
+    ]
   },
   "sonarlint.showDescriptionInHovers": true,
   "sonarlint.showAnalysisProgress": true,
-  "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
   "editor.formatOnSave": true,
   "eslint.validate": [
     "javascript",
