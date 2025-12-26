@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SonarQubeServerConfiguration">
+    <servers>
+      <server>
+        <name>SonarQube Local</name>
+        <url>http://localhost:9000</url>
+        <token>sqa_98d53844dcf675266c1b023f1c2cf4dce7f01af4</token>
+        <id>sonarqube-local</id>
+      </server>
+    </servers>
+    <option name="selectedServerId" value="sonarqube-local" />
+  </component>
+  <component name="SonarQubeProjectConfiguration">
+    <option name="serverName" value="SonarQube Local" />
+    <option name="projectKey" value="buy-01-backend" />
+  </component>
+</project>

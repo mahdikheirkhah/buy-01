@@ -4,10 +4,13 @@
     {
       "connectionId": "sonarqube-local",
       "serverUrl": "http://localhost:9000",
-      "token": "replace-with-your-sonarqube-token"
+      "token": "sqa_98d53844dcf675266c1b023f1c2cf4dce7f01af4"
     }
   ],
-  "sonarlint.connectedMode.project": "buy-01-backend",
+  "sonarlint.connectedMode.project": {
+    "projectKey": "buy-01-backend",
+    "connectionId": "sonarqube-local"
+  },
   "sonarlint.showDescriptionInHovers": true,
   "sonarlint.showAnalysisProgress": true,
   "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
