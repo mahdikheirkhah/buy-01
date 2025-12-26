@@ -4,7 +4,7 @@
     {
       "connectionId": "sonarqube-local",
       "serverUrl": "http://localhost:9000",
-      "token": "sqa_98d53844dcf675266c1b023f1c2cf4dce7f01af4"
+      "token": "${SONARQUBE_TOKEN}"
     }
   ],
   "sonarlint.connectedMode.projects": {
