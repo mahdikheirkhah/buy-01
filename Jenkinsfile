@@ -386,6 +386,50 @@ EOF
             }
         }
 
+        stage('📊 SonarQube Analysis') {
+            when {
+                expression { params.RUN_SONAR == true }
+            }
+            steps {
+                script {
+                    echo "📊 Running SonarQube analysis..."
+                    try {
+                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                            sh '''
+                                echo "Analyzing backend modules..."
+                                cd ${WORKSPACE}/backend
+                                for module in common discovery-service api-gateway user-service product-service media-service; do
+                                    echo "Analyzing $module..."
+                                    cd $module
+                                    mvn sonar:sonar \\
+                                        -Dsonar.projectKey=buy-01-backend:$module \\
+                                        -Dsonar.host.url=http://localhost:9000 \\
+                                        -Dsonar.login=${SONAR_TOKEN} \\
+                                        -q
+                                    cd ..
+                                done
+                                
+                                echo "Analyzing frontend..."
+                                cd ${WORKSPACE}/frontend
+                                npm install --silent 2>/dev/null
+                                npx sonar-scanner \\
+                                    -Dsonar.projectKey=buy-01-frontend \\
+                                    -Dsonar.sources=src \\
+                                    -Dsonar.host.url=http://localhost:9000 \\
+                                    -Dsonar.login=${SONAR_TOKEN}
+                                    
+                                echo "✅ SonarQube analysis completed"
+                                echo "📊 Results: http://localhost:9000/projects"
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo "⚠️ SonarQube analysis warning: ${e.message}"
+                        echo "Continuing build despite SonarQube issues..."
+                    }
+                }
+            }
+        }
+
         stage('🚀 Deploy Locally') {
             when {
                 expression { params.DEPLOY_LOCALLY == true && params.SKIP_DEPLOY == true }
