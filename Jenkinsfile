@@ -461,21 +461,17 @@ pipeline {
                                 BACKEND_QG_DATA=$(echo "$BACKEND_QG" | head -1)
                                 echo "Backend QG HTTP Status: $BACKEND_QG_HTTP"
                                 echo "Backend QG Response: $BACKEND_QG_DATA"
-                                BACKEND_STATUS=$(echo "$BACKEND_QG_DATA" | grep -o '"status":"[^"]*"' || echo "NOT_FOUND")
-                                
-                                echo "Fetching frontend quality gate..."
-                                FRONTEND_QG=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-frontend)
-                                FRONTEND_QG_HTTP=$(echo "$FRONTEND_QG" | tail -1)
-                                FRONTEND_QG_DATA=$(echo "$FRONTEND_QG" | head -1)
-                                echo "Frontend QG HTTP Status: $FRONTEND_QG_HTTP"
-                                echo "Frontend QG Response: $FRONTEND_QG_DATA"
-                                FRONTEND_STATUS=$(echo "$FRONTEND_QG_DATA" | grep -o '"status":"[^"]*"' || echo "NOT_FOUND")
-                                
-                                echo ""
-                                echo "=== Quality Gate Status Summary ==="
-                                echo "Backend Quality Gate: $BACKEND_STATUS"
-                                echo "Frontend Quality Gate: $FRONTEND_STATUS"
-                                
+                            # Extract ONLY the projectStatus.status field (first occurrence)
+                            BACKEND_STATUS=$(echo "$BACKEND_QG_DATA" | grep -o '"projectStatus":{[^}]*"status":"[^"]*"' | grep -o '"status":"[^"]*"' | head -1 || echo "NOT_FOUND")
+                            
+                            echo "Fetching frontend quality gate..."
+                            FRONTEND_QG=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-frontend)
+                            FRONTEND_QG_HTTP=$(echo "$FRONTEND_QG" | tail -1)
+                            FRONTEND_QG_DATA=$(echo "$FRONTEND_QG" | head -1)
+                            echo "Frontend QG HTTP Status: $FRONTEND_QG_HTTP"
+                            echo "Frontend QG Response: $FRONTEND_QG_DATA"
+                            # Extract ONLY the projectStatus.status field (first occurrence)
+                            FRONTEND_STATUS=$(echo "$FRONTEND_QG_DATA" | grep -o '"projectStatus":{[^}]*"status":"[^"]*"' | grep -o '"status":"[^"]*"' | head -1 || echo "NOT_FOUND")
                                 echo ""
                                 echo "ℹ️  Quality gates are informational - pipeline continues regardless"
                                 echo "Check SonarQube dashboard:"
