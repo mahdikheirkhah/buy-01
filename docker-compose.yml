@@ -30,7 +30,6 @@ services:
     networks:
       - BACKEND
 
-  # --- SonarQube for Code Quality ---
   sonarqube:
     image: sonarqube:lts-community
     container_name: sonarqube
@@ -39,9 +38,9 @@ services:
     environment:
       SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: 'true'
     volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_logs:/opt/sonarqube/logs
-      - sonarqube_extensions:/opt/sonarqube/extensions
+      - ${HOME}/.docker-volumes/sonarqube_data:/opt/sonarqube/data
+      - ${HOME}/.docker-volumes/sonarqube_logs:/opt/sonarqube/logs
+      - ${HOME}/.docker-volumes/sonarqube_extensions:/opt/sonarqube/extensions
     networks:
       - BACKEND
     healthcheck:
@@ -221,21 +220,3 @@ networks:
 volumes:
   mongo_data:
     driver: local
-  sonarqube_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${HOME}/.docker-volumes/sonarqube_data
-  sonarqube_logs:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${HOME}/.docker-volumes/sonarqube_logs
-  sonarqube_extensions:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${HOME}/.docker-volumes/sonarqube_extensions
