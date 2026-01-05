@@ -384,7 +384,7 @@ pipeline {
                                   --volumes-from jenkins-cicd \\
                                   -v jenkins_m2_cache:/root/.m2 \\
                                   -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
-                                  --network host \\
+                                  --network buy-01_BACKEND \\
                                   ${MAVEN_IMAGE} \\
                                   mvn sonar:sonar \\
                                     -Dsonar.projectKey=buy-01-backend \\
