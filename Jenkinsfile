@@ -226,7 +226,7 @@ pipeline {
                           -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
                           --cap-add=SYS_ADMIN \\
                           node:22-bookworm sh -c \\
-                          "apt-get update && apt-get install -y chromium-browser && npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
+                          "apt-get update && apt-get install -y chromium && npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
 
                         echo "✅ Frontend unit tests passed"
                     '''
