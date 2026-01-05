@@ -1,3 +1,8 @@
+# Default IMAGE_TAG if not set as environment variable
+# Usage: IMAGE_TAG=v1.0 docker-compose up
+# Or: export IMAGE_TAG=v1.0 && docker-compose up
+# If not provided, defaults to 'latest'
+
 services:
   # --- Message Broker ---
   zookeeper:
@@ -67,7 +72,7 @@ services:
       retries: 5
 
   discovery-service:
-    image: mahdikheirkhah/discovery-service:${IMAGE_TAG}
+    image: mahdikheirkhah/discovery-service:${IMAGE_TAG:-latest}
     container_name: discovery-service
     ports:
       - "8761:8761"
@@ -84,7 +89,7 @@ services:
       - BACKEND
 
   api-gateway:
-    image: mahdikheirkhah/api-gateway:${IMAGE_TAG}
+    image: mahdikheirkhah/api-gateway:${IMAGE_TAG:-latest}
     container_name: api-gateway
     ports:
       - "8443:8443"
@@ -106,7 +111,7 @@ services:
       - BACKEND
 
   user-service:
-    image: mahdikheirkhah/user-service:${IMAGE_TAG}
+    image: mahdikheirkhah/user-service:${IMAGE_TAG:-latest}
     container_name: user-service
     environment:
       SPRING_PROFILES_ACTIVE: prod
@@ -129,7 +134,7 @@ services:
       - BACKEND
 
   product-service:
-    image: mahdikheirkhah/product-service:${IMAGE_TAG}
+    image: mahdikheirkhah/product-service:${IMAGE_TAG:-latest}
     container_name: product-service
     environment:
       SPRING_PROFILES_ACTIVE: prod
@@ -152,7 +157,7 @@ services:
       - BACKEND
 
   media-service:
-    image: mahdikheirkhah/media-service:${IMAGE_TAG}
+    image: mahdikheirkhah/media-service:${IMAGE_TAG:-latest}
     container_name: media-service
     environment:
       SPRING_PROFILES_ACTIVE: prod
@@ -200,7 +205,7 @@ services:
       - BACKEND
 
   frontend:
-    image: mahdikheirkhah/frontend:${IMAGE_TAG}
+    image: mahdikheirkhah/frontend:${IMAGE_TAG:-latest}
     container_name: frontend
     ports:
       - "4200:4200"
