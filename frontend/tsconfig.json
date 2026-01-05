@@ -13,7 +13,8 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
-    "module": "es2022"
+    "module": "es2022",
+    "moduleResolution": "nodenext"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
