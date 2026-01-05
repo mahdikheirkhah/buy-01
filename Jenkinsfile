@@ -171,7 +171,7 @@ pipeline {
                                       -e TESTCONTAINERS_RYUK_DISABLED=true \\
                                       --network host \\
                                       ${MAVEN_IMAGE} \\
-                                      mvn clean install -B -q -DskipTests
+                                      mvn clean install -B -DskipTests
 
                                     echo "✅ Backend build completed"
                                 '''
