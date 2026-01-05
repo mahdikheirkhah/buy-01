@@ -405,7 +405,9 @@ pipeline {
                                   -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
                                   --network buy-01_BACKEND \\
                                   node:22 \\
-                                  sh -c "npm install -g sonar-scanner && chmod -R +x /usr/local/lib/node_modules/sonar-scanner/bin/ && sonar-scanner \\
+                                  bash -c "npm install -g sonar-scanner && \\
+                                    chmod -R +x /usr/local/lib/node_modules/sonar-scanner/bin/ && \\
+                                    /usr/local/bin/sonar-scanner \\
                                     -Dsonar.projectKey=buy-01-frontend \\
                                     -Dsonar.projectName='buy-01 Frontend' \\
                                     -Dsonar.host.url=http://sonarqube:9000 \\
