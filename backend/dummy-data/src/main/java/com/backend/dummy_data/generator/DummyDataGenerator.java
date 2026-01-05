@@ -185,10 +185,11 @@ public class DummyDataGenerator {
                         gatewayUrl + "/api/products", entity, Map.class);
 
                 String productId = null;
-                if (resp.getBody() != null) {
-                    productId = (String) resp.getBody().get("id"); // Assuming the service returns "id"
+                Map responseBody = resp.getBody();
+                if (responseBody != null) {
+                    productId = (String) responseBody.get("id"); // Assuming the service returns "id"
                     if (productId == null) {
-                        productId = (String) resp.getBody().get("productId");
+                        productId = (String) responseBody.get("productId");
                     }
                 }
 
