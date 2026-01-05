@@ -400,17 +400,19 @@ pipeline {
 
                             // Frontend Analysis
                             sh '''
-                                cd ${WORKSPACE}/${FRONTEND_DIR}
-                                which sonar-scanner || npm install -g sonar-scanner
-
-                                sonar-scanner \\
-                                  -Dsonar.projectKey=buy-01-frontend \\
-                                  -Dsonar.projectName="buy-01 Frontend" \\
-                                  -Dsonar.host.url=http://sonarqube:9000 \
-                                  -Dsonar.login=${SONAR_TOKEN} \\
-                                  -Dsonar.sources=src \\
-                                  -Dsonar.exclusions=node_modules/**,dist/**,coverage/**,**/*.spec.ts \\
-                                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                                docker run --rm \\
+                                  --volumes-from jenkins-cicd \\
+                                  -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
+                                  --network buy-01_BACKEND \\
+                                  node:22 \\
+                                  sh -c "npm install -g sonar-scanner && sonar-scanner \\
+                                    -Dsonar.projectKey=buy-01-frontend \\
+                                    -Dsonar.projectName='buy-01 Frontend' \\
+                                    -Dsonar.host.url=http://sonarqube:9000 \\
+                                    -Dsonar.login=${SONAR_TOKEN} \\
+                                    -Dsonar.sources=src \\
+                                    -Dsonar.exclusions=node_modules/**,dist/**,coverage/**,**/*.spec.ts \\
+                                    -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info"
 
                                 echo "✅ Frontend analysis completed"
                             '''
