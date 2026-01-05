@@ -13,6 +13,8 @@ import com.backend.user_service.repository.UserRepository;
 @Component
 public class AdminUserInitializer implements CommandLineRunner {
 
+    private static final String DEFAULT_ADMIN_PASSWORD = "CHANGE_ME_IN_PRODUCTION";
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -35,7 +37,7 @@ public class AdminUserInitializer implements CommandLineRunner {
             System.out.println(">>> Admin user not found, creating one...");
 
             // Warn if using default password
-            if ("CHANGE_ME_IN_PRODUCTION".equals(adminPassword)) {
+            if (DEFAULT_ADMIN_PASSWORD.equals(adminPassword)) {
                 System.err.println(
                         "⚠️  WARNING: Admin password is set to default! Set 'app.admin.password' environment variable or application.yml");
             }
