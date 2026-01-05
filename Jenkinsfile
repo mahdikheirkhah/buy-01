@@ -322,6 +322,40 @@ pipeline {
                     
                     if (sonarAvailable == "true") {
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                            // Create SonarQube projects if they don't exist
+                            sh '''
+                                echo "📁 Creating SonarQube projects if they don't exist..."
+                                
+                                # Create Backend project
+                                PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://localhost:9000/api/projects/search?projects=buy-01-backend | grep -o '"key":"buy-01-backend"' || echo "")
+                                if [ -z "$PROJECT_EXISTS" ]; then
+                                    echo "Creating backend project..."
+                                    curl -X POST -u ${SONAR_TOKEN}: \
+                                      -F "project=buy-01-backend" \
+                                      -F "name=buy-01 Backend" \
+                                      http://localhost:9000/api/projects/create || echo "Backend project creation response received"
+                                    echo "✅ Backend project created"
+                                else
+                                    echo "✅ Backend project already exists"
+                                fi
+                                
+                                # Create Frontend project
+                                PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://localhost:9000/api/projects/search?projects=buy-01-frontend | grep -o '"key":"buy-01-frontend"' || echo "")
+                                if [ -z "$PROJECT_EXISTS" ]; then
+                                    echo "Creating frontend project..."
+                                    curl -X POST -u ${SONAR_TOKEN}: \
+                                      -F "project=buy-01-frontend" \
+                                      -F "name=buy-01 Frontend" \
+                                      http://localhost:9000/api/projects/create || echo "Frontend project creation response received"
+                                    echo "✅ Frontend project created"
+                                else
+                                    echo "✅ Frontend project already exists"
+                                fi
+                                
+                                echo "Waiting 3 seconds for projects to be initialized..."
+                                sleep 3
+                            '''
+                            
                             // Backend Analysis
                             sh '''
                                 docker run --rm \\
