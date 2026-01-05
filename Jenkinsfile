@@ -247,81 +247,126 @@ pipeline {
                             if docker ps | grep -q sonarqube; then
                                 echo "✅ SonarQube is already running"
                             else
-                                echo "🔄 Starting SonarQube..."
+                                echo "🔄 Starting SonarQube from docker-compose..."
+                                
+                                # Navigate to workspace and start SonarQube using docker-compose
+                                cd ${WORKSPACE}
+                                
+                                # Ensure .env file exists with IMAGE_TAG
+                                if [ ! -f .env ]; then
+                                    echo "IMAGE_TAG=${BUILD_NUMBER}" > .env
+                                else
+                                    if ! grep -q "IMAGE_TAG" .env; then
+                                        echo "IMAGE_TAG=${BUILD_NUMBER}" >> .env
+                                    fi
+                                fi
+                                
+                                echo "Running: docker compose up -d sonarqube"
                                 docker compose up -d sonarqube
-                                echo "⏳ Waiting for SonarQube to be ready (up to 60 seconds)..."
+                                
+                                echo "⏳ Waiting for SonarQube to be healthy (up to 120 seconds)..."
                                 
                                 # Wait for SonarQube to be healthy
-                                for i in {1..60}; do
-                                    if curl -s http://localhost:9000/api/system/status | grep -q '"status":"UP"'; then
+                                READY=false
+                                for i in {1..120}; do
+                                    RESPONSE=$(timeout 2 curl -s http://localhost:9000/api/system/status 2>/dev/null || echo "")
+                                    if echo "$RESPONSE" | grep -q '"status":"UP"'; then
                                         echo "✅ SonarQube is ready!"
+                                        READY=true
                                         break
                                     fi
-                                    echo "⏳ Waiting... ($i/60)"
+                                    if [ $((i % 10)) -eq 0 ]; then
+                                        echo "⏳ Still waiting... ($i/120 seconds)"
+                                    fi
                                     sleep 1
                                 done
+                                
+                                if [ "$READY" = false ]; then
+                                    echo "⚠️ SonarQube did not become ready in time"
+                                    echo "Current Docker containers:"
+                                    docker ps -a | head -20
+                                    echo "\\nSonarQube logs:"
+                                    docker logs sonarqube 2>&1 | tail -30 || echo "No logs available"
+                                fi
                             fi
                         '''
                     } catch (Exception e) {
                         echo "⚠️ Warning: Could not start SonarQube: ${e.message}"
-                        echo "Make sure docker-compose.yml has sonarqube service configured"
-                        throw e
+                        echo "Attempting to diagnose..."
+                        sh '''
+                            echo "Docker ps:"
+                            docker ps -a | grep -i sonar || echo "No SonarQube container found"
+                            echo "\\nDocker compose version:"
+                            docker compose version
+                            echo "\\nWorkspace contents:"
+                            ls -la ${WORKSPACE} | grep -E "(docker-compose|.env)"
+                        '''
                     }
                 }
             }
         }
 
-        stage('�📊 SonarQube Analysis') {
+        stage('📊 SonarQube Analysis') {
             when {
                 expression { params.RUN_SONAR == true }
             }
             steps {
                 script {
                     echo "📊 Running SonarQube analysis..."
-                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                        // Backend Analysis
-                        sh '''
-                            docker run --rm \\
-                              --volumes-from jenkins-cicd \\
-                              -v jenkins_m2_cache:/root/.m2 \\
-                              -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
-                              --network host \\
-                              ${MAVEN_IMAGE} \\
-                              mvn sonar:sonar \\
-                                -Dsonar.projectKey=buy-01-backend \\
-                                -Dsonar.projectName="buy-01 Backend" \\
-                                -Dsonar.host.url=http://localhost:9000 \\
-                                -Dsonar.login=${SONAR_TOKEN} \\
-                                -Dsonar.sources=. \\
-                                -Dsonar.exclusions="**/target/**,**/test/**,**/*Test.java,**/*Tests.java" \\
-                                -Dsonar.java.binaries=*/target/classes \\
-                                -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**,**/model/** \\
-                                -B -q
+                    
+                    // Check if SonarQube is available
+                    def sonarAvailable = sh(
+                        script: 'timeout 5 curl -s http://localhost:9000/api/system/status | grep -q "UP" && echo "true" || echo "false"',
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (sonarAvailable == "true") {
+                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                            // Backend Analysis
+                            sh '''
+                                docker run --rm \\
+                                  --volumes-from jenkins-cicd \\
+                                  -v jenkins_m2_cache:/root/.m2 \\
+                                  -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
+                                  --network host \\
+                                  ${MAVEN_IMAGE} \\
+                                  mvn sonar:sonar \\
+                                    -Dsonar.projectKey=buy-01-backend \\
+                                    -Dsonar.projectName="buy-01 Backend" \\
+                                    -Dsonar.host.url=http://localhost:9000 \\
+                                    -Dsonar.login=${SONAR_TOKEN} \\
+                                    -Dsonar.sources=. \\
+                                    -Dsonar.exclusions="**/target/**,**/test/**,**/*Test.java,**/*Tests.java" \\
+                                    -Dsonar.java.binaries=*/target/classes \\
+                                    -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**,**/model/** \\
+                                    -B -q
 
-                            echo "✅ Backend analysis completed"
-                        '''
+                                echo "✅ Backend analysis completed"
+                            '''
 
-                        // Frontend Analysis
-                        sh '''
-                            cd ${WORKSPACE}/${FRONTEND_DIR}
-                            which sonar-scanner || npm install -g sonar-scanner
+                            // Frontend Analysis
+                            sh '''
+                                cd ${WORKSPACE}/${FRONTEND_DIR}
+                                which sonar-scanner || npm install -g sonar-scanner
 
-                            sonar-scanner \\
-                              -Dsonar.projectKey=buy-01-frontend \\
-                              -Dsonar.projectName="buy-01 Frontend" \\
-                              -Dsonar.host.url=http://localhost:9000 \\
-                              -Dsonar.login=${SONAR_TOKEN} \\
-                              -Dsonar.sources=src \\
-                              -Dsonar.exclusions=node_modules/**,dist/**,coverage/**,**/*.spec.ts \\
-                              -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                                sonar-scanner \\
+                                  -Dsonar.projectKey=buy-01-frontend \\
+                                  -Dsonar.projectName="buy-01 Frontend" \\
+                                  -Dsonar.host.url=http://localhost:9000 \\
+                                  -Dsonar.login=${SONAR_TOKEN} \\
+                                  -Dsonar.sources=src \\
+                                  -Dsonar.exclusions=node_modules/**,dist/**,coverage/**,**/*.spec.ts \\
+                                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
-                            echo "✅ Frontend analysis completed"
-                        '''
+                                echo "✅ Frontend analysis completed"
+                            '''
+                        }
+                        sleep(time: 10, unit: 'SECONDS')
+                        echo "✅ SonarQube analysis completed"
+                    } else {
+                        echo "⚠️ SonarQube is not available, skipping analysis"
+                        echo "To use SonarQube, ensure the sonarqube service is running in docker-compose.yml"
                     }
-
-                    // Wait for quality gate
-                    sleep(time: 10, unit: 'SECONDS')
-                    echo "✅ SonarQube analysis completed"
                 }
             }
         }
