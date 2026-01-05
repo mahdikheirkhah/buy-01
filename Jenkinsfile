@@ -223,7 +223,7 @@ pipeline {
                           --volumes-from jenkins-cicd \\
                           -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
                           --cap-add=SYS_ADMIN \\
-                          mcr.microsoft.com/playwright:v1.40.1-jammy sh -c \\
+                          mcr.microsoft.com/playwright:v1.48.0-noble sh -c \\
                           "npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
 
                         echo "✅ Frontend unit tests passed"
