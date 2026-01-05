@@ -418,61 +418,71 @@ pipeline {
 
                                 echo "✅ Frontend analysis completed"
                             '''
+                            
+                            sleep(time: 10, unit: 'SECONDS')
+                            echo "✅ SonarQube analysis completed"
+                            
+                            // Check quality gates (informational only - allows pipeline to continue)
+                            echo "🔍 Checking SonarQube quality gates and projects..."
+                            sh '''#!/bin/bash
+                                echo "=== Token Validation ==="
+                                if [ -z "${SONAR_TOKEN}" ]; then
+                                    echo "❌ ERROR: SONAR_TOKEN is not set!"
+                                    exit 1
+                                fi
+                                echo "✓ Token is set (length: ${#SONAR_TOKEN})"
+                                echo "✓ Token prefix: ${SONAR_TOKEN:0:10}..."
+                                
+                                echo ""
+                                echo "=== Diagnostic: Checking if projects exist ==="
+                                
+                                # Check backend project
+                                echo "Checking backend project..."
+                                BACKEND_PROJECT=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-backend)
+                                BACKEND_HTTP_CODE=$(echo "$BACKEND_PROJECT" | tail -1)
+                                BACKEND_PROJECT_DATA=$(echo "$BACKEND_PROJECT" | head -1)
+                                echo "Backend Project HTTP Status: $BACKEND_HTTP_CODE"
+                                echo "Backend Project Data: $BACKEND_PROJECT_DATA"
+                                
+                                # Check frontend project
+                                echo "Checking frontend project..."
+                                FRONTEND_PROJECT=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-frontend)
+                                FRONTEND_HTTP_CODE=$(echo "$FRONTEND_PROJECT" | tail -1)
+                                FRONTEND_PROJECT_DATA=$(echo "$FRONTEND_PROJECT" | head -1)
+                                echo "Frontend Project HTTP Status: $FRONTEND_HTTP_CODE"
+                                echo "Frontend Project Data: $FRONTEND_PROJECT_DATA"
+                                
+                                echo ""
+                                echo "=== Fetching quality gate status ==="
+                                
+                                echo "Fetching backend quality gate..."
+                                BACKEND_QG=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-backend)
+                                BACKEND_QG_HTTP=$(echo "$BACKEND_QG" | tail -1)
+                                BACKEND_QG_DATA=$(echo "$BACKEND_QG" | head -1)
+                                echo "Backend QG HTTP Status: $BACKEND_QG_HTTP"
+                                echo "Backend QG Response: $BACKEND_QG_DATA"
+                                BACKEND_STATUS=$(echo "$BACKEND_QG_DATA" | grep -o '"status":"[^"]*"' || echo "NOT_FOUND")
+                                
+                                echo "Fetching frontend quality gate..."
+                                FRONTEND_QG=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-frontend)
+                                FRONTEND_QG_HTTP=$(echo "$FRONTEND_QG" | tail -1)
+                                FRONTEND_QG_DATA=$(echo "$FRONTEND_QG" | head -1)
+                                echo "Frontend QG HTTP Status: $FRONTEND_QG_HTTP"
+                                echo "Frontend QG Response: $FRONTEND_QG_DATA"
+                                FRONTEND_STATUS=$(echo "$FRONTEND_QG_DATA" | grep -o '"status":"[^"]*"' || echo "NOT_FOUND")
+                                
+                                echo ""
+                                echo "=== Quality Gate Status Summary ==="
+                                echo "Backend Quality Gate: $BACKEND_STATUS"
+                                echo "Frontend Quality Gate: $FRONTEND_STATUS"
+                                
+                                echo ""
+                                echo "ℹ️  Quality gates are informational - pipeline continues regardless"
+                                echo "Check SonarQube dashboard:"
+                                echo "  - Local:    http://localhost:9000/projects"
+                                echo "  - Jenkins:  http://sonarqube:9000/projects"
+                            '''
                         }
-                        sleep(time: 10, unit: 'SECONDS')
-                        echo "✅ SonarQube analysis completed"
-                        
-                        // Check quality gates (informational only - allows pipeline to continue)
-                        echo "🔍 Checking SonarQube quality gates and projects..."
-                        sh '''#!/bin/bash
-                            echo "=== Diagnostic: Checking if projects exist ==="
-                            
-                            # Check backend project
-                            echo "Checking backend project..."
-                            BACKEND_PROJECT=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-backend)
-                            BACKEND_HTTP_CODE=$(echo "$BACKEND_PROJECT" | tail -1)
-                            BACKEND_PROJECT_DATA=$(echo "$BACKEND_PROJECT" | head -1)
-                            echo "Backend Project HTTP Status: $BACKEND_HTTP_CODE"
-                            echo "Backend Project Data: $BACKEND_PROJECT_DATA"
-                            
-                            # Check frontend project
-                            echo "Checking frontend project..."
-                            FRONTEND_PROJECT=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-frontend)
-                            FRONTEND_HTTP_CODE=$(echo "$FRONTEND_PROJECT" | tail -1)
-                            FRONTEND_PROJECT_DATA=$(echo "$FRONTEND_PROJECT" | head -1)
-                            echo "Frontend Project HTTP Status: $FRONTEND_HTTP_CODE"
-                            echo "Frontend Project Data: $FRONTEND_PROJECT_DATA"
-                            
-                            echo ""
-                            echo "=== Fetching quality gate status ==="
-                            
-                            echo "Fetching backend quality gate..."
-                            BACKEND_QG=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-backend)
-                            BACKEND_QG_HTTP=$(echo "$BACKEND_QG" | tail -1)
-                            BACKEND_QG_DATA=$(echo "$BACKEND_QG" | head -1)
-                            echo "Backend QG HTTP Status: $BACKEND_QG_HTTP"
-                            echo "Backend QG Response: $BACKEND_QG_DATA"
-                            BACKEND_STATUS=$(echo "$BACKEND_QG_DATA" | grep -o '"status":"[^"]*"' || echo "NOT_FOUND")
-                            
-                            echo "Fetching frontend quality gate..."
-                            FRONTEND_QG=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-frontend)
-                            FRONTEND_QG_HTTP=$(echo "$FRONTEND_QG" | tail -1)
-                            FRONTEND_QG_DATA=$(echo "$FRONTEND_QG" | head -1)
-                            echo "Frontend QG HTTP Status: $FRONTEND_QG_HTTP"
-                            echo "Frontend QG Response: $FRONTEND_QG_DATA"
-                            FRONTEND_STATUS=$(echo "$FRONTEND_QG_DATA" | grep -o '"status":"[^"]*"' || echo "NOT_FOUND")
-                            
-                            echo ""
-                            echo "=== Quality Gate Status Summary ==="
-                            echo "Backend Quality Gate: $BACKEND_STATUS"
-                            echo "Frontend Quality Gate: $FRONTEND_STATUS"
-                            
-                            echo ""
-                            echo "ℹ️  Quality gates are informational - pipeline continues regardless"
-                            echo "Check SonarQube dashboard for details:"
-                            echo "  - Backend:  http://sonarqube:9000/dashboard?id=buy-01-backend"
-                            echo "  - Frontend: http://sonarqube:9000/dashboard?id=buy-01-frontend"
-                        '''
                     } else {
                         echo "⚠️ SonarQube is not available, skipping analysis"
                         echo "To use SonarQube, ensure the sonarqube service is running in docker-compose.yml"
