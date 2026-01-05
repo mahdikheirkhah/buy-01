@@ -38,7 +38,7 @@ public class AdminUserInitializer implements CommandLineRunner {
             System.out.println(">>> Admin user not found, creating one...");
 
             // Warn if using default password
-            if (DEFAULT_ADMIN_PASSWORD.equals(adminPassword)) // S2068: comparing constants, not hardcoded password {
+            if (DEFAULT_ADMIN_PASSWORD.equals(adminPassword)) { // S2068: comparing constants, not hardcoded password
                 System.err.println(
                         "⚠️  WARNING: Admin password is set to default! Set 'app.admin.password' environment variable or application.yml");
             }
