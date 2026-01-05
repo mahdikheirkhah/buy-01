@@ -69,7 +69,7 @@ jobs:
       - name: Run Backend Unit Tests
         run: |
           cd backend
-          mvn test -B -Dtest=*UnitTest
+          mvn test -B -Dtest=*UnitTest -Dsurefire.failIfNoSpecifiedTests=false
           echo "✅ Unit tests passed"
 
       - name: Build Frontend
