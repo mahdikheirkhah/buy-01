@@ -324,7 +324,7 @@ pipeline {
                     
                     // Check if SonarQube is available
                     def sonarAvailable = sh(
-                        script: 'timeout 5 curl -s http://host.docker.internal:9000/api/system/status | grep -q "UP" && echo "true" || echo "false"',
+                        script: 'timeout 5 curl -s http://sonarqube:9000/api/system/status | grep -q "UP" && echo "true" || echo "false"',
                         returnStdout: true
                     ).trim()
                     
@@ -335,26 +335,26 @@ pipeline {
                                 echo "📁 Creating SonarQube projects if they don't exist..."
                                 
                                 # Create Backend project
-                                PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://host.docker.internal:9000/api/projects/search?projects=buy-01-backend | grep -o '"key":"buy-01-backend"' || echo "")
+                                PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-backend | grep -o '"key":"buy-01-backend"' || echo "")
                                 if [ -z "$PROJECT_EXISTS" ]; then
                                     echo "Creating backend project..."
                                     curl -X POST -u ${SONAR_TOKEN}: \
                                       -F "project=buy-01-backend" \
                                       -F "name=buy-01 Backend" \
-                                      http://host.docker.internal:9000/api/projects/create || echo "Backend project creation response received"
+                                      http://sonarqube:9000/api/projects/create || echo "Backend project creation response received"
                                     echo "✅ Backend project created"
                                 else
                                     echo "✅ Backend project already exists"
                                 fi
                                 
                                 # Create Frontend project
-                                PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://host.docker.internal:9000/api/projects/search?projects=buy-01-frontend | grep -o '"key":"buy-01-frontend"' || echo "")
+                                PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-frontend | grep -o '"key":"buy-01-frontend"' || echo "")
                                 if [ -z "$PROJECT_EXISTS" ]; then
                                     echo "Creating frontend project..."
                                     curl -X POST -u ${SONAR_TOKEN}: \
                                       -F "project=buy-01-frontend" \
                                       -F "name=buy-01 Frontend" \
-                                      http://host.docker.internal:9000/api/projects/create || echo "Frontend project creation response received"
+                                      http://sonarqube:9000/api/projects/create || echo "Frontend project creation response received"
                                     echo "✅ Frontend project created"
                                 else
                                     echo "✅ Frontend project already exists"
@@ -375,7 +375,7 @@ pipeline {
                                   mvn sonar:sonar \\
                                     -Dsonar.projectKey=buy-01-backend \\
                                     -Dsonar.projectName="buy-01 Backend" \\
-                                    -Dsonar.host.url=http://host.docker.internal:9000 \
+                                    -Dsonar.host.url=http://sonarqube:9000 \
                                     -Dsonar.login=${SONAR_TOKEN} \\
                                     -Dsonar.sources=. \\
                                     -Dsonar.exclusions="**/target/**,**/test/**,**/*Test.java,**/*Tests.java" \\
@@ -394,7 +394,7 @@ pipeline {
                                 sonar-scanner \\
                                   -Dsonar.projectKey=buy-01-frontend \\
                                   -Dsonar.projectName="buy-01 Frontend" \\
-                                  -Dsonar.host.url=http://host.docker.internal:9000 \
+                                  -Dsonar.host.url=http://sonarqube:9000 \
                                   -Dsonar.login=${SONAR_TOKEN} \\
                                   -Dsonar.sources=src \\
                                   -Dsonar.exclusions=node_modules/**,dist/**,coverage/**,**/*.spec.ts \\
