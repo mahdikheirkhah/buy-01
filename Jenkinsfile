@@ -391,8 +391,8 @@ pipeline {
                                     -Dsonar.projectName="buy-01 Backend" \\
                                     -Dsonar.host.url=http://sonarqube:9000 \
                                     -Dsonar.login=${SONAR_TOKEN} \\
-                                    -Dsonar.sources=. \\
-                                    -Dsonar.exclusions="**/target/**,**/test/**,**/*Test.java,**/*Tests.java" \\
+                                    -Dsonar.sources=src/main -Dsonar.tests=src/test \
+                                    -Dsonar.exclusions="**/target/**" \
                                     -Dsonar.java.binaries=*/target/classes \\
                                     -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**,**/model/** \\
                                     -B -q
