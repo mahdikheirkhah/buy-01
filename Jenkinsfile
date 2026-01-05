@@ -401,6 +401,7 @@ pipeline {
                             // Frontend Analysis
                             sh '''
                                 docker run --rm \\
+                                  --platform linux/amd64 \\
                                   --volumes-from jenkins-cicd \\
                                   -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
                                   --network buy-01_BACKEND \\
