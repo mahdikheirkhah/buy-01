@@ -196,7 +196,6 @@ public class DummyDataGenerator {
                     System.out.println("    -> Created product: " + product.get("name") + " (ID: " + productId + ")");
                     uploadRandomImages(productId, sellerTokenCookie, 1 + random.nextInt(3));
                 } else {
-                    System.err.println("    -> Failed to extract product ID from response for " + product.get("name")); else {
                     System.err.println("    -> Failed to extract product ID from response for " + product.get("name"));
                 }
             } catch (Exception e) {
