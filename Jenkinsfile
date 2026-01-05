@@ -425,13 +425,13 @@ pipeline {
                             
                             if [[ ! "$BACKEND_STATUS" =~ "PASSED" ]]; then
                                 echo "❌ Backend project failed quality gate!"
-                                curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-backend | grep -o '"conditions":\[[^]]*\]' || true
+                                echo "Check SonarQube dashboard for details: http://sonarqube:9000/dashboard?id=buy-01-backend"
                                 exit 1
                             fi
                             
                             if [[ ! "$FRONTEND_STATUS" =~ "PASSED" ]]; then
                                 echo "❌ Frontend project failed quality gate!"
-                                curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-frontend | grep -o '"conditions":\[[^]]*\]' || true
+                                echo "Check SonarQube dashboard for details: http://sonarqube:9000/dashboard?id=buy-01-frontend"
                                 exit 1
                             fi
                             
