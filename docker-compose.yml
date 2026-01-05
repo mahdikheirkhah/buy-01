@@ -220,6 +220,22 @@ networks:
 
 volumes:
   mongo_data:
+    driver: local
   sonarqube_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/.docker-volumes/sonarqube_data
   sonarqube_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/.docker-volumes/sonarqube_logs
   sonarqube_extensions:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/.docker-volumes/sonarqube_extensions
