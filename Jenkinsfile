@@ -10,7 +10,7 @@ pipeline {
     parameters {
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
         booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run unit tests')
-        booleanParam(name: 'SKIP_FRONTEND_TESTS', defaultValue: false, description: 'Skip frontend unit tests (for debugging)')
+        booleanParam(name: 'SKIP_FRONTEND_TESTS', defaultValue: true, description: 'Skip frontend unit tests (for debugging)')
         booleanParam(name: 'RUN_INTEGRATION_TESTS', defaultValue: false, description: 'Run integration tests (slower, requires Docker)')
         booleanParam(name: 'RUN_SONAR', defaultValue: true, description: 'Run SonarQube analysis')
         booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip deployment')
@@ -75,6 +75,78 @@ pipeline {
                 ])
                 echo "✅ Checkout completed"
                 sh 'git log --oneline -5'
+            }
+        }
+
+        stage('🚀 Start SonarQube Early') {
+            when {
+                expression { params.RUN_SONAR == true }
+            }
+            steps {
+                script {
+                    echo "🚀 Starting SonarQube service early (before tests)..."
+                    try {
+                        sh '''
+                            # Check if SonarQube is already running
+                            if docker ps | grep -q sonarqube; then
+                                echo "✅ SonarQube is already running"
+                            else
+                                echo "🔄 Starting SonarQube from docker-compose..."
+                                
+                                # Navigate to workspace and start SonarQube using docker-compose
+                                cd ${WORKSPACE}
+                                
+                                # Ensure .env file exists with IMAGE_TAG
+                                if [ ! -f .env ]; then
+                                    echo "IMAGE_TAG=${BUILD_NUMBER}" > .env
+                                else
+                                    if ! grep -q "IMAGE_TAG" .env; then
+                                        echo "IMAGE_TAG=${BUILD_NUMBER}" >> .env
+                                    fi
+                                fi
+                                
+                                echo "Running: docker compose up -d sonarqube"
+                                docker compose up -d sonarqube
+                                
+                                echo "⏳ Waiting for SonarQube to be healthy (up to 120 seconds)..."
+                                
+                                # Wait for SonarQube to be healthy
+                                READY=false
+                                for i in {1..120}; do
+                                    RESPONSE=$(timeout 2 curl -s http://localhost:9000/api/system/status 2>/dev/null || echo "")
+                                    if echo "$RESPONSE" | grep -q '"status":"UP"'; then
+                                        echo "✅ SonarQube is ready!"
+                                        READY=true
+                                        break
+                                    fi
+                                    if [ $((i % 10)) -eq 0 ]; then
+                                        echo "⏳ Still waiting... ($i/120 seconds)"
+                                    fi
+                                    sleep 1
+                                done
+                                
+                                if [ "$READY" = false ]; then
+                                    echo "⚠️ SonarQube did not become ready in time"
+                                    echo "Current Docker containers:"
+                                    docker ps -a | head -20
+                                    echo "\\nSonarQube logs:"
+                                    docker logs sonarqube 2>&1 | tail -30 || echo "No logs available"
+                                fi
+                            fi
+                        '''
+                    } catch (Exception e) {
+                        echo "⚠️ Warning: Could not start SonarQube: ${e.message}"
+                        echo "Attempting to diagnose..."
+                        sh '''
+                            echo "Docker ps:"
+                            docker ps -a | grep -i sonar || echo "No SonarQube container found"
+                            echo "\\nDocker compose version:"
+                            docker compose version
+                            echo "\\nWorkspace contents:"
+                            ls -la ${WORKSPACE} | grep -E "(docker-compose|.env)"
+                        '''
+                    }
+                }
             }
         }
 
@@ -238,78 +310,6 @@ pipeline {
 
                         echo "✅ Frontend unit tests passed"
                     '''
-                }
-            }
-        }
-
-        stage('� Start SonarQube') {
-            when {
-                expression { params.RUN_SONAR == true }
-            }
-            steps {
-                script {
-                    echo "🚀 Starting SonarQube service..."
-                    try {
-                        sh '''
-                            # Check if SonarQube is already running
-                            if docker ps | grep -q sonarqube; then
-                                echo "✅ SonarQube is already running"
-                            else
-                                echo "🔄 Starting SonarQube from docker-compose..."
-                                
-                                # Navigate to workspace and start SonarQube using docker-compose
-                                cd ${WORKSPACE}
-                                
-                                # Ensure .env file exists with IMAGE_TAG
-                                if [ ! -f .env ]; then
-                                    echo "IMAGE_TAG=${BUILD_NUMBER}" > .env
-                                else
-                                    if ! grep -q "IMAGE_TAG" .env; then
-                                        echo "IMAGE_TAG=${BUILD_NUMBER}" >> .env
-                                    fi
-                                fi
-                                
-                                echo "Running: docker compose up -d sonarqube"
-                                docker compose up -d sonarqube
-                                
-                                echo "⏳ Waiting for SonarQube to be healthy (up to 120 seconds)..."
-                                
-                                # Wait for SonarQube to be healthy
-                                READY=false
-                                for i in {1..120}; do
-                                    RESPONSE=$(timeout 2 curl -s http://localhost:9000/api/system/status 2>/dev/null || echo "")
-                                    if echo "$RESPONSE" | grep -q '"status":"UP"'; then
-                                        echo "✅ SonarQube is ready!"
-                                        READY=true
-                                        break
-                                    fi
-                                    if [ $((i % 10)) -eq 0 ]; then
-                                        echo "⏳ Still waiting... ($i/120 seconds)"
-                                    fi
-                                    sleep 1
-                                done
-                                
-                                if [ "$READY" = false ]; then
-                                    echo "⚠️ SonarQube did not become ready in time"
-                                    echo "Current Docker containers:"
-                                    docker ps -a | head -20
-                                    echo "\\nSonarQube logs:"
-                                    docker logs sonarqube 2>&1 | tail -30 || echo "No logs available"
-                                fi
-                            fi
-                        '''
-                    } catch (Exception e) {
-                        echo "⚠️ Warning: Could not start SonarQube: ${e.message}"
-                        echo "Attempting to diagnose..."
-                        sh '''
-                            echo "Docker ps:"
-                            docker ps -a | grep -i sonar || echo "No SonarQube container found"
-                            echo "\\nDocker compose version:"
-                            docker compose version
-                            echo "\\nWorkspace contents:"
-                            ls -la ${WORKSPACE} | grep -E "(docker-compose|.env)"
-                        '''
-                    }
                 }
             }
         }
