@@ -86,7 +86,9 @@ pipeline {
                 script {
                     echo "🚀 Starting SonarQube service early (before tests)..."
                     try {
-                        sh '''
+                        sh '''#!/bin/bash
+                            set -e
+                            
                             # Check if SonarQube is already running
                             if docker ps | grep -q sonarqube; then
                                 echo "✅ SonarQube is already running"
@@ -110,9 +112,9 @@ pipeline {
                                 
                                 echo "⏳ Waiting for SonarQube to be healthy (up to 120 seconds)..."
                                 
-                                # Wait for SonarQube to be healthy
+                                # Wait for SonarQube to be healthy (using seq for POSIX compatibility)
                                 READY=false
-                                for i in {1..120}; do
+                                for i in $(seq 1 120); do
                                     RESPONSE=$(timeout 2 curl -s http://localhost:9000/api/system/status 2>/dev/null || echo "")
                                     if echo "$RESPONSE" | grep -q '"status":"UP"'; then
                                         echo "✅ SonarQube is ready!"
@@ -129,7 +131,8 @@ pipeline {
                                     echo "⚠️ SonarQube did not become ready in time"
                                     echo "Current Docker containers:"
                                     docker ps -a | head -20
-                                    echo "\\nSonarQube logs:"
+                                    echo ""
+                                    echo "SonarQube logs:"
                                     docker logs sonarqube 2>&1 | tail -30 || echo "No logs available"
                                 fi
                             fi
@@ -137,12 +140,14 @@ pipeline {
                     } catch (Exception e) {
                         echo "⚠️ Warning: Could not start SonarQube: ${e.message}"
                         echo "Attempting to diagnose..."
-                        sh '''
+                        sh '''#!/bin/bash
                             echo "Docker ps:"
                             docker ps -a | grep -i sonar || echo "No SonarQube container found"
-                            echo "\\nDocker compose version:"
+                            echo ""
+                            echo "Docker compose version:"
                             docker compose version
-                            echo "\\nWorkspace contents:"
+                            echo ""
+                            echo "Workspace contents:"
                             ls -la ${WORKSPACE} | grep -E "(docker-compose|.env)"
                         '''
                     }
@@ -324,18 +329,24 @@ pipeline {
                     
                     // Check if SonarQube is available
                     def sonarAvailable = sh(
-                        script: '''
+                        script: '''#!/bin/bash
                             RESPONSE=$(timeout 5 curl -s http://sonarqube:9000/api/system/status 2>&1)
                             echo "SonarQube response: $RESPONSE"
-                            echo "$RESPONSE" | grep -q '"status":"UP"' && echo "true" || echo "false"
+                            if echo "$RESPONSE" | grep -q '"status":"UP"'; then
+                                echo "true"
+                            else
+                                echo "false"
+                            fi
                         ''',
                         returnStdout: true
                     ).trim()
                     
+                    echo "SonarQube available: ${sonarAvailable}"
+                    
                     if (sonarAvailable == "true") {
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                             // Create SonarQube projects if they don't exist
-                            sh '''
+                            sh '''#!/bin/bash
                                 echo "📁 Creating SonarQube projects if they don't exist..."
                                 
                                 # Create Backend project
@@ -514,13 +525,32 @@ EOF
                     echo "🚀 Deploying locally with tag: ${IMAGE_TAG}"
 
                     try {
-                        sh '''
-                            docker compose down --remove-orphans || true
+                        sh '''#!/bin/bash
+                            set -e
+                            
+                            echo "🧹 Cleaning up stale containers and networks..."
+                            
+                            # Force stop and remove containers
+                            docker compose down --remove-orphans -v || true
+                            sleep 2
+                            
+                            # Force remove containers by name in case compose didn't get them
+                            for container in discovery-service api-gateway user-service product-service media-service dummy-data sonarqube zookeeper kafka mongo buy-01; do
+                                docker rm -f "$container" 2>/dev/null || true
+                            done
+                            sleep 2
+                            
+                            echo "🔄 Pulling latest images..."
                             export IMAGE_TAG=${IMAGE_TAG}
                             docker compose pull || true
+                            
+                            echo "🚀 Starting services..."
                             docker compose up -d --remove-orphans
+                            
                             echo "⏳ Waiting for services to start..."
                             sleep 30
+                            
+                            echo "📊 Service status:"
                             docker compose ps
                             echo "✅ Local deployment successful!"
                         '''
