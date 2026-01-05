@@ -225,6 +225,7 @@ pipeline {
                           --volumes-from jenkins-cicd \\
                           -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
                           --cap-add=SYS_ADMIN \\
+                          -e CHROME_BIN=/usr/bin/chromium \\
                           node:22-bookworm sh -c \\
                           "apt-get update && apt-get install -y chromium && npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
 
