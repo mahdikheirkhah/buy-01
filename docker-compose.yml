@@ -216,6 +216,7 @@ services:
 networks:
   BACKEND:
     driver: bridge
+    name: buy-01_BACKEND
 
 volumes:
   mongo_data:
