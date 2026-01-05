@@ -1,3 +1,5 @@
+// CI/CD Pipeline for Buy-01 E-Commerce Platform
+// Last updated: 2026-01-05
 pipeline {
     agent any
 
