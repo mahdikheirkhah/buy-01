@@ -392,7 +392,6 @@ pipeline {
                                     -Dsonar.host.url=http://sonarqube:9000 \
                                     -Dsonar.login=${SONAR_TOKEN} \\
                                     -Dsonar.exclusions="**/target/**,common/**,discovery-service/**" \
-                                    -Dsonar.java.binaries=*/target/classes \\
                                     -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**,**/model/** \\
                                     -B -q
 
