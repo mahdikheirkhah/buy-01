@@ -515,7 +515,7 @@ EOF
 
                     try {
                         sh '''
-                            docker compose down || true
+                            docker compose down --remove-orphans || true
                             export IMAGE_TAG=${IMAGE_TAG}
                             docker compose pull || true
                             docker compose up -d --remove-orphans
