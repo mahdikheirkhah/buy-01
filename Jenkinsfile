@@ -413,6 +413,30 @@ pipeline {
                         }
                         sleep(time: 10, unit: 'SECONDS')
                         echo "✅ SonarQube analysis completed"
+                        
+                        // Check quality gates
+                        echo "🔍 Checking SonarQube quality gates..."
+                        sh '''#!/bin/bash
+                            BACKEND_STATUS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-backend | grep -o '"status":"[^"]*"')
+                            FRONTEND_STATUS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-frontend | grep -o '"status":"[^"]*"')
+                            
+                            echo "Backend Quality Gate: $BACKEND_STATUS"
+                            echo "Frontend Quality Gate: $FRONTEND_STATUS"
+                            
+                            if [[ ! "$BACKEND_STATUS" =~ "PASSED" ]]; then
+                                echo "❌ Backend project failed quality gate!"
+                                curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-backend | grep -o '"conditions":\[[^]]*\]' || true
+                                exit 1
+                            fi
+                            
+                            if [[ ! "$FRONTEND_STATUS" =~ "PASSED" ]]; then
+                                echo "❌ Frontend project failed quality gate!"
+                                curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-frontend | grep -o '"conditions":\[[^]]*\]' || true
+                                exit 1
+                            fi
+                            
+                            echo "✅ Both projects passed quality gate!"
+                        '''
                     } else {
                         echo "⚠️ SonarQube is not available, skipping analysis"
                         echo "To use SonarQube, ensure the sonarqube service is running in docker-compose.yml"
