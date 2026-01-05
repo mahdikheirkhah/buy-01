@@ -23,8 +23,9 @@ services:
       - ~/.m2:/root/.m2
     # Ensure Jenkins starts automatically
     restart: unless-stopped
-    # Use a custom network if Jenkins needs to interact directly with other services (e.g., Kafka)
-    # If the main docker-compose.yml is also running, you might need to connect them, but for now, we focus on building images.
+    # Connect to the BACKEND network to reach other services (SonarQube, Kafka, etc.)
+    networks:
+      - BACKEND
     user: root # Run as root to ensure permissions for /var/run/docker.sock
     environment:
       # Set timezone for consistency
@@ -33,3 +34,8 @@ services:
 volumes:
   jenkins_home:
     driver: local
+
+networks:
+  BACKEND:
+    external: true
+    name: buy-01_BACKEND
