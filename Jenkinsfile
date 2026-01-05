@@ -434,25 +434,6 @@ pipeline {
                                 echo "✓ Token prefix: ${SONAR_TOKEN:0:10}..."
                                 
                                 echo ""
-                                echo "=== Diagnostic: Checking if projects exist ==="
-                                
-                                # Check backend project
-                                echo "Checking backend project..."
-                                BACKEND_PROJECT=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-backend)
-                                BACKEND_HTTP_CODE=$(echo "$BACKEND_PROJECT" | tail -1)
-                                BACKEND_PROJECT_DATA=$(echo "$BACKEND_PROJECT" | head -1)
-                                echo "Backend Project HTTP Status: $BACKEND_HTTP_CODE"
-                                echo "Backend Project Data: $BACKEND_PROJECT_DATA"
-                                
-                                # Check frontend project
-                                echo "Checking frontend project..."
-                                FRONTEND_PROJECT=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-frontend)
-                                FRONTEND_HTTP_CODE=$(echo "$FRONTEND_PROJECT" | tail -1)
-                                FRONTEND_PROJECT_DATA=$(echo "$FRONTEND_PROJECT" | head -1)
-                                echo "Frontend Project HTTP Status: $FRONTEND_HTTP_CODE"
-                                echo "Frontend Project Data: $FRONTEND_PROJECT_DATA"
-                                
-                                echo ""
                                 echo "=== Fetching quality gate status ==="
                                 
                                 echo "Fetching backend quality gate..."
