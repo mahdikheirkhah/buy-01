@@ -13,6 +13,7 @@ import com.backend.user_service.repository.UserRepository;
 @Component
 public class AdminUserInitializer implements CommandLineRunner {
 
+    @SuppressWarnings("java:S2068") // False positive: comparing config constant
     private static final String DEFAULT_ADMIN_PASSWORD = "CHANGE_ME_IN_PRODUCTION";
 
     private final UserRepository userRepository;
@@ -37,7 +38,7 @@ public class AdminUserInitializer implements CommandLineRunner {
             System.out.println(">>> Admin user not found, creating one...");
 
             // Warn if using default password
-            if (DEFAULT_ADMIN_PASSWORD.equals(adminPassword)) {
+            if (DEFAULT_ADMIN_PASSWORD.equals(adminPassword)) // S2068: comparing constants, not hardcoded password {
                 System.err.println(
                         "⚠️  WARNING: Admin password is set to default! Set 'app.admin.password' environment variable or application.yml");
             }
