@@ -226,7 +226,7 @@ pipeline {
                           -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
                           --cap-add=SYS_ADMIN \\
                           node:22-bookworm sh -c \\
-                          "apt-get update -qq && apt-get install -y -qq chromium --no-install-recommends && npm install --legacy-peer-deps && CHROME_BIN='chromium --no-sandbox' npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
+                          "apt-get update -qq && apt-get install -y -qq chromium --no-install-recommends && npm install --legacy-peer-deps && mkdir -p /tmp/chrome-wrapper && echo '#!/bin/bash' > /tmp/chrome-wrapper/chromium-wrapper && echo '/usr/bin/chromium --no-sandbox \\\"\\$@\\\"' >> /tmp/chrome-wrapper/chromium-wrapper && chmod +x /tmp/chrome-wrapper/chromium-wrapper && CHROME_BIN=/tmp/chrome-wrapper/chromium-wrapper npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
 
                         echo "✅ Frontend unit tests passed"
                     '''
