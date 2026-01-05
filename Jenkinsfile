@@ -10,6 +10,7 @@ pipeline {
     parameters {
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
         booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run unit tests')
+        booleanParam(name: 'SKIP_FRONTEND_TESTS', defaultValue: false, description: 'Skip frontend unit tests (for debugging)')
         booleanParam(name: 'RUN_INTEGRATION_TESTS', defaultValue: false, description: 'Run integration tests (slower, requires Docker)')
         booleanParam(name: 'RUN_SONAR', defaultValue: true, description: 'Run SonarQube analysis')
         booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip deployment')
@@ -215,7 +216,7 @@ pipeline {
 
         stage('🧪 Test Frontend') {
             when {
-                expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_BUILD == false }
+                expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_BUILD == false && params.SKIP_FRONTEND_TESTS == false }
             }
             steps {
                 script {
