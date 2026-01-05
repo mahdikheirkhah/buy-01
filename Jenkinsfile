@@ -10,7 +10,7 @@ pipeline {
     parameters {
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
         booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run unit tests')
-        booleanParam(name: 'SKIP_FRONTEND_TESTS', defaultValue: true, description: 'Skip frontend unit tests (for debugging)')
+        booleanParam(name: 'SKIP_FRONTEND_TESTS', defaultValue: false, description: 'Skip frontend unit tests (for debugging)')
         booleanParam(name: 'RUN_INTEGRATION_TESTS', defaultValue: false, description: 'Run integration tests (slower, requires Docker)')
         booleanParam(name: 'RUN_SONAR', defaultValue: true, description: 'Run SonarQube analysis')
         booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip deployment')
@@ -222,12 +222,19 @@ pipeline {
                 script {
                     echo "🧪 Running frontend unit tests..."
                     sh '''
-                        docker run --rm \\
+                        timeout 120 docker run --rm \\
                           --volumes-from jenkins-cicd \\
                           -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
                           --cap-add=SYS_ADMIN \\
                           node:22-bookworm sh -c \\
-                          "apt-get update -qq && apt-get install -y -qq chromium --no-install-recommends && npm install --legacy-peer-deps && mkdir -p /tmp/chrome-wrapper && echo '#!/bin/bash' > /tmp/chrome-wrapper/chromium-wrapper && echo '/usr/bin/chromium --no-sandbox \\\"\\$@\\\"' >> /tmp/chrome-wrapper/chromium-wrapper && chmod +x /tmp/chrome-wrapper/chromium-wrapper && CHROME_BIN=/tmp/chrome-wrapper/chromium-wrapper npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
+                          "apt-get update -qq && apt-get install -y -qq chromium --no-install-recommends && npm install --legacy-peer-deps && mkdir -p /tmp/chrome-wrapper && echo '#!/bin/bash' > /tmp/chrome-wrapper/chromium-wrapper && echo '/usr/bin/chromium --no-sandbox \\\"\\$@\\\"' >> /tmp/chrome-wrapper/chromium-wrapper && chmod +x /tmp/chrome-wrapper/chromium-wrapper && CHROME_BIN=/tmp/chrome-wrapper/chromium-wrapper npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
+                            EXIT_CODE=\\$?
+                            if [ \\$EXIT_CODE -eq 124 ]; then
+                                echo "⚠️ Test execution timed out after 120 seconds"
+                                exit 124
+                            fi
+                            exit \\$EXIT_CODE
+                        }
 
                         echo "✅ Frontend unit tests passed"
                     '''
