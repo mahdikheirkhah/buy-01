@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.security.SecureRandom;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +31,7 @@ public class DummyDataGenerator {
     private final JwtUtil jwtUtil;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final java.util.Random random = new java.util.Random();
+    private final java.security.SecureRandom random = new java.security.SecureRandom();
 
     @Value("${app.dummy-data.enabled:true}")
     private boolean enabled;
@@ -77,7 +78,7 @@ public class DummyDataGenerator {
 
         } catch (Exception e) {
             System.err.println("Failed to generate dummy data: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Error generating dummy data: " + e.getMessage());
         }
     }
 

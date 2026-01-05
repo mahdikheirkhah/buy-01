@@ -62,7 +62,7 @@ public class WebFluxGlobalExceptionHandler implements ErrorWebExceptionHandler {
             status = HttpStatus.NOT_FOUND;
             body.put("message", "Endpoint not found");
         } else {
-            ex.printStackTrace();
+            System.err.println("Unexpected error: " + ex.getMessage());
             body.put("message", "Unexpected error.");
         }
 
