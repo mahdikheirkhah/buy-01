@@ -1,18 +1,27 @@
 package com.backend.dummy_data.generator;
 
-import com.backend.common.util.JwtUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.*;
+import com.backend.common.util.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -21,12 +30,19 @@ public class DummyDataGenerator {
     private final JwtUtil jwtUtil;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final java.util.Random random = new java.util.Random();
 
     @Value("${app.dummy-data.enabled:true}")
     private boolean enabled;
 
     @Value("${app.api-gateway.url:https://localhost:8443}")
     private String gatewayUrl;
+
+    @Value("${app.admin.email:admin@admin.com}")
+    private String adminEmail;
+
+    @Value("${app.admin.password:CHANGE_ME_IN_PRODUCTION}")
+    private String adminPassword;
 
     private String adminTokenCookie;
 
@@ -44,7 +60,7 @@ public class DummyDataGenerator {
 
         try {
             // 1. Login as Admin (Only needed for GET /api/users/email and registration)
-            adminTokenCookie = login("admin@admin.com", "admin123");
+            adminTokenCookie = login(adminEmail, adminPassword);
             System.out.println("Logged in as admin.");
 
             // 2. Create Sellers and Clients
@@ -79,12 +95,16 @@ public class DummyDataGenerator {
 
     private void createSellers() throws Exception {
         List<Map<String, Object>> sellers = List.of(
-                Map.of("firstName", "Nordic", "lastName", "Designs", "email", "seller1@shop.no", "password", "pass123", "role", "SELLER"),
-                Map.of("firstName", "Scandi", "lastName", "Living", "email", "seller2@scandi.se", "password", "pass123", "role", "SELLER"),
-                Map.of("firstName", "Fjall", "lastName", "Home", "email", "seller3@fjall.dk", "password", "pass123", "role", "SELLER"),
-                Map.of("firstName", "Aurora", "lastName", "Lights", "email", "seller4@aurora.fi", "password", "pass123", "role", "SELLER"),
-                Map.of("firstName", "Viking", "lastName", "Craft", "email", "seller5@viking.is", "password", "pass123", "role", "SELLER")
-        );
+                Map.of("firstName", "Nordic", "lastName", "Designs", "email", "seller1@shop.no", "password", "pass123",
+                        "role", "SELLER"),
+                Map.of("firstName", "Scandi", "lastName", "Living", "email", "seller2@scandi.se", "password", "pass123",
+                        "role", "SELLER"),
+                Map.of("firstName", "Fjall", "lastName", "Home", "email", "seller3@fjall.dk", "password", "pass123",
+                        "role", "SELLER"),
+                Map.of("firstName", "Aurora", "lastName", "Lights", "email", "seller4@aurora.fi", "password", "pass123",
+                        "role", "SELLER"),
+                Map.of("firstName", "Viking", "lastName", "Craft", "email", "seller5@viking.is", "password", "pass123",
+                        "role", "SELLER"));
 
         for (Map<String, Object> s : sellers) {
             try {
@@ -98,12 +118,16 @@ public class DummyDataGenerator {
 
     private void createClients() throws Exception {
         List<Map<String, Object>> clients = List.of(
-                Map.of("firstName", "Lars", "lastName", "Hansen", "email", "lars@client.dk", "password", "pass123", "role", "CLIENT"),
-                Map.of("firstName", "Ingrid", "lastName", "Svensson", "email", "ingrid@client.se", "password", "pass123", "role", "CLIENT"),
-                Map.of("firstName", "Bjorn", "lastName", "Olsen", "email", "bjorn@client.no", "password", "pass123", "role", "CLIENT"),
-                Map.of("firstName", "Freya", "lastName", "Nielsen", "email", "freya@client.dk", "password", "pass123", "role", "CLIENT"),
-                Map.of("firstName", "Erik", "lastName", "Larsson", "email", "erik@client.se", "password", "pass123", "role", "CLIENT")
-        );
+                Map.of("firstName", "Lars", "lastName", "Hansen", "email", "lars@client.dk", "password", "pass123",
+                        "role", "CLIENT"),
+                Map.of("firstName", "Ingrid", "lastName", "Svensson", "email", "ingrid@client.se", "password",
+                        "pass123", "role", "CLIENT"),
+                Map.of("firstName", "Bjorn", "lastName", "Olsen", "email", "bjorn@client.no", "password", "pass123",
+                        "role", "CLIENT"),
+                Map.of("firstName", "Freya", "lastName", "Nielsen", "email", "freya@client.dk", "password", "pass123",
+                        "role", "CLIENT"),
+                Map.of("firstName", "Erik", "lastName", "Larsson", "email", "erik@client.se", "password", "pass123",
+                        "role", "CLIENT"));
 
         for (Map<String, Object> c : clients) {
             try {
@@ -141,17 +165,14 @@ public class DummyDataGenerator {
 
         List<String> names = List.of(
                 "Wool Blanket", "Ceramic Mug", "Wall Clock", "Cotton Towel", "Wood Tray",
-                "LED Candle", "Glass Vase", "Linen Sheets", "Bamboo Cutlery", "Marble Coaster"
-        );
+                "LED Candle", "Glass Vase", "Linen Sheets", "Bamboo Cutlery", "Marble Coaster");
 
-        Random rand = new Random();
         for (String name : names) {
             Map<String, Object> product = Map.of(
-                    "name", name + " - " + (rand.nextInt(1000) + 100),
+                    "name", name + " - " + (random.nextInt(1000) + 100),
                     "description", "Premium quality " + name.toLowerCase() + " from Scandinavia.",
-                    "price", 29.99 + rand.nextDouble() * 120,
-                    "quantity", 10 + rand.nextInt(40)
-            );
+                    "price", 29.99 + random.nextDouble() * 120,
+                    "quantity", 10 + random.nextInt(40));
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -163,15 +184,24 @@ public class DummyDataGenerator {
                 ResponseEntity<Map> resp = restTemplate.postForEntity(
                         gatewayUrl + "/api/products", entity, Map.class);
 
-                String productId = (String) resp.getBody().get("id"); // Assuming the service returns "id"
-                if(productId == null) productId = (String) resp.getBody().get("productId");
+                String productId = null;
+                if (resp.getBody() != null) {
+                    productId = (String) resp.getBody().get("id"); // Assuming the service returns "id"
+                    if (productId == null) {
+                        productId = (String) resp.getBody().get("productId");
+                    }
+                }
 
                 if (productId != null) {
                     System.out.println("    -> Created product: " + product.get("name") + " (ID: " + productId + ")");
-                    uploadRandomImages(productId, sellerTokenCookie, 1 + rand.nextInt(3));
+                    uploadRandomImages(productId, sellerTokenCookie, 1 + random.nextInt(3));
+                } else {
+                    System.err.println("    -> Failed to extract product ID from response for " + product.get("name")); else {
+                    System.err.println("    -> Failed to extract product ID from response for " + product.get("name"));
                 }
             } catch (Exception e) {
-                // This might fail if the token doesn't have SELLER role or if the DTO is missing fields.
+                // This might fail if the token doesn't have SELLER role or if the DTO is
+                // missing fields.
                 System.err.println("    -> Failed to create product for " + sellerEmail + ": " + e.getMessage());
             }
         }
@@ -208,7 +238,8 @@ public class DummyDataGenerator {
 
     private String extractJwtFromCookies(HttpHeaders headers) {
         List<String> cookies = headers.get(HttpHeaders.SET_COOKIE);
-        if (cookies == null) throw new RuntimeException("No Set-Cookie header in response.");
+        if (cookies == null)
+            throw new RuntimeException("No Set-Cookie header in response.");
 
         return cookies.stream()
                 .flatMap(cookie -> Arrays.stream(cookie.split(";")))
