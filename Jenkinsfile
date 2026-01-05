@@ -348,14 +348,20 @@ pipeline {
                             sh '''#!/bin/bash
                                 echo "📁 Creating SonarQube projects if they don't exist..."
                                 
+                                echo "Token: ${SONAR_TOKEN:0:10}... (first 10 chars)"
+
                                 # Create Backend project
-                                PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-backend | grep -o '"key":"buy-01-backend"' || echo "")
+                                echo "Checking if backend project exists..."
+                                SEARCH_RESPONSE=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-backend)
+                                echo "Backend search response: $SEARCH_RESPONSE"
+                                PROJECT_EXISTS=$(echo "$SEARCH_RESPONSE" | grep -o '"key":"buy-01-backend"' || echo "")
                                 if [ -z "$PROJECT_EXISTS" ]; then
                                     echo "Creating backend project..."
-                                    curl -X POST -u ${SONAR_TOKEN}: \
+                                    CREATE_RESPONSE=$(curl -s -X POST -u ${SONAR_TOKEN}: \
                                       -F "project=buy-01-backend" \
                                       -F "name=buy-01 Backend" \
-                                      http://sonarqube:9000/api/projects/create || echo "Backend project creation response received"
+                                      http://sonarqube:9000/api/projects/create)
+                                    echo "Backend creation response: $CREATE_RESPONSE"
                                     echo "✅ Backend project created"
                                 else
                                     echo "✅ Backend project already exists"
@@ -365,10 +371,11 @@ pipeline {
                                 PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-frontend | grep -o '"key":"buy-01-frontend"' || echo "")
                                 if [ -z "$PROJECT_EXISTS" ]; then
                                     echo "Creating frontend project..."
-                                    curl -X POST -u ${SONAR_TOKEN}: \
+                                    CREATE_RESPONSE=$(curl -s -X POST -u ${SONAR_TOKEN}: \
                                       -F "project=buy-01-frontend" \
                                       -F "name=buy-01 Frontend" \
-                                      http://sonarqube:9000/api/projects/create || echo "Frontend project creation response received"
+                                      http://sonarqube:9000/api/projects/create)
+                                    echo "Frontend creation response: $CREATE_RESPONSE"
                                     echo "✅ Frontend project created"
                                 else
                                     echo "✅ Frontend project already exists"
@@ -400,6 +407,7 @@ pipeline {
 
                             // Frontend Analysis
                             sh '''
+                                echo "🔍 Frontend analysis with verbose logging..."
                                 docker run --rm \\
                                   --platform linux/amd64 \\
                                   --volumes-from jenkins-cicd \\
