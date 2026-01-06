@@ -357,6 +357,15 @@ URLS
             echo "  🌐 Frontend (External): $FRONTEND_URL"
             if [ "$START_JENKINS" = true ]; then
                 echo "  🔄 Jenkins (External):  $JENKINS_URL"
+                echo ""
+                echo "  📡 GitHub Webhook URL:"
+                echo "     $JENKINS_URL/github-webhook/"
+                echo ""
+                print_info "Copy the webhook URL above to GitHub repository settings:"
+                echo "     Repo → Settings → Webhooks → Add webhook"
+                echo "     Payload URL: [paste webhook URL]"
+                echo "     Content type: application/json"
+                echo "     Events: Just the push event"
             fi
             echo ""
             print_info "Ngrok dashboard: http://localhost:4040"
@@ -378,6 +387,19 @@ URLS
 7. (Optional) Check Jenkins at http://localhost:8080 (if started with --jenkins)
 
 NEXTSTEPS
+
+    if [ "$START_JENKINS" = true ] && [ "$START_NGROK" = true ]; then
+        echo ""
+        echo "📡 Jenkins + GitHub Webhook Setup:"
+        echo "1. Get the Jenkins webhook URL from the ngrok output above"
+        echo "2. Go to GitHub: Your-Repo → Settings → Webhooks → Add webhook"
+        echo "3. Paste the webhook URL (example: https://xxx.ngrok-free.app/github-webhook/)"
+        echo "4. Content type: application/json"
+        echo "5. Select: Just the push event"
+        echo "6. Click 'Add webhook'"
+        echo "7. Push code to test automatic build trigger"
+        echo ""
+    fi
 
     # Display useful commands
     print_section "📝 Useful Commands"
