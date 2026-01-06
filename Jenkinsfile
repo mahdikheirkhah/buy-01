@@ -4,18 +4,12 @@ pipeline {
     agent any
 
     triggers {
-        // Trigger on push to main branch
+        // Trigger on push to main branch and PR branches
         githubPush()
-        githubPullRequest(
-        triggerPhrase: '.*test\\W+this\\W+please.*',
-        skipBuildPhrase: '.*\\[skip\\W+ci\\].*',
-        onlyTriggerPhrase: false,
-        permitAll: true,
-        autoCloseFailedPullRequests: false
-    )
-        // Note: GitHub PR plugin not installed in Jenkins
-        // For PR validation, PRs must be manually triggered or use GitHub Actions
-        // Valid trigger types: [upstream, cron, githubPush, pollSCM]
+        
+        // Note: GitHub Pull Request Builder (ghprb) doesn't use triggers {} block
+        // Configure it in: Jenkins Job → Configure → Build Triggers → GitHub Pull Request Builder
+        // Or use properties() step below for pipeline configuration
     }
 
     parameters {
