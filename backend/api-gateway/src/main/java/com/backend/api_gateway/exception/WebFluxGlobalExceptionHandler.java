@@ -2,26 +2,31 @@
 
 package com.backend.api_gateway.exception;
 
-import com.backend.api_gateway.exception.CustomException;
-import com.backend.api_gateway.exception.InvalidFileTypeException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.ws.rs.NotFoundException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
-import org.springframework.http.*;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import org.springframework.web.server.*;
-import reactor.core.publisher.Mono;
+import org.springframework.web.server.ServerWebExchange;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import jakarta.validation.ConstraintViolationException;
+import jakarta.ws.rs.NotFoundException;
+import reactor.core.publisher.Mono;
 
 @ControllerAdvice
 public class WebFluxGlobalExceptionHandler implements ErrorWebExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(WebFluxGlobalExceptionHandler.class);
 
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
@@ -34,23 +39,17 @@ public class WebFluxGlobalExceptionHandler implements ErrorWebExceptionHandler {
         } else if (ex instanceof MethodArgumentNotValidException m) {
             status = HttpStatus.BAD_REQUEST;
             Map<String, String> errors = new HashMap<>();
-            m.getBindingResult().getFieldErrors().forEach(e ->
-                    errors.put(e.getField(), e.getDefaultMessage())
-            );
+            m.getBindingResult().getFieldErrors().forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
             body.put("errors", errors);
         } else if (ex instanceof ConstraintViolationException c) {
             status = HttpStatus.BAD_REQUEST;
             Map<String, String> errors = new HashMap<>();
-            c.getConstraintViolations().forEach(v ->
-                    errors.put(v.getPropertyPath().toString(), v.getMessage())
-            );
+            c.getConstraintViolations().forEach(v -> errors.put(v.getPropertyPath().toString(), v.getMessage()));
             body.put("errors", errors);
         } else if (ex instanceof WebExchangeBindException w) {
             status = HttpStatus.BAD_REQUEST;
             Map<String, String> errors = new HashMap<>();
-            w.getFieldErrors().forEach(e ->
-                    errors.put(e.getField(), e.getDefaultMessage())
-            );
+            w.getFieldErrors().forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
             body.put("errors", errors);
         } else if (ex instanceof MaxUploadSizeExceededException) {
             status = HttpStatus.PAYLOAD_TOO_LARGE;
@@ -62,7 +61,7 @@ public class WebFluxGlobalExceptionHandler implements ErrorWebExceptionHandler {
             status = HttpStatus.NOT_FOUND;
             body.put("message", "Endpoint not found");
         } else {
-            System.err.println("Unexpected error: " + ex.getMessage());
+            log.error("Unexpected error: ", ex);
             body.put("message", "Unexpected error.");
         }
 
@@ -77,8 +76,7 @@ public class WebFluxGlobalExceptionHandler implements ErrorWebExceptionHandler {
                     .writeWith(Mono.just(exchange.getResponse()
                             .bufferFactory().wrap(
                                     new com.fasterxml.jackson.databind.ObjectMapper()
-                                            .writeValueAsBytes(body)
-                            )));
+                                            .writeValueAsBytes(body))));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

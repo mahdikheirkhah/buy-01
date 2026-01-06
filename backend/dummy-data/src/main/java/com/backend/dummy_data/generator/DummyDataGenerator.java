@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.security.SecureRandom;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
@@ -28,10 +29,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DummyDataGenerator {
 
+    private static final Logger log = LoggerFactory.getLogger(DummyDataGenerator.class);
+
     private final JwtUtil jwtUtil;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final java.security.SecureRandom random = new java.security.SecureRandom();
+    private final java.util.Random random = new java.util.Random();
 
     @Value("${app.dummy-data.enabled:true}")
     private boolean enabled;
@@ -53,32 +56,31 @@ public class DummyDataGenerator {
     @PostConstruct
     public void generate() {
         if (!enabled) {
-            System.out.println("Dummy data generation is disabled.");
+            log.info("Dummy data generation is disabled.");
             return;
         }
 
-        System.out.println("Starting dummy data generation...");
+        log.info("Starting dummy data generation...");
 
         try {
             // 1. Login as Admin (Only needed for GET /api/users/email and registration)
             adminTokenCookie = login(adminEmail, adminPassword);
-            System.out.println("Logged in as admin.");
+            log.info("Logged in as admin.");
 
             // 2. Create Sellers and Clients
             createSellers();
             createClients();
-            System.out.println("Created " + createdSellers.size() + " sellers and clients.");
+            log.info("Created {} sellers and clients.", createdSellers.size());
 
             // 3. Login as each Seller and create products
             for (Map<String, Object> seller : createdSellers) {
                 loginAndCreateProducts(seller);
             }
 
-            System.out.println("Dummy data generated successfully!");
+            log.info("Dummy data generated successfully!");
 
         } catch (Exception e) {
-            System.err.println("Failed to generate dummy data: " + e.getMessage());
-            System.err.println("Error generating dummy data: " + e.getMessage());
+            log.error("Failed to generate dummy data", e);
         }
     }
 
@@ -112,7 +114,7 @@ public class DummyDataGenerator {
                 registerUser(s);
                 createdSellers.add(s); // Store credentials for later login
             } catch (Exception e) {
-                System.err.println("Could not register seller " + s.get("email") + ": " + e.getMessage());
+                log.error("Could not register seller {}", s.get("email"), e);
             }
         }
     }
@@ -182,11 +184,11 @@ public class DummyDataGenerator {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(product, headers);
             try {
-                ResponseEntity<Map> resp = restTemplate.postForEntity(
-                        gatewayUrl + "/api/products", entity, Map.class);
+                ResponseEntity<Map<String, Object>> resp = restTemplate.postForEntity(
+                        gatewayUrl + "/api/products", entity, (Class<Map<String, Object>>) (Class<?>) Map.class);
 
                 String productId = null;
-                Map responseBody = resp.getBody();
+                Map<String, Object> responseBody = resp.getBody();
                 if (responseBody != null) {
                     productId = (String) responseBody.get("id"); // Assuming the service returns "id"
                     if (productId == null) {
@@ -195,7 +197,7 @@ public class DummyDataGenerator {
                 }
 
                 if (productId != null) {
-                    System.out.println("    -> Created product: " + product.get("name") + " (ID: " + productId + ")");
+                    log.info("    -> Created product: {} (ID: {})", product.get("name"), productId);
                     uploadRandomImages(productId, sellerTokenCookie, 1 + random.nextInt(3));
                 } else {
                     System.err.println("    -> Failed to extract product ID from response for " + product.get("name"));
