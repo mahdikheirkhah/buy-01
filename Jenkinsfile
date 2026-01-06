@@ -6,19 +6,16 @@ pipeline {
     triggers {
         // Trigger on push to main branch
         githubPush()
-        
-        // Trigger on pull request creation/updates (GitHub)
         githubPullRequest(
-            displayBuildStartMessage: true,
-            displayBuildFailureMessage: true,
-            displayBuildErrorMessage: true,
-            displayBuildUnstableMessage: true,
-            displayBuildNotBuiltMessage: true,
-            displayBuildBackToNormalMessage: true,
-            displayBuildUnsuccessfulFilepath: false,
-            skipBuildPhrase: '**SKIP**',
-            onlyTriggerPhrase: false
-        )
+        triggerPhrase: '.*test\\W+this\\W+please.*',
+        skipBuildPhrase: '.*\\[skip\\W+ci\\].*',
+        onlyTriggerPhrase: false,
+        permitAll: true,
+        autoCloseFailedPullRequests: false
+    )
+        // Note: GitHub PR plugin not installed in Jenkins
+        // For PR validation, PRs must be manually triggered or use GitHub Actions
+        // Valid trigger types: [upstream, cron, githubPush, pollSCM]
     }
 
     parameters {

@@ -31,16 +31,17 @@ docker ps
 
 ## 🌐 Access the Applications
 
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| **Frontend** | https://localhost:4200 | Create account |
-| **API Gateway** | https://localhost:8443/actuator/health | - |
-| **Eureka Discovery** | http://localhost:8761 | - |
-| **SonarQube** | http://localhost:9000 | admin / admin |
+| Service              | URL                                    | Credentials    |
+| -------------------- | -------------------------------------- | -------------- |
+| **Frontend**         | https://localhost:4200                 | Create account |
+| **API Gateway**      | https://localhost:8443/actuator/health | -              |
+| **Eureka Discovery** | http://localhost:8761                  | -              |
+| **SonarQube**        | http://localhost:9000                  | admin / admin  |
 
 ## 📊 Common Commands
 
 ### Start/Stop Services
+
 ```bash
 # Start everything
 make all
@@ -59,6 +60,7 @@ docker-compose logs -f api-gateway
 ```
 
 ### Clean Up
+
 ```bash
 # Stop and remove everything (keeps code)
 make clean
@@ -68,6 +70,7 @@ docker system prune -a --volumes
 ```
 
 ### Build Only
+
 ```bash
 # Rebuild all images
 make build
@@ -82,6 +85,7 @@ docker build \
 ## 🐛 Troubleshooting
 
 ### Problem: Ports Already in Use
+
 ```bash
 # Find what's using port 8443
 lsof -i :8443
@@ -93,6 +97,7 @@ kill -9 <PID>
 ```
 
 ### Problem: Build Fails
+
 ```bash
 # Build with fresh images (no cache)
 docker-compose build --no-cache
@@ -102,6 +107,7 @@ docker logs container-name
 ```
 
 ### Problem: Can't Connect to MongoDB
+
 ```bash
 # Check if mongo is running
 docker ps | grep mongo
@@ -114,6 +120,7 @@ docker exec -it buy-01 mongosh --eval "db.adminCommand('ping')"
 ```
 
 ### Problem: Services won't start
+
 ```bash
 # Check all logs
 docker-compose logs
@@ -126,33 +133,39 @@ docker-compose up -d
 ## 📝 What Do I Do Now?
 
 ### 1. **Register & Explore** (2 mins)
+
 - Open https://localhost:4200
 - Click "Sign Up"
 - Choose role: **Seller** (to test all features)
 - Create account with email/password
 
 ### 2. **Create a Product** (2 mins)
+
 - Go to **Seller Dashboard**
 - Click **Create Product**
 - Fill in name, description, price
 - Save product
 
 ### 3. **Upload Product Images** (2 mins)
+
 - Go to **Media Management**
 - Upload an image (JPG/PNG, max 2MB)
 - Use it in your product
 
 ### 4. **Test as Client** (2 mins)
+
 - Logout and create a **Client** account
 - Browse products
 - View product details
 
 ### 5. **Check Logs** (1 min)
+
 ```bash
 docker-compose logs -f api-gateway
 ```
 
 ### 6. **Monitor Code Quality** (Optional)
+
 - Open http://localhost:9000
 - Login: admin / admin
 - Run analysis (see README.md for details)

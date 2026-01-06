@@ -1,17 +1,3 @@
-version: '3.8'
-
-# Jenkins CI/CD Deployment Configuration
-# This docker-compose file runs Jenkins alongside the core e-commerce platform
-# Note: The core services (microservices, MongoDB, Kafka) are defined in docker-compose.yml
-#
-# Usage:
-#   docker-compose -f docker-compose.jenkins.yml up -d    # Start Jenkins only
-#   docker-compose up -d                                  # Start core project (run first)
-#   docker-compose -f docker-compose.jenkins.yml down     # Stop Jenkins
-#
-# IMPORTANT: Run the core project FIRST, then Jenkins
-#   docker-compose up -d                                  # Start core project
-#   docker-compose -f docker-compose.jenkins.yml up -d    # Start Jenkins
 
 services:
   jenkins:
@@ -60,6 +46,5 @@ volumes:
 
 networks:
   BACKEND:
-    # Use external network created by docker-compose.yml
-    # This allows Jenkins to communicate with microservices
     external: true
+    name: buy-01_BACKEND

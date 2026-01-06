@@ -62,9 +62,5 @@
     "editor.defaultFormatter": "vscode.typescript-language-features",
     "editor.formatOnSave": true
   },
-  "java.compile.nullAnalysis.mode": "automatic",
-  "sonarlint.connectedMode.project": {
-    "connectionId": "http-localhost-9000-",
-    "projectKey": "buy-01-frontend"
-  }
+  "java.compile.nullAnalysis.mode": "automatic"
 }
