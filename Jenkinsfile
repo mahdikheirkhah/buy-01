@@ -4,7 +4,21 @@ pipeline {
     agent any
 
     triggers {
+        // Trigger on push to main branch
         githubPush()
+        
+        // Trigger on pull request creation/updates (GitHub)
+        githubPullRequest(
+            displayBuildStartMessage: true,
+            displayBuildFailureMessage: true,
+            displayBuildErrorMessage: true,
+            displayBuildUnstableMessage: true,
+            displayBuildNotBuiltMessage: true,
+            displayBuildBackToNormalMessage: true,
+            displayBuildUnsuccessfulFilepath: false,
+            skipBuildPhrase: '**SKIP**',
+            onlyTriggerPhrase: false
+        )
     }
 
     parameters {
