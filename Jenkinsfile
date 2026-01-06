@@ -585,6 +585,40 @@ EOF
                     echo "🚀 Deploying locally with tag: ${IMAGE_TAG}"
 
                     try {
+                        // 📦 Step 1: Backup current deployment state
+                        sh '''#!/bin/bash
+                            set -e
+                            
+                            echo "📦 Backing up current deployment state..."
+                            
+                            # Create backup directory
+                            mkdir -p .backup
+                            BACKUP_DIR=".backup/deployment-${BUILD_NUMBER}-$(date +%s)"
+                            mkdir -p "$BACKUP_DIR"
+                            
+                            # Save current docker-compose state
+                            if [ -f docker-compose.yml ]; then
+                                cp docker-compose.yml "$BACKUP_DIR/docker-compose.yml"
+                                echo "✅ Backed up docker-compose.yml"
+                            fi
+                            
+                            # Save current running container info
+                            docker compose ps > "$BACKUP_DIR/containers-before.log" 2>&1 || true
+                            docker images | grep mahdikheirkhah > "$BACKUP_DIR/images-before.log" 2>&1 || true
+                            
+                            # Save current IMAGE_TAG for rollback
+                            if [ -f .env ]; then
+                                cp .env "$BACKUP_DIR/.env.backup"
+                                grep IMAGE_TAG .env > "$BACKUP_DIR/previous-tag.txt" || echo "IMAGE_TAG=none" > "$BACKUP_DIR/previous-tag.txt"
+                            else
+                                echo "IMAGE_TAG=none" > "$BACKUP_DIR/previous-tag.txt"
+                            fi
+                            
+                            echo "✅ Backup created at: $BACKUP_DIR"
+                            echo "$BACKUP_DIR" > .backup/latest-backup-path.txt
+                        '''
+                        
+                        // 🧹 Step 2: Clean and deploy
                         sh '''#!/bin/bash
                             set -e
                             
@@ -617,6 +651,48 @@ EOF
                             docker compose ps
                             echo "✅ Local deployment successful!"
                         '''
+                        
+                        // ✅ Step 3: Health check verification
+                        sh '''#!/bin/bash
+                            set -e
+                            
+                            echo "✅ Verifying deployment health..."
+                            
+                            MAX_RETRIES=5
+                            RETRY_COUNT=0
+                            HEALTH_CHECKS_PASSED=0
+                            
+                            # Function to check endpoint
+                            check_endpoint() {
+                                local endpoint=$1
+                                local expected_status=$2
+                                local name=$3
+                                
+                                status=$(curl -s -o /dev/null -w "%{http_code}" -k "$endpoint" 2>/dev/null || echo "000")
+                                if [ "$status" -eq "$expected_status" ] || [ "$status" -eq 200 ]; then
+                                    echo "✅ $name: UP (HTTP $status)"
+                                    return 0
+                                else
+                                    echo "⚠️ $name: Status $status"
+                                    return 1
+                                fi
+                            }
+                            
+                            echo "Checking critical services..."
+                            check_endpoint "http://localhost:8080/api/health" 200 "API Gateway" && ((HEALTH_CHECKS_PASSED++)) || true
+                            check_endpoint "http://localhost:8761/actuator/health" 200 "Eureka Discovery" && ((HEALTH_CHECKS_PASSED++)) || true
+                            check_endpoint "http://localhost:4200" 200 "Frontend" && ((HEALTH_CHECKS_PASSED++)) || true
+                            
+                            echo ""
+                            echo "Health checks passed: $HEALTH_CHECKS_PASSED/3"
+                            
+                            if [ "$HEALTH_CHECKS_PASSED" -lt 2 ]; then
+                                echo "⚠️ WARNING: Only $HEALTH_CHECKS_PASSED services healthy"
+                                exit 1
+                            fi
+                            
+                            echo "✅ Deployment health check PASSED"
+                        '''
 
                         echo "🌐 Access your application at:"
                         echo "   - Frontend: https://localhost:4200"
@@ -624,7 +700,85 @@ EOF
                         echo "   - Eureka: http://localhost:8761"
                     } catch (Exception e) {
                         echo "❌ Local deployment failed: ${e.message}"
-                        error("Deploy failed: ${e.message}")
+                        echo "🔄 Initiating automatic rollback..."
+                        
+                        try {
+                            sh '''#!/bin/bash
+                                set -e
+                                
+                                BACKUP_PATH=$(cat .backup/latest-backup-path.txt 2>/dev/null || echo "")
+                                
+                                if [ -z "$BACKUP_PATH" ] || [ ! -d "$BACKUP_PATH" ]; then
+                                    echo "❌ No valid backup found for rollback!"
+                                    exit 1
+                                fi
+                                
+                                echo "🔄 Rolling back to previous deployment..."
+                                
+                                # Stop current deployment
+                                echo "Stopping current services..."
+                                docker compose down --remove-orphans || true
+                                sleep 5
+                                
+                                # Restore previous docker-compose
+                                if [ -f "$BACKUP_PATH/docker-compose.yml" ]; then
+                                    cp "$BACKUP_PATH/docker-compose.yml" docker-compose.yml
+                                    echo "✅ Restored docker-compose.yml"
+                                fi
+                                
+                                # Get previous image tag
+                                PREVIOUS_TAG=$(grep IMAGE_TAG "$BACKUP_PATH/previous-tag.txt" | cut -d'=' -f2)
+                                echo "Previous IMAGE_TAG: $PREVIOUS_TAG"
+                                
+                                # Start previous version
+                                echo "Starting previous version..."
+                                if [ "$PREVIOUS_TAG" != "none" ]; then
+                                    export IMAGE_TAG=$PREVIOUS_TAG
+                                fi
+                                docker compose up -d --remove-orphans
+                                
+                                # Wait and verify
+                                echo "Waiting for rollback services to start..."
+                                sleep 20
+                                
+                                docker compose ps
+                                echo "✅ Rollback COMPLETED"
+                                
+                                # Log rollback event
+                                echo ""
+                                echo "📋 ROLLBACK LOG:"
+                                echo "  Backup Location: $BACKUP_PATH"
+                                echo "  Failed Build: #${BUILD_NUMBER}"
+                                echo "  Failed Image Tag: ${IMAGE_TAG}"
+                                echo "  Restored Image Tag: $PREVIOUS_TAG"
+                                echo "  Rollback Time: $(date)"
+                                
+                                # Save rollback report
+                                {
+                                    echo "ROLLBACK REPORT"
+                                    echo "=============="
+                                    echo "Build Number: ${BUILD_NUMBER}"
+                                    echo "Failed Image Tag: ${IMAGE_TAG}"
+                                    echo "Rolled Back To: $PREVIOUS_TAG"
+                                    echo "Timestamp: $(date)"
+                                    echo ""
+                                    echo "Previous containers:"
+                                    cat "$BACKUP_PATH/containers-before.log"
+                                } > "$BACKUP_PATH/rollback-report.txt"
+                                
+                                echo "✅ Rollback report saved to: $BACKUP_PATH/rollback-report.txt"
+                            '''
+                            
+                            echo "✅ Automatic rollback completed successfully"
+                            echo "   Previous version has been restored"
+                            echo "   Check .backup/ directory for rollback details"
+                        } catch (Exception rollbackError) {
+                            echo "❌ CRITICAL: Rollback also failed: ${rollbackError.message}"
+                            echo "   Manual intervention required!"
+                            echo "   Check .backup/ directory for backup files"
+                        }
+                        
+                        error("Deploy failed with automatic rollback executed: ${e.message}")
                     }
                 }
             }
@@ -647,25 +801,122 @@ EOF
                             keyFileVariable: 'SSH_KEY',
                             usernameVariable: 'SSH_USER'
                         )]) {
+                            // 📦 Backup remote state before deployment
                             sh '''
-                                scp -i ${SSH_KEY} -o StrictHostKeyChecking=no docker-compose.yml ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOYMENT_DIR}/docker-compose.yml
+                                scp -i ${SSH_KEY} -o StrictHostKeyChecking=no \
+                                    - ${REMOTE_USER}@${REMOTE_HOST}:${DEPLOYMENT_DIR}/backup-before-deploy.sh << 'BACKUP_SCRIPT'
+#!/bin/bash
+BACKUP_DIR="${DEPLOYMENT_DIR}/.backup/deployment-$(date +%s)"
+mkdir -p "$BACKUP_DIR"
 
+# Backup docker-compose and environment
+if [ -f docker-compose.yml ]; then
+    cp docker-compose.yml "$BACKUP_DIR/"
+fi
+if [ -f .env ]; then
+    cp .env "$BACKUP_DIR/"
+fi
+
+# Save running state
+docker compose ps > "$BACKUP_DIR/containers-before.log" 2>&1 || true
+
+echo "$BACKUP_DIR"
+BACKUP_SCRIPT
+                            '''
+                            
+                            // 🚀 Deploy new version
+                            sh '''
                                 ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "
                                     cd ${DEPLOYMENT_DIR}
+                                    
                                     echo 'IMAGE_TAG=${IMAGE_TAG}' > .env
                                     echo 'DOCKER_REPO=${DOCKER_REPO}' >> .env
+                                    
+                                    # Save backup path for rollback
+                                    BACKUP_DIR='${DEPLOYMENT_DIR}/.backup/deployment-'\$(date +%s)
+                                    mkdir -p \$BACKUP_DIR
+                                    [ -f docker-compose.yml ] && cp docker-compose.yml \$BACKUP_DIR/
+                                    [ -f .env.bak ] && cp .env.bak \$BACKUP_DIR/.env.previous || cp .env \$BACKUP_DIR/.env.previous
+                                    
                                     docker compose pull
                                     docker compose up -d --remove-orphans
+                                    
                                     echo 'Waiting for services...'
                                     sleep 30
                                     docker compose ps
+                                    
+                                    # Verify health
+                                    echo 'Verifying deployment health...'
+                                    if curl -sf http://localhost:8080/api/health > /dev/null 2>&1; then
+                                        echo 'Health check PASSED'
+                                    else
+                                        echo 'Health check FAILED'
+                                        exit 1
+                                    fi
+                                    
+                                    echo 'Backup path: '\$BACKUP_DIR > .backup-path.txt
                                 "
                             '''
+                            
                             echo "✅ Remote deployment successful!"
                         }
                     } catch (Exception e) {
                         echo "❌ Remote deployment failed: ${e.message}"
-                        error("Deploy failed: ${e.message}")
+                        echo "🔄 Initiating automatic remote rollback..."
+                        
+                        try {
+                            withCredentials([sshUserPrivateKey(
+                                credentialsId: env.SSH_CREDENTIAL_ID,
+                                keyFileVariable: 'SSH_KEY',
+                                usernameVariable: 'SSH_USER'
+                            )]) {
+                                sh '''
+                                    ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "
+                                        cd ${DEPLOYMENT_DIR}
+                                        
+                                        BACKUP_PATH=\$(cat .backup-path.txt 2>/dev/null | tail -1)
+                                        
+                                        if [ -z \"\$BACKUP_PATH\" ] || [ ! -d \"\$BACKUP_PATH\" ]; then
+                                            echo 'No valid backup found for rollback!'
+                                            exit 1
+                                        fi
+                                        
+                                        echo 'Rolling back to previous deployment...'
+                                        
+                                        # Stop current
+                                        docker compose down --remove-orphans || true
+                                        sleep 5
+                                        
+                                        # Restore previous files
+                                        [ -f \"\$BACKUP_PATH/docker-compose.yml\" ] && cp \"\$BACKUP_PATH/docker-compose.yml\" .
+                                        [ -f \"\$BACKUP_PATH/.env.previous\" ] && cp \"\$BACKUP_PATH/.env.previous\" .env
+                                        
+                                        # Start previous version
+                                        docker compose up -d --remove-orphans
+                                        sleep 20
+                                        
+                                        docker compose ps
+                                        
+                                        echo 'Rollback completed'
+                                        
+                                        # Save rollback report
+                                        {
+                                            echo 'REMOTE ROLLBACK REPORT'
+                                            echo '===================='
+                                            echo 'Failed Image Tag: ${IMAGE_TAG}'
+                                            echo 'Timestamp: '\$(date)
+                                            echo 'Backup: '\$BACKUP_PATH
+                                        } > \"\$BACKUP_PATH/rollback-report.txt\"
+                                    "
+                                '''
+                            }
+                            echo "✅ Remote automatic rollback completed"
+                        } catch (Exception rollbackError) {
+                            echo "❌ CRITICAL: Remote rollback also failed!"
+                            echo "   Manual intervention required on ${REMOTE_HOST}"
+                        }
+                        
+                        error("Remote deploy failed with automatic rollback executed: ${e.message}")
                     }
                 }
             }
@@ -793,6 +1044,27 @@ EOF
         failure {
             script {
                 echo "❌ Pipeline failed!"
+                
+                // Check if rollback was executed
+                try {
+                    def backupPath = sh(
+                        script: 'cat .backup/latest-backup-path.txt 2>/dev/null || echo ""',
+                        returnStdout: true
+                    ).trim()
+                    
+                    def rollbackInfo = ""
+                    if (backupPath) {
+                        def rollbackReport = sh(
+                            script: "cat ${backupPath}/rollback-report.txt 2>/dev/null || echo 'Rollback executed'",
+                            returnStdout: true
+                        ).trim()
+                        rollbackInfo = "\n\n📋 ROLLBACK STATUS:\n${rollbackReport}"
+                    }
+                    
+                    echo "Rollback info captured: ${rollbackInfo ? 'YES' : 'NO'}"
+                } catch (Exception e) {
+                    echo "⚠️ Rollback info capture failed: ${e.message}"
+                }
 
                 def message = """
                     ❌ Build FAILED
