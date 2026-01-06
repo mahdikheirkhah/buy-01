@@ -315,22 +315,31 @@ pipeline {
             steps {
                 script {
                     echo "🧪 Running frontend unit tests..."
-                    sh '''
+                    sh '''#!/bin/bash
+                        set +e
+                        EXIT_CODE=0
+                        
                         timeout 120 docker run --rm \\
                           --volumes-from jenkins-cicd \\
                           -w ${WORKSPACE}/frontend \\
                           --cap-add=SYS_ADMIN \\
-                          node:22-bookworm sh -c \\
-                          "apt-get update -qq && apt-get install -y -qq chromium --no-install-recommends && npm install --legacy-peer-deps && mkdir -p /tmp/chrome-wrapper && echo '#!/bin/bash' > /tmp/chrome-wrapper/chromium-wrapper && echo '/usr/bin/chromium --no-sandbox \\\"\\$@\\\"' >> /tmp/chrome-wrapper/chromium-wrapper && chmod +x /tmp/chrome-wrapper/chromium-wrapper && CHROME_BIN=/tmp/chrome-wrapper/chromium-wrapper npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
-                            EXIT_CODE=\\$?
-                            if [ \\$EXIT_CODE -eq 124 ]; then
-                                echo "⚠️ Test execution timed out after 120 seconds"
-                                exit 124
-                            fi
-                            exit \\$EXIT_CODE
-                        }
-
-                        echo "✅ Frontend unit tests passed"
+                          mcr.microsoft.com/playwright:v1.40.0-focal \\
+                          sh -c "npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
+                        
+                        EXIT_CODE=$?
+                        
+                        if [ $EXIT_CODE -eq 124 ]; then
+                            echo "⚠️ Test execution timed out after 120 seconds"
+                            exit 124
+                        fi
+                        
+                        if [ $EXIT_CODE -eq 0 ]; then
+                            echo "✅ Frontend unit tests passed"
+                        else
+                            echo "❌ Frontend unit tests failed with exit code $EXIT_CODE"
+                        fi
+                        
+                        exit $EXIT_CODE
                     '''
                 }
             }
@@ -424,14 +433,19 @@ pipeline {
 
                             // Frontend Analysis
                             sh '''
-                                echo "🔍 Frontend analysis with verbose logging..."
+                                echo "🔍 Frontend analysis..."
                                 docker run --rm \\
-                                  --platform linux/amd64 \\
                                   --volumes-from jenkins-cicd \\
                                   -w ${WORKSPACE}/frontend \\
                                   --network buy-01_BACKEND \\
-                                  node:22-alpine \\
-                                  sh -c "npm install -g sonar-scanner && sonar-scanner -Dsonar.projectKey=buy-01-frontend -Dsonar.projectName='buy-01 Frontend' -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=${SONAR_TOKEN} -Dsonar.sources=src -Dsonar.exclusions=node_modules/**,dist/**,coverage/**,**/*.spec.ts -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info"
+                                  -e SONAR_HOST_URL=http://sonarqube:9000 \\
+                                  -e SONAR_TOKEN=${SONAR_TOKEN} \\
+                                  sonarsource/sonar-scanner-cli:latest \\
+                                  -Dsonar.projectKey=buy-01-frontend \\
+                                  -Dsonar.projectName="buy-01 Frontend" \\
+                                  -Dsonar.sources=src \\
+                                  -Dsonar.exclusions="node_modules/**,dist/**,coverage/**,**/*.spec.ts" \\
+                                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
                                 echo "✅ Frontend analysis completed"
                             '''
