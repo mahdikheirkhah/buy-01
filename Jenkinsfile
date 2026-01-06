@@ -556,9 +556,12 @@ EOF
             }
         }
 
-        stage(' Deploy Locally') {
+        stage('🚀 Deploy Locally') {
             when {
-                expression { params.DEPLOY_LOCALLY == true && params.SKIP_DEPLOY == true }
+                allOf {
+                    expression { params.DEPLOY_LOCALLY == true }
+                    expression { params.SKIP_DEPLOY == false }
+                }
             }
             steps {
                 script {
@@ -568,15 +571,18 @@ EOF
                         sh '''#!/bin/bash
                             set -e
                             
-                            echo "🧹 Cleaning up stale containers and networks..."
+                            echo "🧹 Cleaning up existing containers..."
                             
-                            # Force stop and remove containers
-                            docker compose down --remove-orphans -v || true
+                            # Stop and remove containers using docker-compose
+                            docker compose down --remove-orphans || true
                             sleep 2
                             
-                            # Force remove containers by name in case compose didn't get them
-                            for container in discovery-service api-gateway user-service product-service media-service dummy-data sonarqube zookeeper kafka mongo buy-01; do
-                                docker rm -f "$container" 2>/dev/null || true
+                            # Force remove specific containers if they still exist
+                            for container in frontend discovery-service api-gateway user-service product-service media-service dummy-data sonarqube zookeeper kafka buy-01; do
+                                if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
+                                    echo "🗑️  Removing container: $container"
+                                    docker rm -f "$container" 2>/dev/null || true
+                                fi
                             done
                             sleep 2
                             
@@ -585,7 +591,7 @@ EOF
                             docker compose pull || true
                             
                             echo "🚀 Starting services..."
-                            docker compose up -d --remove-orphans
+                            docker compose up -d --remove-orphans --force-recreate
                             
                             echo "⏳ Waiting for services to start..."
                             sleep 30
