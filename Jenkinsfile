@@ -315,31 +315,22 @@ pipeline {
             steps {
                 script {
                     echo "🧪 Running frontend unit tests..."
-                    sh '''#!/bin/bash
-                        set +e
-                        EXIT_CODE=0
-                        
-                        timeout 120 docker run --rm \\
+                    sh '''
+                        timeout 180 docker run --rm \\
                           --volumes-from jenkins-cicd \\
                           -w ${WORKSPACE}/frontend \\
                           --cap-add=SYS_ADMIN \\
-                          mcr.microsoft.com/playwright:v1.40.0-focal \\
-                          sh -c "npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage"
-                        
-                        EXIT_CODE=$?
-                        
-                        if [ $EXIT_CODE -eq 124 ]; then
-                            echo "⚠️ Test execution timed out after 120 seconds"
-                            exit 124
-                        fi
-                        
-                        if [ $EXIT_CODE -eq 0 ]; then
-                            echo "✅ Frontend unit tests passed"
-                        else
-                            echo "❌ Frontend unit tests failed with exit code $EXIT_CODE"
-                        fi
-                        
-                        exit $EXIT_CODE
+                          zenika/alpine-chrome:with-node \\
+                          sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
+                            EXIT_CODE=$?
+                            if [ $EXIT_CODE -eq 124 ]; then
+                                echo "⚠️ Test execution timed out after 180 seconds"
+                                exit 124
+                            fi
+                            exit $EXIT_CODE
+                        }
+
+                        echo "✅ Frontend unit tests passed"
                     '''
                 }
             }
