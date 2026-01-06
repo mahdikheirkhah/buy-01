@@ -203,6 +203,13 @@ Password: [your-github-personal-access-token]
 ID: github-credentials
 ```
 
+**How to get GitHub Personal Access Token:**
+
+1. Go to GitHub: Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Click "Generate new token (classic)"
+3. Select scopes: `repo`, `admin:repo_hook` (for webhooks)
+4. Copy the token (you won't see it again!)
+
 #### 3. SonarQube Token (Optional)
 
 ```
@@ -224,7 +231,56 @@ ID: sonarqube-token
    - Branch: `*/main`
    - Script path: `Jenkinsfile`
 
-4. **Save** and test with **Build Now**
+4. **Build Triggers** (Optional - for automatic builds):
+
+   - Check **"GitHub hook trigger for GITScm polling"**
+
+5. **Save** and test with **Build Now**
+
+### Configure GitHub Webhook (For Automatic Builds)
+
+If you want Jenkins to automatically build when you push code to GitHub:
+
+#### Option 1: Using ngrok (for local development)
+
+1. **Start Jenkins with ngrok:**
+
+   ```bash
+   ./setup.sh --jenkins --ngrok
+   ```
+
+2. **Get your webhook URL:**
+
+   - The setup script will display: `https://[random-name].ngrok-free.app/github-webhook/`
+   - Or check ngrok dashboard: http://localhost:4040
+
+3. **Add webhook to GitHub:**
+
+   - Go to your repository: Settings → Webhooks → Add webhook
+   - **Payload URL**: `https://[your-ngrok-url].ngrok-free.app/github-webhook/`
+   - **Content type**: `application/json`
+   - **Which events**: Select "Just the push event"
+   - Click **Add webhook**
+
+4. **Test it:**
+   - Make a commit and push to GitHub
+   - Jenkins should automatically start a build
+   - Check Jenkins dashboard: http://localhost:8080
+
+**Example webhook URL:**
+
+```
+https://alida-ungravitational-overstudiously.ngrok-free.app/github-webhook/
+```
+
+**⚠️ Note**: ngrok URLs change every time you restart ngrok, so you'll need to update the webhook URL in GitHub each time.
+
+#### Option 2: Using public Jenkins server
+
+If you have a publicly accessible Jenkins server:
+
+1. **Webhook URL**: `https://your-jenkins-domain.com/github-webhook/`
+2. Follow steps 3-4 from Option 1 above
 
 ## 📝 Useful Commands
 
