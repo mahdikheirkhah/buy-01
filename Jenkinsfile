@@ -71,9 +71,12 @@ pipeline {
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: "*/${params.BRANCH}"]],
-                    userRemoteConfigs: [[url: 'https://github.com/mahdikheirkhah/buy-01.git']]
+                    userRemoteConfigs: [[
+                        url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
+                        credentialsId: 'gitea-credentials'
+                    ]]
                 ])
-                echo "✅ Checkout completed"
+                echo "✅ Checkout completed from Gitea"
                 sh 'git log --oneline -5'
             }
         }
@@ -165,7 +168,7 @@ pipeline {
                                 sh '''
                                     docker run --rm \\
                                       --volumes-from jenkins-cicd \\
-                                      -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
+                                      -w ${WORKSPACE}/backend \\
                                       -v jenkins_m2_cache:/root/.m2 \\
                                       -v /var/run/docker.sock:/var/run/docker.sock \\
                                       -e TESTCONTAINERS_RYUK_DISABLED=true \\
@@ -194,12 +197,12 @@ pipeline {
                                     export NODE_OPTIONS="--max-old-space-size=4096"
                                     docker run --rm \\
                                       --volumes-from jenkins-cicd \\
-                                      -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
+                                      -w ${WORKSPACE}/frontend \\
                                       -e NODE_OPTIONS="--max-old-space-size=4096" \\
                                       node:22 \\
                                       sh -c "npm install --legacy-peer-deps && npm run build"
 
-                                    if [ -d /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend/dist ]; then
+                                    if [ -d ${WORKSPACE}/frontend/dist ]; then
                                         echo "✅ Frontend dist created"
                                     else
                                         echo "⚠️ Warning: dist directory not found"
@@ -230,11 +233,11 @@ pipeline {
                         try {
                             echo "Testing ${service}..."
                             sh '''
-                                if [ -d /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend/''' + service + ''' ]; then
+                                if [ -d ${WORKSPACE}/backend/''' + service + ''' ]; then
                                     docker run --rm \\
                                       --volumes-from jenkins-cicd \\
                                       -v jenkins_m2_cache:/root/.m2 \\
-                                      -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
+                                      -w ${WORKSPACE}/backend \\
                                       ${MAVEN_IMAGE} \\
                                       mvn test -B -Dtest=*UnitTest -pl ''' + service + '''
 
@@ -270,11 +273,11 @@ pipeline {
                         try {
                             echo "Integration tests for ${service}..."
                             sh '''
-                                if [ -d /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend/''' + service + ''' ]; then
+                                if [ -d ${WORKSPACE}/backend/''' + service + ''' ]; then
                                     docker run --rm \\
                                       --volumes-from jenkins-cicd \\
                                       -v jenkins_m2_cache:/root/.m2 \\
-                                      -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
+                                      -w ${WORKSPACE}/backend \\
                                       ${MAVEN_IMAGE} \\
                                       mvn test -B -Dtest=*IntegrationTest -pl ''' + service + '''
 
@@ -301,7 +304,7 @@ pipeline {
                     sh '''
                         timeout 120 docker run --rm \\
                           --volumes-from jenkins-cicd \\
-                          -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
+                          -w ${WORKSPACE}/frontend \\
                           --cap-add=SYS_ADMIN \\
                           node:22-bookworm sh -c \\
                           "apt-get update -qq && apt-get install -y -qq chromium --no-install-recommends && npm install --legacy-peer-deps && mkdir -p /tmp/chrome-wrapper && echo '#!/bin/bash' > /tmp/chrome-wrapper/chromium-wrapper && echo '/usr/bin/chromium --no-sandbox \\\"\\$@\\\"' >> /tmp/chrome-wrapper/chromium-wrapper && chmod +x /tmp/chrome-wrapper/chromium-wrapper && CHROME_BIN=/tmp/chrome-wrapper/chromium-wrapper npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
@@ -390,7 +393,7 @@ pipeline {
                                 docker run --rm \\
                                   --volumes-from jenkins-cicd \\
                                   -v jenkins_m2_cache:/root/.m2 \\
-                                  -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/backend \\
+                                  -w ${WORKSPACE}/backend \\
                                   --network buy-01_BACKEND \\
                                   ${MAVEN_IMAGE} \\
                                   mvn sonar:sonar \\
@@ -411,7 +414,7 @@ pipeline {
                                 docker run --rm \\
                                   --platform linux/amd64 \\
                                   --volumes-from jenkins-cicd \\
-                                  -w /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend \\
+                                  -w ${WORKSPACE}/frontend \\
                                   --network buy-01_BACKEND \\
                                   node:22-bookworm \\
                                   sh -c "apt-get update -qq && apt-get install -y -qq openjdk-17-jre-headless --no-install-recommends && npx sonar-scanner -Dsonar.projectKey=buy-01-frontend -Dsonar.projectName='buy-01 Frontend' -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=${SONAR_TOKEN} -Dsonar.sources=src -Dsonar.exclusions=node_modules/**,dist/**,coverage/**,**/*.spec.ts -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info"
@@ -533,8 +536,8 @@ EOF
 
                             // Frontend
                             sh '''
-                                if [ -d /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend/dist ]; then
-                                    docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} -f /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend/Dockerfile /var/jenkins_home/workspace/e-commerce-microservices-ci-cd/frontend/
+                                if [ -d ${WORKSPACE}/frontend/dist ]; then
+                                    docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} -f ${WORKSPACE}/frontend/Dockerfile ${WORKSPACE}/frontend/
                                     docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
 
                                     docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
