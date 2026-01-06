@@ -173,10 +173,42 @@ docker ps
 
 ### 5. Access Applications
 
+**Local Access:**
+
 - **Frontend**: https://localhost:4200
 - **API Gateway**: https://localhost:8443/actuator/health
 - **Eureka Discovery**: http://localhost:8761
 - **SonarQube**: http://localhost:9000 (admin/admin)
+
+**External Access with ngrok:**
+
+If you need to access your services from outside your network (e.g., testing on mobile, sharing with team):
+
+```bash
+# Start with ngrok tunnels
+./setup.sh --ngrok
+
+# Or start everything including Jenkins and ngrok
+./setup.sh --jenkins --ngrok
+```
+
+After starting with `--ngrok`:
+
+- Check the ngrok dashboard: http://localhost:4040
+- Frontend will be accessible via: `https://[random-name].ngrok-free.app`
+- Jenkins (if enabled) will be accessible via: `https://[random-name].ngrok-free.app`
+
+**Note**: You need to install and authenticate ngrok first:
+
+```bash
+# Install ngrok
+brew install ngrok/ngrok/ngrok          # macOS
+snap install ngrok                       # Linux
+# Or download from: https://ngrok.com/download
+
+# Authenticate (get token from https://dashboard.ngrok.com/)
+ngrok config add-authtoken <your-token>
+```
 
 ---
 
@@ -591,7 +623,38 @@ docker-compose up -d \
 
 ## 🏃 Running the Application
 
-### Option 1: Docker Compose (Recommended for Production-Like Environment)
+### Option 1: Automated Setup Script (Easiest)
+
+Use the `setup.sh` script for one-command startup:
+
+```bash
+# Basic startup (core services only)
+./setup.sh
+
+# Clean Docker and start fresh
+./setup.sh --clean
+
+# Start with Jenkins CI/CD
+./setup.sh --jenkins
+
+# Start with ngrok for external access
+./setup.sh --ngrok
+
+# Complete setup: clean + Jenkins + ngrok
+./setup.sh --clean --jenkins --ngrok
+```
+
+**What the script does:**
+
+- ✅ Validates Docker is running
+- ✅ Optionally cleans Docker (with `--clean`)
+- ✅ Starts all microservices and infrastructure
+- ✅ Optionally starts Jenkins (with `--jenkins`)
+- ✅ Optionally starts ngrok tunnels (with `--ngrok`)
+- ✅ Displays all access URLs and credentials
+- ✅ Shows useful commands for monitoring
+
+### Option 2: Docker Compose (Manual Control)
 
 #### Start All Services
 
@@ -629,7 +692,7 @@ docker-compose restart
 make clean
 ```
 
-### Option 2: Local Development (Java Backend + Frontend)
+### Option 3: Local Development (Java Backend + Frontend)
 
 #### Terminal 1: Start Backend Services
 
@@ -1549,6 +1612,53 @@ docker-compose restart
 
 # Or import certificate to your browser/system
 # File: backend/certificates/ca/ca-cert.pem
+```
+
+#### 8. ngrok Tunnel Errors
+
+**Problem**: `ERR_NGROK_3200` or tunnel is offline
+
+```bash
+# Check if ngrok is running
+ps aux | grep ngrok
+
+# Restart ngrok tunnels
+kill $(cat .ngrok_pids) 2>/dev/null && rm .ngrok_pids
+./setup.sh --ngrok
+
+# Verify tunnels are active
+curl http://localhost:4040/api/tunnels
+
+# Check ngrok dashboard
+open http://localhost:4040
+```
+
+**Problem**: ngrok not installed
+
+```bash
+# Install ngrok
+brew install ngrok/ngrok/ngrok          # macOS
+snap install ngrok                       # Linux
+# Or download: https://ngrok.com/download
+
+# Authenticate
+ngrok config add-authtoken <your-token>
+# Get token: https://dashboard.ngrok.com/get-started/your-authtoken
+```
+
+**Problem**: ngrok tunnel won't start
+
+```bash
+# Check if ports are available
+lsof -i :4200  # Frontend
+lsof -i :8080  # Jenkins
+
+# Ensure services are running first
+docker ps
+
+# Start ngrok manually
+ngrok http 4200  # Frontend
+ngrok http 8080  # Jenkins (in separate terminal)
 ```
 
 ### Debug Mode
