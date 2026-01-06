@@ -68,6 +68,8 @@ pipeline {
         stage('📥 Checkout') {
             steps {
                 echo "📥 Checking out branch: ${params.BRANCH}"
+                
+                // 🏫 Campus/Gitea Setup (Default)
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: "*/${params.BRANCH}"]],
@@ -77,6 +79,18 @@ pipeline {
                     ]]
                 ])
                 echo "✅ Checkout completed from Gitea"
+                
+                // 🏠 Home/GitHub Setup (Uncomment to use instead of Gitea)
+                // checkout([
+                //     $class: 'GitSCM',
+                //     branches: [[name: "*/${params.BRANCH}"]],
+                //     userRemoteConfigs: [[
+                //         url: 'https://github.com/mahdikheirkhah/buy-01.git',
+                //         credentialsId: 'github-credentials'
+                //     ]]
+                // ])
+                // echo "✅ Checkout completed from GitHub"
+                
                 sh 'git log --oneline -5'
             }
         }
