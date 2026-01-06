@@ -34,6 +34,7 @@ public class DummyDataGenerator {
     private final JwtUtil jwtUtil;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    @SuppressWarnings("java:S6437") // Acceptable for non-cryptographic dummy data generation
     private final java.util.Random random = new java.util.Random();
 
     @Value("${app.dummy-data.enabled:true}")
