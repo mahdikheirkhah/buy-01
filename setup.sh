@@ -277,18 +277,25 @@ main() {
             ngrok http 4200 --log=stdout > /dev/null 2>&1 &
             NGROK_PID_FRONTEND=$!
             
-            if [ "$START_JENKINS" = true ]; then
-                print_info "Starting ngrok tunnel for Jenkins (port 8080)..."
+            # Check if Jenkins is running (even if --jenkins flag wasn't used)
+            JENKINS_RUNNING=false
+            if docker ps --format '{{.Names}}' | grep -q "jenkins-cicd"; then
+                JENKINS_RUNNING=true
+                print_info "Detected Jenkins container running, starting ngrok tunnel for Jenkins (port 8080)..."
                 ngrok http 8080 --log=stdout > /dev/null 2>&1 &
                 NGROK_PID_JENKINS=$!
             fi
             
             print_success "ngrok tunnels started in background"
-            print_info "ngrok PIDs: Frontend=$NGROK_PID_FRONTEND$([ \"$START_JENKINS\" = true ] && echo \", Jenkins=$NGROK_PID_JENKINS\")"
+            if [ "$JENKINS_RUNNING" = true ]; then
+                print_info "ngrok PIDs: Frontend=$NGROK_PID_FRONTEND, Jenkins=$NGROK_PID_JENKINS"
+            else
+                print_info "ngrok PID: Frontend=$NGROK_PID_FRONTEND"
+            fi
             
             # Save PIDs for cleanup
             echo $NGROK_PID_FRONTEND > .ngrok_pids
-            [ "$START_JENKINS" = true ] && echo $NGROK_PID_JENKINS >> .ngrok_pids
+            [ "$JENKINS_RUNNING" = true ] && echo $NGROK_PID_JENKINS >> .ngrok_pids
         fi
     else
         print_section "7️⃣  Skipping ngrok (use --ngrok for external access)"
@@ -351,21 +358,26 @@ URLS
         NGROK_TUNNELS=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null)
         
         if [ -n "$NGROK_TUNNELS" ]; then
-            FRONTEND_URL=$(echo "$NGROK_TUNNELS" | grep -o 'https://[a-zA-Z0-9-]*\.ngrok-free\.app' | head -1)
-            JENKINS_URL=$(echo "$NGROK_TUNNELS" | grep -o 'https://[a-zA-Z0-9-]*\.ngrok-free\.app' | tail -1)
+            FRONTEND_URL=$(echo "$NGROK_TUNNELS" | grep -o 'https://[a-zA-Z0-9-]*\.ngrok-free\.(app|dev)' | head -1)
+            JENKINS_URL=$(echo "$NGROK_TUNNELS" | grep -o 'https://[a-zA-Z0-9-]*\.ngrok-free\.(app|dev)' | tail -1)
             
             echo "  🌐 Frontend (External): $FRONTEND_URL"
-            if [ "$START_JENKINS" = true ]; then
-                echo "  🔄 Jenkins (External):  $JENKINS_URL"
-                echo ""
-                echo "  📡 GitHub Webhook URL:"
-                echo "     $JENKINS_URL/github-webhook/"
-                echo ""
-                print_info "Copy the webhook URL above to GitHub repository settings:"
-                echo "     Repo → Settings → Webhooks → Add webhook"
-                echo "     Payload URL: [paste webhook URL]"
-                echo "     Content type: application/json"
-                echo "     Events: Just the push event"
+            
+            # Check if Jenkins container is running to display Jenkins URL
+            if docker ps --format '{{.Names}}' | grep -q "jenkins-cicd"; then
+                # If we have 2 different URLs, Jenkins tunnel exists
+                if [ "$FRONTEND_URL" != "$JENKINS_URL" ]; then
+                    echo "  🔄 Jenkins (External):  $JENKINS_URL"
+                    echo ""
+                    echo "  📡 GitHub Webhook URL:"
+                    echo "     $JENKINS_URL/github-webhook/"
+                    echo ""
+                    print_info "Copy the webhook URL above to GitHub repository settings:"
+                    echo "     Repo → Settings → Webhooks → Add webhook"
+                    echo "     Payload URL: [paste webhook URL]"
+                    echo "     Content type: application/json"
+                    echo "     Events: Just the push event"
+                fi
             fi
             echo ""
             print_info "Ngrok dashboard: http://localhost:4040"
@@ -388,7 +400,8 @@ URLS
 
 NEXTSTEPS
 
-    if [ "$START_JENKINS" = true ] && [ "$START_NGROK" = true ]; then
+    # Show webhook setup if both Jenkins and ngrok are active
+    if [ "$START_NGROK" = true ] && docker ps --format '{{.Names}}' | grep -q "jenkins-cicd"; then
         echo ""
         echo "📡 Jenkins + GitHub Webhook Setup:"
         echo "1. Get the Jenkins webhook URL from the ngrok output above"
