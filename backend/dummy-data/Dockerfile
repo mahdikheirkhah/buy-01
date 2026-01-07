@@ -5,13 +5,14 @@ WORKDIR /app
 # Copy all backend code
 COPY backend/ .
 
-# Build common module first (without aggregator)
-WORKDIR /app/common
-RUN mvn -q -DskipTests clean install
+# Build parent POM first (without installing modules)
+RUN mvn -q -N install
+
+# Build common module
+RUN mvn -q -DskipTests -pl common clean install
 
 # Now build the service
-WORKDIR /app/dummy-data
-RUN mvn -q -DskipTests clean package
+RUN mvn -q -DskipTests -pl dummy-data clean package
 
 
 # -------- RUNTIME STAGE --------
