@@ -37,8 +37,6 @@ public class Order {
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
-    private Double totalAmount;
-
     private PaymentMethod paymentMethod;
 
     private Instant orderDate;
@@ -48,4 +46,10 @@ public class Order {
 
     @LastModifiedDate
     private Instant updatedAt;
+
+    public Double getTotalAmount() {
+        return items.stream()
+                .mapToDouble(OrderItem::getTotalPrice)
+                .sum();
+    }
 }
