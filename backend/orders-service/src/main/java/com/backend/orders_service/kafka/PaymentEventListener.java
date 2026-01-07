@@ -9,6 +9,7 @@ import com.backend.common.event.PaymentEvent;
 import com.backend.common.event.PaymentEvent.PaymentStatus;
 import com.backend.orders_service.model.Order;
 import com.backend.orders_service.model.OrderStatus;
+import com.backend.orders_service.model.PaymentMethod;
 import com.backend.orders_service.repository.OrderRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -38,11 +39,18 @@ public class PaymentEventListener {
             return;
         }
 
-        // Update order status from PENDING to PROCESSING when payment is successful
+        // Update order status based on payment method
         if (order.getStatus() == OrderStatus.PENDING) {
-            order.setStatus(OrderStatus.PROCESSING);
+            if (order.getPaymentMethod() == PaymentMethod.PAY_ON_DELIVERY) {
+                // For COD, mark as DELIVERED immediately after payment confirmation
+                order.setStatus(OrderStatus.DELIVERED);
+                logger.info("Order {} status updated to DELIVERED (Pay on Delivery)", event.getOrderId());
+            } else if (order.getPaymentMethod() == PaymentMethod.CARD) {
+                // For card payments, move to PROCESSING for fulfillment
+                order.setStatus(OrderStatus.PROCESSING);
+                logger.info("Order {} status updated to PROCESSING (Card Payment)", event.getOrderId());
+            }
             orderRepository.save(order);
-            logger.info("Order {} status updated to PROCESSING after successful payment", event.getOrderId());
         }
     }
 
