@@ -83,33 +83,44 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    public Order updateOrderItem(String orderId, int itemIndex, OrderItem updatedItem) {
+    public Order updateOrderItem(String orderId, String productId, OrderItem updatedItem) {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
         }
 
-        if (itemIndex < 0 || itemIndex >= order.getItems().size()) {
-            throw new IndexOutOfBoundsException("Invalid item index: " + itemIndex);
+        // Find item by productId
+        boolean found = false;
+        for (int i = 0; i < order.getItems().size(); i++) {
+            if (order.getItems().get(i).getProductId().equals(productId)) {
+                order.getItems().set(i, updatedItem);
+                found = true;
+                break;
+            }
         }
 
-        order.getItems().set(itemIndex, updatedItem);
+        if (!found) {
+            throw new IllegalArgumentException("Product not found in order: " + productId);
+        }
+
         return orderRepository.save(order);
     }
 
-    public Order removeItemFromOrder(String orderId, int itemIndex) {
+    public Order removeItemFromOrder(String orderId, String productId) {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
         }
 
-        if (itemIndex < 0 || itemIndex >= order.getItems().size()) {
-            throw new IndexOutOfBoundsException("Invalid item index: " + itemIndex);
+        // Remove item by productId
+        boolean removed = order.getItems().removeIf(item -> item.getProductId().equals(productId));
+
+        if (!removed) {
+            throw new IllegalArgumentException("Product not found in order: " + productId);
         }
 
-        order.getItems().remove(itemIndex);
         return orderRepository.save(order);
     }
 }
