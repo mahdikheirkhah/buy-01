@@ -2,8 +2,14 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
+# Copy parent and all modules
 COPY backend/pom.xml ../
 COPY backend/common backend/common
+
+# Build common module first
+RUN mvn -q -DskipTests -f ../pom.xml clean install
+
+# Copy and build service
 COPY backend/product-service/pom.xml .
 COPY backend/product-service/src ./src
 
