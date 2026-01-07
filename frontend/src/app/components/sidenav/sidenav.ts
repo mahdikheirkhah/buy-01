@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { Router } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../services/auth';
 @Component({
   selector: 'app-sidenav',
@@ -12,7 +13,8 @@ import { AuthService } from '../../services/auth';
     CommonModule,
     RouterModule,
     MatListModule,
-    MatDividerModule
+    MatDividerModule,
+    MatIconModule
   ],
   templateUrl: './sidenav.html',
   styleUrl: './sidenav.css'
@@ -20,7 +22,7 @@ import { AuthService } from '../../services/auth';
 export class SidenavComponent {
   @Output() closeSidenav = new EventEmitter<void>();
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) { }
 
   isSeller(): boolean {
     return this.authService.currentUserRole === 'SELLER';

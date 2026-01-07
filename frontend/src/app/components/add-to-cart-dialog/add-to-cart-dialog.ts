@@ -32,11 +32,14 @@ export interface AddToCartDialogData {
 })
 export class AddToCartDialog {
     quantity: number = 1;
+    addingToCart = false;
 
     constructor(
         public dialogRef: MatDialogRef<AddToCartDialog>,
         @Inject(MAT_DIALOG_DATA) public data: AddToCartDialogData
-    ) { }
+    ) {
+        this.dialogRef.updateSize('480px');
+    }
 
     onCancel(): void {
         this.dialogRef.close();
@@ -46,7 +49,10 @@ export class AddToCartDialog {
         if (this.quantity < 1 || this.quantity > this.data.availableStock) {
             return;
         }
-        this.dialogRef.close(this.quantity);
+        this.addingToCart = true;
+        setTimeout(() => {
+            this.dialogRef.close({ quantity: this.quantity });
+        }, 100);
     }
 
     increaseQuantity(): void {
