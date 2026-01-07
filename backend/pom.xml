@@ -15,6 +15,7 @@
         <module>user-service</module>
         <module>product-service</module>
         <module>media-service</module>
+        <module>orders-service</module>
         <module>common</module>
         <module>dummy-data</module>
     </modules>
