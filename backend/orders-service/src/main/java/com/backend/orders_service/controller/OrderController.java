@@ -146,9 +146,9 @@ public class OrderController {
         }
     }
 
-    @PutMapping("/{orderId}/items/{itemIndex}")
+    @PutMapping("/{orderId}/items/{productId}")
     public ResponseEntity<Order> updateOrderItem(@PathVariable String orderId,
-            @PathVariable int itemIndex,
+            @PathVariable String productId,
             @Valid @RequestBody OrderItem item,
             HttpServletRequest request) {
         Order order = orderService.getOrderById(orderId);
@@ -162,16 +162,16 @@ public class OrderController {
         }
 
         try {
-            Order updated = orderService.updateOrderItem(orderId, itemIndex, item);
+            Order updated = orderService.updateOrderItem(orderId, productId, item);
             return ResponseEntity.ok(updated);
-        } catch (IllegalStateException | IndexOutOfBoundsException e) {
+        } catch (IllegalStateException | IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 
-    @DeleteMapping("/{orderId}/items/{itemIndex}")
+    @DeleteMapping("/{orderId}/items/{productId}")
     public ResponseEntity<Order> removeItemFromOrder(@PathVariable String orderId,
-            @PathVariable int itemIndex,
+            @PathVariable String productId,
             HttpServletRequest request) {
         Order order = orderService.getOrderById(orderId);
         if (order == null) {
@@ -184,9 +184,9 @@ public class OrderController {
         }
 
         try {
-            Order updated = orderService.removeItemFromOrder(orderId, itemIndex);
+            Order updated = orderService.removeItemFromOrder(orderId, productId);
             return ResponseEntity.ok(updated);
-        } catch (IllegalStateException | IndexOutOfBoundsException e) {
+        } catch (IllegalStateException | IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
