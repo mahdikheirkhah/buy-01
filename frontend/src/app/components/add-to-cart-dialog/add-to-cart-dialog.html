@@ -1,0 +1,50 @@
+<h2 mat-dialog-title>Add to Cart</h2>
+
+<mat-dialog-content>
+  <div class="product-info">
+    <h3>{{ data.productName }}</h3>
+    <p class="price">{{ data.price | currency:'USD' }} each</p>
+    <p class="stock" [class.low-stock]="data.availableStock < 10">
+      <mat-icon>inventory_2</mat-icon>
+      {{ data.availableStock }} available in stock
+    </p>
+  </div>
+
+  <div class="quantity-selector">
+    <label>Quantity:</label>
+    <div class="quantity-controls">
+      <button mat-icon-button (click)="decreaseQuantity()" [disabled]="quantity <= 1">
+        <mat-icon>remove</mat-icon>
+      </button>
+      
+      <mat-form-field appearance="outline">
+        <input 
+          matInput 
+          type="number" 
+          [(ngModel)]="quantity"
+          [min]="1"
+          [max]="data.availableStock">
+      </mat-form-field>
+      
+      <button mat-icon-button (click)="increaseQuantity()" [disabled]="quantity >= data.availableStock">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="total">
+    <span>Total:</span>
+    <span class="total-price">{{ getTotalPrice() | currency:'USD' }}</span>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button 
+    mat-raised-button 
+    color="primary" 
+    (click)="onConfirm()"
+    [disabled]="quantity < 1 || quantity > data.availableStock">
+    Add to Cart
+  </button>
+</mat-dialog-actions>
