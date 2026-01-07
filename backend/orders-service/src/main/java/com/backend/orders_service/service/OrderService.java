@@ -66,4 +66,50 @@ public class OrderService {
                 .build();
         return orderRepository.save(copy);
     }
+
+    // ────────────────────────────────────────────────────────────────
+    // ORDER ITEM MANAGEMENT
+    // ────────────────────────────────────────────────────────────────
+
+    public Order addItemToOrder(String orderId, OrderItem item) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+
+        // Only allow modifications to PENDING orders
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
+        }
+
+        order.getItems().add(item);
+        return orderRepository.save(order);
+    }
+
+    public Order updateOrderItem(String orderId, int itemIndex, OrderItem updatedItem) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
+        }
+
+        if (itemIndex < 0 || itemIndex >= order.getItems().size()) {
+            throw new IndexOutOfBoundsException("Invalid item index: " + itemIndex);
+        }
+
+        order.getItems().set(itemIndex, updatedItem);
+        return orderRepository.save(order);
+    }
+
+    public Order removeItemFromOrder(String orderId, int itemIndex) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
+        }
+
+        if (itemIndex < 0 || itemIndex >= order.getItems().size()) {
+            throw new IndexOutOfBoundsException("Invalid item index: " + itemIndex);
+        }
+
+        order.getItems().remove(itemIndex);
+        return orderRepository.save(order);
+    }
 }
