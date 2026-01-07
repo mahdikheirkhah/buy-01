@@ -11,7 +11,10 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 import { ProductService } from '../../services/product-service';
 import { EditProductModal } from '../edit-product-modal/edit-product-modal';
-import { ProductDetailDTO,MediaUploadResponseDTO } from '../../models/product.model';
+import { ProductDetailDTO, MediaUploadResponseDTO } from '../../models/product.model';
+import { AuthService } from '../../services/auth';
+import { AddToCartDialog } from '../add-to-cart-dialog/add-to-cart-dialog';
+import { OrderService } from '../../services/order.service';
 @Component({
   selector: 'app-product-card',
   standalone: true,
@@ -37,11 +40,18 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
   currentImageIndex = 0;
   imageChangeInterval: any = null;
   // -------------------------
+  public currentUserRole: string | null = null;
 
   constructor(private router: Router,
     private productService: ProductService,
-     public dialog: MatDialog
-    ) {}
+    public dialog: MatDialog,
+    private authService: AuthService,
+    private orderService: OrderService
+  ) {
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUserRole = user?.role || null;
+    });
+  }
 
   ngOnInit(): void {
     // Start the carousel when the component loads
@@ -61,8 +71,8 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
       this.imageChangeInterval = setInterval(() => {
         // This moves to the next image, wrapping around to 0
         if (this.product) {
-                  this.currentImageIndex = (this.currentImageIndex + 1) % this.product.imageUrls.length;
-                }
+          this.currentImageIndex = (this.currentImageIndex + 1) % this.product.imageUrls.length;
+        }
       }, 3000); // Change image every 3 seconds
     }
   }
@@ -81,71 +91,121 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
   }
   // ------------------------------------------
 
+  onAddToCart(event: MouseEvent): void {
+    event.stopPropagation();
+    if (!this.product) return;
+
+    // Fetch full product details for stock info
+    this.productService.getProductById(this.product.id).subscribe({
+      next: (fullProduct) => {
+        const dialogRef = this.dialog.open(AddToCartDialog, {
+          width: '400px',
+          data: {
+            productId: this.product!.id,
+            productName: this.product!.name,
+            price: this.product!.price,
+            availableStock: fullProduct.quantity,
+            sellerId: fullProduct.sellerId
+          }
+        });
+
+        dialogRef.afterClosed().subscribe((result) => {
+          if (result) {
+            this.authService.currentUser$.subscribe(user => {
+              if (user) {
+                // Get or create cart
+                this.orderService.getOrCreateCart(user.id, 'Default Address').subscribe({
+                  next: (cart) => {
+                    // Add item to cart
+                    this.orderService.addItemToOrder(cart.id, {
+                      productId: this.product!.id,
+                      productName: this.product!.name,
+                      sellerId: fullProduct.sellerId,
+                      quantity: result.quantity || result,
+                      unitPrice: this.product!.price
+                    }).subscribe({
+                      next: (updatedCart) => {
+                        console.log('Item added to cart', updatedCart);
+                        this.orderService.cartSubject.next(updatedCart);
+                      },
+                      error: (err) => console.error('Failed to add item to cart', err)
+                    });
+                  }
+                });
+              }
+            });
+          }
+        });
+      },
+      error: (err) => console.error('Failed to fetch product details', err)
+    });
+  }
+
   // Helper to get the image URL (unchanged)
   getImageUrl(imagePath: string): string {
     return `https://localhost:8443${imagePath}`;
   }
 
   onCardClick(): void {
-      if (this.product) {
-        this.router.navigate(['/product', this.product.id]);
-      }
+    if (this.product) {
+      this.router.navigate(['/product', this.product.id]);
     }
+  }
 
   onDelete(event: MouseEvent): void {
-        event.stopPropagation(); // Stop the card click
-        if (!this.product) return;
+    event.stopPropagation(); // Stop the card click
+    if (!this.product) return;
 
-        // 1. Open the confirmation dialog
-        const dialogRef = this.dialog.open(ConfirmDialog, {
-          width: '350px',
-          data: {
-            title: 'Delete Product',
-            message: `Are you sure you want to delete "${this.product.name}"? This action cannot be undone.`
-          }
-        });
+    // 1. Open the confirmation dialog
+    const dialogRef = this.dialog.open(ConfirmDialog, {
+      width: '350px',
+      data: {
+        title: 'Delete Product',
+        message: `Are you sure you want to delete "${this.product.name}"? This action cannot be undone.`
+      }
+    });
 
-        // 2. Listen for the dialog to close
-        dialogRef.afterClosed().subscribe(result => {
-          // 3. If the user clicked "Delete" (result is true)
-          if (result === true && this.product) {
-            this.productService.deleteProduct(this.product.id).subscribe({
-              next: (response) => {
-                console.log(response); // "Product deleted successfully"
-                // 4. Emit the (delete) event to tell the parent to refresh
-                this.delete.emit();
-              },
-              error: (err) => {
-                console.error('Failed to delete product', err);
-                // TODO: Show a snackbar or alert
-              }
-            });
+    // 2. Listen for the dialog to close
+    dialogRef.afterClosed().subscribe(result => {
+      // 3. If the user clicked "Delete" (result is true)
+      if (result === true && this.product) {
+        this.productService.deleteProduct(this.product.id).subscribe({
+          next: (response) => {
+            console.log(response); // "Product deleted successfully"
+            // 4. Emit the (delete) event to tell the parent to refresh
+            this.delete.emit();
+          },
+          error: (err) => {
+            console.error('Failed to delete product', err);
+            // TODO: Show a snackbar or alert
           }
         });
       }
-   onEdit(event: MouseEvent): void {
-       event.stopPropagation(); // Stop the card click
-       if (!this.product) return;
+    });
+  }
+  onEdit(event: MouseEvent): void {
+    event.stopPropagation(); // Stop the card click
+    if (!this.product) return;
 
-       // 1. Fetch the *full* product details first
-       this.productService.getProductById(this.product.id).subscribe({
-         next: (fullProduct: ProductDetailDTO) => {
-           // 2. Open the modal
-           const dialogRef = this.dialog.open(EditProductModal, {
-             width: '600px',
-             data: { product: fullProduct }
-           });
-           // 3. After modal closes, emit the 'edit' event
-           dialogRef.afterClosed().subscribe(wasSuccessful => {
-             if (wasSuccessful) {
-               this.edit.emit(); // <-- Emits void
-             }
-           });
-         },
-         error: (err) => {
-           console.error('Failed to fetch product details for editing', err);
-           alert('Could not open editor. Please try again.');
-         }
-       });
-     }
+    // 1. Fetch the *full* product details first
+    this.productService.getProductById(this.product.id).subscribe({
+      next: (fullProduct: ProductDetailDTO) => {
+        // 2. Open the modal
+        const dialogRef = this.dialog.open(EditProductModal, {
+          width: '600px',
+          data: { product: fullProduct }
+        });
+        // 3. After modal closes, emit the 'edit' event
+        dialogRef.afterClosed().subscribe(wasSuccessful => {
+          if (wasSuccessful) {
+            this.edit.emit(); // <-- Emits void
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Failed to fetch product details for editing', err);
+        alert('Could not open editor. Please try again.');
+      }
+    });
+  }
 }

@@ -1,4 +1,7 @@
-<h2 mat-dialog-title>Add to Cart</h2>
+<h2 mat-dialog-title style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+  <mat-icon style="color: #1976d2; font-size: 1.5rem; width: 1.5rem; height: 1.5rem;">shopping_cart</mat-icon>
+  <span>Add to Cart</span>
+</h2>
 
 <mat-dialog-content>
   <div class="product-info">
@@ -39,12 +42,16 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button (click)="onCancel()" [disabled]="addingToCart">
+    Cancel
+  </button>
   <button 
     mat-raised-button 
     color="primary" 
     (click)="onConfirm()"
-    [disabled]="quantity < 1 || quantity > data.availableStock">
-    Add to Cart
+    [disabled]="quantity < 1 || quantity > data.availableStock || addingToCart">
+    <mat-icon *ngIf="!addingToCart" style="margin-right: 0.5rem;">add_shopping_cart</mat-icon>
+    <span *ngIf="!addingToCart">Add to Cart</span>
+    <span *ngIf="addingToCart">Adding...</span>
   </button>
 </mat-dialog-actions>
