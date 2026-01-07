@@ -18,5 +18,5 @@ public class CreateOrderRequest {
     @NotEmpty
     private List<OrderItem> items;
     @NotNull
-    private String paymentMethod; // PAY_ON_DELIVERY
+    private PaymentMethod paymentMethod;
 }

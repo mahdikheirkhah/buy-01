@@ -39,7 +39,7 @@ public class Order {
 
     private Double totalAmount;
 
-    private String paymentMethod; // e.g., PAY_ON_DELIVERY
+    private PaymentMethod paymentMethod;
 
     private Instant orderDate;
 
