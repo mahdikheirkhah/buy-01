@@ -1,0 +1,79 @@
+.product-info {
+  margin-bottom: 1.5rem;
+}
+
+.product-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.price {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1976d2;
+  margin: 0.5rem 0;
+}
+
+.stock {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4caf50;
+  margin: 0.5rem 0;
+}
+
+.stock mat-icon {
+  font-size: 1.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.stock.low-stock {
+  color: #ff9800;
+}
+
+.quantity-selector {
+  margin: 1.5rem 0;
+}
+
+.quantity-selector label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #666;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantity-controls mat-form-field {
+  width: 80px;
+}
+
+.quantity-controls input {
+  text-align: center;
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 4px;
+  margin-top: 1rem;
+}
+
+.total-price {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+mat-dialog-actions {
+  padding: 1rem 0 0 0;
+}

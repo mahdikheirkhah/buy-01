@@ -71,6 +71,12 @@ public class OrderService {
     // ORDER ITEM MANAGEMENT
     // ────────────────────────────────────────────────────────────────
 
+    /**
+     * Add an item to an order.
+     * NOTE: Stock validation should be performed at the frontend/gateway level
+     * by calling the product-service to verify availability before calling this
+     * method.
+     */
     public Order addItemToOrder(String orderId, OrderItem item) {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
@@ -83,6 +89,12 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    /**
+     * Update an existing item in an order.
+     * NOTE: Stock validation should be performed at the frontend/gateway level
+     * by calling the product-service to verify availability before calling this
+     * method.
+     */
     public Order updateOrderItem(String orderId, String productId, OrderItem updatedItem) {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
