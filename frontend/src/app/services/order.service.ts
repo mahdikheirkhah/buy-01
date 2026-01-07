@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, map } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { Order, OrderItem, CreateOrderRequest, UpdateOrderStatusRequest } from '../models/order.model';
+import { Order, OrderItem, CreateOrderRequest, UpdateOrderStatusRequest, PaymentMethod } from '../models/order.model';
 import { Page } from './product-service';
 
 @Injectable({
@@ -12,8 +12,13 @@ export class OrderService {
     private orderApiUrl = 'https://localhost:8443/api/orders';
 
     // Cart management - holds the current pending order
-    private cartSubject = new BehaviorSubject<Order | null>(null);
+    public cartSubject = new BehaviorSubject<Order | null>(null);
     public cart$ = this.cartSubject.asObservable();
+
+    // Cart item count for badge
+    public cartItemCount$ = this.cart$.pipe(
+        map(cart => cart ? cart.items.length : 0)
+    );
 
     constructor(private http: HttpClient) { }
 
@@ -111,7 +116,7 @@ export class OrderService {
                             userId,
                             shippingAddress,
                             items: [],
-                            paymentMethod: 'CARD'
+                            paymentMethod: PaymentMethod.CARD
                         }).subscribe({
                             next: (newOrder) => {
                                 this.cartSubject.next(newOrder);
