@@ -11,6 +11,8 @@ import { AuthLayout } from './layouts/auth-layout/auth-layout';
 import { LoggedInGuard } from './guards/logged-in-guard';
 import { AuthGuard } from './guards/auth-guard';
 import { ProductDetail } from './pages/product-detail/product-detail';
+import { Cart } from './pages/cart/cart';
+import { MyOrders } from './pages/my-orders/my-orders';
 
 export const routes: Routes = [
   {
@@ -31,6 +33,8 @@ export const routes: Routes = [
       { path: 'home', component: HomeComponent },
       { path: 'my-info', component: MyInfo },
       { path: 'my-products', component: MyProducts },
+      { path: 'my-orders', component: MyOrders },
+      { path: 'cart', component: Cart },
       { path: 'create-product', component: CreateProduct },
       { path: 'product/:id', component: ProductDetail },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
