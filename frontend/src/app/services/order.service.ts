@@ -1,0 +1,158 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { Order, OrderItem, CreateOrderRequest, UpdateOrderStatusRequest } from '../models/order.model';
+import { Page } from './product-service';
+
+@Injectable({
+    providedIn: 'root'
+})
+export class OrderService {
+    private orderApiUrl = 'https://localhost:8443/api/orders';
+
+    // Cart management - holds the current pending order
+    private cartSubject = new BehaviorSubject<Order | null>(null);
+    public cart$ = this.cartSubject.asObservable();
+
+    constructor(private http: HttpClient) { }
+
+    // ==================== ORDER CRUD ====================
+
+    createOrder(request: CreateOrderRequest): Observable<Order> {
+        return this.http.post<Order>(this.orderApiUrl, request, { withCredentials: true });
+    }
+
+    getOrderById(orderId: string): Observable<Order> {
+        return this.http.get<Order>(`${this.orderApiUrl}/${orderId}`, { withCredentials: true });
+    }
+
+    getUserOrders(userId: string, page: number, size: number): Observable<Page<Order>> {
+        let params = new HttpParams()
+            .set('page', page.toString())
+            .set('size', size.toString());
+
+        return this.http.get<Page<Order>>(`${this.orderApiUrl}/user/${userId}`, {
+            withCredentials: true,
+            params: params
+        });
+    }
+
+    updateOrderStatus(orderId: string, request: UpdateOrderStatusRequest): Observable<Order> {
+        return this.http.put<Order>(`${this.orderApiUrl}/${orderId}/status`, request, { withCredentials: true });
+    }
+
+    cancelOrder(orderId: string): Observable<void> {
+        return this.http.delete<void>(`${this.orderApiUrl}/${orderId}`, { withCredentials: true });
+    }
+
+    redoOrder(orderId: string): Observable<Order> {
+        return this.http.post<Order>(`${this.orderApiUrl}/${orderId}/redo`, {}, { withCredentials: true });
+    }
+
+    // ==================== ORDER ITEM MANAGEMENT ====================
+
+    addItemToOrder(orderId: string, item: OrderItem): Observable<Order> {
+        return this.http.post<Order>(`${this.orderApiUrl}/${orderId}/items`, item, { withCredentials: true })
+            .pipe(tap(order => {
+                if (order.status === 'PENDING') {
+                    this.cartSubject.next(order);
+                }
+            }));
+    }
+
+    updateOrderItem(orderId: string, productId: string, item: OrderItem): Observable<Order> {
+        return this.http.put<Order>(`${this.orderApiUrl}/${orderId}/items/${productId}`, item, { withCredentials: true })
+            .pipe(tap(order => {
+                if (order.status === 'PENDING') {
+                    this.cartSubject.next(order);
+                }
+            }));
+    }
+
+    removeItemFromOrder(orderId: string, productId: string): Observable<Order> {
+        return this.http.delete<Order>(`${this.orderApiUrl}/${orderId}/items/${productId}`, { withCredentials: true })
+            .pipe(tap(order => {
+                if (order.status === 'PENDING') {
+                    this.cartSubject.next(order);
+                }
+            }));
+    }
+
+    // ==================== CART HELPERS ====================
+
+    /**
+     * Load or create the user's current cart (PENDING order)
+     */
+    loadCart(userId: string): Observable<Page<Order>> {
+        return this.getUserOrders(userId, 0, 1).pipe(
+            tap(page => {
+                // Find the first PENDING order or set cart to null
+                const pendingOrder = page.content.find(order => order.status === 'PENDING');
+                this.cartSubject.next(pendingOrder || null);
+            })
+        );
+    }
+
+    /**
+     * Get or create a PENDING order for the cart
+     */
+    getOrCreateCart(userId: string, shippingAddress: string): Observable<Order> {
+        return new Observable(observer => {
+            this.loadCart(userId).subscribe({
+                next: (page) => {
+                    const pendingOrder = page.content.find(order => order.status === 'PENDING');
+                    if (pendingOrder) {
+                        observer.next(pendingOrder);
+                        observer.complete();
+                    } else {
+                        // Create new cart
+                        this.createOrder({
+                            userId,
+                            shippingAddress,
+                            items: [],
+                            paymentMethod: 'CARD'
+                        }).subscribe({
+                            next: (newOrder) => {
+                                this.cartSubject.next(newOrder);
+                                observer.next(newOrder);
+                                observer.complete();
+                            },
+                            error: (err) => observer.error(err)
+                        });
+                    }
+                },
+                error: (err) => observer.error(err)
+            });
+        });
+    }
+
+    /**
+     * Clear the cart from memory (call after checkout)
+     */
+    clearCart(): void {
+        this.cartSubject.next(null);
+    }
+
+    /**
+     * Get current cart value
+     */
+    getCurrentCart(): Order | null {
+        return this.cartSubject.value;
+    }
+
+    /**
+     * Calculate total amount from items
+     */
+    calculateTotal(items: OrderItem[]): number {
+        return items.reduce((total, item) => total + (item.unitPrice * item.quantity), 0);
+    }
+
+    /**
+     * Get cart item count
+     */
+    getCartItemCount(): number {
+        const cart = this.getCurrentCart();
+        return cart ? cart.items.reduce((count, item) => count + item.quantity, 0) : 0;
+    }
+}
