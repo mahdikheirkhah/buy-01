@@ -2,8 +2,10 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-COPY pom.xml .
-COPY src ./src
+COPY backend/pom.xml ../
+COPY backend/common backend/common
+COPY backend/api-gateway/pom.xml .
+COPY backend/api-gateway/src ./src
 
 RUN mvn -q -DskipTests clean package
 
@@ -15,6 +17,6 @@ WORKDIR /app
 COPY --from=build /app/target/api-gateway-0.0.1-SNAPSHOT.jar app.jar
 
 # Copy SSL keystore
-COPY src/main/resources/certs/keystore.p12 src/main/resources/certs/keystore.p12
+COPY backend/api-gateway/src/main/resources/certs/keystore.p12 src/main/resources/certs/keystore.p12
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
