@@ -2,17 +2,15 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copy parent and all modules
-COPY backend/pom.xml ../
-COPY backend/common backend/common
+# Copy all backend code
+COPY backend/ .
 
-# Build common module first
-RUN mvn -q -DskipTests -f ../pom.xml clean install
+# Build common module first (without aggregator)
+WORKDIR /app/common
+RUN mvn -q -DskipTests clean install
 
-# Copy and build service
-COPY backend/api-gateway/pom.xml .
-COPY backend/api-gateway/src ./src
-
+# Now build the service
+WORKDIR /app/api-gateway
 RUN mvn -q -DskipTests clean package
 
 
@@ -20,7 +18,7 @@ RUN mvn -q -DskipTests clean package
 FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
-COPY --from=build /app/target/api-gateway-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar app.jar
 
 # Copy SSL keystore
 COPY backend/api-gateway/src/main/resources/certs/keystore.p12 src/main/resources/certs/keystore.p12
