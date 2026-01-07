@@ -3,6 +3,7 @@ package com.backend.orders_service.dto;
 import java.util.List;
 
 import com.backend.orders_service.model.OrderItem;
+import com.backend.orders_service.model.PaymentMethod;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
