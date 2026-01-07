@@ -22,12 +22,10 @@ public class OrderService {
     private final OrderRepository orderRepository;
 
     public Order createOrder(CreateOrderRequest req) {
-        double total = req.getItems().stream().mapToDouble(OrderItem::getTotalPrice).sum();
         Order order = Order.builder()
                 .userId(req.getUserId())
                 .shippingAddress(req.getShippingAddress())
                 .items(req.getItems())
-                .totalAmount(total)
                 .paymentMethod(req.getPaymentMethod())
                 .status(OrderStatus.PENDING)
                 .orderDate(Instant.now())
@@ -62,7 +60,6 @@ public class OrderService {
                 .userId(existing.getUserId())
                 .shippingAddress(existing.getShippingAddress())
                 .items(existing.getItems())
-                .totalAmount(existing.getTotalAmount())
                 .paymentMethod(existing.getPaymentMethod())
                 .status(OrderStatus.PENDING)
                 .orderDate(Instant.now())
