@@ -2,8 +2,8 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copy all backend code
-COPY backend/ .
+# Copy entire backend sources
+COPY . .
 
 # Build parent POM first (without installing modules)
 RUN mvn -q -N install

@@ -18,7 +18,6 @@ import com.backend.orders_service.dto.CreateOrderRequest;
 import com.backend.orders_service.dto.UpdateOrderStatusRequest;
 import com.backend.orders_service.model.Order;
 import com.backend.orders_service.model.OrderItem;
-import com.backend.orders_service.model.OrderStatus;
 import com.backend.orders_service.service.OrderService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -187,6 +186,25 @@ public class OrderController {
             Order updated = orderService.removeItemFromOrder(orderId, productId);
             return ResponseEntity.ok(updated);
         } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+    @DeleteMapping("/{orderId}/items")
+    public ResponseEntity<Order> clearOrderItems(@PathVariable String orderId, HttpServletRequest request) {
+        Order order = orderService.getOrderById(orderId);
+        if (order == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (!hasAccessToOrder(order, request)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            Order updated = orderService.clearOrderItems(orderId);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }

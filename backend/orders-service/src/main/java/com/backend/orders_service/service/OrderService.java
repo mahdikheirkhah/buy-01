@@ -1,7 +1,7 @@
 package com.backend.orders_service.service;
 
 import java.time.Instant;
-import java.util.List;
+import java.util.ArrayList;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,7 +25,7 @@ public class OrderService {
         Order order = Order.builder()
                 .userId(req.getUserId())
                 .shippingAddress(req.getShippingAddress())
-                .items(req.getItems())
+                .items(req.getItems() != null ? new ArrayList<>(req.getItems()) : new ArrayList<>())
                 .paymentMethod(req.getPaymentMethod())
                 .status(OrderStatus.PENDING)
                 .orderDate(Instant.now())
@@ -85,7 +85,13 @@ public class OrderService {
             throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
         }
 
-        order.getItems().add(item);
+        // Merge with existing entry when the product is already in the cart
+        order.getItems().stream()
+                .filter(existing -> existing.getProductId().equals(item.getProductId()))
+                .findFirst()
+                .ifPresentOrElse(existing -> existing.setQuantity(existing.getQuantity() + item.getQuantity()),
+                        () -> order.getItems().add(item));
+
         return orderRepository.save(order);
     }
 
@@ -133,6 +139,17 @@ public class OrderService {
             throw new IllegalArgumentException("Product not found in order: " + productId);
         }
 
+        return orderRepository.save(order);
+    }
+
+    public Order clearOrderItems(String orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
+        }
+
+        order.setItems(new ArrayList<>());
         return orderRepository.save(order);
     }
 }

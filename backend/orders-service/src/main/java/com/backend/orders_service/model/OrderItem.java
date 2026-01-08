@@ -13,18 +13,7 @@ import lombok.NoArgsConstructor;
 public class OrderItem {
     @NotBlank
     private String productId;
-    @NotBlank
-    private String productName;
-    @NotBlank
-    private String sellerId;
     @NotNull
     @Min(1)
     private Integer quantity;
-    @NotNull
-    @Min(0)
-    private Double unitPrice;
-
-    public Double getTotalPrice() {
-        return unitPrice * quantity;
-    }
 }

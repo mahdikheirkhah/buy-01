@@ -17,14 +17,14 @@
     <div class="cart-items">
       <mat-card *ngFor="let item of cart.items" class="cart-item">
         <div class="item-image">
-          <img [src]="getImageUrl(item.productId)" [alt]="item.productName">
+          <img [src]="getImageUrl(item.productId)" [alt]="getProductName(item.productId)">
         </div>
         
         <div class="item-details">
           <h3>
-            <a [routerLink]="['/product', item.productId]">{{ item.productName }}</a>
+            <a [routerLink]="['/product', item.productId]">{{ getProductName(item.productId) }}</a>
           </h3>
-          <p class="item-price">{{ item.unitPrice | currency:'USD' }} each</p>
+          <p class="item-price">{{ getProductPrice(item.productId) | currency:'USD' }} each</p>
         </div>
 
         <div class="item-quantity">
@@ -40,7 +40,7 @@
         </div>
 
         <div class="item-total">
-          <p>{{ (item.quantity * item.unitPrice) | currency:'USD' }}</p>
+          <p>{{ getItemSubtotal(item) | currency:'USD' }}</p>
         </div>
 
         <div class="item-actions">
@@ -67,6 +67,9 @@
           </div>
         </mat-card-content>
         <mat-card-actions>
+          <button mat-stroked-button color="warn" (click)="clearCartItems()" class="clear-btn">
+            Clear Cart
+          </button>
           <button mat-raised-button color="primary" (click)="proceedToCheckout()" class="checkout-btn">
             Proceed to Checkout
           </button>

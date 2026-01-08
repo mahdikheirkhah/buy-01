@@ -5,10 +5,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { Order, OrderStatus } from '../../models/order.model';
+import { forkJoin } from 'rxjs';
+import { Order, OrderItem, OrderStatus } from '../../models/order.model';
 import { OrderService } from '../../services/order.service';
 import { AuthService } from '../../services/auth';
 import { Page } from '../../services/product-service';
+import { ProductService } from '../../services/product-service';
+import { ProductDetailDTO } from '../../models/product.model';
 
 @Component({
     selector: 'app-my-orders',
@@ -31,10 +34,12 @@ export class MyOrders implements OnInit {
     totalElements = 0;
     isLoading = true;
     userId: string | null = null;
+    productDetails: Record<string, ProductDetailDTO> = {};
 
     constructor(
         private orderService: OrderService,
-        private authService: AuthService
+        private authService: AuthService,
+        private productService: ProductService
     ) { }
 
     ngOnInit(): void {
@@ -55,6 +60,7 @@ export class MyOrders implements OnInit {
                 next: (page: Page<Order>) => {
                     this.orders = page.content.filter(order => order.status !== OrderStatus.PENDING);
                     this.totalElements = page.totalElements;
+                    this.populateProductDetails(this.orders);
                     this.isLoading = false;
                 },
                 error: (err) => {
@@ -82,7 +88,7 @@ export class MyOrders implements OnInit {
     }
 
     getTotalAmount(order: Order): number {
-        return this.orderService.calculateTotal(order.items);
+        return order.items.reduce((total, item) => total + this.getItemSubtotal(item), 0);
     }
 
     reorder(orderId: string): void {
@@ -94,6 +100,42 @@ export class MyOrders implements OnInit {
                 console.error('Failed to reorder:', err);
                 alert('Failed to recreate order');
             }
+        });
+    }
+
+    getProductName(productId: string): string {
+        const detail = this.productDetails[productId];
+        return detail ? detail.name : 'Loading...';
+    }
+
+    getProductPrice(productId: string): number {
+        const detail = this.productDetails[productId];
+        return detail ? detail.price : 0;
+    }
+
+    getItemSubtotal(item: OrderItem): number {
+        return this.getProductPrice(item.productId) * item.quantity;
+    }
+
+    private populateProductDetails(orders: Order[]): void {
+        const uniqueIds = new Set<string>();
+        orders.forEach(order => order.items.forEach(item => uniqueIds.add(item.productId)));
+
+        const idsToFetch = Array.from(uniqueIds).filter(id => !this.productDetails[id]);
+        if (idsToFetch.length === 0) {
+            return;
+        }
+
+        forkJoin(idsToFetch.map(id => this.productService.getProductById(id))).subscribe({
+            next: (products) => {
+                products.forEach(product => {
+                    const key = product.productId || product.id;
+                    if (key) {
+                        this.productDetails[key] = product;
+                    }
+                });
+            },
+            error: (err) => console.error('Failed to fetch product details for orders:', err)
         });
     }
 }

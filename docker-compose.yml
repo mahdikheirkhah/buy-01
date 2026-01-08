@@ -182,6 +182,9 @@ services:
       - BACKEND
 
   orders-service:
+    build:
+      context: ./backend
+      dockerfile: orders-service/Dockerfile
     image: mahdikheirkhah/orders-service:${IMAGE_TAG:-latest}
     container_name: orders-service
     environment:

@@ -47,9 +47,4 @@ public class Order {
     @LastModifiedDate
     private Instant updatedAt;
 
-    public Double getTotalAmount() {
-        return items.stream()
-                .mapToDouble(OrderItem::getTotalPrice)
-                .sum();
-    }
 }

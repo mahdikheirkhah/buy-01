@@ -15,6 +15,8 @@ import { ProductDetailDTO, MediaUploadResponseDTO } from '../../models/product.m
 import { AuthService } from '../../services/auth';
 import { AddToCartDialog } from '../add-to-cart-dialog/add-to-cart-dialog';
 import { OrderService } from '../../services/order.service';
+import { throwError } from 'rxjs';
+import { switchMap, take } from 'rxjs/operators';
 @Component({
   selector: 'app-product-card',
   standalone: true,
@@ -110,31 +112,33 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
         });
 
         dialogRef.afterClosed().subscribe((result) => {
-          if (result) {
-            this.authService.currentUser$.subscribe(user => {
-              if (user) {
-                // Get or create cart
-                this.orderService.getOrCreateCart(user.id, 'Default Address').subscribe({
-                  next: (cart) => {
-                    // Add item to cart
-                    this.orderService.addItemToOrder(cart.id, {
-                      productId: this.product!.id,
-                      productName: this.product!.name,
-                      sellerId: fullProduct.sellerId,
-                      quantity: result.quantity || result,
-                      unitPrice: this.product!.price
-                    }).subscribe({
-                      next: (updatedCart) => {
-                        console.log('Item added to cart', updatedCart);
-                        this.orderService.cartSubject.next(updatedCart);
-                      },
-                      error: (err) => console.error('Failed to add item to cart', err)
-                    });
-                  }
-                });
-              }
-            });
+          const quantityValue = typeof result === 'number' ? result : result?.quantity;
+          const quantity = Number(quantityValue);
+
+          if (!result || !Number.isFinite(quantity) || quantity < 1) {
+            return;
           }
+
+          this.authService.currentUser$.pipe(
+            take(1),
+            switchMap(user => {
+              if (!user) {
+                return throwError(() => new Error('User not authenticated'));
+              }
+
+              return this.orderService.getOrCreateCart(user.id, 'Default Address');
+            }),
+            switchMap(cart => this.orderService.addItemToOrder(cart.id, {
+              productId: this.product!.id,
+              quantity
+            }))
+          ).subscribe({
+            next: (updatedCart) => {
+              console.log('Item added to cart', updatedCart);
+              this.orderService.cartSubject.next(updatedCart);
+            },
+            error: (err) => console.error('Failed to add item to cart', err)
+          });
         });
       },
       error: (err) => console.error('Failed to fetch product details', err)

@@ -1,10 +1,7 @@
 // Order models
 export interface OrderItem {
     productId: string;
-    productName: string;
-    sellerId: string;
     quantity: number;
-    unitPrice: number;
 }
 
 export interface Order {

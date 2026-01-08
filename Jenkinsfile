@@ -524,7 +524,7 @@ pipeline {
                                 echo "✅ Docker Hub login successful"
                             '''
 
-                            def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'dummy-data']
+                            def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'orders-service', 'dummy-data']
 
                             services.each { service ->
                                 sh '''
@@ -1028,6 +1028,7 @@ BACKUP_SCRIPT
                     - ${DOCKER_REPO}/user-service:${IMAGE_TAG}
                     - ${DOCKER_REPO}/product-service:${IMAGE_TAG}
                     - ${DOCKER_REPO}/media-service:${IMAGE_TAG}
+                    - ${DOCKER_REPO}/orders-service:${IMAGE_TAG}
                     - ${DOCKER_REPO}/dummy-data:${IMAGE_TAG}
                     - ${DOCKER_REPO}/frontend:${IMAGE_TAG}
 
