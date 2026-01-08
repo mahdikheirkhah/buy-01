@@ -23,8 +23,16 @@
     <p><strong>Quantity:</strong> {{ product.quantity }}</p>
   </mat-card-content>
 
-  <mat-card-actions *ngIf="product.createdByMe">
-    <button mat-button (click)="onEdit($event)">EDIT</button>
-    <button mat-button color="warn" (click)="onDelete($event)">DELETE</button>
+  <mat-card-actions>
+    <ng-container *ngIf="product.createdByMe">
+      <button mat-button (click)="onEdit($event)">EDIT</button>
+      <button mat-button color="warn" (click)="onDelete($event)">DELETE</button>
+    </ng-container>
+    <ng-container *ngIf="!product.createdByMe && currentUserRole === 'CLIENT'">
+      <button mat-button color="accent" (click)="onAddToCart($event)">
+        <mat-icon>add_shopping_cart</mat-icon>
+        ADD TO CART
+      </button>
+    </ng-container>
   </mat-card-actions>
 </mat-card>

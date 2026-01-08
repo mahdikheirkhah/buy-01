@@ -4,12 +4,14 @@ import { Router, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { User } from '../../models/user.model'; // Adjust path if needed
 import { AuthService } from '../../services/auth'; // Adjust path if needed
+import { OrderService } from '../../services/order.service';
 
 // Import Angular Material modules
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatBadgeModule } from '@angular/material/badge';
 
 @Component({
   selector: 'app-navbar',
@@ -20,7 +22,8 @@ import { MatMenuModule } from '@angular/material/menu';
     MatToolbarModule,
     MatIconModule,
     MatButtonModule,
-    MatMenuModule
+    MatMenuModule,
+    MatBadgeModule
   ],
   templateUrl: './navbar.html',
   styleUrls: ['./navbar.css'] // Use styleUrls (plural)
@@ -28,9 +31,11 @@ import { MatMenuModule } from '@angular/material/menu';
 export class Navbar {
   @Output() toggleSidenav = new EventEmitter<void>();
   public currentUser$: Observable<User | null>;
+  public cartItemCount$: Observable<number>;
 
-  constructor(private authService: AuthService, private router: Router) {
+  constructor(private authService: AuthService, private router: Router, private orderService: OrderService) {
     this.currentUser$ = this.authService.currentUser$;
+    this.cartItemCount$ = this.orderService.cartItemCount$;
   }
 
   // Helper to build the full URL for the avatar
