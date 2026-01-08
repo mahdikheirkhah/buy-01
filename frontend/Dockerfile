@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy source code and build
+# Copy source code
 COPY . .
 
 # Expose port 4200

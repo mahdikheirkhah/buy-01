@@ -181,6 +181,29 @@ services:
     networks:
       - BACKEND
 
+  orders-service:
+    image: mahdikheirkhah/orders-service:${IMAGE_TAG:-latest}
+    container_name: orders-service
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      buy-01:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 0"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - BACKEND
+
   dummy-data:
     image: mahdikheirkhah/dummy-data:${IMAGE_TAG}
     container_name: dummy-data
@@ -189,6 +212,7 @@ services:
       APP_API_GATEWAY_URL: https://api-gateway:8443
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      APP_DUMMY_DATA_ENABLED: 'true'
     depends_on:
       api-gateway:
         condition: service_healthy
@@ -199,6 +223,8 @@ services:
       product-service:
         condition: service_healthy
       media-service:
+        condition: service_healthy
+      orders-service:
         condition: service_healthy
     restart: on-failure:5
     networks:

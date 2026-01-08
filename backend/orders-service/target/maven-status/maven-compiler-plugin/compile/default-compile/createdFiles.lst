@@ -1,0 +1,12 @@
+com/backend/orders_service/service/OrderService.class
+com/backend/orders_service/repository/OrderRepository.class
+com/backend/orders_service/model/Order$OrderBuilder.class
+com/backend/orders_service/dto/CreateOrderRequest.class
+com/backend/orders_service/OrdersServiceApplication.class
+com/backend/orders_service/model/OrderStatus.class
+com/backend/orders_service/dto/UpdateOrderStatusRequest.class
+com/backend/orders_service/kafka/PaymentEventListener.class
+com/backend/orders_service/controller/OrderController.class
+com/backend/orders_service/model/PaymentMethod.class
+com/backend/orders_service/model/OrderItem.class
+com/backend/orders_service/model/Order.class
