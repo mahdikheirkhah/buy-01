@@ -90,6 +90,12 @@ public class ProductController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/restock")
+    public ResponseEntity<Void> restock(@RequestBody List<StockAdjustmentRequest> adjustments) {
+        productService.restockProducts(adjustments);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/create/images")
     @PreAuthorize("hasRole('ROLE_SELLER') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<Map<String, String>> addImagesToProduct(
