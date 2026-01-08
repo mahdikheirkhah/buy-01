@@ -34,6 +34,25 @@ public class ProductInventoryClient {
                 .block();
     }
 
+    public void increaseStock(List<OrderItem> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+
+        List<StockAdjustmentRequest> payload = items.stream()
+                .map(item -> new StockAdjustmentRequest(item.getProductId(), item.getQuantity()))
+                .toList();
+
+        webClientBuilder.build()
+                .post()
+                .uri("https://PRODUCT-SERVICE/api/products/restock")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(payload)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+    }
+
     private record StockAdjustmentRequest(String productId, int quantity) {
     }
 }

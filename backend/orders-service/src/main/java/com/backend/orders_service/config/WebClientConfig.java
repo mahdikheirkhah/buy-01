@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import reactor.netty.http.client.HttpClient;
 
 @Configuration
 public class WebClientConfig {

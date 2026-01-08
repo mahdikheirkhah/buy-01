@@ -243,6 +243,20 @@ public class ProductService {
         }
     }
 
+    public void restockProducts(List<StockAdjustmentRequest> adjustments) {
+        if (adjustments == null || adjustments.isEmpty()) {
+            return;
+        }
+
+        for (StockAdjustmentRequest adjustment : adjustments) {
+            Product product = productRepository.findById(adjustment.getProductId())
+                    .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
+
+            product.setQuantity(product.getQuantity() + adjustment.getQuantity());
+            productRepository.save(product);
+        }
+    }
+
     public void createImage(MultipartFile file, String productId, String sellerId, String role) {
         if (file == null || file.isEmpty()) {
             return;

@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, map } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, BehaviorSubject, map, of, throwError } from 'rxjs';
+import { tap, catchError, switchMap } from 'rxjs/operators';
 import { Order, OrderItem, CreateOrderRequest, UpdateOrderStatusRequest, PaymentMethod, CheckoutRequest } from '../models/order.model';
 import { Page } from './product-service';
 
@@ -109,13 +109,9 @@ export class OrderService {
     /**
      * Load or create the user's current cart (PENDING order)
      */
-    loadCart(userId: string): Observable<Page<Order>> {
-        return this.getUserOrders(userId, 0, 1).pipe(
-            tap(page => {
-                // Find the first PENDING order or set cart to null
-                const pendingOrder = page.content.find(order => order.status === 'PENDING');
-                this.cartSubject.next(pendingOrder || null);
-            })
+    loadCart(userId: string): Observable<Order | null> {
+        return this.getActiveCart(userId).pipe(
+            tap(order => this.cartSubject.next(order))
         );
     }
 
@@ -123,33 +119,38 @@ export class OrderService {
      * Get or create a PENDING order for the cart
      */
     getOrCreateCart(userId: string, shippingAddress: string): Observable<Order> {
-        return new Observable(observer => {
-            this.loadCart(userId).subscribe({
-                next: (page) => {
-                    const pendingOrder = page.content.find(order => order.status === 'PENDING');
-                    if (pendingOrder) {
-                        observer.next(pendingOrder);
-                        observer.complete();
-                    } else {
-                        // Create new cart
-                        this.createOrder({
-                            userId,
-                            shippingAddress,
-                            items: [],
-                            paymentMethod: PaymentMethod.CARD
-                        }).subscribe({
-                            next: (newOrder) => {
-                                this.cartSubject.next(newOrder);
-                                observer.next(newOrder);
-                                observer.complete();
-                            },
-                            error: (err) => observer.error(err)
-                        });
-                    }
-                },
-                error: (err) => observer.error(err)
-            });
-        });
+        return this.getActiveCart(userId).pipe(
+            switchMap(existingCart => {
+                if (existingCart) {
+                    this.cartSubject.next(existingCart);
+                    return of(existingCart);
+                }
+
+                return this.createOrder({
+                    userId,
+                    shippingAddress,
+                    items: [],
+                    paymentMethod: PaymentMethod.CARD
+                }).pipe(
+                    tap(newOrder => this.cartSubject.next(newOrder))
+                );
+            })
+        );
+    }
+
+    getActiveCart(userId: string): Observable<Order | null> {
+        return this.http.get<Order>(`${this.orderApiUrl}/user/${userId}/cart`, {
+            withCredentials: true,
+            observe: 'response'
+        }).pipe(
+            map(response => response.body ?? null),
+            catchError(err => {
+                if (err.status === 404 || err.status === 204) {
+                    return of(null);
+                }
+                return throwError(() => err);
+            })
+        );
     }
 
     /**

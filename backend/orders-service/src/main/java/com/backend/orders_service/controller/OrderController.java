@@ -1,5 +1,7 @@
 package com.backend.orders_service.controller;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -94,6 +96,20 @@ public class OrderController {
         }
 
         return orderService.getOrdersByUserId(userId, page, size);
+    }
+
+    @GetMapping("/user/{userId}/cart")
+    public ResponseEntity<Order> getActiveCart(@PathVariable String userId, HttpServletRequest request) {
+        String requestingUserId = request.getHeader(USER_ID_HEADER);
+        String userRole = request.getHeader(USER_ROLE_HEADER);
+
+        if (!isAdmin(userRole) && !userId.equals(requestingUserId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        Optional<Order> pendingCart = orderService.findLatestPendingOrder(userId);
+        return pendingCart.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @PutMapping("/{orderId}/status")

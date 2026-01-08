@@ -2,11 +2,13 @@ package com.backend.orders_service.service;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.backend.orders_service.client.ProductInventoryClient;
@@ -25,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductInventoryClient productInventoryClient;
+    private final OrderStatusScheduler orderStatusScheduler;
 
     public Order createOrder(CreateOrderRequest req) {
         Order order = Order.builder()
@@ -43,8 +46,13 @@ public class OrderService {
     }
 
     public Page<Order> getOrdersByUserId(String userId, int page, int size) {
-        Pageable p = PageRequest.of(page, size);
+        Sort sort = Sort.by(Sort.Direction.DESC, "updatedAt", "orderDate", "createdAt");
+        Pageable p = PageRequest.of(page, size, sort);
         return orderRepository.findByUserId(userId, p);
+    }
+
+    public Optional<Order> findLatestPendingOrder(String userId) {
+        return orderRepository.findFirstByUserIdAndStatusOrderByOrderDateDesc(userId, OrderStatus.PENDING);
     }
 
     public Order updateOrderStatus(String orderId, OrderStatus status) {
@@ -181,7 +189,9 @@ public class OrderService {
         order.setStatus(OrderStatus.SHIPPING);
         order.setOrderDate(Instant.now());
 
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        orderStatusScheduler.schedulePostCheckoutUpdate(saved.getId());
+        return saved;
     }
 
     private boolean simulatePayment() {
