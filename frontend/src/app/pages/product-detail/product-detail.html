@@ -47,6 +47,13 @@
         <span>({{ product.sellerEmail }})</span>
       </div>
 
+      <div class="cart-actions" *ngIf="canAddToCart()">
+        <button mat-raised-button color="accent" (click)="onAddToCart()">
+          <mat-icon>add_shopping_cart</mat-icon>
+          Add to Cart
+        </button>
+      </div>
+
       <div class="action-buttons" *ngIf="product.createdByMe">
         <button mat-raised-button color="primary" (click)="onEdit()">
           <mat-icon>edit</mat-icon>

@@ -35,10 +35,10 @@
           <h3>Items ({{ order.items.length }})</h3>
           <ul>
             <li *ngFor="let item of order.items">
-              <span>{{ item.productName }}</span>
+              <span>{{ getProductName(item.productId) }}</span>
               <span class="item-details">
-                Qty: {{ item.quantity }} × {{ item.unitPrice | currency:'USD' }}
-                = {{ (item.quantity * item.unitPrice) | currency:'USD' }}
+                Qty: {{ item.quantity }} × {{ getProductPrice(item.productId) | currency:'USD' }}
+                = {{ getItemSubtotal(item) | currency:'USD' }}
               </span>
             </li>
           </ul>

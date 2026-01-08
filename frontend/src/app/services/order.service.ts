@@ -84,6 +84,15 @@ export class OrderService {
             }));
     }
 
+    clearCartItems(orderId: string): Observable<Order> {
+        return this.http.delete<Order>(`${this.orderApiUrl}/${orderId}/items`, { withCredentials: true })
+            .pipe(tap(order => {
+                if (order.status === 'PENDING') {
+                    this.cartSubject.next(order);
+                }
+            }));
+    }
+
     // ==================== CART HELPERS ====================
 
     /**
@@ -144,13 +153,6 @@ export class OrderService {
      */
     getCurrentCart(): Order | null {
         return this.cartSubject.value;
-    }
-
-    /**
-     * Calculate total amount from items
-     */
-    calculateTotal(items: OrderItem[]): number {
-        return items.reduce((total, item) => total + (item.unitPrice * item.quantity), 0);
     }
 
     /**

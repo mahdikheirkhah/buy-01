@@ -109,6 +109,11 @@ h1 {
   padding-top: 1rem;
 }
 
+.clear-btn {
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
 .checkout-btn {
   width: 100%;
   padding: 0.75rem;
