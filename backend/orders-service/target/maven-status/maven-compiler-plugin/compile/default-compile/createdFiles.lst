@@ -4,6 +4,7 @@ com/backend/orders_service/model/Order$OrderBuilder.class
 com/backend/orders_service/dto/CreateOrderRequest.class
 com/backend/orders_service/OrdersServiceApplication.class
 com/backend/orders_service/model/OrderStatus.class
+com/backend/orders_service/config/SecurityConfig.class
 com/backend/orders_service/dto/UpdateOrderStatusRequest.class
 com/backend/orders_service/kafka/PaymentEventListener.class
 com/backend/orders_service/controller/OrderController.class

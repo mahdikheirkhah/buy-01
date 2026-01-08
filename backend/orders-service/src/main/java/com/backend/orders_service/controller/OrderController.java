@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.orders_service.dto.CheckoutRequest;
 import com.backend.orders_service.dto.CreateOrderRequest;
 import com.backend.orders_service.dto.UpdateOrderStatusRequest;
 import com.backend.orders_service.model.Order;
@@ -39,6 +40,27 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<Order> createOrder(@Valid @RequestBody CreateOrderRequest req) {
         return ResponseEntity.ok(orderService.createOrder(req));
+    }
+
+    @PostMapping("/{orderId}/checkout")
+    public ResponseEntity<Order> checkout(@PathVariable String orderId,
+            @Valid @RequestBody CheckoutRequest request,
+            HttpServletRequest httpRequest) {
+        Order order = orderService.getOrderById(orderId);
+        if (order == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (!hasAccessToOrder(order, httpRequest)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            Order checkedOut = orderService.checkoutOrder(orderId, request);
+            return ResponseEntity.ok(checkedOut);
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
 
     @GetMapping("/{orderId}")

@@ -19,6 +19,7 @@ export interface Order {
 export enum OrderStatus {
     PENDING = 'PENDING',
     PROCESSING = 'PROCESSING',
+    SHIPPING = 'SHIPPING',
     SHIPPED = 'SHIPPED',
     DELIVERED = 'DELIVERED',
     CANCELLED = 'CANCELLED'
@@ -33,6 +34,11 @@ export interface CreateOrderRequest {
     userId: string;
     shippingAddress: string;
     items: OrderItem[];
+    paymentMethod: PaymentMethod;
+}
+
+export interface CheckoutRequest {
+    shippingAddress: string;
     paymentMethod: PaymentMethod;
 }
 

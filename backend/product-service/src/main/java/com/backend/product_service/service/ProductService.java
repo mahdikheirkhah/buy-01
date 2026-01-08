@@ -27,6 +27,7 @@ import com.backend.common.exception.CustomException;
 import com.backend.product_service.dto.CreateProductDTO;
 import com.backend.product_service.dto.ProductCardDTO;
 import com.backend.product_service.dto.ProductDTO;
+import com.backend.product_service.dto.StockAdjustmentRequest;
 import com.backend.product_service.dto.UpdateProductDTO;
 import com.backend.product_service.model.Product;
 import com.backend.product_service.repository.ProductRepository;
@@ -222,6 +223,24 @@ public class ProductService {
 
         // Save and return the product so we can get its ID
         return productRepository.save(product);
+    }
+
+    public void adjustProductStock(List<StockAdjustmentRequest> adjustments) {
+        if (adjustments == null || adjustments.isEmpty()) {
+            return;
+        }
+
+        for (StockAdjustmentRequest adjustment : adjustments) {
+            Product product = productRepository.findById(adjustment.getProductId())
+                    .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
+
+            if (product.getQuantity() < adjustment.getQuantity()) {
+                throw new CustomException("Insufficient stock for product", HttpStatus.BAD_REQUEST);
+            }
+
+            product.setQuantity(product.getQuantity() - adjustment.getQuantity());
+            productRepository.save(product);
+        }
     }
 
     public void createImage(MultipartFile file, String productId, String sellerId, String role) {

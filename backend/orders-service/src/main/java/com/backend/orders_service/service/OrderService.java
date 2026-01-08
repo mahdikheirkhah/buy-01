@@ -2,16 +2,20 @@ package com.backend.orders_service.service;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.backend.orders_service.client.ProductInventoryClient;
+import com.backend.orders_service.dto.CheckoutRequest;
 import com.backend.orders_service.dto.CreateOrderRequest;
 import com.backend.orders_service.model.Order;
 import com.backend.orders_service.model.OrderItem;
 import com.backend.orders_service.model.OrderStatus;
+import com.backend.orders_service.model.PaymentMethod;
 import com.backend.orders_service.repository.OrderRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -20,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
+    private final ProductInventoryClient productInventoryClient;
 
     public Order createOrder(CreateOrderRequest req) {
         Order order = Order.builder()
@@ -151,5 +156,35 @@ public class OrderService {
 
         order.setItems(new ArrayList<>());
         return orderRepository.save(order);
+    }
+
+    public Order checkoutOrder(String orderId, CheckoutRequest request) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException("Only pending orders can be checked out");
+        }
+
+        if (order.getItems() == null || order.getItems().isEmpty()) {
+            throw new IllegalStateException("Cannot checkout an empty order");
+        }
+
+        order.setShippingAddress(request.getShippingAddress());
+        order.setPaymentMethod(request.getPaymentMethod());
+
+        if (request.getPaymentMethod() == PaymentMethod.CARD && !simulatePayment()) {
+            throw new IllegalStateException("Payment was declined");
+        }
+
+        productInventoryClient.decreaseStock(order.getItems());
+
+        order.setStatus(OrderStatus.SHIPPING);
+        order.setOrderDate(Instant.now());
+
+        return orderRepository.save(order);
+    }
+
+    private boolean simulatePayment() {
+        return ThreadLocalRandom.current().nextInt(100) < 80;
     }
 }

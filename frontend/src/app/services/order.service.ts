@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, map } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { Order, OrderItem, CreateOrderRequest, UpdateOrderStatusRequest, PaymentMethod } from '../models/order.model';
+import { Order, OrderItem, CreateOrderRequest, UpdateOrderStatusRequest, PaymentMethod, CheckoutRequest } from '../models/order.model';
 import { Page } from './product-service';
 
 @Injectable({
@@ -80,6 +80,17 @@ export class OrderService {
             .pipe(tap(order => {
                 if (order.status === 'PENDING') {
                     this.cartSubject.next(order);
+                }
+            }));
+    }
+
+    checkoutOrder(orderId: string, request: CheckoutRequest): Observable<Order> {
+        return this.http.post<Order>(`${this.orderApiUrl}/${orderId}/checkout`, request, { withCredentials: true })
+            .pipe(tap(order => {
+                if (order.status === 'PENDING') {
+                    this.cartSubject.next(order);
+                } else {
+                    this.cartSubject.next(null);
                 }
             }));
     }

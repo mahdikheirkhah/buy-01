@@ -149,8 +149,23 @@ export class Cart implements OnInit {
     }
 
     proceedToCheckout(): void {
-        // Navigate to checkout page or implement checkout flow
-        alert('Checkout functionality coming soon!');
+        if (!this.cart || this.cart.items.length === 0) {
+            alert('Add items to your cart before checking out.');
+            return;
+        }
+
+        if (!this.userId) {
+            alert('Please sign in again to continue with checkout.');
+            return;
+        }
+
+        // Ensure cart data is fresh before navigating
+        this.orderService.loadCart(this.userId).subscribe({
+            next: () => this.router.navigate(['/checkout']),
+            error: () => {
+                alert('Unable to load cart details. Please try again.');
+            }
+        });
     }
 
     getProductName(productId: string): string {
