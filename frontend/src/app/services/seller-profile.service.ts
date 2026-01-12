@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
 
 export interface SellerProfile {
     sellerId: string;
@@ -37,7 +36,7 @@ export interface SellerProfile {
 })
 export class SellerProfileService {
 
-    private apiUrl = environment.apiUrl;
+    private apiUrl = 'https://localhost:8443/api';
 
     constructor(private http: HttpClient) { }
 
