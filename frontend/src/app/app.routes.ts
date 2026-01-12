@@ -15,6 +15,8 @@ import { Cart } from './pages/cart/cart';
 import { Checkout } from './pages/checkout/checkout';
 import { MyOrders } from './pages/my-orders/my-orders';
 import { OrderDetail } from './pages/order-detail/order-detail';
+import { UserProfileComponent } from './pages/user-profile/user-profile.component';
+import { SellerProfileComponent } from './pages/seller-profile/seller-profile.component';
 
 export const routes: Routes = [
   {
@@ -33,6 +35,8 @@ export const routes: Routes = [
     canActivate: [LoggedInGuard],
     children: [
       { path: 'home', component: HomeComponent },
+      { path: 'profile', component: UserProfileComponent },
+      { path: 'seller/:sellerId', component: SellerProfileComponent },
       { path: 'my-info', component: MyInfo },
       { path: 'my-products', component: MyProducts },
       { path: 'my-orders', component: MyOrders },
