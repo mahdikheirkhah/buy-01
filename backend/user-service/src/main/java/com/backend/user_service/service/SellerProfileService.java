@@ -1,6 +1,8 @@
 package com.backend.user_service.service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class SellerProfileService {
 
     private final SellerProfileRepository sellerProfileRepository;
+    private final StatsCalculationService statsCalculationService;
 
     /**
      * Get seller profile by sellerId
@@ -33,9 +36,30 @@ public class SellerProfileService {
 
     /**
      * Get seller statistics (for seller dashboard)
+     * Calculates fresh stats from all orders
      */
     public SellerProfileDTO getSellerStatistics(String sellerId) {
-        return getSellerProfile(sellerId);
+        SellerProfile profile = sellerProfileRepository.findBySellerId(sellerId)
+                .orElseGet(() -> createDefaultProfile(sellerId));
+
+        // Calculate fresh statistics from orders
+        Map<String, Object> statsMap = statsCalculationService.calculateSellerStats(sellerId);
+
+        // Update profile with calculated stats
+        profile.setTotalRevenue((BigDecimal) statsMap.getOrDefault("totalRevenue", BigDecimal.ZERO));
+        profile.setTotalSales((Integer) statsMap.get("totalSales"));
+        profile.setTotalOrders((Integer) statsMap.get("totalOrders"));
+        profile.setTotalCustomers((Integer) statsMap.get("totalCustomers"));
+        profile.setLastSaleDate((Instant) statsMap.get("lastSaleDate"));
+        profile.setDeliveryRating(((Number) statsMap.get("deliveryRating")).doubleValue());
+        profile.setReturnRate(((Number) statsMap.get("returnRate")).intValue());
+        profile.setCancellationRate(((Number) statsMap.get("cancellationRate")).intValue());
+        profile.setUpdatedAt(Instant.now());
+
+        // Save updated profile
+        sellerProfileRepository.save(profile);
+
+        return mapToDTO(profile);
     }
 
     /**

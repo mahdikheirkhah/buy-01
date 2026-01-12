@@ -1,0 +1,274 @@
+<div class="my-stats-container">
+  <!-- CUSTOMER STATS VIEW -->
+  <div *ngIf="currentUserRole === 'CLIENT' && !isLoading">
+    <mat-card class="stats-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>bar_chart</mat-icon>
+          My Shopping Statistics
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content *ngIf="userProfile">
+        <div class="stats-grid">
+          <!-- Total Orders -->
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>shopping_bag</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Total Orders</h3>
+                <p class="stat-value">{{ userProfile.totalOrders }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Total Spent -->
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>attach_money</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Total Spent</h3>
+                <p class="stat-value">{{ formattedTotalSpent }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Loyalty Points -->
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>loyalty</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Loyalty Points</h3>
+                <p class="stat-value">{{ userProfile.loyaltyPoints }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Reviews -->
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>star</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Reviews Written</h3>
+                <p class="stat-value">{{ userProfile.totalReviews }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Average Rating -->
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>rating</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Average Rating</h3>
+                <p class="stat-value">{{ userProfile.averageRating.toFixed(1) }}/5</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Most Bought Category -->
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>category</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Favorite Category</h3>
+                <p class="stat-value">{{ bestCategoryDisplay }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Detailed Information -->
+        <mat-card class="details-card">
+          <mat-card-header>
+            <mat-card-title>Shopping Details</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="detail-row">
+              <span class="label">Last Order Date:</span>
+              <span class="value">{{ lastOrderDisplay }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Best Product Purchased:</span>
+              <span class="value">{{ userProfile.bestProductName || 'Not available' }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- SELLER STATS VIEW -->
+  <div *ngIf="currentUserRole === 'SELLER' && !isLoading">
+    <mat-card class="stats-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>trending_up</mat-icon>
+          My Shop Statistics
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content *ngIf="sellerProfile">
+        <div class="stats-grid">
+          <!-- Total Revenue -->
+          <mat-card class="stat-card success">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>attach_money</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Total Revenue</h3>
+                <p class="stat-value">{{ formattedRevenue }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Total Sales -->
+          <mat-card class="stat-card success">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>shopping_cart</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Total Sales</h3>
+                <p class="stat-value">{{ sellerProfile.totalSales }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Total Orders -->
+          <mat-card class="stat-card success">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>receipt</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Total Orders</h3>
+                <p class="stat-value">{{ sellerProfile.totalOrders }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Total Customers -->
+          <mat-card class="stat-card success">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>people</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Total Customers</h3>
+                <p class="stat-value">{{ sellerProfile.totalCustomers }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Shop Rating -->
+          <mat-card class="stat-card success">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>star</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Shop Rating</h3>
+                <p class="stat-value">{{ sellerProfile.averageRating.toFixed(1) }}/5</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Customer Reviews -->
+          <mat-card class="stat-card success">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>feedback</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Customer Reviews</h3>
+                <p class="stat-value">{{ sellerProfile.totalReviews }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Followers -->
+          <mat-card class="stat-card success">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>favorite</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Shop Followers</h3>
+                <p class="stat-value">{{ sellerProfile.followerCount }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Verification Status -->
+          <mat-card class="stat-card success">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon *ngIf="sellerProfile.isVerified" class="verified">verified</mat-icon>
+                <mat-icon *ngIf="!sellerProfile.isVerified">pending</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Verification</h3>
+                <p class="stat-value">{{ sellerProfile.isVerified ? 'Verified' : 'Pending' }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Detailed Performance -->
+        <mat-card class="details-card">
+          <mat-card-header>
+            <mat-card-title>Performance Metrics</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="detail-row">
+              <span class="label">Delivery Rating:</span>
+              <span class="value">{{ sellerProfile.deliveryRating.toFixed(1) }}/5</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Communication Rating:</span>
+              <span class="value">{{ sellerProfile.communicationRating.toFixed(1) }}/5</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Return Rate:</span>
+              <span class="value">{{ sellerProfile.returnRate.toFixed(1) }}%</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Cancellation Rate:</span>
+              <span class="value">{{ sellerProfile.cancellationRate.toFixed(1) }}%</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Join Date:</span>
+              <span class="value">{{ joinDateDisplay }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Last Sale:</span>
+              <span class="value">{{ lastSaleDateDisplay }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Loading State -->
+  <mat-card *ngIf="isLoading" class="stats-card">
+    <mat-card-content class="loading">
+      <mat-icon>hourglass_empty</mat-icon>
+      <p>Loading statistics...</p>
+    </mat-card-content>
+  </mat-card>
+</div>

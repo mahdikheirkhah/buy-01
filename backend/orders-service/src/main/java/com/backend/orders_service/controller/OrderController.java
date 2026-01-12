@@ -1,5 +1,6 @@
 package com.backend.orders_service.controller;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -110,6 +111,16 @@ public class OrderController {
         Optional<Order> pendingCart = orderService.findLatestPendingOrder(userId);
         return pendingCart.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    /**
+     * Get all orders - for statistics calculation (internal use only)
+     * Only accessible from internal services
+     */
+    @GetMapping("/all")
+    public ResponseEntity<List<Order>> getAllOrders() {
+        List<Order> allOrders = orderService.getAllOrders();
+        return ResponseEntity.ok(allOrders);
     }
 
     @PutMapping("/{orderId}/status")

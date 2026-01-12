@@ -60,6 +60,14 @@ public class OrderService {
         return orderRepository.findFirstByUserIdAndStatusOrderByOrderDateDesc(userId, OrderStatus.PENDING);
     }
 
+    /**
+     * Get all orders for statistics calculation
+     * Used internally by stats services
+     */
+    public java.util.List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
+
     public Order updateOrderStatus(String orderId, OrderStatus status) {
         Order order = orderRepository.findById(orderId).orElseThrow();
         order.setStatus(status);
