@@ -1,0 +1,378 @@
+.seller-profile-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.profile-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+mat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+
+  mat-card-title {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 500;
+  }
+
+  .edit-btn {
+    align-self: flex-start;
+  }
+}
+
+.profile-header {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e0e0e0;
+
+  .shop-logo {
+    flex-shrink: 0;
+
+    img {
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid #f5f5f5;
+    }
+
+    mat-icon {
+      font-size: 120px;
+      width: 120px;
+      height: 120px;
+      color: #bdbdbd;
+    }
+  }
+
+  .shop-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .name-and-badges {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+
+      h2 {
+        margin: 0;
+        font-size: 1.6rem;
+        color: #212121;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+
+        &.verification-badge {
+          background: #e8f5e9;
+          color: #2e7d32;
+
+          mat-icon {
+            font-size: 1rem;
+            width: 1rem;
+            height: 1rem;
+          }
+        }
+
+        &.status-badge {
+          background: #e3f2fd;
+          color: #1565c0;
+
+          mat-icon {
+            font-size: 1rem;
+            width: 1rem;
+            height: 1rem;
+          }
+        }
+      }
+    }
+
+    .description {
+      margin: 0;
+      color: #666;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+  }
+
+  .edit-form {
+    flex-grow: 1;
+    display: grid;
+    gap: 1.5rem;
+
+    .full-width {
+      width: 100%;
+    }
+  }
+}
+
+.statistics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+
+  .stat-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+
+    mat-card-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      text-align: center;
+
+      .stat-icon {
+        flex-shrink: 0;
+
+        mat-icon {
+          font-size: 2.5rem;
+          width: 2.5rem;
+          height: 2.5rem;
+          color: #1976d2;
+        }
+      }
+
+      .stat-info {
+        flex-grow: 1;
+
+        h3 {
+          margin: 0 0 0.5rem 0;
+          font-size: 0.85rem;
+          color: #666;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+          margin: 0;
+          font-size: 1.6rem;
+          font-weight: 600;
+          color: #212121;
+        }
+      }
+    }
+  }
+}
+
+mat-tab-group {
+  margin: 2rem 0;
+
+  ::ng-deep {
+    .mat-mdc-tab-labels {
+      background-color: #fafafa;
+    }
+  }
+}
+
+.metrics-card,
+.info-card {
+  margin-top: 1.5rem;
+
+  mat-card-content {
+    padding: 2rem;
+  }
+}
+
+.metric-row {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .metric-label {
+    flex-shrink: 0;
+    width: 150px;
+    font-weight: 500;
+    color: #666;
+  }
+
+  .metric-bar-container {
+    flex-grow: 1;
+    height: 32px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+
+    .metric-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #4caf50 0%, #45a049 100%);
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      border-radius: 4px;
+      min-width: 50px;
+      transition: width 0.3s ease;
+
+      &.negative {
+        background: linear-gradient(90deg, #f44336 0%, #da190b 100%);
+      }
+
+      .metric-value {
+        color: white;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+    }
+  }
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    font-weight: 500;
+    color: #666;
+    flex-shrink: 0;
+    margin-right: 1rem;
+  }
+
+  .value {
+    color: #212121;
+    font-weight: 500;
+    flex-grow: 1;
+    text-align: right;
+  }
+
+  .categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+
+    .category-badge {
+      display: inline-block;
+      background: #e3f2fd;
+      color: #1565c0;
+      padding: 0.4rem 0.8rem;
+      border-radius: 16px;
+      font-size: 0.85rem;
+    }
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+
+  button {
+    mat-icon {
+      margin-right: 0.5rem;
+    }
+  }
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+
+  mat-icon {
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    animation: spin 1s linear infinite;
+  }
+
+  p {
+    color: #999;
+    font-size: 1rem;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    .shop-info .name-and-badges {
+      justify-content: center;
+    }
+
+    .edit-form {
+      width: 100%;
+    }
+  }
+
+  .statistics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .metric-row {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .metric-label {
+      width: 100%;
+    }
+  }
+
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .value {
+      text-align: left;
+      margin-top: 0.5rem;
+    }
+
+    .categories {
+      justify-content: flex-start;
+    }
+  }
+
+  .actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
