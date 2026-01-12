@@ -1,6 +1,7 @@
 package com.backend.user_service.service;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
     private final UserRepository userRepository;
+    private final StatsCalculationService statsCalculationService;
 
     /**
      * Get user profile by userId
@@ -40,9 +42,30 @@ public class UserProfileService {
 
     /**
      * Get user statistics (for dashboard)
+     * Calculates fresh stats from all orders
      */
     public UserProfileDTO getUserStatistics(String userId) {
-        return getUserProfile(userId);
+        // Find user to get basic info
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        // Find or create user profile
+        UserProfile profile = userProfileRepository.findByUserId(userId)
+                .orElseGet(() -> createDefaultProfile(userId, user));
+
+        // Calculate fresh statistics from orders
+        Map<String, Object> statsMap = statsCalculationService.calculateUserStats(userId);
+
+        // Update profile with calculated stats
+        profile.setTotalOrders((Integer) statsMap.getOrDefault("totalOrders", 0));
+        profile.setTotalSpent((java.math.BigDecimal) statsMap.getOrDefault("totalSpent", java.math.BigDecimal.ZERO));
+        profile.setLastOrderDate((Instant) statsMap.get("lastOrderDate"));
+        profile.setUpdatedAt(Instant.now());
+
+        // Save updated profile
+        userProfileRepository.save(profile);
+
+        return mapToDTO(profile, user);
     }
 
     /**

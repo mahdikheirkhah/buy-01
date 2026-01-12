@@ -16,4 +16,7 @@ public interface OrderRepository extends MongoRepository<Order, String> {
     List<Order> findTop20ByUserIdOrderByOrderDateDesc(String userId);
 
     Optional<Order> findFirstByUserIdAndStatusOrderByOrderDateDesc(String userId, OrderStatus status);
+
+    // Get all orders for statistics calculation
+    List<Order> findAll();
 }
