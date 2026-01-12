@@ -35,14 +35,12 @@ import com.backend.product_service.repository.ProductRepository;
 @Service
 public class ProductService {
     private final ProductRepository productRepository;
-    private final ProductMapper productMapper;
     private final WebClient.Builder webClientBuilder;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Autowired
-    public ProductService(ProductRepository productRepository, ProductMapper productMapper,
+    public ProductService(ProductRepository productRepository,
             WebClient.Builder webClientBuilder, KafkaTemplate<String, String> kafkaTemplate) {
-        this.productMapper = productMapper;
         this.productRepository = productRepository;
         this.webClientBuilder = webClientBuilder;
         this.kafkaTemplate = kafkaTemplate;
@@ -70,7 +68,19 @@ public class ProductService {
 
     public UpdateProductDTO updateProduct(String productId, String sellerId, UpdateProductDTO productDto) {
         Product existingProduct = checkProduct(productId, sellerId);
-        productMapper.updateProductFromDto(productDto, existingProduct);
+        // Manual mapping to avoid MapStruct bean dependency
+        if (productDto.getName() != null) {
+            existingProduct.setName(productDto.getName());
+        }
+        if (productDto.getDescription() != null) {
+            existingProduct.setDescription(productDto.getDescription());
+        }
+        if (productDto.getPrice() != null) {
+            existingProduct.setPrice(productDto.getPrice());
+        }
+        if (productDto.getQuantity() != null) {
+            existingProduct.setQuantity(productDto.getQuantity());
+        }
         Product savedProduct = productRepository.save(existingProduct);
         return UpdateProductDTO.builder()
                 .name(savedProduct.getName())

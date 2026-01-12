@@ -1,10 +1,19 @@
 package com.backend.product_service.service;
 
-import com.backend.common.dto.InfoUserDTO;
-import com.backend.common.exception.CustomException;
-import com.backend.product_service.dto.UpdateProductDTO;
-import com.backend.product_service.model.Product;
-import com.backend.product_service.repository.ProductRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,15 +24,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import com.backend.common.dto.InfoUserDTO;
+import com.backend.common.exception.CustomException;
+import com.backend.product_service.model.Product;
+import com.backend.product_service.repository.ProductRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductService Unit Tests")
@@ -31,9 +35,6 @@ class ProductServiceUnitTest {
 
     @Mock
     private ProductRepository productRepository;
-
-    @Mock
-    private ProductMapper productMapper;
 
     @Mock
     private WebClient.Builder webClientBuilder;
@@ -314,4 +315,3 @@ class ProductServiceUnitTest {
         assertThat(testProduct.getUpdatedAt()).isNotNull();
     }
 }
-

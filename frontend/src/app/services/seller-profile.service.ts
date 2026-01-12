@@ -44,28 +44,28 @@ export class SellerProfileService {
      * Get current seller's profile (authenticated seller)
      */
     getSellerProfile(): Observable<SellerProfile> {
-        return this.http.get<SellerProfile>(`${this.apiUrl}/sellers/profile`);
+        return this.http.get<SellerProfile>(`${this.apiUrl}/sellers/profile`, { withCredentials: true });
     }
 
     /**
      * Get public seller profile (viewable by anyone)
      */
     getPublicSellerProfile(sellerId: string): Observable<SellerProfile> {
-        return this.http.get<SellerProfile>(`${this.apiUrl}/sellers/${sellerId}/profile`);
+        return this.http.get<SellerProfile>(`${this.apiUrl}/sellers/${sellerId}/profile`, { withCredentials: true });
     }
 
     /**
      * Get seller statistics (current seller only)
      */
     getSellerStatistics(sellerId: string): Observable<SellerProfile> {
-        return this.http.get<SellerProfile>(`${this.apiUrl}/sellers/${sellerId}/statistics`);
+        return this.http.get<SellerProfile>(`${this.apiUrl}/sellers/${sellerId}/statistics`, { withCredentials: true });
     }
 
     /**
      * Update seller profile (current seller only)
      */
     updateSellerProfile(profile: Partial<SellerProfile>): Observable<SellerProfile> {
-        return this.http.put<SellerProfile>(`${this.apiUrl}/sellers/profile`, profile);
+        return this.http.put<SellerProfile>(`${this.apiUrl}/sellers/profile`, profile, { withCredentials: true });
     }
 
     /**
