@@ -235,7 +235,10 @@ public class ProductService {
                     .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
 
             if (product.getQuantity() < adjustment.getQuantity()) {
-                throw new CustomException("Insufficient stock for product", HttpStatus.BAD_REQUEST);
+                throw new CustomException(
+                        String.format("Product '%s' is out of stock. Available: %d, Requested: %d",
+                                product.getName(), product.getQuantity(), adjustment.getQuantity()),
+                        HttpStatus.BAD_REQUEST);
             }
 
             product.setQuantity(product.getQuantity() - adjustment.getQuantity());

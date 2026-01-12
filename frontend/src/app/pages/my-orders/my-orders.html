@@ -46,6 +46,10 @@
       </mat-card-content>
 
       <mat-card-actions>
+        <button mat-button [routerLink]="['/order', order.id]" color="primary">
+          <mat-icon>info</mat-icon>
+          View Details
+        </button>
         <button mat-button (click)="reorder(order.id)">
           <mat-icon>refresh</mat-icon>
           Reorder

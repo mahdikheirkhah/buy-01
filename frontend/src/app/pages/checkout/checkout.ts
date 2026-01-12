@@ -127,11 +127,27 @@ export class Checkout implements OnInit, OnDestroy {
             error: (err) => {
                 this.isProcessing = false;
                 this.successMessage = null;
+                
+                // Extract error message from various response formats
+                let errorMsg = 'Checkout failed due to an unexpected error. Please retry.';
+                
                 if (err.status === 400) {
-                    this.errorMessage = err.error?.message || 'Payment authorization failed. Please try again.';
+                    // Try to get message from different response formats
+                    if (err.error?.message) {
+                        errorMsg = err.error.message;
+                    } else if (err.error?.error) {
+                        errorMsg = err.error.error;
+                    } else if (typeof err.error === 'string') {
+                        errorMsg = err.error;
+                    }
+                } else if (err.status === 0) {
+                    errorMsg = 'Unable to connect to server. Please check your internet connection.';
                 } else {
-                    this.errorMessage = 'Checkout failed due to an unexpected error. Please retry.';
+                    errorMsg = `Server error (${err.status}). Please try again later.`;
                 }
+                
+                this.errorMessage = errorMsg;
+                console.error('Checkout error:', err);
             }
         });
     }

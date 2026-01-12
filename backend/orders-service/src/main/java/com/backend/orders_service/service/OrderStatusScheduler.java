@@ -13,6 +13,7 @@ import com.backend.orders_service.client.ProductInventoryClient;
 import com.backend.orders_service.model.OrderStatus;
 import com.backend.orders_service.repository.OrderRepository;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -21,21 +22,21 @@ public class OrderStatusScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(OrderStatusScheduler.class);
 
-    private static final long MIN_DELAY_MS = Duration.ofSeconds(30).toMillis();
-    private static final long MAX_DELAY_MS = Duration.ofMinutes(3).toMillis();
+    private static final long MIN_DELAY_MS = Duration.ofSeconds(10).toMillis();
+    private static final long MAX_DELAY_MS = Duration.ofSeconds(30).toMillis();
 
     private final TaskScheduler taskScheduler;
     private final OrderRepository orderRepository;
     private final ProductInventoryClient productInventoryClient;
 
-    public void schedulePostCheckoutUpdate(String orderId) {
+    public void schedulePostCheckoutUpdate(@NotNull String orderId) {
         long delay = ThreadLocalRandom.current().nextLong(MIN_DELAY_MS, MAX_DELAY_MS + 1);
         Instant runAt = Instant.now().plusMillis(delay);
         taskScheduler.schedule(() -> processOrder(orderId), runAt);
         log.debug("Scheduled status update for order {} in {} ms", orderId, delay);
     }
 
-    private void processOrder(String orderId) {
+    private void processOrder(@NotNull String orderId) {
         orderRepository.findById(orderId).ifPresent(order -> {
             if (order.getStatus() != OrderStatus.SHIPPING) {
                 log.debug("Skipping scheduled update for order {} because status is {}", orderId, order.getStatus());

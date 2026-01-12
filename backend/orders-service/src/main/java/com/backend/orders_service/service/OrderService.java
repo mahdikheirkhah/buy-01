@@ -9,8 +9,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import com.backend.common.exception.CustomException;
 import com.backend.orders_service.client.ProductInventoryClient;
 import com.backend.orders_service.dto.CheckoutRequest;
 import com.backend.orders_service.dto.CreateOrderRequest;
@@ -19,6 +22,8 @@ import com.backend.orders_service.model.OrderItem;
 import com.backend.orders_service.model.OrderStatus;
 import com.backend.orders_service.model.PaymentMethod;
 import com.backend.orders_service.repository.OrderRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -184,7 +189,13 @@ public class OrderService {
             throw new IllegalStateException("Payment was declined");
         }
 
-        productInventoryClient.decreaseStock(order.getItems());
+        try {
+            productInventoryClient.decreaseStock(order.getItems());
+        } catch (WebClientResponseException e) {
+            // Extract the error message from the product service response
+            String errorMessage = extractErrorMessage(e);
+            throw new CustomException(errorMessage, HttpStatus.BAD_REQUEST);
+        }
 
         order.setStatus(OrderStatus.SHIPPING);
         order.setOrderDate(Instant.now());
@@ -196,5 +207,27 @@ public class OrderService {
 
     private boolean simulatePayment() {
         return ThreadLocalRandom.current().nextInt(100) < 80;
+    }
+
+    private String extractErrorMessage(WebClientResponseException e) {
+        try {
+            String responseBody = e.getResponseBodyAsString();
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode jsonNode = mapper.readTree(responseBody);
+
+            // Try to get message field first
+            if (jsonNode.has("message")) {
+                return jsonNode.get("message").asText();
+            }
+            // Fallback to error field
+            if (jsonNode.has("error")) {
+                return jsonNode.get("error").asText();
+            }
+            // Fallback to the full response
+            return responseBody;
+        } catch (Exception ex) {
+            // If parsing fails, return the exception message
+            return e.getMessage();
+        }
     }
 }

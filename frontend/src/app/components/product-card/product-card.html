@@ -29,10 +29,15 @@
       <button mat-button color="warn" (click)="onDelete($event)">DELETE</button>
     </ng-container>
     <ng-container *ngIf="!product.createdByMe && currentUserRole === 'CLIENT'">
-      <button mat-button color="accent" (click)="onAddToCart($event)">
-        <mat-icon>add_shopping_cart</mat-icon>
-        ADD TO CART
-      </button>
+      <ng-container *ngIf="product.quantity > 0">
+        <button mat-button color="accent" (click)="onAddToCart($event)">
+          <mat-icon>add_shopping_cart</mat-icon>
+          ADD TO CART
+        </button>
+      </ng-container>
+      <ng-container *ngIf="product.quantity === 0">
+        <p class="out-of-stock-message">Out of Stock</p>
+      </ng-container>
     </ng-container>
   </mat-card-actions>
 </mat-card>

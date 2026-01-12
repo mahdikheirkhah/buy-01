@@ -90,3 +90,10 @@ mat-card-actions button[color="warn"] {
 mat-card-actions button[color="warn"]:hover {
   background-color: #da190b; /* Darker red on hover */
 }
+.out-of-stock-message {
+  color: #d32f2f;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 8px 0;
+  text-align: center;
+}
