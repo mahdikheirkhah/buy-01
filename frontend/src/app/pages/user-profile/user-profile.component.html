@@ -1,140 +1,297 @@
 <div class="user-profile-container">
-  <mat-card class="profile-card">
-    <mat-card-header>
-      <mat-card-title>Your Profile</mat-card-title>
-      <button mat-icon-button (click)="toggleEditMode()" class="edit-btn">
-        <mat-icon>{{ isEditMode ? 'close' : 'edit' }}</mat-icon>
-      </button>
-    </mat-card-header>
+  <!-- CLIENT PROFILE VIEW -->
+  <div *ngIf="currentUserRole === 'CLIENT'">
+    <mat-card class="profile-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>person</mat-icon>
+          Customer Profile
+        </mat-card-title>
+        <button mat-icon-button (click)="toggleEditMode()" class="edit-btn">
+          <mat-icon>{{ isEditMode ? 'close' : 'edit' }}</mat-icon>
+        </button>
+      </mat-card-header>
 
-    <mat-card-content *ngIf="!isLoading && userProfile">
-      <div class="profile-header">
-        <div class="avatar">
-          <img *ngIf="userProfile.avatarUrl" [src]="userProfile.avatarUrl" alt="Profile" />
-          <mat-icon *ngIf="!userProfile.avatarUrl">account_circle</mat-icon>
+      <mat-card-content *ngIf="!isLoading && userProfile">
+        <div class="profile-header">
+          <div class="avatar">
+            <img *ngIf="userProfile.avatarUrl" [src]="userProfile.avatarUrl" alt="Profile" />
+            <mat-icon *ngIf="!userProfile.avatarUrl">account_circle</mat-icon>
+          </div>
+
+          <div class="basic-info" *ngIf="!isEditMode">
+            <h2>{{ userProfile.firstName }} {{ userProfile.lastName }}</h2>
+            <p class="email">{{ userProfile.email }}</p>
+            <p class="role-badge">Shopping Customer</p>
+          </div>
+
+          <form *ngIf="isEditMode" [formGroup]="profileForm" class="edit-form">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>First Name</mat-label>
+              <input matInput formControlName="firstName" placeholder="First Name" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Last Name</mat-label>
+              <input matInput formControlName="lastName" placeholder="Last Name" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" type="email" placeholder="Email" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Preferred Payment Method</mat-label>
+              <input matInput formControlName="preferredPaymentMethod" type="number" placeholder="Payment Method ID" />
+            </mat-form-field>
+          </form>
         </div>
 
-        <div class="basic-info" *ngIf="!isEditMode">
-          <h2>{{ userProfile.firstName }} {{ userProfile.lastName }}</h2>
-          <p class="email">{{ userProfile.email }}</p>
+        <!-- Client Shopping Statistics -->
+        <div class="statistics">
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>shopping_bag</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Total Orders</h3>
+                <p class="stat-value">{{ userProfile.totalOrders }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>attach_money</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Total Spent</h3>
+                <p class="stat-value">{{ formattedTotalSpent }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>loyalty</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Loyalty Points</h3>
+                <p class="stat-value">{{ userProfile.loyaltyPoints }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>star</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Your Reviews</h3>
+                <p class="stat-value">{{ userProfile.totalReviews }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
         </div>
 
-        <form *ngIf="isEditMode" [formGroup]="profileForm" class="edit-form">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>First Name</mat-label>
-            <input matInput formControlName="firstName" placeholder="First Name" />
-          </mat-form-field>
+        <!-- Client Preferences -->
+        <div class="details-section">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Shopping Preferences</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="detail-row">
+                <span class="label">Most Bought Category:</span>
+                <span class="value">{{ bestCategoryDisplay }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Best Product:</span>
+                <span class="value">{{ userProfile.bestProductName || 'Not available' }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Last Order Date:</span>
+                <span class="value">{{ lastOrderDisplay }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Average Rating Given:</span>
+                <span class="value">{{ userProfile.averageRating.toFixed(1) }}/5</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Last Name</mat-label>
-            <input matInput formControlName="lastName" placeholder="Last Name" />
-          </mat-form-field>
+        <div class="actions">
+          <button *ngIf="!isEditMode" mat-raised-button color="primary" (click)="toggleEditMode()">
+            <mat-icon>edit</mat-icon>
+            Edit Profile
+          </button>
+          <button *ngIf="isEditMode" mat-raised-button color="primary" (click)="saveProfile()" [disabled]="profileForm.invalid || isLoading">
+            <mat-icon>save</mat-icon>
+            Save Changes
+          </button>
+          <button *ngIf="isEditMode" mat-raised-button (click)="toggleEditMode()">
+            <mat-icon>cancel</mat-icon>
+            Cancel
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Email</mat-label>
-            <input matInput formControlName="email" type="email" placeholder="Email" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Preferred Payment Method</mat-label>
-            <input matInput formControlName="preferredPaymentMethod" type="number" placeholder="Payment Method ID" />
-          </mat-form-field>
-        </form>
-      </div>
-
-      <div class="statistics">
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-icon">
-              <mat-icon>shopping_bag</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>Total Orders</h3>
-              <p class="stat-value">{{ userProfile.totalOrders }}</p>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-icon">
-              <mat-icon>attach_money</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>Total Spent</h3>
-              <p class="stat-value">{{ formattedTotalSpent }}</p>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-icon">
-              <mat-icon>loyalty</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>Loyalty Points</h3>
-              <p class="stat-value">{{ userProfile.loyaltyPoints }}</p>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-icon">
-              <mat-icon>star</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>Average Rating</h3>
-              <p class="stat-value">{{ userProfile.averageRating.toFixed(1) }}/5</p>
-            </div>
-          </mat-card-content>
-        </mat-card>
-      </div>
-
-      <div class="details-section">
-        <mat-card>
-          <mat-card-header>
-            <mat-card-title>Shopping Preferences</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="detail-row">
-              <span class="label">Most Bought Category:</span>
-              <span class="value">{{ bestCategoryDisplay }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Best Product:</span>
-              <span class="value">{{ userProfile.bestProductName || 'Not available' }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Last Order Date:</span>
-              <span class="value">{{ lastOrderDisplay }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Total Reviews:</span>
-              <span class="value">{{ userProfile.totalReviews }}</span>
-            </div>
-          </mat-card-content>
-        </mat-card>
-      </div>
-
-      <div class="actions">
-        <button *ngIf="!isEditMode" mat-raised-button color="primary" (click)="toggleEditMode()">
-          <mat-icon>edit</mat-icon>
-          Edit Profile
+  <!-- SELLER PROFILE VIEW -->
+  <div *ngIf="currentUserRole === 'SELLER'">
+    <mat-card class="profile-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>store</mat-icon>
+          Seller Dashboard
+        </mat-card-title>
+        <button mat-icon-button (click)="toggleEditMode()" class="edit-btn">
+          <mat-icon>{{ isEditMode ? 'close' : 'edit' }}</mat-icon>
         </button>
-        <button *ngIf="isEditMode" mat-raised-button color="primary" (click)="saveProfile()" [disabled]="profileForm.invalid || isLoading">
-          <mat-icon>save</mat-icon>
-          Save Changes
-        </button>
-        <button *ngIf="isEditMode" mat-raised-button (click)="toggleEditMode()">
-          <mat-icon>cancel</mat-icon>
-          Cancel
-        </button>
-      </div>
-    </mat-card-content>
+      </mat-card-header>
 
-    <mat-card-content *ngIf="isLoading" class="loading">
+      <mat-card-content *ngIf="!isLoading && userProfile">
+        <div class="profile-header">
+          <div class="avatar">
+            <img *ngIf="userProfile.avatarUrl" [src]="userProfile.avatarUrl" alt="Profile" />
+            <mat-icon *ngIf="!userProfile.avatarUrl">storefront</mat-icon>
+          </div>
+
+          <div class="basic-info" *ngIf="!isEditMode">
+            <h2>{{ userProfile.firstName }} {{ userProfile.lastName }}</h2>
+            <p class="email">{{ userProfile.email }}</p>
+            <p class="role-badge">Shop Owner</p>
+          </div>
+
+          <form *ngIf="isEditMode" [formGroup]="profileForm" class="edit-form">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>First Name</mat-label>
+              <input matInput formControlName="firstName" placeholder="First Name" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Last Name</mat-label>
+              <input matInput formControlName="lastName" placeholder="Last Name" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" type="email" placeholder="Email" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Preferred Payment Method</mat-label>
+              <input matInput formControlName="preferredPaymentMethod" type="number" placeholder="Payment Method ID" />
+            </mat-form-field>
+          </form>
+        </div>
+
+        <!-- Seller Sales Statistics -->
+        <div class="statistics">
+          <mat-card class="stat-card success">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>trending_up</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Total Sales</h3>
+                <p class="stat-value">{{ userProfile.totalOrders }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card success">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>attach_money</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Total Revenue</h3>
+                <p class="stat-value">{{ formattedTotalSpent }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>star</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Shop Rating</h3>
+                <p class="stat-value">{{ userProfile.averageRating.toFixed(1) }}/5</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-icon">
+                <mat-icon>feedback</mat-icon>
+              </div>
+              <div class="stat-info">
+                <h3>Customer Reviews</h3>
+                <p class="stat-value">{{ userProfile.totalReviews }}</p>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Seller Shop Information -->
+        <div class="details-section">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Shop Information</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="detail-row">
+                <span class="label">Best Selling Category:</span>
+                <span class="value">{{ bestCategoryDisplay }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Best Selling Product:</span>
+                <span class="value">{{ userProfile.bestProductName || 'No sales yet' }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Last Sale Date:</span>
+                <span class="value">{{ lastOrderDisplay }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Total Customers:</span>
+                <span class="value">{{ userProfile.totalReviews }}</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <div class="actions">
+          <button *ngIf="!isEditMode" mat-raised-button color="primary" (click)="toggleEditMode()">
+            <mat-icon>edit</mat-icon>
+            Edit Profile
+          </button>
+          <button *ngIf="isEditMode" mat-raised-button color="primary" (click)="saveProfile()" [disabled]="profileForm.invalid || isLoading">
+            <mat-icon>save</mat-icon>
+            Save Changes
+          </button>
+          <button *ngIf="isEditMode" mat-raised-button (click)="toggleEditMode()">
+            <mat-icon>cancel</mat-icon>
+            Cancel
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Loading State -->
+  <mat-card *ngIf="isLoading" class="profile-card">
+    <mat-card-content class="loading">
       <mat-icon>hourglass_empty</mat-icon>
       <p>Loading profile...</p>
     </mat-card-content>

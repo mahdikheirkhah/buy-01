@@ -32,6 +32,7 @@ export class UserProfileComponent implements OnInit {
     isLoading = false;
     profileForm!: FormGroup;
     currentUserId: string = '';
+    currentUserRole: string = ''; // Add role property
 
     constructor(
         private userProfileService: UserProfileService,
@@ -40,9 +41,10 @@ export class UserProfileComponent implements OnInit {
         private fb: FormBuilder,
         private snackBar: MatSnackBar
     ) {
-        // Get current user ID from auth service
+        // Get current user ID and role from auth service
         this.authService.currentUser$.subscribe(user => {
             this.currentUserId = user?.id || '';
+            this.currentUserRole = user?.role || ''; // Capture user role
         });
     }
 
