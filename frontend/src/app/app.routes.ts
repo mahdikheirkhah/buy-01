@@ -14,6 +14,7 @@ import { ProductDetail } from './pages/product-detail/product-detail';
 import { Cart } from './pages/cart/cart';
 import { Checkout } from './pages/checkout/checkout';
 import { MyOrders } from './pages/my-orders/my-orders';
+import { OrderDetail } from './pages/order-detail/order-detail';
 
 export const routes: Routes = [
   {
@@ -35,6 +36,7 @@ export const routes: Routes = [
       { path: 'my-info', component: MyInfo },
       { path: 'my-products', component: MyProducts },
       { path: 'my-orders', component: MyOrders },
+      { path: 'order/:id', component: OrderDetail },
       { path: 'cart', component: Cart },
       { path: 'checkout', component: Checkout },
       { path: 'create-product', component: CreateProduct },

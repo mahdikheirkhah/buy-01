@@ -143,7 +143,7 @@ public class OrderController {
     }
 
     @PostMapping("/{orderId}/redo")
-    public ResponseEntity<Order> redo(@PathVariable String orderId, HttpServletRequest request) {
+    public ResponseEntity<?> redo(@PathVariable String orderId, HttpServletRequest request) {
         Order order = orderService.getOrderById(orderId);
         if (order == null) {
             return ResponseEntity.notFound().build();

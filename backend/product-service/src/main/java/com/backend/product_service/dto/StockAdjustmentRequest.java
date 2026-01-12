@@ -13,6 +13,6 @@ public class StockAdjustmentRequest {
     @NotBlank
     private String productId;
 
-    @Min(1)
+    @Min(0)
     private int quantity;
 }
