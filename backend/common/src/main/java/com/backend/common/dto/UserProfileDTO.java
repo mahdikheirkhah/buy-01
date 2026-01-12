@@ -41,6 +41,7 @@ public class UserProfileDTO {
 
     // Metadata
     private List<String> savedAddresses;
+    private Integer preferredPaymentMethod; // 0 = Pay on Delivery, 1 = Card, etc.
     private Integer totalReviews;
     private Double averageRating;
 
