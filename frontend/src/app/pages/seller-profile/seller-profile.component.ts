@@ -44,7 +44,10 @@ export class SellerProfileComponent implements OnInit {
         private fb: FormBuilder,
         private snackBar: MatSnackBar
     ) {
-        this.currentUserId = this.authService.getCurrentUserId();
+        // Get current user ID from auth service
+        this.authService.currentUser$.subscribe(user => {
+            this.currentUserId = user?.id || '';
+        });
     }
 
     ngOnInit(): void {
