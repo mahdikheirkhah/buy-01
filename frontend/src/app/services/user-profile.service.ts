@@ -36,27 +36,27 @@ export class UserProfileService {
      * Get current user's profile (authenticated user)
      */
     getUserProfile(): Observable<UserProfile> {
-        return this.http.get<UserProfile>(`${this.apiUrl}/users/profile`);
+        return this.http.get<UserProfile>(`${this.apiUrl}/users/profile`, { withCredentials: true });
     }
 
     /**
      * Get user statistics
      */
     getUserStatistics(userId: string): Observable<UserProfile> {
-        return this.http.get<UserProfile>(`${this.apiUrl}/users/${userId}/statistics`);
+        return this.http.get<UserProfile>(`${this.apiUrl}/users/${userId}/statistics`, { withCredentials: true });
     }
 
     /**
      * Update current user's profile
      */
     updateUserProfile(profile: Partial<UserProfile>): Observable<UserProfile> {
-        return this.http.put<UserProfile>(`${this.apiUrl}/users/profile`, profile);
+        return this.http.put<UserProfile>(`${this.apiUrl}/users/profile`, profile, { withCredentials: true });
     }
 
     /**
      * Get user's active cart (pending order)
      */
     getUserCart(userId: string): Observable<any> {
-        return this.http.get<any>(`${this.apiUrl}/orders/user/${userId}/cart`);
+        return this.http.get<any>(`${this.apiUrl}/orders/user/${userId}/cart`, { withCredentials: true });
     }
 }
