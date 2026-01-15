@@ -1,7 +1,9 @@
 package com.backend.orders_service.service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -9,8 +11,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.backend.common.exception.CustomException;
@@ -26,13 +31,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductInventoryClient productInventoryClient;
     private final OrderStatusScheduler orderStatusScheduler;
+    private final RestTemplate restTemplate;
+    private static final String PRODUCT_SERVICE_URL = "http://product-service"; // Eureka service discovery
+    private static final String PRODUCT_CACHE_SIZE = "100"; // Max products to cache
 
     public Order createOrder(CreateOrderRequest req) {
         Order order = Order.builder()
@@ -99,16 +109,30 @@ public class OrderService {
 
     /**
      * Add an item to an order.
+     * Fetches product details (price, seller, name) once and populates OrderItem
      * NOTE: Stock validation should be performed at the frontend/gateway level
      * by calling the product-service to verify availability before calling this
      * method.
      */
     public Order addItemToOrder(String orderId, OrderItem item) {
+        log.info("Adding item to order - orderId: {}, productId: {}, quantity: {}", orderId, item.getProductId(),
+                item.getQuantity());
+
         Order order = orderRepository.findById(orderId).orElseThrow();
 
         // Only allow modifications to PENDING orders
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
+        }
+
+        // Populate product details if not already set
+        if (item.getPrice() == null || item.getSellerId() == null || item.getProductName() == null) {
+            log.info("Product details not set, fetching from product-service. Price: {}, SellerId: {}, ProductName: {}",
+                    item.getPrice(), item.getSellerId(), item.getProductName());
+            populateProductDetails(item);
+        } else {
+            log.info("Product details already set - Price: {}, SellerId: {}, ProductName: {}",
+                    item.getPrice(), item.getSellerId(), item.getProductName());
         }
 
         // Merge with existing entry when the product is already in the cart
@@ -118,7 +142,74 @@ public class OrderService {
                 .ifPresentOrElse(existing -> existing.setQuantity(existing.getQuantity() + item.getQuantity()),
                         () -> order.getItems().add(item));
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        log.info("Order saved successfully with {} items", savedOrder.getItems().size());
+        return savedOrder;
+    }
+
+    /**
+     * Fetch all product details at once from product-service
+     * Populates price, sellerId, and productName in the OrderItem
+     */
+    private void populateProductDetails(OrderItem item) {
+        try {
+            String productUrl = PRODUCT_SERVICE_URL + "/api/products/" + item.getProductId();
+            log.info("Fetching product details from: {}", productUrl);
+
+            // Create headers with X-User-ID (required by product-service)
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-User-ID", "system-service"); // Use system user ID for internal service calls
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> product = restTemplate.exchange(productUrl, org.springframework.http.HttpMethod.GET,
+                    entity, Map.class).getBody();
+
+            if (product != null) {
+                log.info("Product found: {}", product);
+
+                // Set price
+                if (product.containsKey("price")) {
+                    Object priceObj = product.get("price");
+                    item.setPrice(new BigDecimal(priceObj.toString()));
+                    log.info("Set price: {} for productId: {}", priceObj, item.getProductId());
+                }
+
+                // Set sellerId
+                if (product.containsKey("sellerId")) {
+                    String sellerId = product.get("sellerId").toString();
+                    item.setSellerId(sellerId);
+                    log.info("Set sellerId: {} for productId: {}", sellerId, item.getProductId());
+                }
+
+                // Set product name
+                if (product.containsKey("name")) {
+                    String productName = product.get("name").toString();
+                    item.setProductName(productName);
+                    log.info("Set productName: {} for productId: {}", productName, item.getProductId());
+                }
+
+                log.info("Successfully populated product details for productId: {}", item.getProductId());
+            } else {
+                log.warn("Product not found from API for productId: {}", item.getProductId());
+                if (item.getPrice() == null)
+                    item.setPrice(BigDecimal.ZERO);
+                if (item.getProductName() == null)
+                    item.setProductName("Unknown Product");
+                if (item.getSellerId() == null)
+                    item.setSellerId("Unknown Seller");
+            }
+        } catch (Exception e) {
+            log.error("Failed to fetch product details for productId: {}, Exception: {}", item.getProductId(),
+                    e.getMessage(), e);
+            // Set defaults if fetch fails
+            if (item.getPrice() == null)
+                item.setPrice(BigDecimal.ZERO);
+            if (item.getProductName() == null)
+                item.setProductName("Unknown Product");
+            if (item.getSellerId() == null)
+                item.setSellerId("Unknown Seller");
+        }
     }
 
     /**
@@ -210,6 +301,20 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         orderStatusScheduler.schedulePostCheckoutUpdate(saved.getId());
+
+        // Create a new empty PENDING order for the user's next cart
+        // This clears the old cart after successful payment
+        Order newCart = Order.builder()
+                .userId(order.getUserId())
+                .shippingAddress("")
+                .items(new ArrayList<>())
+                .paymentMethod(PaymentMethod.CARD)
+                .status(OrderStatus.PENDING)
+                .orderDate(Instant.now())
+                .build();
+        orderRepository.save(newCart);
+        log.info("New empty cart created for user {} after checkout of order {}", order.getUserId(), orderId);
+
         return saved;
     }
 

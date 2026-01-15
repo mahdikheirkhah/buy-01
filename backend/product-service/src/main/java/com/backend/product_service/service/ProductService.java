@@ -27,6 +27,7 @@ import com.backend.common.exception.CustomException;
 import com.backend.product_service.dto.CreateProductDTO;
 import com.backend.product_service.dto.ProductCardDTO;
 import com.backend.product_service.dto.ProductDTO;
+import com.backend.product_service.dto.ProductSimpleDTO;
 import com.backend.product_service.dto.StockAdjustmentRequest;
 import com.backend.product_service.dto.UpdateProductDTO;
 import com.backend.product_service.model.Product;
@@ -60,6 +61,21 @@ public class ProductService {
         System.out.println("Get product by productID: " + productID);
         return productRepository.findById(productID)
                 .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
+    }
+
+    /**
+     * Get product DTO with minimal details (just product info from database)
+     * Used for internal service-to-service calls that only need basic product data
+     * No external calls - returns data directly from database
+     */
+    public ProductSimpleDTO getProductDTOOnly(String productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
+        if (product == null) {
+            return null;
+        }
+        // Return simple DTO with just product data including sellerID
+        return new ProductSimpleDTO(product);
     }
 
     public List<Product> getAllProducts() {

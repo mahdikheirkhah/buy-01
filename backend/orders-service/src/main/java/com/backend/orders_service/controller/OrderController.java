@@ -23,6 +23,7 @@ import com.backend.orders_service.dto.UpdateOrderStatusRequest;
 import com.backend.orders_service.model.Order;
 import com.backend.orders_service.model.OrderItem;
 import com.backend.orders_service.service.OrderService;
+import com.backend.orders_service.service.OrderStatsService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -34,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class OrderController {
     private final OrderService orderService;
+    private final OrderStatsService orderStatsService;
 
     private static final String USER_ID_HEADER = "X-User-ID";
     private static final String USER_ROLE_HEADER = "X-User-Role";
@@ -121,6 +123,29 @@ public class OrderController {
     public ResponseEntity<List<Order>> getAllOrders() {
         List<Order> allOrders = orderService.getAllOrders();
         return ResponseEntity.ok(allOrders);
+    }
+
+    /**
+     * Get statistics for a specific user
+     * Fetches all orders for the user and calculates statistics
+     * Returns: totalOrders, totalSpent, lastOrderDate, mostPurchasedProductId,
+     * mostPurchasedProductName, mostPurchasedProductCount, totalQuantityBought
+     */
+    @GetMapping("/user/{userId}/stats")
+    public ResponseEntity<java.util.Map<String, Object>> getUserStats(@PathVariable String userId) {
+        java.util.Map<String, Object> stats = orderStatsService.calculateUserStats(userId);
+        return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * Get statistics for a specific seller
+     * Fetches all orders and filters by seller
+     * Returns: totalRevenue, totalSales, totalOrders, totalCustomers, lastSaleDate
+     */
+    @GetMapping("/seller/{sellerId}/stats")
+    public ResponseEntity<java.util.Map<String, Object>> getSellerStats(@PathVariable String sellerId) {
+        java.util.Map<String, Object> stats = orderStatsService.calculateSellerStats(sellerId);
+        return ResponseEntity.ok(stats);
     }
 
     @PutMapping("/{orderId}/status")

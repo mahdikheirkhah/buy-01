@@ -6,12 +6,14 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.backend.common.dto.SellerProfileDTO;
 import com.backend.common.entity.SellerProfile;
 import com.backend.common.repository.SellerProfileRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service for managing seller profiles and performance metrics
@@ -19,10 +21,12 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SellerProfileService {
 
     private final SellerProfileRepository sellerProfileRepository;
-    private final StatsCalculationService statsCalculationService;
+    private final RestTemplate restTemplate;
+    private static final String ORDERS_SERVICE_URL = "http://orders-service"; // Eureka service discovery
 
     /**
      * Get seller profile by sellerId
@@ -36,24 +40,54 @@ public class SellerProfileService {
 
     /**
      * Get seller statistics (for seller dashboard)
-     * Calculates fresh stats from all orders
+     * Calls orders-service to calculate fresh stats from seller's orders
      */
     public SellerProfileDTO getSellerStatistics(String sellerId) {
         SellerProfile profile = sellerProfileRepository.findBySellerId(sellerId)
                 .orElseGet(() -> createDefaultProfile(sellerId));
 
-        // Calculate fresh statistics from orders
-        Map<String, Object> statsMap = statsCalculationService.calculateSellerStats(sellerId);
+        // Call orders-service to get statistics for this seller
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> statsMap = restTemplate.getForObject(
+                    ORDERS_SERVICE_URL + "/api/orders/seller/" + sellerId + "/stats",
+                    Map.class);
 
-        // Update profile with calculated stats
-        profile.setTotalRevenue((BigDecimal) statsMap.getOrDefault("totalRevenue", BigDecimal.ZERO));
-        profile.setTotalSales((Integer) statsMap.get("totalSales"));
-        profile.setTotalOrders((Integer) statsMap.get("totalOrders"));
-        profile.setTotalCustomers((Integer) statsMap.get("totalCustomers"));
-        profile.setLastSaleDate((Instant) statsMap.get("lastSaleDate"));
-        profile.setDeliveryRating(((Number) statsMap.get("deliveryRating")).doubleValue());
-        profile.setReturnRate(((Number) statsMap.get("returnRate")).intValue());
-        profile.setCancellationRate(((Number) statsMap.get("cancellationRate")).intValue());
+            if (statsMap != null) {
+                log.info("Received seller stats from orders-service: {}", statsMap);
+
+                // Update profile with calculated stats from new field names
+                profile.setTotalRevenue(new BigDecimal(
+                        statsMap.getOrDefault("totalRevenue", "0").toString()));
+
+                // Map new field names to profile fields
+                profile.setTotalSales(((Number) statsMap.getOrDefault("totalItemsSold", 0)).intValue());
+                profile.setTotalOrders(((Number) statsMap.getOrDefault("totalDeliveredOrders", 0)).intValue());
+                profile.setTotalCustomers(((Number) statsMap.getOrDefault("totalUniqueCustomers", 0)).intValue());
+
+                // Map delivery rating and cancellation rate from orders-service
+                profile.setDeliveryRating(((Number) statsMap.getOrDefault("deliveryRating", 5.0)).doubleValue());
+                profile.setCancellationRate(
+                        (int) Math.round(((Number) statsMap.getOrDefault("cancellationRate", 0.0)).doubleValue()));
+
+                Object lastDeliveredDate = statsMap.get("lastDeliveredDate");
+                if (lastDeliveredDate != null) {
+                    if (lastDeliveredDate instanceof Long) {
+                        profile.setLastSaleDate(Instant.ofEpochMilli((Long) lastDeliveredDate));
+                    } else if (lastDeliveredDate instanceof String) {
+                        profile.setLastSaleDate(Instant.parse((String) lastDeliveredDate));
+                    }
+                }
+
+                log.info(
+                        "Updated seller profile with stats - Revenue: {}, Sales: {}, Orders: {}, Customers: {}, DeliveryRating: {}, CancellationRate: {}%",
+                        profile.getTotalRevenue(), profile.getTotalSales(), profile.getTotalOrders(),
+                        profile.getTotalCustomers(), profile.getDeliveryRating(), profile.getCancellationRate());
+            }
+        } catch (Exception e) {
+            log.error("Error fetching statistics from orders-service for sellerId: {}", sellerId, e);
+        }
+
         profile.setUpdatedAt(Instant.now());
 
         // Save updated profile
