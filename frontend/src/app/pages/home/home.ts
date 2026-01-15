@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common'; // For *ngIf
+import { FormsModule } from '@angular/forms'; // For [(ngModel)]
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 // Import our new components and services
 import { ProductCard } from '../../components/product-card/product-card';
@@ -13,6 +14,7 @@ import { User } from '../../models/user.model';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatPaginatorModule,
     ProductCard // Import the reusable card component
   ],
@@ -32,10 +34,20 @@ export class HomeComponent implements OnInit {
   pageSize: number = 10;
   pageIndex: number = 0;
 
+  // Search/Filter properties
+  searchKeyword: string = '';
+  minPrice: number | null = null;
+  maxPrice: number | null = null;
+  minQuantity: number | null = null;
+  maxQuantity: number | null = null;
+  startDate: string = '';
+  endDate: string = '';
+  isSearchActive: boolean = false;
+
   constructor(
     private authService: AuthService,
     private productService: ProductService // Inject ProductService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // 1. Fetch the user (like before)
@@ -44,8 +56,8 @@ export class HomeComponent implements OnInit {
         this.currentUser = user;
       },
       error: (err) => {
-         console.error('Failed to fetch current user:', err);
-         this.errorMessage = 'Could not load user data.';
+        console.error('Failed to fetch current user:', err);
+        this.errorMessage = 'Could not load user data.';
       }
     });
 
@@ -54,17 +66,55 @@ export class HomeComponent implements OnInit {
   }
 
   fetchProducts(): void {
-    this.productService.getAllProducts(this.pageIndex, this.pageSize).subscribe((page: Page<ProductCardDTO>) => {
-      this.products = page.content;
-      this.totalElements = page.totalElements;
-    });
-   console.log("image urls", this.products);
+    if (this.isSearchActive) {
+      this.productService.searchProducts(
+        this.searchKeyword || undefined,
+        this.minPrice || undefined,
+        this.maxPrice || undefined,
+        this.minQuantity || undefined,
+        this.maxQuantity || undefined,
+        this.startDate || undefined,
+        this.endDate || undefined,
+        this.pageIndex,
+        this.pageSize
+      ).subscribe((page: Page<ProductCardDTO>) => {
+        this.products = page.content;
+        this.totalElements = page.totalElements;
+      });
+    } else {
+      this.productService.getAllProducts(this.pageIndex, this.pageSize).subscribe((page: Page<ProductCardDTO>) => {
+        this.products = page.content;
+        this.totalElements = page.totalElements;
+      });
+    }
+    console.log("image urls", this.products);
   }
 
   // This is called by the <mat-paginator>
   onPageChange(event: PageEvent): void {
     this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
+    this.fetchProducts();
+  }
+
+  // Search and filter handler
+  onSearch(): void {
+    this.pageIndex = 0; // Reset to first page
+    this.isSearchActive = true;
+    this.fetchProducts();
+  }
+
+  // Clear all filters
+  clearFilters(): void {
+    this.searchKeyword = '';
+    this.minPrice = null;
+    this.maxPrice = null;
+    this.minQuantity = null;
+    this.maxQuantity = null;
+    this.startDate = '';
+    this.endDate = '';
+    this.pageIndex = 0;
+    this.isSearchActive = false;
     this.fetchProducts();
   }
 
@@ -75,7 +125,7 @@ export class HomeComponent implements OnInit {
     // You could navigate to an edit page here
   }
 
-onProductDeleted(): void {
+  onProductDeleted(): void {
     console.log('Product deleted from home, refreshing list...');
     this.fetchProducts();
   }
