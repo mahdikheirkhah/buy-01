@@ -58,8 +58,9 @@
 
 .filter-controls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
+  margin-bottom: 20px;
 }
 
 .filter-group {
@@ -102,19 +103,20 @@
 .button-group {
   display: flex;
   gap: 12px;
-  align-items: flex-end;
+  grid-column: 1 / -1;
+  justify-content: flex-start;
 }
 
 .btn-search,
 .btn-clear {
-  flex: 1;
-  padding: 12px 24px;
+  padding: 12px 32px;
   font-size: 14px;
   font-weight: 600;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s;
+  min-width: 120px;
 }
 
 .btn-search {
@@ -136,6 +138,28 @@
 .btn-clear:hover {
   background-color: #e6e6e6;
   border-color: var(--navy);
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .filter-controls {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .filter-inputs {
+    flex-direction: column;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .btn-search,
+  .btn-clear {
+    width: 100%;
+    min-width: unset;
+  }
 }
 
 .product-grid {
