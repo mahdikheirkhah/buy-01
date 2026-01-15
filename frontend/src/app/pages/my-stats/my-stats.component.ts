@@ -1,16 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { UserProfileService, UserProfile } from '../../services/user-profile.service';
 import { SellerProfileService, SellerProfile } from '../../services/seller-profile.service';
 import { AuthService } from '../../services/auth';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { User } from '../../models/user.model';
 
 @Component({
     selector: 'app-my-stats',
     standalone: true,
-    imports: [CommonModule, MatCardModule, MatIconModule],
+    imports: [CommonModule, RouterModule, MatCardModule, MatIconModule],
     templateUrl: './my-stats.component.html',
     styleUrls: ['./my-stats.component.scss']
 })
@@ -18,6 +20,7 @@ export class MyStatsComponent implements OnInit {
     userProfile: UserProfile | null = null;
     sellerProfile: SellerProfile | null = null;
     currentUserRole: string = '';
+    currentUser: User | null = null;
     isLoading = false;
 
     constructor(
@@ -25,24 +28,37 @@ export class MyStatsComponent implements OnInit {
         private sellerProfileService: SellerProfileService,
         private authService: AuthService,
         private snackBar: MatSnackBar
-    ) {
-        // Get current user role
+    ) { }
+
+    ngOnInit(): void {
+        // Subscribe to current user and load stats when user is available
         this.authService.currentUser$.subscribe(user => {
+            this.currentUser = user;
             this.currentUserRole = user?.role || '';
+
+            if (user && user.id) {
+                this.loadStats();
+            }
         });
     }
 
-    ngOnInit(): void {
-        this.loadStats();
-    }
-
     loadStats(): void {
-        this.isLoading = true;
+        if (!this.currentUser || !this.currentUser.id) {
+            console.warn('No user available for loading stats');
+            return;
+        }
 
-        if (this.currentUserRole === 'SELLER') {
+        this.isLoading = true;
+        const userId = this.currentUser.id;
+        const role = this.currentUser.role;
+
+        console.log('[MyStats] Loading stats for user:', userId, 'role:', role);
+
+        if (role === 'SELLER') {
             // Load seller stats
-            this.sellerProfileService.getSellerProfile().subscribe({
+            this.sellerProfileService.getSellerStatistics(userId).subscribe({
                 next: (profile) => {
+                    console.log('[MyStats] Seller profile loaded:', profile);
                     this.sellerProfile = profile;
                     this.isLoading = false;
                 },
@@ -54,8 +70,9 @@ export class MyStatsComponent implements OnInit {
             });
         } else {
             // Load customer stats
-            this.userProfileService.getUserProfile().subscribe({
+            this.userProfileService.getUserStatistics(userId).subscribe({
                 next: (profile) => {
+                    console.log('[MyStats] User profile loaded:', profile);
                     this.userProfile = profile;
                     this.isLoading = false;
                 },

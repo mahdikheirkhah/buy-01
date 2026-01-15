@@ -121,16 +121,18 @@ export class Checkout implements OnInit, OnDestroy {
         this.orderService.checkoutOrder(this.cart.id, request).subscribe({
             next: (order) => {
                 this.isProcessing = false;
-                this.successMessage = 'Checkout successful! Redirecting to order history...';
+                this.successMessage = 'Checkout successful! Cart cleared. Redirecting to order history...';
+                // Clear the cart from local state
+                this.orderService.clearCart();
                 setTimeout(() => this.router.navigate(['/my-orders']), 1500);
             },
             error: (err) => {
                 this.isProcessing = false;
                 this.successMessage = null;
-                
+
                 // Extract error message from various response formats
                 let errorMsg = 'Checkout failed due to an unexpected error. Please retry.';
-                
+
                 if (err.status === 400) {
                     // Try to get message from different response formats
                     if (err.error?.message) {
@@ -145,7 +147,7 @@ export class Checkout implements OnInit, OnDestroy {
                 } else {
                     errorMsg = `Server error (${err.status}). Please try again later.`;
                 }
-                
+
                 this.errorMessage = errorMsg;
                 console.error('Checkout error:', err);
             }

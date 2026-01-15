@@ -13,6 +13,7 @@ com/backend/orders_service/dto/RedoOrderResponse.class
 com/backend/orders_service/controller/OrderController.class
 com/backend/orders_service/model/PaymentMethod.class
 com/backend/orders_service/dto/CheckoutRequest.class
+com/backend/orders_service/service/OrderStatsService.class
 com/backend/orders_service/client/ProductInventoryClient$StockAdjustmentRequest.class
 com/backend/orders_service/model/OrderItem.class
 com/backend/orders_service/service/OrderStatusScheduler.class

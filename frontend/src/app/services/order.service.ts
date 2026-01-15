@@ -87,11 +87,9 @@ export class OrderService {
     checkoutOrder(orderId: string, request: CheckoutRequest): Observable<Order> {
         return this.http.post<Order>(`${this.orderApiUrl}/${orderId}/checkout`, request, { withCredentials: true })
             .pipe(tap(order => {
-                if (order.status === 'PENDING') {
-                    this.cartSubject.next(order);
-                } else {
-                    this.cartSubject.next(null);
-                }
+                // After successful checkout, clear the cart from local state
+                // The backend will have created a new empty cart for the user
+                this.cartSubject.next(null);
             }));
     }
 

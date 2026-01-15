@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.backend.product_service.dto.CreateProductDTO;
 import com.backend.product_service.dto.ProductCardDTO;
 import com.backend.product_service.dto.ProductDTO;
+import com.backend.product_service.dto.ProductSimpleDTO;
 import com.backend.product_service.dto.StockAdjustmentRequest;
 import com.backend.product_service.dto.UpdateProductDTO;
 import com.backend.product_service.model.Product;
@@ -148,6 +149,22 @@ public class ProductController {
     public ResponseEntity<ProductDTO> getProductWithId(@PathVariable String productId,
             @RequestHeader("X-User-ID") String userId) {
         ProductDTO product = productService.getProductWithDetail(productId, userId);
+        return ResponseEntity.ok(product);
+    }
+
+    // Public endpoint for internal services (like orders-service) to fetch product
+    // details without user context
+    @GetMapping("/public/{productId}")
+    public ResponseEntity<ProductDTO> getProductPublic(@PathVariable String productId) {
+        ProductDTO product = productService.getProductWithDetail(productId, null);
+        return ResponseEntity.ok(product);
+    }
+
+    // Lightweight public endpoint - returns only product DTO without heavy details
+    // Used by orders-service to fetch basic product info (price, name, sellerID)
+    @GetMapping("/simple/{productId}")
+    public ResponseEntity<ProductSimpleDTO> getProductSimple(@PathVariable String productId) {
+        ProductSimpleDTO product = productService.getProductDTOOnly(productId);
         return ResponseEntity.ok(product);
     }
 

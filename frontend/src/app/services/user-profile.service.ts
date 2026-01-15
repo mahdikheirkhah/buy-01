@@ -40,10 +40,10 @@ export class UserProfileService {
     }
 
     /**
-     * Get user statistics
+     * Get user statistics from orders-service
      */
-    getUserStatistics(userId: string): Observable<UserProfile> {
-        return this.http.get<UserProfile>(`${this.apiUrl}/users/${userId}/statistics`, { withCredentials: true });
+    getUserStatistics(userId: string): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/orders/user/${userId}/stats`, { withCredentials: true });
     }
 
     /**

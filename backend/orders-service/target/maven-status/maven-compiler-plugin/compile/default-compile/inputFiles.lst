@@ -3,6 +3,7 @@
 /Users/mohammad.kheirkhah/Desktop/buy-01/backend/orders-service/src/main/java/com/backend/orders_service/dto/CreateOrderRequest.java
 /Users/mohammad.kheirkhah/Desktop/buy-01/backend/orders-service/src/main/java/com/backend/orders_service/model/PaymentMethod.java
 /Users/mohammad.kheirkhah/Desktop/buy-01/backend/orders-service/src/main/java/com/backend/orders_service/kafka/PaymentEventListener.java
+/Users/mohammad.kheirkhah/Desktop/buy-01/backend/orders-service/src/main/java/com/backend/orders_service/service/OrderStatsService.java
 /Users/mohammad.kheirkhah/Desktop/buy-01/backend/orders-service/src/main/java/com/backend/orders_service/client/ProductInventoryClient.java
 /Users/mohammad.kheirkhah/Desktop/buy-01/backend/orders-service/src/main/java/com/backend/orders_service/model/OrderStatus.java
 /Users/mohammad.kheirkhah/Desktop/buy-01/backend/orders-service/src/main/java/com/backend/orders_service/service/OrderService.java

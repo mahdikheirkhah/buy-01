@@ -101,8 +101,18 @@
               <span class="value">{{ lastOrderDisplay }}</span>
             </div>
             <div class="detail-row">
-              <span class="label">Best Product Purchased:</span>
-              <span class="value">{{ userProfile.bestProductName || 'Not available' }}</span>
+              <span class="label">Most Purchased Product:</span>
+              <span class="value">
+                <ng-container *ngIf="userProfile.bestProductId; else noProduct">
+                  <a [routerLink]="['/product', userProfile.bestProductId]" class="product-link">
+                    {{ userProfile.bestProductName || 'Unknown Product' }}
+                  </a>
+                  (Purchased {{ userProfile.totalOrders > 0 ? 'multiple times' : '0 times' }})
+                </ng-container>
+                <ng-template #noProduct>
+                  <span>Not available</span>
+                </ng-template>
+              </span>
             </div>
           </mat-card-content>
         </mat-card>
@@ -237,14 +247,6 @@
             <div class="detail-row">
               <span class="label">Delivery Rating:</span>
               <span class="value">{{ sellerProfile.deliveryRating.toFixed(1) }}/5</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Communication Rating:</span>
-              <span class="value">{{ sellerProfile.communicationRating.toFixed(1) }}/5</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Return Rate:</span>
-              <span class="value">{{ sellerProfile.returnRate.toFixed(1) }}%</span>
             </div>
             <div class="detail-row">
               <span class="label">Cancellation Rate:</span>

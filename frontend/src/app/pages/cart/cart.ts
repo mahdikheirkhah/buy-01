@@ -47,14 +47,16 @@ export class Cart implements OnInit {
         this.authService.currentUser$.subscribe(user => {
             if (user?.id) {
                 this.userId = user.id;
+                // Fetch fresh cart data from backend when cart page is accessed
                 this.loadCart();
             }
         });
 
-        // Subscribe to cart updates
+        // Subscribe to cart updates from the service
+        // This will be updated whenever cart data is fetched or modified
         this.orderService.cart$.subscribe(cart => {
             this.cart = cart;
-            if (cart) {
+            if (cart && cart.items.length > 0) {
                 this.populateProductDetails(cart.items);
             }
         });
