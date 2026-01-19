@@ -91,7 +91,8 @@ export class ProductService {
   }
 
   /**
-   * Search products with all filters combined
+   * Search and filter products - single unified endpoint
+   * If no filters are provided, returns all products
    */
   searchProducts(
     keyword?: string,
@@ -118,73 +119,6 @@ export class ProductService {
     if (endDate) params = params.set('endDate', endDate);
 
     return this.http.get<Page<ProductCardDTO>>(`${this.productApiUrl}/search`, {
-      withCredentials: true,
-      params: params
-    });
-  }
-
-  /**
-   * Search products by keyword only
-   */
-  searchByKeyword(keyword: string, page: number = 0, size: number = 10): Observable<Page<ProductCardDTO>> {
-    let params = new HttpParams()
-      .set('q', keyword)
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'createdAt,desc');
-
-    return this.http.get<Page<ProductCardDTO>>(`${this.productApiUrl}/search/keyword`, {
-      withCredentials: true,
-      params: params
-    });
-  }
-
-  /**
-   * Filter products by price range
-   */
-  filterByPrice(minPrice: number, maxPrice: number, page: number = 0, size: number = 10): Observable<Page<ProductCardDTO>> {
-    let params = new HttpParams()
-      .set('minPrice', minPrice.toString())
-      .set('maxPrice', maxPrice.toString())
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'price,asc');
-
-    return this.http.get<Page<ProductCardDTO>>(`${this.productApiUrl}/search/price`, {
-      withCredentials: true,
-      params: params
-    });
-  }
-
-  /**
-   * Filter products by quantity range
-   */
-  filterByQuantity(minQuantity: number, maxQuantity: number, page: number = 0, size: number = 10): Observable<Page<ProductCardDTO>> {
-    let params = new HttpParams()
-      .set('minQuantity', minQuantity.toString())
-      .set('maxQuantity', maxQuantity.toString())
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'quantity,desc');
-
-    return this.http.get<Page<ProductCardDTO>>(`${this.productApiUrl}/search/quantity`, {
-      withCredentials: true,
-      params: params
-    });
-  }
-
-  /**
-   * Filter products by creation date range
-   */
-  filterByDate(startDate: string, endDate: string, page: number = 0, size: number = 10): Observable<Page<ProductCardDTO>> {
-    let params = new HttpParams()
-      .set('startDate', startDate)
-      .set('endDate', endDate)
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', 'createdAt,desc');
-
-    return this.http.get<Page<ProductCardDTO>>(`${this.productApiUrl}/search/date`, {
       withCredentials: true,
       params: params
     });
