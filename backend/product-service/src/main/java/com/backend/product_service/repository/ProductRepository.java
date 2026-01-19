@@ -1,21 +1,49 @@
 package com.backend.product_service.repository;
 
-import com.backend.product_service.model.Product;
+import java.time.Instant;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.repository.MongoRepository; // <-- Change this back
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 
-import java.util.List;
-// PagingAndSortingRepository is no longer needed here
+import com.backend.product_service.model.Product;
 
-public interface ProductRepository extends MongoRepository<Product, String> { // <-- Use MongoRepository
+public interface ProductRepository extends MongoRepository<Product, String> {
 
-    // This new method will find all products by a seller, with pagination
+    // Find products by seller with pagination
     Page<Product> findBySellerID(String sellerId, Pageable pageable);
 
     List<Product> findAllBySellerID(String sellerId);
-    // You now get all these methods:
-    // 1. Basic CRUD: save(), findById(), delete() (from CrudRepository)
-    // 2. Paging/Sorting: findAll(Pageable), findAll(Sort) (from PagingAndSortingRepository)
-    // 3. Mongo-specific: insert(), findAll(Example) (from MongoRepository)
+
+    /**
+     * Search and filter products with dynamic criteria
+     * MongoDB query with optional filters for keyword, price, quantity, and date
+     * range
+     */
+    @Query("{ " +
+            "$and: [ " +
+            "  { $or: [ " +
+            "    { $expr: { $eq: [?0, null] } }, " +
+            "    { name: { $regex: ?0, $options: 'i' } }, " +
+            "    { description: { $regex: ?0, $options: 'i' } } " +
+            "  ]}, " +
+            "  { $or: [ { $expr: { $eq: [?1, null] } }, { price: { $gte: ?1 } } ]}, " +
+            "  { $or: [ { $expr: { $eq: [?2, null] } }, { price: { $lte: ?2 } } ]}, " +
+            "  { $or: [ { $expr: { $eq: [?3, null] } }, { quantity: { $gte: ?3 } } ]}, " +
+            "  { $or: [ { $expr: { $eq: [?4, null] } }, { quantity: { $lte: ?4 } } ]}, " +
+            "  { $or: [ { $expr: { $eq: [?5, null] } }, { createdAt: { $gte: ?5 } } ]}, " +
+            "  { $or: [ { $expr: { $eq: [?6, null] } }, { createdAt: { $lte: ?6 } } ]} " +
+            "] " +
+            "}")
+    Page<Product> searchAndFilterProducts(
+            String keyword,
+            Double minPrice,
+            Double maxPrice,
+            Integer minQuantity,
+            Integer maxQuantity,
+            Instant startDate,
+            Instant endDate,
+            Pageable pageable);
 }

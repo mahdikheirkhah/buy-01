@@ -42,7 +42,6 @@ export class HomeComponent implements OnInit {
   maxQuantity: number | null = null;
   startDate: string = '';
   endDate: string = '';
-  isSearchActive: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -66,27 +65,21 @@ export class HomeComponent implements OnInit {
   }
 
   fetchProducts(): void {
-    if (this.isSearchActive) {
-      this.productService.searchProducts(
-        this.searchKeyword || undefined,
-        this.minPrice || undefined,
-        this.maxPrice || undefined,
-        this.minQuantity || undefined,
-        this.maxQuantity || undefined,
-        this.startDate || undefined,
-        this.endDate || undefined,
-        this.pageIndex,
-        this.pageSize
-      ).subscribe((page: Page<ProductCardDTO>) => {
-        this.products = page.content;
-        this.totalElements = page.totalElements;
-      });
-    } else {
-      this.productService.getAllProducts(this.pageIndex, this.pageSize).subscribe((page: Page<ProductCardDTO>) => {
-        this.products = page.content;
-        this.totalElements = page.totalElements;
-      });
-    }
+    // Use searchProducts for everything - it handles both "all products" and filtered cases
+    this.productService.searchProducts(
+      this.searchKeyword || undefined,
+      this.minPrice || undefined,
+      this.maxPrice || undefined,
+      this.minQuantity || undefined,
+      this.maxQuantity || undefined,
+      this.startDate || undefined,
+      this.endDate || undefined,
+      this.pageIndex,
+      this.pageSize
+    ).subscribe((page: Page<ProductCardDTO>) => {
+      this.products = page.content;
+      this.totalElements = page.totalElements;
+    });
     console.log("image urls", this.products);
   }
 
@@ -100,7 +93,6 @@ export class HomeComponent implements OnInit {
   // Search and filter handler
   onSearch(): void {
     this.pageIndex = 0; // Reset to first page
-    this.isSearchActive = true;
     this.fetchProducts();
   }
 
@@ -114,7 +106,6 @@ export class HomeComponent implements OnInit {
     this.startDate = '';
     this.endDate = '';
     this.pageIndex = 0;
-    this.isSearchActive = false;
     this.fetchProducts();
   }
 

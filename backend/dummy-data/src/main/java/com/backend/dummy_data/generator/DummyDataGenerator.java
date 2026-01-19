@@ -4,10 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.security.SecureRandom;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
@@ -29,13 +28,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DummyDataGenerator {
 
-    private static final Logger log = LoggerFactory.getLogger(DummyDataGenerator.class);
-
     private final JwtUtil jwtUtil;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    @SuppressWarnings("java:S6437") // Acceptable for non-cryptographic dummy data generation
-    private final java.util.Random random = new java.util.Random();
+    private final java.security.SecureRandom random = new java.security.SecureRandom();
 
     @Value("${app.dummy-data.enabled:true}")
     private boolean enabled;
@@ -57,31 +53,32 @@ public class DummyDataGenerator {
     @PostConstruct
     public void generate() {
         if (!enabled) {
-            log.info("Dummy data generation is disabled.");
+            System.out.println("Dummy data generation is disabled.");
             return;
         }
 
-        log.info("Starting dummy data generation...");
+        System.out.println("Starting dummy data generation...");
 
         try {
             // 1. Login as Admin (Only needed for GET /api/users/email and registration)
             adminTokenCookie = login(adminEmail, adminPassword);
-            log.info("Logged in as admin.");
+            System.out.println("Logged in as admin.");
 
             // 2. Create Sellers and Clients
             createSellers();
             createClients();
-            log.info("Created {} sellers and clients.", createdSellers.size());
+            System.out.println("Created " + createdSellers.size() + " sellers and clients.");
 
             // 3. Login as each Seller and create products
             for (Map<String, Object> seller : createdSellers) {
                 loginAndCreateProducts(seller);
             }
 
-            log.info("Dummy data generated successfully!");
+            System.out.println("Dummy data generated successfully!");
 
         } catch (Exception e) {
-            log.error("Failed to generate dummy data", e);
+            System.err.println("Failed to generate dummy data: " + e.getMessage());
+            System.err.println("Error generating dummy data: " + e.getMessage());
         }
     }
 
@@ -99,7 +96,7 @@ public class DummyDataGenerator {
 
     private void createSellers() throws Exception {
         List<Map<String, Object>> sellers = List.of(
-                Map.of("firstName", "Nordic", "lastName", "Designs", "email", "seller1@shop.no", "password", "pass123",
+                Map.of("firstName", "Nordic", "lastName", "Designs", "email", "seller1@shop.no", "passwoseller1@shop.no
                         "role", "SELLER"),
                 Map.of("firstName", "Scandi", "lastName", "Living", "email", "seller2@scandi.se", "password", "pass123",
                         "role", "SELLER"),
@@ -115,7 +112,7 @@ public class DummyDataGenerator {
                 registerUser(s);
                 createdSellers.add(s); // Store credentials for later login
             } catch (Exception e) {
-                log.error("Could not register seller {}", s.get("email"), e);
+                System.err.println("Could not register seller " + s.get("email") + ": " + e.getMessage());
             }
         }
     }
@@ -185,11 +182,11 @@ public class DummyDataGenerator {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(product, headers);
             try {
-                ResponseEntity<Map<String, Object>> resp = restTemplate.postForEntity(
-                        gatewayUrl + "/api/products", entity, (Class<Map<String, Object>>) (Class<?>) Map.class);
+                ResponseEntity<Map> resp = restTemplate.postForEntity(
+                        gatewayUrl + "/api/products", entity, Map.class);
 
                 String productId = null;
-                Map<String, Object> responseBody = resp.getBody();
+                Map responseBody = resp.getBody();
                 if (responseBody != null) {
                     productId = (String) responseBody.get("id"); // Assuming the service returns "id"
                     if (productId == null) {
@@ -198,7 +195,7 @@ public class DummyDataGenerator {
                 }
 
                 if (productId != null) {
-                    log.info("    -> Created product: {} (ID: {})", product.get("name"), productId);
+                    System.out.println("    -> Created product: " + product.get("name") + " (ID: " + productId + ")");
                     uploadRandomImages(productId, sellerTokenCookie, 1 + random.nextInt(3));
                 } else {
                     System.err.println("    -> Failed to extract product ID from response for " + product.get("name"));
