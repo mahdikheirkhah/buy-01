@@ -69,10 +69,10 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
 
   startImageCarousel(): void {
     // Only start if there's more than one image
-    if (this.product && this.product.imageUrls.length > 1) {
+    if (this.product && this.product.imageUrls && this.product.imageUrls.length > 1) {
       this.imageChangeInterval = setInterval(() => {
         // This moves to the next image, wrapping around to 0
-        if (this.product) {
+        if (this.product && this.product.imageUrls) {
           this.currentImageIndex = (this.currentImageIndex + 1) % this.product.imageUrls.length;
         }
       }, 3000); // Change image every 3 seconds

@@ -3,12 +3,12 @@
   <div class="card-image-container">
 
     <img
-      *ngFor="let imageUrl of product.imageUrls; let i = index"
+      *ngFor="let imageUrl of product.imageUrls || []; let i = index"
       mat-card-image
       [src]="getImageUrl(imageUrl)"
       [class.active]="i === currentImageIndex" alt="{{ product.name }} (image {{i + 1}})">
 
-    <div *ngIf="product.imageUrls.length === 0" class="no-image-placeholder">
+    <div *ngIf="!product.imageUrls || product.imageUrls.length === 0" class="no-image-placeholder">
       <mat-icon>image_not_supported</mat-icon>
     </div>
   </div>
