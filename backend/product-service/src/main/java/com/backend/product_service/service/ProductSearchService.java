@@ -2,12 +2,15 @@ package com.backend.product_service.service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import com.backend.product_service.dto.ProductDTO;
+import com.backend.product_service.dto.ProductCardDTO;
 import com.backend.product_service.model.Product;
 import com.backend.product_service.repository.ProductRepository;
 
@@ -24,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ProductSearchService {
 
     private final ProductRepository productRepository;
-    private final ProductService productService;
+    private final WebClient.Builder webClientBuilder;
 
     /**
      * Search and filter products with optional criteria
@@ -37,10 +40,12 @@ public class ProductSearchService {
      * @param maxQuantity - Maximum quantity filter (optional)
      * @param startDate   - Filter products created after this date (optional)
      * @param endDate     - Filter products created before this date (optional)
+     * @param sellerId    - Current user ID to check if they created the product
+     *                    (optional)
      * @param pageable    - Pagination info
-     * @return Page of ProductDTO matching the criteria
+     * @return Page of ProductCardDTO matching the criteria
      */
-    public Page<ProductDTO> searchAndFilter(
+    public Page<ProductCardDTO> searchAndFilter(
             String keyword,
             BigDecimal minPrice,
             BigDecimal maxPrice,
@@ -48,6 +53,7 @@ public class ProductSearchService {
             Integer maxQuantity,
             Instant startDate,
             Instant endDate,
+            String sellerId,
             Pageable pageable) {
 
         log.info(
@@ -71,7 +77,52 @@ public class ProductSearchService {
 
         log.info("Found {} products matching criteria", products.getTotalElements());
 
-        // Convert Product entities to ProductDTO with seller info
-        return products.map(product -> productService.getProductByProductID(product.getId()));
+        // Convert Product entities to ProductCardDTO with limited images
+        return convertToCardDTOPage(products, sellerId);
+    }
+
+    /**
+     * Convert Product page to ProductCardDTO page with limited images
+     * Same pattern as ProductService.getAllProducts()
+     */
+    private Page<ProductCardDTO> convertToCardDTOPage(Page<Product> productPage, String sellerId) {
+        return productPage.map(product -> {
+            boolean isCreator = sellerId != null && product.getSellerID().equals(sellerId);
+            List<String> limitedImages = getLimitedImageUrls(product.getId(), 3);
+
+            return new ProductCardDTO(
+                    product.getId(),
+                    product.getName(),
+                    product.getDescription(),
+                    product.getPrice(),
+                    product.getQuantity(),
+                    isCreator,
+                    limitedImages);
+        });
+    }
+
+    /**
+     * Fetch limited image URLs from Media Service
+     * Same pattern as ProductService.getLimitedImageUrls()
+     */
+    private List<String> getLimitedImageUrls(String productId, int limit) {
+        try {
+            ParameterizedTypeReference<List<String>> listType = new ParameterizedTypeReference<>() {
+            };
+
+            return webClientBuilder.build().get()
+                    .uri(uriBuilder -> uriBuilder
+                            .scheme("https")
+                            .host("MEDIA-SERVICE")
+                            .path("/api/media/product/{productId}/urls")
+                            .queryParam("limit", limit)
+                            .build(productId))
+                    .retrieve()
+                    .bodyToMono(listType)
+                    .block();
+        } catch (Exception e) {
+            log.error("Failed to fetch media URLs for product {}: {}", productId, e.getMessage());
+            return List.of();
+        }
     }
 }
