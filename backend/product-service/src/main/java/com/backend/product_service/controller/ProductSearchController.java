@@ -9,11 +9,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.backend.product_service.dto.ProductDTO;
+import com.backend.product_service.dto.ProductCardDTO;
 import com.backend.product_service.service.ProductSearchService;
 
 import lombok.RequiredArgsConstructor;
@@ -54,7 +55,7 @@ public class ProductSearchController {
      * - GET /api/products/search?q=laptop&minPrice=500&maxPrice=1500 - Combined
      */
     @GetMapping("/search")
-    public ResponseEntity<Page<ProductDTO>> searchProducts(
+    public ResponseEntity<Page<ProductCardDTO>> searchProducts(
             @RequestParam(name = "q", required = false) String keyword,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
@@ -62,6 +63,7 @@ public class ProductSearchController {
             @RequestParam(required = false) Integer maxQuantity,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
+            @RequestHeader(value = "X-User-ID", required = false) String sellerId,
             @PageableDefault(size = 20, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         log.info("Search request - keyword: {}, minPrice: {}, maxPrice: {}, minQty: {}, maxQty: {}",
@@ -71,7 +73,7 @@ public class ProductSearchController {
         Instant parsedStartDate = startDate != null ? Instant.parse(startDate) : null;
         Instant parsedEndDate = endDate != null ? Instant.parse(endDate) : null;
 
-        Page<ProductDTO> results = productSearchService.searchAndFilter(
+        Page<ProductCardDTO> results = productSearchService.searchAndFilter(
                 keyword,
                 minPrice,
                 maxPrice,
@@ -79,6 +81,7 @@ public class ProductSearchController {
                 maxQuantity,
                 parsedStartDate,
                 parsedEndDate,
+                sellerId,
                 pageable);
 
         log.info("Search returned {} results on page {}", results.getNumberOfElements(), pageable.getPageNumber());
