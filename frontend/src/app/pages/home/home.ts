@@ -65,8 +65,8 @@ export class HomeComponent implements OnInit {
   }
 
   fetchProducts(): void {
-    // Check if any filters are active
-    const hasFilters = this.searchKeyword ||
+    // Check if any filters are active (use trim() to ignore empty strings)
+    const hasFilters = (this.searchKeyword && this.searchKeyword.trim()) ||
       this.minPrice != null ||
       this.maxPrice != null ||
       this.minQuantity != null ||

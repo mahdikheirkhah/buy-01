@@ -110,7 +110,7 @@ public class ProductSearchService {
             ParameterizedTypeReference<List<String>> listType = new ParameterizedTypeReference<>() {
             };
 
-            return webClientBuilder.build().get()
+            List<String> result = webClientBuilder.build().get()
                     .uri(uriBuilder -> uriBuilder
                             .scheme("https")
                             .host("MEDIA-SERVICE")
@@ -120,6 +120,9 @@ public class ProductSearchService {
                     .retrieve()
                     .bodyToMono(listType)
                     .block();
+
+            // Ensure we never return null
+            return result != null ? result : List.of();
         } catch (Exception e) {
             log.error("Failed to fetch media URLs for product {}: {}", productId, e.getMessage());
             return List.of();
