@@ -65,21 +65,39 @@ export class HomeComponent implements OnInit {
   }
 
   fetchProducts(): void {
-    // Use searchProducts for everything - it handles both "all products" and filtered cases
-    this.productService.searchProducts(
-      this.searchKeyword || undefined,
-      this.minPrice || undefined,
-      this.maxPrice || undefined,
-      this.minQuantity || undefined,
-      this.maxQuantity || undefined,
-      this.startDate || undefined,
-      this.endDate || undefined,
-      this.pageIndex,
-      this.pageSize
-    ).subscribe((page: Page<ProductCardDTO>) => {
-      this.products = page.content;
-      this.totalElements = page.totalElements;
-    });
+    // Check if any filters are active
+    const hasFilters = this.searchKeyword ||
+      this.minPrice != null ||
+      this.maxPrice != null ||
+      this.minQuantity != null ||
+      this.maxQuantity != null ||
+      this.startDate ||
+      this.endDate;
+
+    if (hasFilters) {
+      // Use search endpoint when filters are applied
+      this.productService.searchProducts(
+        this.searchKeyword || undefined,
+        this.minPrice || undefined,
+        this.maxPrice || undefined,
+        this.minQuantity || undefined,
+        this.maxQuantity || undefined,
+        this.startDate || undefined,
+        this.endDate || undefined,
+        this.pageIndex,
+        this.pageSize
+      ).subscribe((page: Page<ProductCardDTO>) => {
+        this.products = page.content;
+        this.totalElements = page.totalElements;
+      });
+    } else {
+      // Use getAllProducts endpoint when no filters
+      this.productService.getAllProducts(this.pageIndex, this.pageSize)
+        .subscribe((page: Page<ProductCardDTO>) => {
+          this.products = page.content;
+          this.totalElements = page.totalElements;
+        });
+    }
     console.log("image urls", this.products);
   }
 
