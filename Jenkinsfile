@@ -24,6 +24,10 @@ pipeline {
     }
 
     environment {
+        // GitHub integration
+        GITHUB_TOKEN = credentials('github-token')
+        GITHUB_REPO = 'mahdikheirkhah'
+        
         // Docker configuration
         DOCKER_REPO = 'mahdikheirkhah'
         DOCKER_CREDENTIAL_ID = 'dockerhub-credentials'
@@ -495,7 +499,60 @@ pipeline {
             }
         }
 
-        stage('🐳 Dockerize & Push') {
+        stage('� Quality Gate') {
+            when {
+                expression { params.RUN_SONAR == true }
+            }
+            steps {
+                script {
+                    echo "Waiting for SonarQube Quality Gate result..."
+                    
+                    try {
+                        timeout(time: 5, unit: 'MINUTES') {
+                            def qg = waitForQualityGate()
+                            
+                            if (qg.status != 'OK') {
+                                // Report failure to GitHub
+                                if (env.GIT_COMMIT) {
+                                    sh """
+                                        curl -s -H "Authorization: token \${GITHUB_TOKEN}" \\
+                                            -X POST -H "Accept: application/vnd.github.v3+json" \\
+                                            -d '{"state":"failure", "context":"SonarQube Quality Gate", "description":"Quality gate failed", "target_url":"${BUILD_URL}"}' \\
+                                            https://api.github.com/repos/\${GITHUB_REPO}/statuses/\${GIT_COMMIT} || true
+                                    """
+                                }
+                                error "❌ Quality Gate failed: ${qg.status}\\nCheck SonarQube at http://localhost:9000"
+                            } else {
+                                echo "✅ Quality Gate passed!"
+                                // Report success to GitHub
+                                if (env.GIT_COMMIT) {
+                                    sh """
+                                        curl -s -H "Authorization: token \${GITHUB_TOKEN}" \\
+                                            -X POST -H "Accept: application/vnd.github.v3+json" \\
+                                            -d '{"state":"success", "context":"SonarQube Quality Gate", "description":"Quality gate passed", "target_url":"${BUILD_URL}"}' \\
+                                            https://api.github.com/repos/\${GITHUB_REPO}/statuses/\${GIT_COMMIT} || true
+                                    """
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        echo "⚠️ Quality Gate check failed: ${e.message}"
+                        // Report error to GitHub
+                        if (env.GIT_COMMIT) {
+                            sh """
+                                curl -s -H "Authorization: token \${GITHUB_TOKEN}" \\
+                                    -X POST -H "Accept: application/vnd.github.v3+json" \\
+                                    -d '{"state":"error", "context":"SonarQube Quality Gate", "description":"Quality gate check error", "target_url":"${BUILD_URL}"}' \\
+                                    https://api.github.com/repos/\${GITHUB_REPO}/statuses/\${GIT_COMMIT} || true
+                            """
+                        }
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('�🐳 Dockerize & Push') {
             steps {
                 script {
                     echo "🐳 Building and pushing Docker images with tag: ${IMAGE_TAG}"
@@ -1048,6 +1105,23 @@ BACKUP_SCRIPT
                 } catch (Exception e) {
                     echo "⚠️ Email notification failed: ${e.message}"
                 }
+                
+                // Report success to GitHub
+                try {
+                    if (env.GIT_COMMIT) {
+                        sh '''
+                            curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+                                -X POST -H "Accept: application/vnd.github.v3+json" \
+                                -d '{"state":"success", "context":"Jenkins CI", "description":"Build passed", "target_url":"'${BUILD_URL}'"}' \
+                                https://api.github.com/repos/${GITHUB_REPO}/statuses/${GIT_COMMIT} || true
+                        '''
+                        echo "✅ GitHub status reported: SUCCESS"
+                    }
+                } catch (Exception e) {
+                    echo "⚠️ GitHub status report failed: ${e.message}"
+                } catch (Exception e) {
+                    echo "⚠️ Email notification failed: ${e.message}"
+                }
             }
         }
 
@@ -1096,6 +1170,21 @@ BACKUP_SCRIPT
                     )
                 } catch (Exception e) {
                     echo "⚠️ Email notification failed: ${e.message}"
+                }
+                
+                // Report failure to GitHub
+                try {
+                    if (env.GIT_COMMIT) {
+                        sh '''
+                            curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+                                -X POST -H "Accept: application/vnd.github.v3+json" \
+                                -d '{"state":"failure", "context":"Jenkins CI", "description":"Build failed", "target_url":"'${BUILD_URL}'"}' \
+                                https://api.github.com/repos/${GITHUB_REPO}/statuses/${GIT_COMMIT} || true
+                        '''
+                        echo "❌ GitHub status reported: FAILURE"
+                    }
+                } catch (Exception e) {
+                    echo "⚠️ GitHub status report failed: ${e.message}"
                 }
             }
         }
