@@ -7,7 +7,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = {
-        "spring.data.mongodb.uri=mongodb://localhost:27017/test",
+        // Use embedded Mongo (Flapdoodle). Do not point to localhost to avoid
+        // connection failures.
         "spring.kafka.bootstrap-servers=",
         "spring.cloud.discovery.enabled=false",
         "eureka.client.enabled=false",
