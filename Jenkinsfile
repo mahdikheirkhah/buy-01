@@ -26,7 +26,7 @@ pipeline {
     environment {
         // GitHub integration
         GITHUB_TOKEN = credentials('github-token')
-        GITHUB_REPO = 'mahdikheirkhah'
+        GITHUB_REPO = 'mahdikheirkhah/buy-01'
         
         // Docker configuration
         DOCKER_REPO = 'mahdikheirkhah'
