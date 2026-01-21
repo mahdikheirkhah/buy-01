@@ -73,7 +73,7 @@ export class MyStatsComponent implements OnInit {
             this.userProfileService.getUserStatistics(userId).subscribe({
                 next: (profile) => {
                     console.log('[MyStats] User profile loaded:', profile);
-                    this.userProfile = profile;
+                    this.userProfile = this.mapUserStats(profile);
                     this.isLoading = false;
                 },
                 error: (error) => {
@@ -83,6 +83,29 @@ export class MyStatsComponent implements OnInit {
                 }
             });
         }
+    }
+
+    private mapUserStats(raw: any): UserProfile {
+        return {
+            userId: raw.userId ?? this.currentUser?.id ?? '',
+            firstName: raw.firstName ?? this.currentUser?.firstName ?? '',
+            lastName: raw.lastName ?? this.currentUser?.lastName ?? '',
+            email: raw.email ?? this.currentUser?.email ?? '',
+            avatarUrl: raw.avatarUrl,
+            totalSpent: Number(raw.totalSpent ?? 0),
+            totalOrders: raw.totalOrders ?? 0,
+            lastOrderDate: raw.lastOrderDate ?? raw.lastOrder ?? null,
+            bestProductId: raw.bestProductId ?? raw.mostPurchasedProductId ?? null,
+            bestProductName: raw.bestProductName ?? raw.mostPurchasedProductName ?? null,
+            mostBoughtCategory: raw.mostBoughtCategory ?? raw.bestCategory ?? raw.favoriteCategory,
+            loyaltyPoints: raw.loyaltyPoints ?? 0,
+            savedAddresses: raw.savedAddresses ?? [],
+            preferredPaymentMethod: raw.preferredPaymentMethod,
+            totalReviews: raw.totalReviews ?? 0,
+            averageRating: raw.averageRating ?? 0,
+            createdAt: raw.createdAt ?? '',
+            updatedAt: raw.updatedAt ?? ''
+        } as UserProfile;
     }
 
     // Customer getters

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.security.SecureRandom;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -96,7 +95,7 @@ public class DummyDataGenerator {
 
     private void createSellers() throws Exception {
         List<Map<String, Object>> sellers = List.of(
-                Map.of("firstName", "Nordic", "lastName", "Designs", "email", "seller1@shop.no", "passwoseller1@shop.no
+                Map.of("firstName", "Nordic", "lastName", "Designs", "email", "seller1@shop.no", "password", "pass123",
                         "role", "SELLER"),
                 Map.of("firstName", "Scandi", "lastName", "Living", "email", "seller2@scandi.se", "password", "pass123",
                         "role", "SELLER"),

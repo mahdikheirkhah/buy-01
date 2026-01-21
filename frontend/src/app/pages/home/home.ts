@@ -25,6 +25,7 @@ export class HomeComponent implements OnInit {
   // User data state
   currentUser: User | null = null;
   errorMessage: string | null = null;
+  filterError: string | null = null;
 
   // Product data state
   products: ProductCardDTO[] = [];
@@ -65,6 +66,11 @@ export class HomeComponent implements OnInit {
   }
 
   fetchProducts(): void {
+    // Validate filters before hitting the API
+    if (!this.isFilterValid()) {
+      return;
+    }
+
     // Check if any filters are active (use trim() to ignore empty strings)
     const hasFilters = (this.searchKeyword && this.searchKeyword.trim()) ||
       this.minPrice != null ||
@@ -123,6 +129,7 @@ export class HomeComponent implements OnInit {
     this.maxQuantity = null;
     this.startDate = '';
     this.endDate = '';
+    this.filterError = null;
     this.pageIndex = 0;
     this.fetchProducts();
   }
@@ -141,5 +148,44 @@ export class HomeComponent implements OnInit {
   onProductUpdated(): void {
     console.log('Product was updated, refreshing list...');
     this.fetchProducts();
+  }
+
+  /**
+   * Frontend validation to prevent invalid filter submissions
+   */
+  private isFilterValid(): boolean {
+    this.filterError = null;
+
+    // Non-negative checks
+    if ((this.minPrice ?? 0) < 0 || (this.maxPrice ?? 0) < 0) {
+      this.filterError = 'Price cannot be negative.';
+      return false;
+    }
+    if ((this.minQuantity ?? 0) < 0 || (this.maxQuantity ?? 0) < 0) {
+      this.filterError = 'Quantity cannot be negative.';
+      return false;
+    }
+
+    // Min/Max ordering checks
+    if (this.minPrice != null && this.maxPrice != null && this.minPrice > this.maxPrice) {
+      this.filterError = 'Min price must be less than or equal to max price.';
+      return false;
+    }
+    if (this.minQuantity != null && this.maxQuantity != null && this.minQuantity > this.maxQuantity) {
+      this.filterError = 'Min quantity must be less than or equal to max quantity.';
+      return false;
+    }
+
+    // Date ordering check
+    if (this.startDate && this.endDate) {
+      const start = new Date(this.startDate);
+      const end = new Date(this.endDate);
+      if (start > end) {
+        this.filterError = 'Start date must be before end date.';
+        return false;
+      }
+    }
+
+    return true;
   }
 }
