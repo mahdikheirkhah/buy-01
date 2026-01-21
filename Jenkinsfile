@@ -25,7 +25,7 @@ pipeline {
 
     environment {
         // GitHub integration
-        GITHUB_TOKEN = credentials('github-token')
+        GITHUB_TOKEN = credentials('multi-branch-github')
         GITHUB_REPO = 'mahdikheirkhah/buy-01'
         
         // Docker configuration
