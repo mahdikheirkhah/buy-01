@@ -21,8 +21,25 @@ export class LoginComponent {
     this.authService.login(this.loginData).subscribe({
       next: (response) => {
         console.log('Login successful', response);
-        // We will handle the JWT token here in the next step
-        this.router.navigate(['/home']);
+        // Fetch current user to determine role
+        this.authService.fetchCurrentUser().subscribe({
+          next: (user) => {
+            console.log('User role:', user.role);
+            // Route based on user role
+            if (user.role === 'CLIENT') {
+              this.router.navigate(['/home']);
+            } else if (user.role === 'SELLER') {
+              this.router.navigate(['/seller-dashboard']);
+            } else {
+              // Default fallback
+              this.router.navigate(['/home']);
+            }
+          },
+          error: (err) => {
+            console.error('Failed to fetch user role', err);
+            this.router.navigate(['/home']);
+          }
+        });
       },
       error: (err) => {
         console.error('Login failed', err);

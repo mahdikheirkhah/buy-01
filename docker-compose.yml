@@ -220,7 +220,7 @@ services:
 
 networks:
   BACKEND:
-    driver: bridge
+    external: true
     name: buy-01_BACKEND
 
 volumes:
