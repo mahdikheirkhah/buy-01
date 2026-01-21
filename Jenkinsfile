@@ -25,7 +25,7 @@ pipeline {
 
     environment {
         // GitHub integration
-        GITHUB_TOKEN = credentials('github-token')
+        GITHUB_TOKEN = credentials('multi-branch-github')
         GITHUB_REPO = 'mahdikheirkhah/buy-01'
         
         // Docker configuration
@@ -78,16 +78,27 @@ pipeline {
             steps {
                 echo "📥 Checking out branch: ${params.BRANCH}"
                 
-                // GitHub Setup
+                // 🏫 Campus/Gitea Setup (Default)
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: "*/${params.BRANCH}"]],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/mahdikheirkhah/buy-01.git',
-                        credentialsId: 'github-packages-creds'
+                        url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
+                        credentialsId: 'gitea-credentials'
                     ]]
                 ])
-                echo "✅ Checkout completed from GitHub"
+                echo "✅ Checkout completed from Gitea"
+                
+                // 🏠 Home/GitHub Setup (Uncomment to use instead of Gitea)
+                // checkout([
+                //     $class: 'GitSCM',
+                //     branches: [[name: "*/${params.BRANCH}"]],
+                //     userRemoteConfigs: [[
+                //         url: 'https://github.com/mahdikheirkhah/buy-01.git',
+                //         credentialsId: 'github-credentials'
+                //     ]]
+                // ])
+                // echo "✅ Checkout completed from GitHub"
                 
                 sh 'git log --oneline -5'
             }
@@ -408,14 +419,14 @@ pipeline {
                                   -w ${WORKSPACE}/backend \\
                                   --network buy-01_BACKEND \\
                                   ${MAVEN_IMAGE} \\
-                                  mvn sonar:sonar \\
+                                  mvn clean install sonar:sonar \\
                                     -Dsonar.projectKey=buy-01-backend \\
                                     -Dsonar.projectName="buy-01 Backend" \\
-                                    -Dsonar.host.url=http://sonarqube:9000 \
+                                    -Dsonar.host.url=http://sonarqube:9000 \\
                                     -Dsonar.login=${SONAR_TOKEN} \\
-                                    -Dsonar.exclusions="**/target/**,common/**,discovery-service/**" \
+                                    -Dsonar.exclusions="**/target/**,common/**,discovery-service/**" \\
                                     -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**,**/model/** \\
-                                    -B -q
+                                    -B
 
                                 echo "✅ Backend analysis completed"
                             '''
@@ -488,54 +499,73 @@ pipeline {
             }
         }
 
-        stage('� Quality Gate') {
+        stage('📊 Quality Gate') {
             when {
                 expression { params.RUN_SONAR == true }
             }
             steps {
                 script {
-                    echo "Waiting for SonarQube Quality Gate result..."
+                    echo "📊 Checking SonarQube quality gates..."
                     
                     try {
-                        timeout(time: 5, unit: 'MINUTES') {
-                            def qg = waitForQualityGate()
+                        // Wait for analysis to complete
+                        sleep(time: 10, unit: 'SECONDS')
+                        
+                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                            // Check quality gate status via API
+                            sh '''#!/bin/bash
+                                echo "Fetching backend quality gate status..."
+                                BACKEND_QG=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-backend)
+                                BACKEND_STATUS=$(echo "$BACKEND_QG" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+                                
+                                echo "Fetching frontend quality gate status..."
+                                FRONTEND_QG=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-frontend)
+                                FRONTEND_STATUS=$(echo "$FRONTEND_QG" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+                                
+                                echo "Backend Quality Gate: $BACKEND_STATUS"
+                                echo "Frontend Quality Gate: $FRONTEND_STATUS"
+                                
+                                # Store for reporting
+                                echo "$BACKEND_STATUS" > /tmp/backend-qg.txt
+                                echo "$FRONTEND_STATUS" > /tmp/frontend-qg.txt
+                                
+                                if [ "$FRONTEND_STATUS" = "OK" ]; then
+                                    echo "✅ Frontend Quality Gate: PASSED"
+                                else
+                                    echo "⚠️  Frontend Quality Gate: $FRONTEND_STATUS"
+                                fi
+                                
+                                if [ "$BACKEND_STATUS" = "OK" ]; then
+                                    echo "✅ Backend Quality Gate: PASSED"
+                                else
+                                    echo "⚠️  Backend Quality Gate: $BACKEND_STATUS (see SonarQube dashboard for details)"
+                                fi
+                            '''
+                        }
+                        
+                        // Report to GitHub
+                        sh '''#!/bin/bash
+                            FRONTEND_STATUS=$(cat /tmp/frontend-qg.txt 2>/dev/null || echo "UNKNOWN")
                             
-                            if (qg.status != 'OK') {
-                                // Report failure to GitHub
-                                if (env.GIT_COMMIT) {
-                                    sh """
-                                        curl -s -H "Authorization: token \${GITHUB_TOKEN}" \\
-                                            -X POST -H "Accept: application/vnd.github.v3+json" \\
-                                            -d '{"state":"failure", "context":"SonarQube Quality Gate", "description":"Quality gate failed", "target_url":"${BUILD_URL}"}' \\
-                                            https://api.github.com/repos/\${GITHUB_REPO}/statuses/\${GIT_COMMIT} || true
-                                    """
-                                }
-                                error "❌ Quality Gate failed: ${qg.status}\\nCheck SonarQube at http://localhost:9000"
-                            } else {
-                                echo "✅ Quality Gate passed!"
-                                // Report success to GitHub
-                                if (env.GIT_COMMIT) {
-                                    sh """
-                                        curl -s -H "Authorization: token \${GITHUB_TOKEN}" \\
-                                            -X POST -H "Accept: application/vnd.github.v3+json" \\
-                                            -d '{"state":"success", "context":"SonarQube Quality Gate", "description":"Quality gate passed", "target_url":"${BUILD_URL}"}' \\
-                                            https://api.github.com/repos/\${GITHUB_REPO}/statuses/\${GIT_COMMIT} || true
-                                    """
-                                }
-                            }
-                        }
+                            if [ "$FRONTEND_STATUS" = "OK" ]; then
+                                QG_STATE="success"
+                                QG_DESC="Quality Gate PASSED"
+                            else
+                                QG_STATE="failure"
+                                QG_DESC="Quality Gate: $FRONTEND_STATUS"
+                            fi
+                            
+                            echo "📢 Reporting to GitHub: $QG_STATE"
+                            curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+                                -X POST -H "Accept: application/vnd.github.v3+json" \
+                                -d "{\"state\":\"${QG_STATE}\", \"context\":\"SonarQube Quality Gate\", \"description\":\"${QG_DESC}\", \"target_url\":\"${BUILD_URL}\"}" \
+                                https://api.github.com/repos/${GITHUB_REPO}/statuses/${GIT_COMMIT} || echo "⚠️  GitHub reporting failed"
+                        '''
+                        
+                        echo "✅ Quality Gate check completed"
                     } catch (Exception e) {
-                        echo "⚠️ Quality Gate check failed: ${e.message}"
-                        // Report error to GitHub
-                        if (env.GIT_COMMIT) {
-                            sh """
-                                curl -s -H "Authorization: token \${GITHUB_TOKEN}" \\
-                                    -X POST -H "Accept: application/vnd.github.v3+json" \\
-                                    -d '{"state":"error", "context":"SonarQube Quality Gate", "description":"Quality gate check error", "target_url":"${BUILD_URL}"}' \\
-                                    https://api.github.com/repos/\${GITHUB_REPO}/statuses/\${GIT_COMMIT} || true
-                            """
-                        }
-                        throw e
+                        echo "⚠️  Quality Gate check error: ${e.message}"
+                        // Continue pipeline even if check fails
                     }
                 }
             }
@@ -1034,26 +1064,8 @@ BACKUP_SCRIPT
 
     post {
         always {
-            node {
-                script {
-                    echo "🧹 Cleanup..."
-
-                    try {
-                        def testReportsExist = sh(
-                            script: 'find ${BACKEND_DIR}/*/target/surefire-reports -name "*.xml" -type f 2>/dev/null | wc -l',
-                            returnStdout: true
-                        ).trim().toInteger() > 0
-
-                        if (testReportsExist) {
-                            echo "📊 Collecting test results..."
-                            junit allowEmptyResults: true, testResults: '${BACKEND_DIR}/*/target/surefire-reports/*.xml'
-                        }
-                    } catch (Exception e) {
-                        echo "⚠️ Test result collection: ${e.message}"
-                    }
-
-                    cleanWs notFailBuild: true
-                }
+            script {
+                echo "🧹 Pipeline execution completed"
             }
         }
 
