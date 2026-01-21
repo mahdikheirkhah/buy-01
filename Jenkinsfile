@@ -78,27 +78,16 @@ pipeline {
             steps {
                 echo "📥 Checking out branch: ${params.BRANCH}"
                 
-                // 🏫 Campus/Gitea Setup (Default)
+                // GitHub Setup
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: "*/${params.BRANCH}"]],
                     userRemoteConfigs: [[
-                        url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
-                        credentialsId: 'gitea-credentials'
+                        url: 'https://github.com/mahdikheirkhah/buy-01.git',
+                        credentialsId: 'github-packages-creds'
                     ]]
                 ])
-                echo "✅ Checkout completed from Gitea"
-                
-                // 🏠 Home/GitHub Setup (Uncomment to use instead of Gitea)
-                // checkout([
-                //     $class: 'GitSCM',
-                //     branches: [[name: "*/${params.BRANCH}"]],
-                //     userRemoteConfigs: [[
-                //         url: 'https://github.com/mahdikheirkhah/buy-01.git',
-                //         credentialsId: 'github-credentials'
-                //     ]]
-                // ])
-                // echo "✅ Checkout completed from GitHub"
+                echo "✅ Checkout completed from GitHub"
                 
                 sh 'git log --oneline -5'
             }
