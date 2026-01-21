@@ -1,5 +1,6 @@
 # Buy-01: E-Commerce Microservices Platform
 
+test
 A complete, production-ready e-commerce platform featuring Spring Boot microservices, Angular frontend, Jenkins CI/CD, and SonarQube code quality integration.
 
 ## 📋 Table of Contents
@@ -794,21 +795,18 @@ brew services start jenkins-lts
 2. Add the following credentials:
 
    **Docker Hub Credentials**
-
    - Kind: Username with password
    - Username: `[your-docker-hub-username]`
    - Password: `[your-docker-hub-token]`
    - ID: `dockerhub-credentials`
 
    **GitHub Credentials** (for repo access)
-
    - Kind: Username with password
    - Username: `[your-github-username]`
    - Password: `[your-github-personal-access-token]`
    - ID: `github-credentials`
 
    **SonarQube Credentials** (optional)
-
    - Kind: Secret text
    - Secret: `[your-sonarqube-token]`
    - ID: `sonarqube-token`
@@ -823,7 +821,6 @@ brew services start jenkins-lts
    **Definition**: Pipeline script from SCM
 
    **SCM**: Git
-
    - Repository URL: `https://github.com/mahdikheirkhah/buy-01.git`
    - Credentials: Select `github-credentials`
    - Branch: `*/main`
@@ -1002,13 +999,11 @@ npm install -D sonar-scanner
 ### Viewing Results and Reports
 
 1. **Dashboard**: http://localhost:9000/dashboard
-
    - Overview of all projects
    - Code coverage metrics
    - Security hotspots
 
 2. **Issue Tracking**
-
    - View bugs, code smells, vulnerabilities
    - Filter by severity (Blocker, Critical, Major, Minor, Info)
    - Assign to developers
