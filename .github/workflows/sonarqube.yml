@@ -38,7 +38,7 @@ jobs:
           KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
           KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
         ports:
-          - 9092:9092
+          - 9092:9092          gh secret set SONAR_TOKEN --body "YOUR_TOKEN_HERE"
 
     steps:
       - name: Checkout code
@@ -82,7 +82,7 @@ jobs:
       - name: Run Frontend Tests
         run: |
           cd frontend
-          npm test -- --watch=false --code-coverage 2>&1 || echo "Frontend tests completed"
+          npm test -- --watch=false --browsers=ChromeHeadless --code-coverage 2>&1 || echo "Frontend tests completed"
 
       - name: Upload Coverage Reports
         if: always()
@@ -92,26 +92,22 @@ jobs:
           path: |
             backend/*/target/site/jacoco
             frontend/coverage
-      # Add after "Run Backend Unit Tests" step
-      - name: SonarQube Analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-          cd backend
-          mvn sonar:sonar \
-            -Dsonar.projectKey=buy-01-backend \
-            -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.qualitygate.wait=true \
-            -Dsonar.qualitygate.timeout=300
-          echo "✅ SonarQube analysis completed"
 
-      - name: SonarQube Quality Gate Check
-        run: |
-          echo "Checking quality gate status..."
-          # The previous step will fail if quality gate fails
-          echo "✅ Quality gate passed"
+      # Option 1: Use SonarCloud (cloud-based) - Recommended
+      - name: SonarCloud Analysis
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: backend
+          args: >
+            -Dsonar.projectKey=buy-01-backend
+            -Dsonar.organization=mahdikheirkhah-m7eCE
+            -Dsonar.qualitygate.wait=true
+
+      # Option 2: Run SonarQube as a service (localhost accessible)
+      # Uncomment the service below and comment out SonarCloud action above
       - name: Notify Build Status
         if: always()
         run: |
