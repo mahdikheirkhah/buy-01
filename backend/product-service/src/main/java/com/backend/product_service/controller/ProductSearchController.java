@@ -2,6 +2,8 @@ package com.backend.product_service.controller;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -69,9 +71,42 @@ public class ProductSearchController {
         log.info("Search request - keyword: {}, minPrice: {}, maxPrice: {}, minQty: {}, maxQty: {}",
                 keyword, minPrice, maxPrice, minQuantity, maxQuantity);
 
-        // Parse dates if provided
-        Instant parsedStartDate = startDate != null ? Instant.parse(startDate) : null;
-        Instant parsedEndDate = endDate != null ? Instant.parse(endDate) : null;
+        // Basic validation for non-negative values and ordering
+        if ((minPrice != null && minPrice.signum() < 0)
+                || (maxPrice != null && maxPrice.signum() < 0)) {
+            log.warn("Rejecting search: negative price bounds");
+            return ResponseEntity.badRequest().body(Page.empty(pageable));
+        }
+        if ((minQuantity != null && minQuantity < 0)
+                || (maxQuantity != null && maxQuantity < 0)) {
+            log.warn("Rejecting search: negative quantity bounds");
+            return ResponseEntity.badRequest().body(Page.empty(pageable));
+        }
+        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
+            log.warn("Rejecting search: minPrice > maxPrice");
+            return ResponseEntity.badRequest().body(Page.empty(pageable));
+        }
+        if (minQuantity != null && maxQuantity != null && minQuantity > maxQuantity) {
+            log.warn("Rejecting search: minQuantity > maxQuantity");
+            return ResponseEntity.badRequest().body(Page.empty(pageable));
+        }
+
+        // Parse dates if provided (support both full ISO and plain yyyy-MM-dd from HTML
+        // date inputs)
+        Instant parsedStartDate;
+        Instant parsedEndDate;
+        try {
+            parsedStartDate = parseDate(startDate);
+            parsedEndDate = parseDate(endDate);
+        } catch (IllegalArgumentException ex) {
+            log.warn("Rejecting search: invalid date format start={} end={}", startDate, endDate);
+            return ResponseEntity.badRequest().body(Page.empty(pageable));
+        }
+
+        if (parsedStartDate != null && parsedEndDate != null && parsedStartDate.isAfter(parsedEndDate)) {
+            log.warn("Rejecting search: startDate after endDate");
+            return ResponseEntity.badRequest().body(Page.empty(pageable));
+        }
 
         Page<ProductCardDTO> results = productSearchService.searchAndFilter(
                 keyword,
@@ -86,5 +121,26 @@ public class ProductSearchController {
 
         log.info("Search returned {} results on page {}", results.getNumberOfElements(), pageable.getPageNumber());
         return ResponseEntity.ok(results);
+    }
+
+    /**
+     * Parse an ISO-8601 instant or a plain yyyy-MM-dd (HTML date input) string to
+     * Instant at UTC start of day.
+     */
+    private Instant parseDate(String date) {
+        if (date == null || date.isBlank()) {
+            return null;
+        }
+        try {
+            return Instant.parse(date);
+        } catch (Exception ignored) {
+            // Try simple date without time
+        }
+        try {
+            LocalDate localDate = LocalDate.parse(date);
+            return localDate.atStartOfDay().toInstant(ZoneOffset.UTC);
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Invalid date format: " + date);
+        }
     }
 }

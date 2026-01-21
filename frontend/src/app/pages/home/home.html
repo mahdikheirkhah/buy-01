@@ -7,6 +7,9 @@
   <div *ngIf="errorMessage" class="error-banner">
     <p>{{ errorMessage }}</p>
   </div>
+  <div *ngIf="filterError" class="error-banner">
+    <p>{{ filterError }}</p>
+  </div>
 
   <!-- Search and Filter Section -->
   <div class="search-filter-container">
@@ -27,12 +30,14 @@
             type="number" 
             placeholder="Min Price" 
             [(ngModel)]="minPrice"
+            min="0"
             class="filter-input"
           />
           <input 
             type="number" 
             placeholder="Max Price" 
             [(ngModel)]="maxPrice"
+            min="0"
             class="filter-input"
           />
         </div>
@@ -45,12 +50,14 @@
             type="number" 
             placeholder="Min Qty" 
             [(ngModel)]="minQuantity"
+            min="0"
             class="filter-input"
           />
           <input 
             type="number" 
             placeholder="Max Qty" 
             [(ngModel)]="maxQuantity"
+            min="0"
             class="filter-input"
           />
         </div>

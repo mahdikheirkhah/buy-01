@@ -167,6 +167,11 @@
   /* Creates a responsive grid of cards */
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
+  align-items: stretch;
+}
+
+.product-grid app-product-card {
+  height: 100%;
 }
 
 mat-paginator {
