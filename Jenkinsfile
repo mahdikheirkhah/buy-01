@@ -416,8 +416,10 @@ pipeline {
                                 docker run --rm \\
                                   --volumes-from jenkins-cicd \\
                                   -v jenkins_m2_cache:/root/.m2 \\
+                                                                    -v /var/run/docker.sock:/var/run/docker.sock \\
                                   -w ${WORKSPACE}/backend \\
                                   --network buy-01_BACKEND \\
+                                                                    -e TESTCONTAINERS_RYUK_DISABLED=true \\
                                   ${MAVEN_IMAGE} \\
                                   mvn clean install sonar:sonar \\
                                     -Dsonar.projectKey=buy-01-backend \\
