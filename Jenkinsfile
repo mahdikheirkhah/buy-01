@@ -1046,23 +1046,7 @@ BACKUP_SCRIPT
     post {
         always {
             script {
-                echo "🧹 Cleanup..."
-
-                try {
-                    def testReportsExist = sh(
-                        script: 'find ${BACKEND_DIR}/*/target/surefire-reports -name "*.xml" -type f 2>/dev/null | wc -l',
-                        returnStdout: true
-                    ).trim().toInteger() > 0
-
-                    if (testReportsExist) {
-                        echo "📊 Collecting test results..."
-                        junit allowEmptyResults: true, testResults: '${BACKEND_DIR}/*/target/surefire-reports/*.xml'
-                    }
-                } catch (Exception e) {
-                    echo "⚠️ Test result collection: ${e.message}"
-                }
-
-                cleanWs notFailBuild: true
+                echo "🧹 Pipeline execution completed"
             }
         }
 
