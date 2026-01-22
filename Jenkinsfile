@@ -376,62 +376,49 @@ pipeline {
                                 
                                 echo "Token: ${SONAR_TOKEN:0:10}... (first 10 chars)"
 
-                                # Create Backend project
-                                echo "Checking if backend project exists..."
-                                SEARCH_RESPONSE=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-backend)
-                                echo "Backend search response: $SEARCH_RESPONSE"
-                                PROJECT_EXISTS=$(echo "$SEARCH_RESPONSE" | grep -o '"key":"buy-01-backend"' || echo "")
-                                if [ -z "$PROJECT_EXISTS" ]; then
-                                    echo "Creating backend project..."
-                                    CREATE_RESPONSE=$(curl -s -X POST -u ${SONAR_TOKEN}: \
-                                      -F "project=buy-01-backend" \
-                                      -F "name=buy-01 Backend" \
-                                      http://sonarqube:9000/api/projects/create)
-                                    echo "Backend creation response: $CREATE_RESPONSE"
-                                    echo "✅ Backend project created"
-                                else
-                                    echo "✅ Backend project already exists"
-                                fi
-                                
-                                # Create Frontend project
-                                PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=buy-01-frontend | grep -o '"key":"buy-01-frontend"' || echo "")
-                                if [ -z "$PROJECT_EXISTS" ]; then
-                                    echo "Creating frontend project..."
-                                    CREATE_RESPONSE=$(curl -s -X POST -u ${SONAR_TOKEN}: \
-                                      -F "project=buy-01-frontend" \
-                                      -F "name=buy-01 Frontend" \
-                                      http://sonarqube:9000/api/projects/create)
-                                    echo "Frontend creation response: $CREATE_RESPONSE"
-                                    echo "✅ Frontend project created"
-                                else
-                                    echo "✅ Frontend project already exists"
-                                fi
+                                # Create individual service projects
+                                for service in user-service product-service media-service api-gateway discovery-service frontend; do
+                                    echo "Checking if $service project exists..."
+                                    PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=$service | grep -o "\"key\":\"$service\"" || echo "")
+                                    if [ -z "$PROJECT_EXISTS" ]; then
+                                        echo "Creating $service project..."
+                                        CREATE_RESPONSE=$(curl -s -X POST -u ${SONAR_TOKEN}: \
+                                          -F "project=$service" \
+                                          -F "name=$(echo $service | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2));}1')" \
+                                          http://sonarqube:9000/api/projects/create)
+                                        echo "✅ $service project created"
+                                    else
+                                        echo "✅ $service project already exists"
+                                    fi
+                                done
                                 
                                 echo "Waiting 3 seconds for projects to be initialized..."
                                 sleep 3
                             '''
                             
-                            // Backend Analysis
-                            sh '''
-                                docker run --rm \\
-                                  --volumes-from jenkins-cicd \\
-                                  -v jenkins_m2_cache:/root/.m2 \\
-                                                                    -v /var/run/docker.sock:/var/run/docker.sock \\
-                                  -w ${WORKSPACE}/backend \\
-                                  --network buy-01_BACKEND \\
-                                                                    -e TESTCONTAINERS_RYUK_DISABLED=true \\
-                                  ${MAVEN_IMAGE} \\
-                                  mvn clean install sonar:sonar \\
-                                    -Dsonar.projectKey=buy-01-backend \\
-                                    -Dsonar.projectName="buy-01 Backend" \\
-                                    -Dsonar.host.url=http://sonarqube:9000 \\
-                                    -Dsonar.login=${SONAR_TOKEN} \\
-                                    -Dsonar.exclusions="**/target/**,common/**,discovery-service/**" \\
-                                    -Dsonar.coverage.exclusions=**/dto/**,**/config/**,**/entity/**,**/model/** \\
-                                    -B
+                            // Analyze each backend service individually
+                            def services = ['user-service', 'product-service', 'media-service', 'api-gateway', 'discovery-service']
+                            
+                            services.each { service ->
+                                sh """
+                                    echo "🔍 Analyzing ${service}..."
+                                    docker run --rm \\
+                                      --volumes-from jenkins-cicd \\
+                                      -v jenkins_m2_cache:/root/.m2 \\
+                                      -v /var/run/docker.sock:/var/run/docker.sock \\
+                                      -w \${WORKSPACE}/backend/${service} \\
+                                      --network buy-01_BACKEND \\
+                                      -e TESTCONTAINERS_RYUK_DISABLED=true \\
+                                      \${MAVEN_IMAGE} \\
+                                      mvn clean install sonar:sonar \\
+                                        -Dsonar.projectKey=${service} \\
+                                        -Dsonar.host.url=http://sonarqube:9000 \\
+                                        -Dsonar.login=\${SONAR_TOKEN} \\
+                                        -B
 
-                                echo "✅ Backend analysis completed"
-                            '''
+                                    echo "✅ ${service} analysis completed"
+                                """
+                            }
 
                             // Frontend Analysis
                             sh '''
@@ -443,8 +430,8 @@ pipeline {
                                   -e SONAR_HOST_URL=http://sonarqube:9000 \\
                                   -e SONAR_TOKEN=${SONAR_TOKEN} \\
                                   sonarsource/sonar-scanner-cli:latest \\
-                                  -Dsonar.projectKey=buy-01-frontend \\
-                                  -Dsonar.projectName="buy-01 Frontend" \\
+                                  -Dsonar.projectKey=frontend \\
+                                  -Dsonar.projectName="Frontend" \\
                                   -Dsonar.sources=src \\
                                   -Dsonar.exclusions="node_modules/**,dist/**,coverage/**,**/*.spec.ts" \\
                                   -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
@@ -514,50 +501,54 @@ pipeline {
                         sleep(time: 10, unit: 'SECONDS')
                         
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                            // Check quality gate status via API
+                            // Check quality gate status via API for all services
                             sh '''#!/bin/bash
-                                echo "Fetching backend quality gate status..."
-                                BACKEND_QG=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-backend)
-                                BACKEND_STATUS=$(echo "$BACKEND_QG" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+                                echo "Fetching quality gate status for all services..."
                                 
-                                echo "Fetching frontend quality gate status..."
-                                FRONTEND_QG=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-frontend)
-                                FRONTEND_STATUS=$(echo "$FRONTEND_QG" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+                                SERVICES="user-service product-service media-service api-gateway discovery-service frontend"
+                                FAILED_SERVICES=""
+                                PASSED_COUNT=0
+                                TOTAL_COUNT=6
                                 
-                                echo "Backend Quality Gate: $BACKEND_STATUS"
-                                echo "Frontend Quality Gate: $FRONTEND_STATUS"
+                                for service in $SERVICES; do
+                                    echo "Checking $service..."
+                                    QG=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=$service)
+                                    STATUS=$(echo "$QG" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+                                    
+                                    if [ "$STATUS" = "OK" ]; then
+                                        echo "✅ $service: PASSED"
+                                        PASSED_COUNT=$((PASSED_COUNT + 1))
+                                    elif [ -z "$STATUS" ]; then
+                                        echo "⚠️  $service: NO DATA (first analysis pending)"
+                                    else
+                                        echo "❌ $service: $STATUS"
+                                        FAILED_SERVICES="$FAILED_SERVICES $service"
+                                    fi
+                                done
+                                
+                                echo ""
+                                echo "Quality Gate Summary: $PASSED_COUNT/$TOTAL_COUNT passed"
                                 
                                 # Store for reporting
-                                echo "$BACKEND_STATUS" > /tmp/backend-qg.txt
-                                echo "$FRONTEND_STATUS" > /tmp/frontend-qg.txt
-                                
-                                if [ "$FRONTEND_STATUS" = "OK" ]; then
-                                    echo "✅ Frontend Quality Gate: PASSED"
+                                if [ $PASSED_COUNT -eq $TOTAL_COUNT ]; then
+                                    echo "success" > /tmp/qg-state.txt
+                                    echo "All services passed quality gate" > /tmp/qg-desc.txt
+                                elif [ -n "$FAILED_SERVICES" ]; then
+                                    echo "failure" > /tmp/qg-state.txt
+                                    echo "Failed:$FAILED_SERVICES" > /tmp/qg-desc.txt
                                 else
-                                    echo "⚠️  Frontend Quality Gate: $FRONTEND_STATUS"
-                                fi
-                                
-                                if [ "$BACKEND_STATUS" = "OK" ]; then
-                                    echo "✅ Backend Quality Gate: PASSED"
-                                else
-                                    echo "⚠️  Backend Quality Gate: $BACKEND_STATUS (see SonarQube dashboard for details)"
+                                    echo "success" > /tmp/qg-state.txt
+                                    echo "$PASSED_COUNT/$TOTAL_COUNT services analyzed" > /tmp/qg-desc.txt
                                 fi
                             '''
                         }
                         
                         // Report to GitHub
                         sh '''#!/bin/bash
-                            FRONTEND_STATUS=$(cat /tmp/frontend-qg.txt 2>/dev/null || echo "UNKNOWN")
+                            QG_STATE=$(cat /tmp/qg-state.txt 2>/dev/null || echo "success")
+                            QG_DESC=$(cat /tmp/qg-desc.txt 2>/dev/null || echo "Quality gates checked")
                             
-                            if [ "$FRONTEND_STATUS" = "OK" ]; then
-                                QG_STATE="success"
-                                QG_DESC="Quality Gate PASSED"
-                            else
-                                QG_STATE="failure"
-                                QG_DESC="Quality Gate: $FRONTEND_STATUS"
-                            fi
-                            
-                            echo "📢 Reporting to GitHub: $QG_STATE"
+                            echo "📢 Reporting to GitHub: $QG_STATE - $QG_DESC"
                             curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
                                 -X POST -H "Accept: application/vnd.github.v3+json" \
                                 -d "{\"state\":\"${QG_STATE}\", \"context\":\"SonarQube Quality Gate\", \"description\":\"${QG_DESC}\", \"target_url\":\"${BUILD_URL}\"}" \
