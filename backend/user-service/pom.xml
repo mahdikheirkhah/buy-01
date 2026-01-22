@@ -97,6 +97,13 @@
             <artifactId>netty-resolver-dns-native-macos</artifactId>
             <classifier>osx-aarch_64</classifier>
         </dependency>
+        <!-- Embedded MongoDB for tests -->
+        <dependency>
+            <groupId>de.flapdoodle.embed</groupId>
+            <artifactId>de.flapdoodle.embed.mongo.spring30x</artifactId>
+            <version>4.9.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
    <build>
