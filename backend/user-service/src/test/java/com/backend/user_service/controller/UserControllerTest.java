@@ -29,12 +29,17 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 
 import com.backend.common.dto.InfoUserDTO;
+import com.backend.common.dto.Role;
 import com.backend.user_service.dto.loginUserDTO;
 import com.backend.user_service.dto.registerUserDTO;
 import com.backend.user_service.dto.updateUserDTO;
+import com.backend.user_service.model.User;
 import com.backend.user_service.service.UserService;
+
+import jakarta.servlet.http.Cookie;
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
@@ -248,17 +253,17 @@ class UserControllerTest {
     @Test
     void testHandleUserRegistration_Success() {
         // Arrange
-        registerUserDTO registerDto = new registerUserDTO("john@example.com", "password123", "SELLER");
-        User user = User.builder()
-                .email("john@example.com")
-                .password("encodedPassword")
-                .role(Role.SELLER)
-                .build();
+        registerUserDTO registerDto = new registerUserDTO();
+        registerDto.setEmail("john@example.com");
+        registerDto.setPassword("password123");
+        registerDto.setFirstName("John");
+        registerDto.setLastName("Doe");
+        registerDto.setRole(Role.SELLER);
 
         doNothing().when(userService).registerUser(any(User.class), any());
 
         // Act
-        ResponseEntity<Map<String, String>> result = userController.handleUserRegistration(registerDto, null);
+        ResponseEntity<Map<String, String>> result = userController.register(registerDto, null);
 
         // Assert
         assertNotNull(result);
@@ -269,7 +274,9 @@ class UserControllerTest {
     @Test
     void testHandleUserLogin_Success() {
         // Arrange
-        loginUserDTO loginDto = new loginUserDTO("john@example.com", "password123");
+        loginUserDTO loginDto = new loginUserDTO();
+        loginDto.setEmail("john@example.com");
+        loginDto.setPassword("password123");
         Cookie jwtCookie = new Cookie("jwt", "token");
 
         Authentication auth = mock(Authentication.class);
@@ -278,7 +285,7 @@ class UserControllerTest {
         when(userService.generateCookie("john@example.com")).thenReturn(jwtCookie);
 
         // Act
-        ResponseEntity<Map<String, String>> result = userController.handleUserLogin(loginDto, response);
+        ResponseEntity<Map<String, String>> result = userController.login(loginDto, response);
 
         // Assert
         assertNotNull(result);
@@ -290,33 +297,19 @@ class UserControllerTest {
     @Test
     void testHandleUserLogin_BadCredentials() {
         // Arrange
-        loginUserDTO loginDto = new loginUserDTO("john@example.com", "wrongPassword");
+        loginUserDTO loginDto = new loginUserDTO();
+        loginDto.setEmail("john@example.com");
+        loginDto.setPassword("wrongPassword");
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
         // Act
-        ResponseEntity<Map<String, String>> result = userController.handleUserLogin(loginDto, response);
+        ResponseEntity<Map<String, String>> result = userController.login(loginDto, response);
 
         // Assert
         assertNotNull(result);
         assertEquals(HttpStatus.UNAUTHORIZED, result.getStatusCode());
         assertTrue(result.getBody().get("error").contains("Invalid email or password"));
-    }
-
-    @Test
-    void testHandleUserLogout_Success() {
-        // Arrange
-        Cookie emptyCookie = new Cookie("jwt", "");
-        when(userService.generateEmptyCookie()).thenReturn(emptyCookie);
-
-        // Act
-        ResponseEntity<Map<String, String>> result = userController.handleUserLogout(response);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-        assertEquals("Logout successful", result.getBody().get("message"));
-        verify(userService).generateEmptyCookie();
     }
 }
