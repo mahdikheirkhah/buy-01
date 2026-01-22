@@ -461,18 +461,18 @@ pipeline {
                             // Frontend Analysis
                             sh '''
                                 echo "🔍 Frontend analysis..."
-                                docker run --rm \\
-                                  --volumes-from jenkins-cicd \\
-                                  -w ${WORKSPACE}/frontend \\
-                                  --network buy-01_BACKEND \\
-                                  -e SONAR_HOST_URL=http://sonarqube:9000 \\
-                                  -e SONAR_TOKEN=${SONAR_TOKEN} \\
-                                  sonarsource/sonar-scanner-cli:latest \\
-                                  -Dsonar.projectKey=frontend \\
-                                  -Dsonar.projectName="Frontend" \\
-                                  -Dsonar.sources=src \\
-                                  -Dsonar.exclusions="node_modules/**,dist/**,coverage/**,**/*.spec.ts" \\
-                                  -Dsonar.coverage.exclusions="**/app.config.ts,**/app.routes.ts,**/models/*.dto.ts,**/models/*.model.ts,**/components/sidenav/sidenav.component.ts,**/components/navbar/navbar.component.ts,**/main.ts,**/index.html" \\
+                                docker run --rm \
+                                  --volumes-from jenkins-cicd \
+                                  -w ${WORKSPACE}/frontend \
+                                  --network buy-01_BACKEND \
+                                  -e SONAR_HOST_URL=http://sonarqube:9000 \
+                                  -e SONAR_TOKEN=${SONAR_TOKEN} \
+                                  sonarsource/sonar-scanner-cli:latest \
+                                  -Dsonar.projectKey=frontend \
+                                  -Dsonar.projectName="Frontend" \
+                                  -Dsonar.sources=src \
+                                  -Dsonar.exclusions="node_modules/**,dist/**,coverage/**,**/*.spec.ts" \
+                                  -Dsonar.coverage.exclusions="**/app.config.ts,**/app.routes.ts,**/models/*.dto.ts,**/models/*.model.ts,**/components/sidenav/sidenav.component.ts,**/components/navbar/navbar.component.ts,**/main.ts,**/index.html" \
                                   -Dsonar.javascript.lcov.reportPaths=coverage/frontend/lcov.info
 
                                 echo "✅ Frontend analysis completed"
