@@ -21,6 +21,7 @@ pipeline {
         booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip deployment')
         booleanParam(name: 'DEPLOY_LOCALLY', defaultValue: true, description: 'Deploy locally without SSH')
         booleanParam(name: 'SKIP_FRONTEND_BUILD', defaultValue: false, description: 'Skip frontend build')
+        booleanParam(name: 'SKIP_GITHUB_STATUS', defaultValue: true, description: 'Skip GitHub status reporting')
     }
 
     environment {
@@ -545,16 +546,20 @@ pipeline {
                         }
                         
                         // Report to GitHub
-                        sh '''#!/bin/bash
-                            QG_STATE=$(cat /tmp/qg-state.txt 2>/dev/null || echo "success")
-                            QG_DESC=$(cat /tmp/qg-desc.txt 2>/dev/null || echo "Quality gates checked")
-                            
-                            echo "📢 Reporting to GitHub: $QG_STATE - $QG_DESC"
-                            curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
-                                -X POST -H "Accept: application/vnd.github.v3+json" \
-                                -d "{\"state\":\"${QG_STATE}\", \"context\":\"SonarQube Quality Gate\", \"description\":\"${QG_DESC}\", \"target_url\":\"${BUILD_URL}\"}" \
-                                https://api.github.com/repos/${GITHUB_REPO}/statuses/${GIT_COMMIT} || echo "⚠️  GitHub reporting failed"
-                        '''
+                        if (params.SKIP_GITHUB_STATUS == false) {
+                            sh '''#!/bin/bash
+                                QG_STATE=$(cat /tmp/qg-state.txt 2>/dev/null || echo "success")
+                                QG_DESC=$(cat /tmp/qg-desc.txt 2>/dev/null || echo "Quality gates checked")
+                                
+                                echo "📢 Reporting to GitHub: $QG_STATE - $QG_DESC"
+                                curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+                                    -X POST -H "Accept: application/vnd.github.v3+json" \
+                                    -d "{\"state\":\"${QG_STATE}\", \"context\":\"SonarQube Quality Gate\", \"description\":\"${QG_DESC}\", \"target_url\":\"${BUILD_URL}\"}" \
+                                    https://api.github.com/repos/${GITHUB_REPO}/statuses/${GIT_COMMIT} || echo "⚠️  GitHub reporting failed"
+                            '''
+                        } else {
+                            echo "⏭️  Skipping GitHub status reporting (SKIP_GITHUB_STATUS=true)"
+                        }
                         
                         echo "✅ Quality Gate check completed"
                     } catch (Exception e) {
@@ -1104,20 +1109,22 @@ BACKUP_SCRIPT
                 }
                 
                 // Report success to GitHub
-                try {
-                    if (env.GIT_COMMIT) {
-                        sh '''
-                            curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
-                                -X POST -H "Accept: application/vnd.github.v3+json" \
-                                -d '{"state":"success", "context":"Jenkins CI", "description":"Build passed", "target_url":"'${BUILD_URL}'"}' \
-                                https://api.github.com/repos/${GITHUB_REPO}/statuses/${GIT_COMMIT} || true
-                        '''
-                        echo "✅ GitHub status reported: SUCCESS"
+                if (params.SKIP_GITHUB_STATUS == false) {
+                    try {
+                        if (env.GIT_COMMIT) {
+                            sh '''
+                                curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+                                    -X POST -H "Accept: application/vnd.github.v3+json" \
+                                    -d '{"state":"success", "context":"Jenkins CI", "description":"Build passed", "target_url":"'${BUILD_URL}'"}' \
+                                    https://api.github.com/repos/${GITHUB_REPO}/statuses/${GIT_COMMIT} || true
+                            '''
+                            echo "✅ GitHub status reported: SUCCESS"
+                        }
+                    } catch (Exception e) {
+                        echo "⚠️ GitHub status report failed: ${e.message}"
                     }
-                } catch (Exception e) {
-                    echo "⚠️ GitHub status report failed: ${e.message}"
-                } catch (Exception e) {
-                    echo "⚠️ Email notification failed: ${e.message}"
+                } else {
+                    echo "⏭️  Skipping GitHub status reporting (SKIP_GITHUB_STATUS=true)"
                 }
             }
         }
@@ -1170,18 +1177,22 @@ BACKUP_SCRIPT
                 }
                 
                 // Report failure to GitHub
-                try {
-                    if (env.GIT_COMMIT) {
-                        sh '''
-                            curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
-                                -X POST -H "Accept: application/vnd.github.v3+json" \
-                                -d '{"state":"failure", "context":"Jenkins CI", "description":"Build failed", "target_url":"'${BUILD_URL}'"}' \
-                                https://api.github.com/repos/${GITHUB_REPO}/statuses/${GIT_COMMIT} || true
-                        '''
-                        echo "❌ GitHub status reported: FAILURE"
+                if (params.SKIP_GITHUB_STATUS == false) {
+                    try {
+                        if (env.GIT_COMMIT) {
+                            sh '''
+                                curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+                                    -X POST -H "Accept: application/vnd.github.v3+json" \
+                                    -d '{"state":"failure", "context":"Jenkins CI", "description":"Build failed", "target_url":"'${BUILD_URL}'"}' \
+                                    https://api.github.com/repos/${GITHUB_REPO}/statuses/${GIT_COMMIT} || true
+                            '''
+                            echo "❌ GitHub status reported: FAILURE"
+                        }
+                    } catch (Exception e) {
+                        echo "⚠️ GitHub status report failed: ${e.message}"
                     }
-                } catch (Exception e) {
-                    echo "⚠️ GitHub status report failed: ${e.message}"
+                } else {
+                    echo "⏭️  Skipping GitHub status reporting (SKIP_GITHUB_STATUS=true)"
                 }
             }
         }
