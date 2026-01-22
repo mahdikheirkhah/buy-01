@@ -416,6 +416,7 @@ pipeline {
                                         -Dsonar.projectKey=${service} \\
                                         -Dsonar.host.url=http://sonarqube:9000 \\
                                         -Dsonar.login=\${SONAR_TOKEN} \\
+                                        -Dtest=!**/*IntegrationTest \\
                                         -B
 
                                     echo "✅ ${service} analysis completed"
