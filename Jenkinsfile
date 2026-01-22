@@ -329,6 +329,7 @@ pipeline {
                           --volumes-from jenkins-cicd \\
                           -w ${WORKSPACE}/frontend \\
                           --cap-add=SYS_ADMIN \\
+                          --user root \\
                           zenika/alpine-chrome:with-node \\
                           sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
                             EXIT_CODE=$?
