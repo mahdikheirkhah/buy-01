@@ -412,6 +412,32 @@ pipeline {
                             services.each { service ->
                                 sh """
                                     echo "🔍 Analyzing ${service}..."
+                                    
+                                    # Define coverage exclusions based on service
+                                    COVERAGE_EXCLUSIONS=""
+                                    case "${service}" in
+                                        "api-gateway")
+                                            # Exclude all files - no tests
+                                            COVERAGE_EXCLUSIONS="**/ApiGatewayApplication.java,**/config/**,**/exception/**,**/util/**"
+                                            ;;
+                                        "discovery-service")
+                                            # Exclude all files - no tests
+                                            COVERAGE_EXCLUSIONS="**/DiscoveryServiceApplication.java,**/config/**"
+                                            ;;
+                                        "dummy-data")
+                                            # Exclude all files - no tests
+                                            COVERAGE_EXCLUSIONS="**/DummyDataApplication.java,**/config/**,**/generator/**"
+                                            ;;
+                                        "common")
+                                            # Exclude all files - shared library, no tests
+                                            COVERAGE_EXCLUSIONS="**/config/**,**/dto/**,**/exception/**,**/util/**"
+                                            ;;
+                                        *)
+                                            # For user-service, product-service, media-service: exclude config/DTOs/Application
+                                            COVERAGE_EXCLUSIONS="**/*Application.java,**/dto/**,**/model/**,**/repository/**,**/config/AdminUserInitializer.java,**/config/SslConfig.java,**/config/MongoConfig.java,**/config/WebClientConfig.java,**/config/SecurityConfig.java,**/config/CustomAuthEntryPoint.java,**/messaging/**"
+                                            ;;
+                                    esac
+                                    
                                     docker run --rm \\
                                       --volumes-from jenkins-cicd \\
                                       -v jenkins_m2_cache:/root/.m2 \\
@@ -424,10 +450,11 @@ pipeline {
                                         -Dsonar.projectKey=${service} \\
                                         -Dsonar.host.url=http://sonarqube:9000 \\
                                         -Dsonar.login=\${SONAR_TOKEN} \\
+                                        -Dsonar.coverage.exclusions=\${COVERAGE_EXCLUSIONS} \\
                                         -Dtest=!**/*IntegrationTest \\
                                         -B
 
-                                    echo "✅ ${service} analysis completed"
+                                    echo "✅ ${service} analysis completed (coverage exclusions: \${COVERAGE_EXCLUSIONS})"
                                 """
                             }
 
@@ -445,7 +472,8 @@ pipeline {
                                   -Dsonar.projectName="Frontend" \\
                                   -Dsonar.sources=src \\
                                   -Dsonar.exclusions="node_modules/**,dist/**,coverage/**,**/*.spec.ts" \\
-                                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                                  -Dsonar.coverage.exclusions="**/app.config.ts,**/app.routes.ts,**/models/*.dto.ts,**/models/*.model.ts,**/components/sidenav/sidenav.component.ts,**/components/navbar/navbar.component.ts,**/main.ts,**/index.html" \\
+                                  -Dsonar.javascript.lcov.reportPaths=coverage/frontend/lcov.info
 
                                 echo "✅ Frontend analysis completed"
                             '''
