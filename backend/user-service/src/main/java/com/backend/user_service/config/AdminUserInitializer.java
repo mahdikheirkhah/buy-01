@@ -25,7 +25,7 @@ public class AdminUserInitializer implements CommandLineRunner {
 
     @SuppressWarnings("java:S2068") // False positive: injected from environment variable
     @Value("${app.admin.password:}")
-    private String adminPassword;
+    private String adminSecret;
 
     @Value("${app.admin.email:admin@admin.com}")
     private String adminEmail;
@@ -43,9 +43,9 @@ public class AdminUserInitializer implements CommandLineRunner {
             log.info(">>> Admin user not found, creating one...");
 
             // Use default if no password configured
-            String passwordToUse = (adminPassword == null || adminPassword.isEmpty())
+            String passwordToUse = (adminSecret == null || adminSecret.isEmpty())
                     ? DEFAULT_ADMIN_PASSWORD
-                    : adminPassword;
+                    : adminSecret;
 
             // Warn if using default password
             if (DEFAULT_ADMIN_PASSWORD.equals(passwordToUse)) { // S2068: comparing constants, not hardcoded password

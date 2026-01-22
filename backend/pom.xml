@@ -34,16 +34,9 @@
         <server.ssl.key-store-type>PKCS12</server.ssl.key-store-type>
         <server.ssl.trust-store-password>changeit</server.ssl.trust-store-password>
         
-        <!-- SonarQube Configuration -->
-        <sonar.projectKey>buy-01-backend</sonar.projectKey>
-        <sonar.projectName>Buy-01 Backend</sonar.projectName>
-        <sonar.exclusions>**/target/**,common/**,discovery-service/**</sonar.exclusions>
-        <sonar.coverage.exclusions>**/dto/**,**/config/**,**/entity/**,**/model/**</sonar.coverage.exclusions>
+        <!-- JaCoCo report path for coverage consumption -->
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <sonar.qualitygate.wait>false</sonar.qualitygate.wait>
-        <!-- Analyze overall code, not just new code -->
-        <sonar.newCode.referenceBranch></sonar.newCode.referenceBranch>
     </properties>
 
     <dependencyManagement>
