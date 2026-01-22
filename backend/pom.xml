@@ -39,6 +39,8 @@
         <sonar.projectName>Buy-01 Backend</sonar.projectName>
         <sonar.exclusions>**/target/**,common/**,discovery-service/**</sonar.exclusions>
         <sonar.coverage.exclusions>**/dto/**,**/config/**,**/entity/**,**/model/**</sonar.coverage.exclusions>
+        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencyManagement>
@@ -121,8 +123,36 @@
                     <artifactId>sonar-maven-plugin</artifactId>
                     <version>3.10.0.2594</version>
                 </plugin>
+                <!-- JaCoCo for test coverage -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.11</version>
+                </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <!-- JaCoCo Plugin - Generate coverage reports -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
