@@ -3,13 +3,11 @@ package com.backend.user_service.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,16 +25,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 
 import com.backend.common.dto.InfoUserDTO;
-import com.backend.common.dto.Role;
-import com.backend.user_service.dto.loginUserDTO;
-import com.backend.user_service.dto.registerUserDTO;
 import com.backend.user_service.dto.updateUserDTO;
-import com.backend.user_service.model.User;
 import com.backend.user_service.service.UserService;
 
 import jakarta.servlet.http.Cookie;
@@ -250,66 +241,11 @@ class UserControllerTest {
         verify(userService).getUserByEmail("john@example.com");
     }
 
-    @Test
-    void testHandleUserRegistration_Success() {
-        // Arrange
-        registerUserDTO registerDto = new registerUserDTO();
-        registerDto.setEmail("john@example.com");
-        registerDto.setPassword("password123");
-        registerDto.setFirstName("John");
-        registerDto.setLastName("Doe");
-        registerDto.setRole(Role.SELLER);
+    // Removed registration test: UserController does not expose registration
+    // endpoint.
 
-        doNothing().when(userService).registerUser(any(User.class), any());
+    // Removed login success test: UserController does not expose login endpoint.
 
-        // Act
-        ResponseEntity<Map<String, String>> result = userController.register(registerDto, null);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-        assertEquals("User registered successfully", result.getBody().get("message"));
-    }
-
-    @Test
-    void testHandleUserLogin_Success() {
-        // Arrange
-        loginUserDTO loginDto = new loginUserDTO();
-        loginDto.setEmail("john@example.com");
-        loginDto.setPassword("password123");
-        Cookie jwtCookie = new Cookie("jwt", "token");
-
-        Authentication auth = mock(Authentication.class);
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(auth);
-        when(userService.generateCookie("john@example.com")).thenReturn(jwtCookie);
-
-        // Act
-        ResponseEntity<Map<String, String>> result = userController.login(loginDto, response);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-        assertEquals("Login successful", result.getBody().get("message"));
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
-    void testHandleUserLogin_BadCredentials() {
-        // Arrange
-        loginUserDTO loginDto = new loginUserDTO();
-        loginDto.setEmail("john@example.com");
-        loginDto.setPassword("wrongPassword");
-
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new BadCredentialsException("Bad credentials"));
-
-        // Act
-        ResponseEntity<Map<String, String>> result = userController.login(loginDto, response);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(HttpStatus.UNAUTHORIZED, result.getStatusCode());
-        assertTrue(result.getBody().get("error").contains("Invalid email or password"));
-    }
+    // Removed login bad credentials test: UserController does not expose login
+    // endpoint.
 }
