@@ -396,10 +396,18 @@ pipeline {
                                 
                                 echo "Waiting 3 seconds for projects to be initialized..."
                                 sleep 3
-                            '''
                             
-                            // Analyze each backend service individually
-                            def services = ['user-service', 'product-service', 'media-service', 'api-gateway', 'discovery-service']
+                            # Run frontend tests with coverage before analysis
+                            echo "Running frontend tests with coverage..."
+                            if [ -d ${WORKSPACE}/frontend ]; then
+                                docker run --rm \
+                                  --volumes-from jenkins-cicd \
+                                  -w ${WORKSPACE}/frontend \
+                                  --cap-add=SYS_ADMIN \
+                                  --user root \
+                                  zenika/alpine-chrome:with-node \
+                                  sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || echo "Frontend tests failed, continuing with analysis"
+                            fi
                             
                             services.each { service ->
                                 sh """
