@@ -1,27 +1,31 @@
 package com.backend.product_service.dto;
 
+import java.util.List;
+
 import com.backend.common.dto.InfoUserDTO;
 import com.backend.common.dto.MediaUploadResponseDTO;
 import com.backend.product_service.model.Product;
-import jakarta.validation.constraints.*;
-import lombok.Data;
 
-import javax.print.attribute.standard.Media;
-import java.util.List;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
 
 @Data
 public class ProductDTO {
     @NotBlank
     String productId;
-    @NotBlank(message = "name is required ")
-    @Size(min = 3, max = 100, message = "name should be between 3 to 100 characters")
+    @NotBlank(message = "Product name cannot be blank")
+    @Size(min = 3, max = 100, message = "Product name requires 3 to 100 characters")
     private String name;
-    @NotBlank(message = "description is required")
-    @Size(min = 5, message = "description should consist at least 5 characters")
+    @NotBlank(message = "Product description cannot be blank")
+    @Size(min = 5, message = "Product description requires minimum 5 characters")
     private String description;
-    @Positive(message = "price should be positive")
+    @Positive(message = "Price value must be positive")
     private Double price;
-    @PositiveOrZero(message = "quantity should be zero or more")
+    @PositiveOrZero(message = "Quantity value must not be negative")
     private Integer quantity;
 
     @NotBlank(message = "First name is required")
@@ -31,7 +35,7 @@ public class ProductDTO {
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
     private String sellerEmail;
-    private boolean CreatedByMe ;
+    private boolean CreatedByMe;
     private List<MediaUploadResponseDTO> media;
 
     public ProductDTO(Product product, InfoUserDTO seller, List<MediaUploadResponseDTO> media) {

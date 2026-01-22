@@ -1,6 +1,7 @@
 package com.backend.product_service.dto;
 
 import com.backend.product_service.model.Product;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -13,19 +14,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateProductDTO {
-    @NotBlank(message = "name is required ")
-    @Size(min = 3, max = 100, message = "name should be between 3 to 100 characters")
+    @NotBlank(message = "Name field is required")
+    @Size(min = 3, max = 100, message = "Name length must be 3-100 characters")
     private String name;
-    @NotBlank(message = "description is required")
-    @Size(min = 5 , message = "description should consist at least 5 characters")
+    @NotBlank(message = "Description field is required")
+    @Size(min = 5, message = "Description must contain at least 5 characters")
     private String description;
-    @Positive(message = "price should be positive")
+    @Positive(message = "Price must be a positive value")
     private Double price;
-    @PositiveOrZero(message = "quantity should be zero or more")
+    @PositiveOrZero(message = "Quantity cannot be negative")
     private Integer quantity;
 
     public Product toProduct() {
-        return  Product
+        return Product
                 .builder()
                 .name(this.name)
                 .description(this.description)
