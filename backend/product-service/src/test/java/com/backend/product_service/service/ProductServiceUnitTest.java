@@ -531,20 +531,7 @@ class ProductServiceUnitTest {
 
         // Assert
         verify(productRepository, never()).findById(anyString());
-    }
-
-    @Test
-    @DisplayName("Should return early when file is empty")
-    void testCreateImageWithEmptyFile() {
-        // Arrange
-        MultipartFile mockFile = mock(MultipartFile.class);
-        when(mockFile.isEmpty()).thenReturn(true);
-
-        // Act
-        productService.createImage(mockFile, "product123", "seller123", "ROLE_SELLER");
-
-        // Assert
-        verify(productRepository, never()).findById(anyString());
+        // Also ensure no webClient call is made
         verify(webClient, never()).post();
     }
 }
