@@ -408,7 +408,9 @@ pipeline {
                                   zenika/alpine-chrome:with-node \
                                   sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || echo "Frontend tests failed, continuing with analysis"
                             fi
+                            '''
                             
+                            def services = ['user-service', 'product-service', 'media-service', 'api-gateway', 'discovery-service', 'common']
                             services.each { service ->
                                 sh """
                                     echo "🔍 Analyzing ${service}..."
