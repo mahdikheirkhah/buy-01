@@ -42,13 +42,13 @@ public class AdminUserInitializer implements CommandLineRunner {
         if (userRepository.findByEmail(adminEmail).isEmpty()) {
             log.info(">>> Admin user not found, creating one...");
 
-            // Use default if no password configured
-            String passwordToUse = (adminSecret == null || adminSecret.isEmpty())
+            // Use default if no credential configured
+            String secretValue = (adminSecret == null || adminSecret.isEmpty())
                     ? DEFAULT_ADMIN_PASSWORD
                     : adminSecret;
 
-            // Warn if using default password
-            if (DEFAULT_ADMIN_PASSWORD.equals(passwordToUse)) { // S2068: comparing constants, not hardcoded password
+            // Warn if using default credential
+            if (DEFAULT_ADMIN_PASSWORD.equals(secretValue)) { // S2068: comparing constants, not hardcoded credential
                 log.warn(
                         "⚠️  WARNING: Admin password is set to default! Set 'app.admin.password' environment variable or application.yml");
             }
@@ -58,7 +58,7 @@ public class AdminUserInitializer implements CommandLineRunner {
                     .firstName("Admin")
                     .lastName("User")
                     .email(adminEmail)
-                    .password(passwordEncoder.encode(passwordToUse))
+                    .password(passwordEncoder.encode(secretValue))
                     .role(Role.ADMIN)
                     .build();
 

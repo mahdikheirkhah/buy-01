@@ -444,44 +444,6 @@ pipeline {
                             
                             sleep(time: 10, unit: 'SECONDS')
                             echo "✅ SonarQube analysis completed"
-                            
-                            // Check quality gates (informational only - allows pipeline to continue)
-                            echo "🔍 Checking SonarQube quality gates and projects..."
-                            sh '''#!/bin/bash
-                                echo "=== Token Validation ==="
-                                if [ -z "${SONAR_TOKEN}" ]; then
-                                    echo "❌ ERROR: SONAR_TOKEN is not set!"
-                                    exit 1
-                                fi
-                                echo "✓ Token is set (length: ${#SONAR_TOKEN})"
-                                echo "✓ Token prefix: ${SONAR_TOKEN:0:10}..."
-                                
-                                echo ""
-                                echo "=== Fetching quality gate status ==="
-                                
-                                echo "Fetching backend quality gate..."
-                                BACKEND_QG=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-backend)
-                                BACKEND_QG_HTTP=$(echo "$BACKEND_QG" | tail -1)
-                                BACKEND_QG_DATA=$(echo "$BACKEND_QG" | head -1)
-                                echo "Backend QG HTTP Status: $BACKEND_QG_HTTP"
-                                echo "Backend QG Response: $BACKEND_QG_DATA"
-                            # Extract ONLY the projectStatus.status field (first occurrence)
-                            BACKEND_STATUS=$(echo "$BACKEND_QG_DATA" | grep -o '"projectStatus":{[^}]*"status":"[^"]*"' | grep -o '"status":"[^"]*"' | head -1 || echo "NOT_FOUND")
-                            
-                            echo "Fetching frontend quality gate..."
-                            FRONTEND_QG=$(curl -s -w "\n%{http_code}" -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=buy-01-frontend)
-                            FRONTEND_QG_HTTP=$(echo "$FRONTEND_QG" | tail -1)
-                            FRONTEND_QG_DATA=$(echo "$FRONTEND_QG" | head -1)
-                            echo "Frontend QG HTTP Status: $FRONTEND_QG_HTTP"
-                            echo "Frontend QG Response: $FRONTEND_QG_DATA"
-                            # Extract ONLY the projectStatus.status field (first occurrence)
-                            FRONTEND_STATUS=$(echo "$FRONTEND_QG_DATA" | grep -o '"projectStatus":{[^}]*"status":"[^"]*"' | grep -o '"status":"[^"]*"' | head -1 || echo "NOT_FOUND")
-                                echo ""
-                                echo "ℹ️  Quality gates are informational - pipeline continues regardless"
-                                echo "Check SonarQube dashboard:"
-                                echo "  - Local:    http://localhost:9000/projects"
-                                echo "  - Jenkins:  http://sonarqube:9000/projects"
-                            '''
                         }
                     } else {
                         echo "⚠️ SonarQube is not available, skipping analysis"
@@ -499,52 +461,58 @@ pipeline {
                 script {
                     echo "📊 Checking SonarQube quality gates..."
                     
-                    try {
-                        // Wait for analysis to complete
-                        sleep(time: 10, unit: 'SECONDS')
-                        
-                        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                            // Check quality gate status via API for all services
-                            sh '''#!/bin/bash
-                                echo "Fetching quality gate status for all services..."
+                    // Wait for analysis to complete
+                    sleep(time: 10, unit: 'SECONDS')
+                    
+                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                        // Check quality gate status via API for all services
+                        def qgResult = sh(script: '''#!/bin/bash
+                            echo "Fetching quality gate status for all services..."
+                            
+                            SERVICES="user-service product-service media-service api-gateway discovery-service frontend"
+                            FAILED_SERVICES=""
+                            PASSED_COUNT=0
+                            TOTAL_COUNT=6
+                            
+                            for service in $SERVICES; do
+                                echo "Checking $service..."
+                                QG=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=$service)
+                                STATUS=$(echo "$QG" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
                                 
-                                SERVICES="user-service product-service media-service api-gateway discovery-service frontend"
-                                FAILED_SERVICES=""
-                                PASSED_COUNT=0
-                                TOTAL_COUNT=6
-                                
-                                for service in $SERVICES; do
-                                    echo "Checking $service..."
-                                    QG=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/qualitygates/project_status?projectKey=$service)
-                                    STATUS=$(echo "$QG" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
-                                    
-                                    if [ "$STATUS" = "OK" ]; then
-                                        echo "✅ $service: PASSED"
-                                        PASSED_COUNT=$((PASSED_COUNT + 1))
-                                    elif [ -z "$STATUS" ]; then
-                                        echo "⚠️  $service: NO DATA (first analysis pending)"
-                                    else
-                                        echo "❌ $service: $STATUS"
-                                        FAILED_SERVICES="$FAILED_SERVICES $service"
-                                    fi
-                                done
-                                
-                                echo ""
-                                echo "Quality Gate Summary: $PASSED_COUNT/$TOTAL_COUNT passed"
-                                
-                                # Store for reporting
-                                if [ $PASSED_COUNT -eq $TOTAL_COUNT ]; then
-                                    echo "success" > /tmp/qg-state.txt
-                                    echo "All services passed quality gate" > /tmp/qg-desc.txt
-                                elif [ -n "$FAILED_SERVICES" ]; then
-                                    echo "failure" > /tmp/qg-state.txt
-                                    echo "Failed:$FAILED_SERVICES" > /tmp/qg-desc.txt
+                                if [ "$STATUS" = "OK" ]; then
+                                    echo "✅ $service: PASSED"
+                                    PASSED_COUNT=$((PASSED_COUNT + 1))
+                                elif [ -z "$STATUS" ]; then
+                                    echo "⚠️  $service: NO DATA (first analysis pending)"
+                                    # Count as passed for first run
+                                    PASSED_COUNT=$((PASSED_COUNT + 1))
                                 else
-                                    echo "success" > /tmp/qg-state.txt
-                                    echo "$PASSED_COUNT/$TOTAL_COUNT services analyzed" > /tmp/qg-desc.txt
+                                    echo "❌ $service: $STATUS"
+                                    FAILED_SERVICES="$FAILED_SERVICES $service"
                                 fi
-                            '''
-                        }
+                            done
+                            
+                            echo ""
+                            echo "Quality Gate Summary: $PASSED_COUNT/$TOTAL_COUNT passed"
+                            
+                            # Store for reporting
+                            if [ $PASSED_COUNT -eq $TOTAL_COUNT ]; then
+                                echo "success" > /tmp/qg-state.txt
+                                echo "All services passed quality gate" > /tmp/qg-desc.txt
+                                exit 0
+                            elif [ -n "$FAILED_SERVICES" ]; then
+                                echo "failure" > /tmp/qg-state.txt
+                                echo "Failed:$FAILED_SERVICES" > /tmp/qg-desc.txt
+                                echo ""
+                                echo "❌ QUALITY GATE FAILED FOR:$FAILED_SERVICES"
+                                echo "Check SonarQube: http://sonarqube:9000/projects"
+                                exit 1
+                            else
+                                echo "success" > /tmp/qg-state.txt
+                                echo "$PASSED_COUNT/$TOTAL_COUNT services analyzed" > /tmp/qg-desc.txt
+                                exit 0
+                            fi
+                        ''', returnStatus: true)
                         
                         // Report to GitHub
                         if (params.SKIP_GITHUB_STATUS == false) {
@@ -562,10 +530,12 @@ pipeline {
                             echo "⏭️  Skipping GitHub status reporting (SKIP_GITHUB_STATUS=true)"
                         }
                         
+                        // Fail pipeline if quality gate failed
+                        if (qgResult != 0) {
+                            error("❌ Quality Gate failed for one or more services. Check SonarQube dashboard.")
+                        }
+                        
                         echo "✅ Quality Gate check completed"
-                    } catch (Exception e) {
-                        echo "⚠️  Quality Gate check error: ${e.message}"
-                        // Continue pipeline even if check fails
                     }
                 }
             }
