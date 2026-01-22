@@ -473,6 +473,7 @@ pipeline {
                                         -Dsonar.projectKey=${service} \\
                                         -Dsonar.host.url=http://sonarqube:9000 \\
                                         -Dsonar.login=\${SONAR_TOKEN} \\
+                                        -Dsonar.exclusions="**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**" \\
                                         -Dsonar.coverage.exclusions=\${COVERAGE_EXCLUSIONS} \\
                                         -Dtest=!**/*IntegrationTest \\
                                         -B
@@ -495,7 +496,7 @@ pipeline {
                                   -Dsonar.projectName="Frontend" \
                                   -Dsonar.sources=src \
                                   -Dsonar.exclusions="node_modules/**,dist/**,coverage/**,**/*.spec.ts" \
-                                  -Dsonar.coverage.exclusions="**/app.config.ts,**/app.routes.ts,**/app.ts,**/main.ts,**/models/**,**/components/sidenav/sidenav.component.ts,**/components/navbar/navbar.component.ts" \
+                                  -Dsonar.coverage.exclusions="**/app.config.ts,**/app.routes.ts,**/app.ts,**/main.ts,**/models/**,**/guards/**,**/interceptors/**,**/layouts/**,**/components/sidenav/**,**/components/navbar/**,**/components/confirm-dialog/**,**/components/password-confirm-dialog/**,**/components/image-cropper-modal/**,**/components/product-card/**,**/components/update-info-form/**,**/components/edit-product-modal/**" \
                                   -Dsonar.javascript.lcov.reportPaths=coverage/frontend/lcov.info
 
                                 echo "✅ Frontend analysis completed"

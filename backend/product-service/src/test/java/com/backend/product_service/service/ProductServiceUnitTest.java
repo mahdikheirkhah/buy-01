@@ -1,10 +1,21 @@
 package com.backend.product_service.service;
 
-import com.backend.common.dto.InfoUserDTO;
-import com.backend.common.exception.CustomException;
-import com.backend.product_service.dto.UpdateProductDTO;
-import com.backend.product_service.model.Product;
-import com.backend.product_service.repository.ProductRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,18 +23,26 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
+import com.backend.common.dto.InfoUserDTO;
+import com.backend.common.dto.MediaUploadResponseDTO;
+import com.backend.common.exception.CustomException;
+import com.backend.product_service.dto.CreateProductDTO;
+import com.backend.product_service.dto.ProductCardDTO;
+import com.backend.product_service.dto.ProductDTO;
+import com.backend.product_service.dto.UpdateProductDTO;
+import com.backend.product_service.model.Product;
+import com.backend.product_service.repository.ProductRepository;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductService Unit Tests")
@@ -37,6 +56,21 @@ class ProductServiceUnitTest {
 
     @Mock
     private WebClient.Builder webClientBuilder;
+
+    @Mock
+    private WebClient webClient;
+
+    @Mock
+    private WebClient.RequestHeadersUriSpec requestHeadersUriSpec;
+
+    @Mock
+    private WebClient.RequestBodyUriSpec requestBodyUriSpec;
+
+    @Mock
+    private WebClient.RequestBodySpec requestBodySpec;
+
+    @Mock
+    private WebClient.ResponseSpec responseSpec;
 
     @Mock
     private KafkaTemplate<String, String> kafkaTemplate;
@@ -313,5 +347,204 @@ class ProductServiceUnitTest {
         assertThat(testProduct.getCreatedAt()).isNotNull();
         assertThat(testProduct.getUpdatedAt()).isNotNull();
     }
-}
 
+    @Test
+    @DisplayName("Should get product by product ID with details")
+    void testGetProductByProductID() {
+        // Arrange
+        when(productRepository.findById("product123")).thenReturn(Optional.of(testProduct));
+        when(webClientBuilder.build()).thenReturn(webClient);
+        when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(anyString(), anyString())).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(InfoUserDTO.class)).thenReturn(Mono.just(testSeller));
+        when(responseSpec.bodyToFlux(MediaUploadResponseDTO.class)).thenReturn(Flux.empty());
+
+        // Act
+        ProductDTO result = productService.getProductByProductID("product123");
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getProductId()).isEqualTo("product123");
+        verify(productRepository).findById("product123");
+    }
+
+    @Test
+    @DisplayName("Should update product successfully")
+    void testUpdateProduct() {
+        // Arrange
+        UpdateProductDTO updateDTO = UpdateProductDTO.builder()
+                .name("Updated Product")
+                .description("Updated Description")
+                .price(149.99)
+                .quantity(20)
+                .build();
+
+        when(productRepository.findById("product123")).thenReturn(Optional.of(testProduct));
+        doNothing().when(productMapper).updateProductFromDto(any(UpdateProductDTO.class), any(Product.class));
+        when(productRepository.save(any(Product.class))).thenReturn(testProduct);
+
+        // Act
+        UpdateProductDTO result = productService.updateProduct("product123", "seller123", updateDTO);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(productRepository).findById("product123");
+        verify(productMapper).updateProductFromDto(eq(updateDTO), any(Product.class));
+        verify(productRepository).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("Should delete product media successfully")
+    void testDeleteProductMedia() {
+        // Arrange
+        when(productRepository.findById("product123")).thenReturn(Optional.of(testProduct));
+        when(webClientBuilder.build()).thenReturn(webClient);
+        when(webClient.delete()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(anyString(), anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(String.class)).thenReturn(Mono.just("Deleted"));
+
+        // Act
+        productService.deleteProductMedia("product123", "seller123", "media456");
+
+        // Assert
+        verify(productRepository).findById("product123");
+        verify(webClient).delete();
+    }
+
+    @Test
+    @DisplayName("Should get product with detail including createdByMe flag")
+    void testGetProductWithDetail() {
+        // Arrange
+        when(productRepository.findById("product123")).thenReturn(Optional.of(testProduct));
+        when(webClientBuilder.build()).thenReturn(webClient);
+        when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(anyString(), anyString())).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(InfoUserDTO.class)).thenReturn(Mono.just(testSeller));
+        when(responseSpec.bodyToFlux(MediaUploadResponseDTO.class)).thenReturn(Flux.empty());
+
+        // Act
+        ProductDTO result = productService.getProductWithDetail("product123", "seller123");
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getProductId()).isEqualTo("product123");
+        assertThat(result.isCreatedByMe()).isTrue();
+        verify(productRepository).findById("product123");
+    }
+
+    @Test
+    @DisplayName("Should get all products with email")
+    void testGetAllProductsWithEmail() {
+        // Arrange
+        List<Product> products = List.of(testProduct);
+        MediaUploadResponseDTO media = new MediaUploadResponseDTO();
+        media.setFileUrl("http://example.com/image.jpg");
+
+        when(webClientBuilder.build()).thenReturn(webClient);
+        when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(anyString())).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(anyString(), anyString())).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(InfoUserDTO.class)).thenReturn(Mono.just(testSeller));
+        when(productRepository.findAllBySellerID("seller123")).thenReturn(products);
+        when(responseSpec.bodyToFlux(MediaUploadResponseDTO.class)).thenReturn(Flux.just(media));
+
+        // Act
+        List<ProductDTO> result = productService.getAllProductsWithEmail("seller@example.com");
+
+        // Assert
+        assertThat(result).isNotEmpty();
+        assertThat(result).hasSize(1);
+        verify(productRepository).findAllBySellerID("seller123");
+    }
+
+    @Test
+    @DisplayName("Should get my products with pagination")
+    void testGetMyProducts() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        List<Product> productList = List.of(testProduct);
+        Page<Product> productPage = new PageImpl<>(productList, pageable, 1);
+
+        when(productRepository.findBySellerID(eq("seller123"), any(Pageable.class))).thenReturn(productPage);
+        when(webClientBuilder.build()).thenReturn(webClient);
+        when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(any(java.util.function.Function.class))).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(any(org.springframework.core.ParameterizedTypeReference.class)))
+                .thenReturn(Mono.just(List.of()));
+
+        // Act
+        Page<ProductCardDTO> result = productService.getMyProducts(pageable, "seller123");
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        verify(productRepository).findBySellerID(eq("seller123"), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("Should create product successfully")
+    void testCreateProduct() {
+        // Arrange
+        CreateProductDTO createDTO = new CreateProductDTO();
+        createDTO.setName("New Product");
+        createDTO.setDescription("New Description");
+        createDTO.setPrice(79.99);
+        createDTO.setQuantity(15);
+
+        Product newProduct = Product.builder()
+                .name("New Product")
+                .description("New Description")
+                .price(79.99)
+                .quantity(15)
+                .build();
+
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> {
+            Product p = inv.getArgument(0);
+            p.setId("newId123");
+            return p;
+        });
+
+        // Act
+        Product result = productService.createProduct("seller123", createDTO);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo("newId123");
+        assertThat(result.getSellerID()).isEqualTo("seller123");
+        verify(productRepository).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("Should not create image when file is empty")
+    void testCreateImageWithEmptyFile() {
+        // Arrange
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(mockFile.isEmpty()).thenReturn(true);
+
+        // Act
+        productService.createImage(mockFile, "product123", "seller123", "ROLE_SELLER");
+
+        // Assert
+        verify(productRepository, never()).findById(anyString());
+    }
+
+    @Test
+    @DisplayName("Should return early when file is empty")
+    void testCreateImageWithEmptyFile() {
+        // Arrange
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(mockFile.isEmpty()).thenReturn(true);
+
+        // Act
+        productService.createImage(mockFile, "product123", "seller123", "ROLE_SELLER");
+
+        // Assert
+        verify(productRepository, never()).findById(anyString());
+        verify(webClient, never()).post();
+    }
+}
