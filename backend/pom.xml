@@ -33,6 +33,12 @@
         <server.ssl.key-store-password>changeit</server.ssl.key-store-password>
         <server.ssl.key-store-type>PKCS12</server.ssl.key-store-type>
         <server.ssl.trust-store-password>changeit</server.ssl.trust-store-password>
+        
+        <!-- SonarQube Configuration -->
+        <sonar.projectKey>buy-01-backend</sonar.projectKey>
+        <sonar.projectName>Buy-01 Backend</sonar.projectName>
+        <sonar.exclusions>**/target/**,common/**,discovery-service/**</sonar.exclusions>
+        <sonar.coverage.exclusions>**/dto/**,**/config/**,**/entity/**,**/model/**</sonar.coverage.exclusions>
     </properties>
 
     <dependencyManagement>
