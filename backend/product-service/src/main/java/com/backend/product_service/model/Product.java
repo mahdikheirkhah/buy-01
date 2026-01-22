@@ -1,17 +1,18 @@
 package com.backend.product_service.model;
 
+import java.time.Instant;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.time.Instant;
 
 @Document(collection = "products")
 @Data
@@ -19,15 +20,15 @@ import java.time.Instant;
 public class Product {
     @Id
     private String id;
-    @NotBlank(message = "name is required ")
-    @Size(min = 3, max = 100, message = "name should be between 3 to 100 characters")
+    @NotBlank(message = "Product name is required")
+    @Size(min = 3, max = 100, message = "Product name must be between 3 and 100 characters")
     private String name;
-    @NotBlank(message = "description is required")
-    @Size(min = 5 , message = "description should consist at least 5 characters")
+    @NotBlank(message = "Product description is required")
+    @Size(min = 5, message = "Product description must be at least 5 characters")
     private String description;
-    @Positive(message = "price should be positive")
+    @Positive(message = "Product price must be positive")
     private Double price;
-    @PositiveOrZero(message = "quantity should be zero or more")
+    @PositiveOrZero(message = "Product quantity must be zero or greater")
     private Integer quantity;
     @NotBlank
     private String sellerID;
