@@ -330,7 +330,7 @@ pipeline {
                           --volumes-from jenkins-cicd \\
                           -w ${WORKSPACE}/frontend \\
                           --cap-add=SYS_ADMIN \\
-                          --user root \\
+                          --user 1000:1000 \\
                           zenika/alpine-chrome:latest \\
                           sh -s <<'EOF'
 npm install --legacy-peer-deps
@@ -406,11 +406,11 @@ EOF
                             if [ -d ${WORKSPACE}/frontend ]; then
                                                                 docker run --rm \
                                                                     --volumes-from jenkins-cicd \
-                                                                    -w ${WORKSPACE}/frontend \
-                                                                    --cap-add=SYS_ADMIN \
-                                                                    --user root \
-                                                                    zenika/alpine-chrome:latest \
-                                                                    sh -s <<'EOF'
+                                                                        -w ${WORKSPACE}/frontend \
+                                                                        --cap-add=SYS_ADMIN \
+                                                                        --user 1000:1000 \
+                                                                        zenika/alpine-chrome:latest \
+                                                                        sh -s <<'EOF'
 npm install --legacy-peer-deps
 CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
 EOF
