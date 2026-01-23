@@ -73,4 +73,94 @@ describe('SidenavComponent', () => {
     expect(component.closeSidenav.emit).toHaveBeenCalled();
     expect(routerMock.navigate).toHaveBeenCalledWith(['/login']);
   });
+
+  it('should handle isSeller with ADMIN role', () => {
+    Object.defineProperty(authServiceMock, 'currentUserRole', {
+      get: () => 'ADMIN',
+      configurable: true
+    });
+
+    const result = component.isSeller();
+
+    expect(result).toBe(false);
+  });
+
+  it('should handle isSeller with null role', () => {
+    Object.defineProperty(authServiceMock, 'currentUserRole', {
+      get: () => null,
+      configurable: true
+    });
+
+    const result = component.isSeller();
+
+    expect(result).toBe(false);
+  });
+
+  it('should handle multiple logout calls', () => {
+    spyOn(component.closeSidenav, 'emit');
+
+    component.logout();
+    expect(authServiceMock.logout).toHaveBeenCalledTimes(1);
+
+    component.logout();
+    expect(authServiceMock.logout).toHaveBeenCalledTimes(2);
+
+    expect(component.closeSidenav.emit).toHaveBeenCalledTimes(2);
+  });
+
+  it('should emit closeSidenav before navigation', (done) => {
+    spyOn(component.closeSidenav, 'emit');
+
+    component.closeSidenav.subscribe(() => {
+      expect(routerMock.navigate).not.toHaveBeenCalled();
+      done();
+    });
+
+    component.logout();
+  });
+
+  it('should handle logout error', () => {
+    authServiceMock.logout.and.returnValue({
+      subscribe: (next: any, error: any) => {
+        error({ status: 500 });
+      }
+    } as any);
+    spyOn(component.closeSidenav, 'emit');
+
+    component.logout();
+
+    expect(authServiceMock.logout).toHaveBeenCalled();
+  });
+
+  it('should return true from isSeller for exact SELLER string', () => {
+    Object.defineProperty(authServiceMock, 'currentUserRole', {
+      get: () => 'SELLER',
+      configurable: true
+    });
+
+    expect(component.isSeller()).toBe(true);
+  });
+
+  it('should return false from isSeller for case-sensitive roles', () => {
+    Object.defineProperty(authServiceMock, 'currentUserRole', {
+      get: () => 'seller',
+      configurable: true
+    });
+
+    expect(component.isSeller()).toBe(false);
+  });
+
+  it('should handle role changes dynamically', () => {
+    Object.defineProperty(authServiceMock, 'currentUserRole', {
+      get: () => 'CLIENT',
+      configurable: true
+    });
+    expect(component.isSeller()).toBe(false);
+
+    Object.defineProperty(authServiceMock, 'currentUserRole', {
+      get: () => 'SELLER',
+      configurable: true
+    });
+    expect(component.isSeller()).toBe(true);
+  });
 });
