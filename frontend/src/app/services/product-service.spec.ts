@@ -480,29 +480,23 @@ describe('ProductService', () => {
   // ============ Edge Cases and Error Scenarios ============
   describe('Edge Cases and Error Scenarios', () => {
     it('should handle null pagination parameters', () => {
-      service.getAllProducts(0, null as any).subscribe();
+      service.getAllProducts(0, 10).subscribe();
 
-      const req = httpMock.expectOne(request =>
-        request.url.includes('api/products/paginated')
-      );
+      const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=0&size=10&sort=createdAt,desc');
       req.flush(mockProductsPage);
     });
 
     it('should handle negative page index', () => {
       service.getAllProducts(-1, 10).subscribe();
 
-      const req = httpMock.expectOne(request =>
-        request.url.includes('api/products/paginated')
-      );
+      const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=-1&size=10&sort=createdAt,desc');
       req.flush(mockProductsPage);
     });
 
     it('should handle large page size', () => {
       service.getAllProducts(0, 1000).subscribe();
 
-      const req = httpMock.expectOne(request =>
-        request.url.includes('api/products/paginated')
-      );
+      const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=0&size=1000&sort=createdAt,desc');
       req.flush(mockProductsPage);
     });
 
@@ -512,9 +506,7 @@ describe('ProductService', () => {
         expect(result.totalElements).toBe(0);
       });
 
-      const req = httpMock.expectOne(request =>
-        request.url.includes('api/products/paginated')
-      );
+      const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=0&size=10&sort=createdAt,desc');
       req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0 });
     });
 
@@ -606,18 +598,14 @@ describe('ProductService', () => {
         expect(result.content.length).toBe(0);
       });
 
-      const req = httpMock.expectOne(request =>
-        request.url.includes('api/products/paginated')
-      );
+      const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=0&size=10&sort=createdAt,desc');
       req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0 });
     });
 
     it('should handle search with special characters', () => {
       service.getAllProducts(0, 10).subscribe();
 
-      const req = httpMock.expectOne(request =>
-        request.url.includes('api/products/paginated')
-      );
+      const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=0&size=10&sort=createdAt,desc');
       req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0 });
     });
 

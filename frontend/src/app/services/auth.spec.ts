@@ -462,9 +462,10 @@ describe('AuthService', () => {
 
     it('should emit currentUser$ when user data changes', (done) => {
       let emissionCount = 0;
-      service.currentUser$.subscribe(() => {
+      service.currentUser$.subscribe(user => {
         emissionCount++;
         if (emissionCount === 2) {
+          expect(user).toEqual(mockUser);
           done();
         }
       });
