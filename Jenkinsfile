@@ -332,14 +332,18 @@ pipeline {
                           --cap-add=SYS_ADMIN \\
                           --user root \\
                           zenika/alpine-chrome:latest \\
-                          sh -c \"npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage\" || {
-                            EXIT_CODE=$?
-                            if [ $EXIT_CODE -eq 124 ]; then
-                                echo "⚠️ Test execution timed out after 180 seconds"
-                                exit 124
-                            fi
+                          sh -s <<'EOF'
+npm install --legacy-peer-deps
+CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
+EOF
+                        EXIT_CODE=$?
+                        if [ $EXIT_CODE -eq 124 ]; then
+                            echo "⚠️ Test execution timed out after 180 seconds"
+                            exit 124
+                        fi
+                        if [ $EXIT_CODE -ne 0 ]; then
                             exit $EXIT_CODE
-                        }
+                        fi
 
                         echo "✅ Frontend unit tests passed"
                     '''
@@ -400,16 +404,20 @@ pipeline {
                             # Run frontend tests with coverage before analysis
                             echo "Running frontend tests with coverage..."
                             if [ -d ${WORKSPACE}/frontend ]; then
-                                docker run --rm \
-                                  --volumes-from jenkins-cicd \
-                                  -w ${WORKSPACE}/frontend \
-                                  --cap-add=SYS_ADMIN \
-                                  --user root \
-                                  zenika/alpine-chrome:latest \
-                                  sh -c \"npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage\" || {
-                                    echo "⚠️ Frontend tests failed, but continuing with analysis"
-                                    echo "Coverage file may not be generated"
-                                }
+                                                                docker run --rm \
+                                                                    --volumes-from jenkins-cicd \
+                                                                    -w ${WORKSPACE}/frontend \
+                                                                    --cap-add=SYS_ADMIN \
+                                                                    --user root \
+                                                                    zenika/alpine-chrome:latest \
+                                                                    sh -s <<'EOF'
+npm install --legacy-peer-deps
+CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
+EOF
+                                                                if [ $? -ne 0 ]; then
+                                                                    echo "⚠️ Frontend tests failed, but continuing with analysis"
+                                                                    echo "Coverage file may not be generated"
+                                                                fi
                                 
                                 # Check if coverage was generated
                                 if [ -f ${WORKSPACE}/frontend/coverage/frontend/lcov.info ]; then
