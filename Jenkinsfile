@@ -331,7 +331,7 @@ pipeline {
                           -w ${WORKSPACE}/frontend \\
                           --cap-add=SYS_ADMIN \\
                           --user root \\
-                          zenika/alpine-chrome:with-node \\
+                          zenika/alpine-chrome:latest \\
                           sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
                             EXIT_CODE=$?
                             if [ $EXIT_CODE -eq 124 ]; then
@@ -405,7 +405,7 @@ pipeline {
                                   -w ${WORKSPACE}/frontend \
                                   --cap-add=SYS_ADMIN \
                                   --user root \
-                                  zenika/alpine-chrome:with-node \
+                                  zenika/alpine-chrome:latest \
                                   sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
                                     echo "⚠️ Frontend tests failed, but continuing with analysis"
                                     echo "Coverage file may not be generated"
