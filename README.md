@@ -1729,7 +1729,10 @@ docker exec -it kafka bash
 
 **Contributors**:
 
-- Mahdi Kheirkhah (Lead Developer)
+- [Mohammad Mahdi Kheirkhah](https://github.com/mahdikheirkhah/)
+- [Fatemeh Kheirkhah](https://github.com/fatemekh78)
+- [Parisa Rahinmi](https://github.com/prahimi94)
+- [Kateryna Ovsiienko](https://github.com/mavka1207)
 
 ---
 
@@ -1744,5 +1747,5 @@ docker exec -it kafka bash
 
 ---
 
-**Last Updated**: January 5, 2026  
+**Last Updated**: January 23, 2026  
 **Version**: 1.0.0
