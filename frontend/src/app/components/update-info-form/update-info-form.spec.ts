@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -7,6 +6,12 @@ import { of, throwError } from 'rxjs';
 import { UpdateInfoForm } from './update-info-form';
 import { UserService } from '../../services/user';
 import { User } from '../../models/user.model';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
+import { CommonModule } from '@angular/common';
 
 describe('UpdateInfoForm', () => {
   let component: UpdateInfoForm;
@@ -27,13 +32,22 @@ describe('UpdateInfoForm', () => {
     userServiceMock.updateUser.and.returnValue(of({} as any));
 
     await TestBed.configureTestingModule({
-      imports: [UpdateInfoForm, HttpClientTestingModule, ReactiveFormsModule],
+      imports: [
+        UpdateInfoForm,
+        HttpClientTestingModule,
+        ReactiveFormsModule,
+        CommonModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        MatProgressSpinnerModule,
+        MatDividerModule
+      ],
       providers: [
         { provide: UserService, useValue: userServiceMock },
         { provide: MatDialogRef, useValue: {} },
         { provide: MAT_DIALOG_DATA, useValue: {} }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(UpdateInfoForm);

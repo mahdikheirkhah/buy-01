@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { ProductDetail } from './product-detail';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { ProductService } from '../../services/product-service';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { CommonModule } from '@angular/common';
 
 describe('ProductDetail', () => {
   let component: ProductDetail;
@@ -44,15 +44,14 @@ describe('ProductDetail', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [ProductDetail, HttpClientTestingModule],
+      imports: [ProductDetail, HttpClientTestingModule, CommonModule, MatDialogModule],
       providers: [
         { provide: ActivatedRoute, useValue: activatedRouteMock },
         { provide: AuthService, useValue: authServiceMock },
         { provide: ProductService, useValue: productServiceMock },
         { provide: Router, useValue: routerMock },
         { provide: MatDialog, useValue: dialogMock }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProductDetail);

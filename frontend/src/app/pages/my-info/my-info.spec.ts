@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { MyInfo } from './my-info';
 import { AuthService } from '../../services/auth';
 import { UserService } from '../../services/user';
 import { Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { CommonModule } from '@angular/common';
 
 describe('MyInfo', () => {
   let component: MyInfo;
@@ -37,14 +37,13 @@ describe('MyInfo', () => {
     dialogMock = jasmine.createSpyObj('MatDialog', ['open']);
 
     await TestBed.configureTestingModule({
-      imports: [MyInfo, HttpClientTestingModule],
+      imports: [MyInfo, HttpClientTestingModule, CommonModule, MatDialogModule],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         { provide: UserService, useValue: userServiceMock },
         { provide: Router, useValue: routerMock },
         { provide: MatDialog, useValue: dialogMock }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyInfo);

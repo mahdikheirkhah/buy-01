@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { HomeComponent } from './home';
 import { AuthService } from '../../services/auth';
 import { ProductService } from '../../services/product-service';
 import { PageEvent } from '@angular/material/paginator';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { CommonModule } from '@angular/common';
 
 describe('Home', () => {
   let component: HomeComponent;
@@ -28,12 +29,11 @@ describe('Home', () => {
     } as any));
 
     await TestBed.configureTestingModule({
-      imports: [HomeComponent],
+      imports: [HomeComponent, HttpClientTestingModule, CommonModule],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         { provide: ProductService, useValue: productServiceMock }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);

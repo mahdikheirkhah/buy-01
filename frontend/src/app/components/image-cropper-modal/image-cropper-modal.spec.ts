@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ImageCropperModal } from './image-cropper-modal';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
+import { CommonModule } from '@angular/common';
 
 describe('ImageCropperModal', () => {
   let component: ImageCropperModal;
@@ -9,8 +9,7 @@ describe('ImageCropperModal', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ImageCropperModal],
-      schemas: [NO_ERRORS_SCHEMA]
+      imports: [ImageCropperModal, CommonModule]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ImageCropperModal);

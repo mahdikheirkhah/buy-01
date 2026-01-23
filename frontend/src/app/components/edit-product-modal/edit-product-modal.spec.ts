@@ -1,12 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { of, throwError } from 'rxjs';
 import { EditProductModal } from './edit-product-modal';
 import { ProductService } from '../../services/product-service';
 import { ProductDetailDTO } from '../../models/product.model';
+import { CommonModule, CurrencyPipe } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTabsModule } from '@angular/material/tabs';
 
 describe('EditProductModal', () => {
   let component: EditProductModal;
@@ -43,13 +50,26 @@ describe('EditProductModal', () => {
     dialogRefMock = jasmine.createSpyObj('MatDialogRef', ['close']);
 
     await TestBed.configureTestingModule({
-      imports: [EditProductModal, HttpClientTestingModule, ReactiveFormsModule],
+      imports: [
+        EditProductModal,
+        HttpClientTestingModule,
+        ReactiveFormsModule,
+        CommonModule,
+        CurrencyPipe,
+        MatDialogModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        MatIconModule,
+        MatProgressSpinnerModule,
+        MatDividerModule,
+        MatTabsModule
+      ],
       providers: [
         { provide: ProductService, useValue: productServiceMock },
         { provide: MatDialogRef, useValue: dialogRefMock },
         { provide: MAT_DIALOG_DATA, useValue: { product: mockProduct } }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(EditProductModal);
