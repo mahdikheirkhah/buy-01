@@ -389,7 +389,9 @@ describe('UserService', () => {
         email: 'test@example.com'
       };
 
-      service.updateUser(nullUpdate).subscribe();
+      service.updateUser(nullUpdate).subscribe((result: any) => {
+        expect(result).toBeTruthy();
+      });
 
       const req = httpMock.expectOne('https://localhost:8443/api/users/me');
       req.flush(mockUpdatedUser);
@@ -402,7 +404,9 @@ describe('UserService', () => {
         email: 'test@example.com'
       };
 
-      service.updateUser(emptyUpdate).subscribe();
+      service.updateUser(emptyUpdate).subscribe((result: any) => {
+        expect(result).toBeTruthy();
+      });
 
       const req = httpMock.expectOne('https://localhost:8443/api/users/me');
       req.flush(mockUpdatedUser);
@@ -416,7 +420,9 @@ describe('UserService', () => {
         email: 'test@example.com'
       };
 
-      service.updateUser(longNameUpdate).subscribe();
+      service.updateUser(longNameUpdate).subscribe((result: any) => {
+        expect(result).toBeTruthy();
+      });
 
       const req = httpMock.expectOne('https://localhost:8443/api/users/me');
       req.flush(mockUpdatedUser);
@@ -429,7 +435,9 @@ describe('UserService', () => {
         email: 'test@example.com'
       };
 
-      service.updateUser(specialUpdate).subscribe();
+      service.updateUser(specialUpdate).subscribe((result: any) => {
+        expect(result).toBeTruthy();
+      });
 
       const req = httpMock.expectOne('https://localhost:8443/api/users/me');
       req.flush(mockUpdatedUser);
@@ -442,7 +450,9 @@ describe('UserService', () => {
         email: 'not-an-email'
       };
 
-      service.updateUser(invalidEmailUpdate).subscribe();
+      service.updateUser(invalidEmailUpdate).subscribe((result: any) => {
+        expect(result).toBeTruthy();
+      });
 
       const req = httpMock.expectOne('https://localhost:8443/api/users/me');
       req.flush(mockUpdatedUser);
@@ -563,7 +573,9 @@ describe('UserService', () => {
         newPassword: 'samePassword'
       };
 
-      service.updateUser(samePasswordUpdate).subscribe();
+      service.updateUser(samePasswordUpdate).subscribe((result: any) => {
+        expect(result).toBeTruthy();
+      });
 
       const req = httpMock.expectOne('https://localhost:8443/api/users/me');
       req.flush(mockUpdatedUser);
@@ -571,7 +583,9 @@ describe('UserService', () => {
 
     it('should handle very long password', () => {
       const veryLongPassword = 'P'.repeat(1000);
-      service.deleteUser(veryLongPassword).subscribe();
+      service.deleteUser(veryLongPassword).subscribe((result: any) => {
+        expect(result).toBeTruthy();
+      });
 
       const req = httpMock.expectOne(request =>
         request.url === 'https://localhost:8443/api/users'
@@ -602,8 +616,12 @@ describe('UserService', () => {
     });
 
     it('should handle concurrent update and delete requests', () => {
-      service.updateUser(mockUpdateUserDTO).subscribe();
-      service.deleteUser('password').subscribe();
+      service.updateUser(mockUpdateUserDTO).subscribe((result: any) => {
+        expect(result).toBeTruthy();
+      });
+      service.deleteUser('password').subscribe((result: any) => {
+        expect(result).toBeTruthy();
+      });
 
       const updateReq = httpMock.expectOne('https://localhost:8443/api/users/me');
       updateReq.flush(mockUpdatedUser);
