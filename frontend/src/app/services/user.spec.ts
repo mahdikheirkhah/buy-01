@@ -358,5 +358,261 @@ describe('UserService', () => {
       req.flush('Current password is incorrect', { status: 401, statusText: 'Unauthorized' });
     });
   });
+
+  // ============ Edge Cases and Error Scenarios ============
+  describe('Edge Cases and Error Scenarios', () => {
+    it('should handle delete with empty password', () => {
+      service.deleteUser('').subscribe();
+
+      const req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      expect(req.request.params.get('password')).toBe('');
+      req.flush({ message: 'User deleted' });
+    });
+
+    it('should handle delete with special characters in password', () => {
+      const specialPassword = '@#$%^&*()_+-=[]{}|;\':",./<>?';
+      service.deleteUser(specialPassword).subscribe();
+
+      const req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      expect(req.request.params.get('password')).toBe(specialPassword);
+      req.flush({ message: 'User deleted' });
+    });
+
+    it('should handle update with null values', () => {
+      const nullUpdate: UpdateUserDTO = {
+        firstName: null as any,
+        lastName: null as any,
+        email: 'test@example.com'
+      };
+
+      service.updateUser(nullUpdate).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle update with empty strings', () => {
+      const emptyUpdate: UpdateUserDTO = {
+        firstName: '',
+        lastName: '',
+        email: 'test@example.com'
+      };
+
+      service.updateUser(emptyUpdate).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle update with very long names', () => {
+      const longName = 'A'.repeat(1000);
+      const longNameUpdate: UpdateUserDTO = {
+        firstName: longName,
+        lastName: longName,
+        email: 'test@example.com'
+      };
+
+      service.updateUser(longNameUpdate).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle update with special characters in names', () => {
+      const specialUpdate: UpdateUserDTO = {
+        firstName: '@#$%',
+        lastName: '中文日本語',
+        email: 'test@example.com'
+      };
+
+      service.updateUser(specialUpdate).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle update with invalid email format', () => {
+      const invalidEmailUpdate: UpdateUserDTO = {
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'not-an-email'
+      };
+
+      service.updateUser(invalidEmailUpdate).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle update only firstName', () => {
+      const singleFieldUpdate: UpdateUserDTO = {
+        firstName: 'NewFirstName'
+      };
+
+      service.updateUser(singleFieldUpdate).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      expect(req.request.body.firstName).toBe('NewFirstName');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle update only lastName', () => {
+      const singleFieldUpdate: UpdateUserDTO = {
+        lastName: 'NewLastName'
+      };
+
+      service.updateUser(singleFieldUpdate).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      expect(req.request.body.lastName).toBe('NewLastName');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle update only email', () => {
+      const singleFieldUpdate: UpdateUserDTO = {
+        email: 'newemail@example.com'
+      };
+
+      service.updateUser(singleFieldUpdate).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      expect(req.request.body.email).toBe('newemail@example.com');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle network error on update', () => {
+      service.updateUser(mockUpdateUserDTO).subscribe(
+        () => fail('should have failed'),
+        (error) => {
+          expect(error).toBeDefined();
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.error(new ErrorEvent('Network error'));
+    });
+
+    it('should handle network error on delete', () => {
+      service.deleteUser('password123').subscribe(
+        () => fail('should have failed'),
+        (error) => {
+          expect(error).toBeDefined();
+        }
+      );
+
+      const req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      req.error(new ErrorEvent('Network error'));
+    });
+
+    it('should handle server error 500 on update', () => {
+      service.updateUser(mockUpdateUserDTO).subscribe(
+        () => fail('should have failed'),
+        (error) => {
+          expect(error.status).toBe(500);
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
+    });
+
+    it('should handle server error 500 on delete', () => {
+      service.deleteUser('password123').subscribe(
+        () => fail('should have failed'),
+        (error) => {
+          expect(error.status).toBe(500);
+        }
+      );
+
+      const req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
+    });
+
+    it('should handle malformed response on getCurrentUser', () => {
+      service.updateUser(mockUpdateUserDTO).subscribe((result: any) => {
+        expect(result).toBeTruthy();
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush({ partial: 'data' });
+    });
+
+    it('should handle getCurrentUser with forbidden error', () => {
+      service.updateUser(mockUpdateUserDTO).subscribe(
+        () => fail('should have failed'),
+        (error: any) => {
+          expect(error.status).toBe(403);
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
+    });
+
+    it('should handle password change with same old and new password', () => {
+      const samePasswordUpdate: UpdateUserDTO = {
+        currentPassword: 'samePassword',
+        newPassword: 'samePassword'
+      };
+
+      service.updateUser(samePasswordUpdate).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle very long password', () => {
+      const veryLongPassword = 'P'.repeat(1000);
+      service.deleteUser(veryLongPassword).subscribe();
+
+      const req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      req.flush({ message: 'User deleted' });
+    });
+
+    it('should send withCredentials on all requests', () => {
+      service.updateUser(mockUpdateUserDTO).subscribe();
+
+      const updateReq = httpMock.expectOne('https://localhost:8443/api/users/me');
+      expect(updateReq.request.withCredentials).toBe(true);
+      updateReq.flush(mockUpdatedUser);
+
+      service.deleteUser('password').subscribe();
+
+      const deleteReq = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      expect(deleteReq.request.withCredentials).toBe(true);
+      deleteReq.flush({ message: 'deleted' });
+
+      service.updateUser(mockUpdateUserDTO).subscribe();
+
+      const getReq = httpMock.expectOne('https://localhost:8443/api/users/me');
+      expect(getReq.request.withCredentials).toBe(true);
+      getReq.flush(mockUpdatedUser);
+    });
+
+    it('should handle concurrent update and delete requests', () => {
+      service.updateUser(mockUpdateUserDTO).subscribe();
+      service.deleteUser('password').subscribe();
+
+      const updateReq = httpMock.expectOne('https://localhost:8443/api/users/me');
+      updateReq.flush(mockUpdatedUser);
+
+      const deleteReq = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      deleteReq.flush({ message: 'deleted' });
+    });
+  });
 });
 

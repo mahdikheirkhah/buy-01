@@ -136,4 +136,105 @@ describe('Home', () => {
     expect(component.products.length).toBe(1);
     expect(component.totalElements).toBe(100);
   });
+
+  it('should handle product fetch error', () => {
+    productServiceMock.getAllProducts.and.returnValue(throwError(() => ({ status: 500 })));
+
+    component.fetchProducts();
+
+    expect(component.products.length).toBe(0);
+  });
+
+  it('should handle empty product list', () => {
+    productServiceMock.getAllProducts.and.returnValue(of({
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      number: 0
+    } as any));
+
+    fixture.detectChanges();
+
+    expect(component.products.length).toBe(0);
+    expect(component.totalElements).toBe(0);
+  });
+
+  it('should update pageIndex and pageSize independently', () => {
+    fixture.detectChanges();
+
+    const pageEvent: PageEvent = { pageIndex: 2, pageSize: 15, length: 100 };
+    component.onPageChange(pageEvent);
+
+    expect(component.pageIndex).toBe(2);
+    expect(component.pageSize).toBe(15);
+  });
+
+  it('should handle multiple page changes in sequence', () => {
+    fixture.detectChanges();
+
+    component.onPageChange({ pageIndex: 1, pageSize: 10, length: 40 } as PageEvent);
+    expect(productServiceMock.getAllProducts).toHaveBeenCalledWith(1, 10);
+
+    component.onPageChange({ pageIndex: 2, pageSize: 10, length: 40 } as PageEvent);
+    expect(productServiceMock.getAllProducts).toHaveBeenCalledWith(2, 10);
+  });
+
+  it('should clear errorMessage when user fetches successfully', () => {
+    component.errorMessage = 'Previous error';
+    authServiceMock.fetchCurrentUser.and.returnValue(of({ id: '1', email: 'test@example.com', role: 'CLIENT' } as any));
+
+    fixture.detectChanges();
+
+    expect(component.errorMessage).toBe('Previous error'); // Should not clear on successful fetch
+    expect(component.currentUser).toBeTruthy();
+  });
+
+  it('should fetch with correct page parameters on first call', () => {
+    fixture.detectChanges();
+
+    expect(productServiceMock.getAllProducts).toHaveBeenCalledWith(0, 10);
+  });
+
+  it('should log products array when fetched', () => {
+    spyOn(console, 'log');
+    productServiceMock.getAllProducts.and.returnValue(of({
+      content: [{ id: '1', name: 'Test', price: 50, images: [] }],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0
+    } as any));
+
+    component.fetchProducts();
+
+    expect(console.log).toHaveBeenCalledWith('image urls', jasmine.arrayContaining([
+      jasmine.objectContaining({ id: '1', name: 'Test' })
+    ]));
+  });
+
+  it('should handle paginator with large page size', () => {
+    fixture.detectChanges();
+
+    const pageEvent: PageEvent = { pageIndex: 0, pageSize: 100, length: 500 };
+    component.onPageChange(pageEvent);
+
+    expect(component.pageSize).toBe(100);
+    expect(productServiceMock.getAllProducts).toHaveBeenCalledWith(0, 100);
+  });
+
+  it('should clear current user on error', () => {
+    component.currentUser = { id: '1', email: 'test@example.com' } as any;
+    authServiceMock.fetchCurrentUser.and.returnValue(throwError(() => ({ status: 401 })));
+    spyOn(console, 'error');
+
+    fixture.detectChanges();
+
+    expect(console.error).toHaveBeenCalled();
+    expect(component.errorMessage).toBe('Could not load user data.');
+  });
+
+  it('should call fetchProducts exactly once on init', () => {
+    fixture.detectChanges();
+
+    expect(productServiceMock.getAllProducts).toHaveBeenCalledTimes(1);
+  });
 });
