@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Router, ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { SidenavComponent } from './sidenav';
 import { AuthService } from '../../services/auth';
 import { User } from '../../models/user.model';
+import { CommonModule } from '@angular/common';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('SidenavComponent', () => {
   let component: SidenavComponent;
@@ -24,13 +25,12 @@ describe('SidenavComponent', () => {
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-      imports: [SidenavComponent, HttpClientTestingModule],
+      imports: [SidenavComponent, HttpClientTestingModule, CommonModule, RouterTestingModule],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         { provide: Router, useValue: routerMock },
         { provide: ActivatedRoute, useValue: { snapshot: { params: {} } } }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SidenavComponent);

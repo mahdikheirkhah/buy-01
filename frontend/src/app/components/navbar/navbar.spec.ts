@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { BehaviorSubject, of } from 'rxjs';
 import { Navbar } from './navbar';
 import { AuthService } from '../../services/auth';
 import { User } from '../../models/user.model';
+import { CommonModule } from '@angular/common';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('Navbar', () => {
   let component: Navbar;
@@ -25,13 +26,12 @@ describe('Navbar', () => {
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-      imports: [Navbar, HttpClientTestingModule],
+      imports: [Navbar, HttpClientTestingModule, CommonModule, RouterTestingModule],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         { provide: Router, useValue: routerMock },
         { provide: ActivatedRoute, useValue: { snapshot: { params: {} } } }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(Navbar);

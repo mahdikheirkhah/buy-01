@@ -1,12 +1,16 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MatDialog } from '@angular/material/dialog';
-import { Router } from '@angular/router';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { Router, RouterLink } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ProductCard } from './product-card';
 import { ProductService } from '../../services/product-service';
 import { ProductCardDTO } from '../../models/productCard.model';
+import { CommonModule } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { CurrencyPipe } from '@angular/common';
 
 describe('ProductCard', () => {
   let component: ProductCard;
@@ -33,13 +37,22 @@ describe('ProductCard', () => {
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-      imports: [ProductCard, HttpClientTestingModule],
+      imports: [
+        ProductCard,
+        HttpClientTestingModule,
+        CommonModule,
+        MatCardModule,
+        MatButtonModule,
+        MatIconModule,
+        CurrencyPipe,
+        MatDialogModule,
+        RouterLink
+      ],
       providers: [
         { provide: ProductService, useValue: productServiceMock },
         { provide: MatDialog, useValue: dialogMock },
         { provide: Router, useValue: routerMock }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProductCard);

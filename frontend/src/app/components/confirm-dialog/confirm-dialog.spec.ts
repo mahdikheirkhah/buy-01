@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialog, ConfirmDialogData } from './confirm-dialog';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
 
 describe('ConfirmDialog', () => {
   let component: ConfirmDialog;
@@ -16,12 +17,11 @@ describe('ConfirmDialog', () => {
     dialogRefMock = jasmine.createSpyObj('MatDialogRef', ['close']);
 
     await TestBed.configureTestingModule({
-      imports: [ConfirmDialog],
+      imports: [ConfirmDialog, CommonModule, MatDialogModule, MatButtonModule],
       providers: [
         { provide: MatDialogRef, useValue: dialogRefMock },
         { provide: MAT_DIALOG_DATA, useValue: mockData }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ConfirmDialog);

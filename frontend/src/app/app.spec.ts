@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { App } from './app';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [App],
-      schemas: [NO_ERRORS_SCHEMA]
+      imports: [App, HttpClientTestingModule, RouterTestingModule]
     }).compileComponents();
   });
 

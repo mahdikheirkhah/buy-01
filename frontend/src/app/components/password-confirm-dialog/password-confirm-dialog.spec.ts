@@ -1,8 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { PasswordConfirmDialog, PasswordDialogData } from './password-confirm-dialog';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
 
 describe('PasswordConfirmDialog', () => {
   let component: PasswordConfirmDialog;
@@ -17,12 +20,19 @@ describe('PasswordConfirmDialog', () => {
     dialogRefMock = jasmine.createSpyObj('MatDialogRef', ['close']);
 
     await TestBed.configureTestingModule({
-      imports: [PasswordConfirmDialog, FormsModule],
+      imports: [
+        PasswordConfirmDialog,
+        FormsModule,
+        CommonModule,
+        MatDialogModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule
+      ],
       providers: [
         { provide: MatDialogRef, useValue: dialogRefMock },
         { provide: MAT_DIALOG_DATA, useValue: mockData }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(PasswordConfirmDialog);

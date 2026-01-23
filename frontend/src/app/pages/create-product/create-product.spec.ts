@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { CreateProduct } from './create-product';
@@ -7,6 +6,12 @@ import { AuthService } from '../../services/auth';
 import { ProductService } from '../../services/product-service';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
 
 describe('CreateProduct', () => {
   let component: CreateProduct;
@@ -26,13 +31,22 @@ describe('CreateProduct', () => {
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-      imports: [CreateProduct, HttpClientTestingModule, ReactiveFormsModule],
+      imports: [
+        CreateProduct,
+        HttpClientTestingModule,
+        ReactiveFormsModule,
+        CommonModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        MatProgressSpinnerModule,
+        MatDividerModule
+      ],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         { provide: ProductService, useValue: productServiceMock },
         { provide: Router, useValue: routerMock }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(CreateProduct);

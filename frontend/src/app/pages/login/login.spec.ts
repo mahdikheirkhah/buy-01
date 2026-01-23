@@ -1,11 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login';
 import { AuthService } from '../../services/auth';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
 
 describe('Login', () => {
   let component: LoginComponent;
@@ -20,13 +25,22 @@ describe('Login', () => {
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-      imports: [LoginComponent, HttpClientTestingModule, FormsModule],
+      imports: [
+        LoginComponent,
+        HttpClientTestingModule,
+        FormsModule,
+        CommonModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        MatProgressSpinnerModule,
+        MatDividerModule
+      ],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         { provide: Router, useValue: routerMock },
         { provide: ActivatedRoute, useValue: { snapshot: { params: {} } } }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(LoginComponent);
