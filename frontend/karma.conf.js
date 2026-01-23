@@ -57,7 +57,20 @@ module.exports = function (config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: false,
-    browsers: ['ChromeHeadless'],
+    customLaunchers: {
+      // CI-friendly headless Chrome with explicit flags to avoid sandbox/dev-shm issues
+      ChromeHeadlessCI: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--no-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--remote-debugging-port=9222',
+          '--single-process',
+        ],
+      },
+    },
+    browsers: ['ChromeHeadlessCI'],
     singleRun: true,
     restartOnFileChange: false,
   });
