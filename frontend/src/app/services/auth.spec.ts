@@ -382,5 +382,173 @@ describe('AuthService', () => {
         done();
       }, 100);
     });
+
+    it('should handle different user roles', (done) => {
+      const sellerUser = { ...mockUser, role: 'SELLER' };
+      service.fetchCurrentUser().subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(sellerUser);
+
+      setTimeout(() => {
+        expect(service.currentUserRole).toBe('SELLER');
+        done();
+      }, 100);
+    });
+
+    it('should handle admin role', (done) => {
+      const adminUser = { ...mockUser, role: 'ADMIN' };
+      service.fetchCurrentUser().subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(adminUser);
+
+      setTimeout(() => {
+        expect(service.currentUserRole).toBe('ADMIN');
+        done();
+      }, 100);
+    });
+  });
+
+  // ============ Edge Cases and Error Scenarios ============
+  describe('Edge Cases and Error Scenarios', () => {
+    it('should handle login with null credentials', () => {
+      service.login(null as any).subscribe({
+        next: () => { },
+        error: (err) => {
+          expect(err).toBeDefined();
+        }
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/auth/login');
+      req.error(new ErrorEvent('Network error'));
+    });
+
+    it('should handle fetchCurrentUser with 401 Unauthorized', () => {
+      service.fetchCurrentUser().subscribe({
+        next: () => { },
+        error: (err) => {
+          expect(err.status).toBe(401);
+        }
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+    });
+
+    it('should handle fetchCurrentUser with 500 Server Error', () => {
+      service.fetchCurrentUser().subscribe({
+        next: () => { },
+        error: (err) => {
+          expect(err.status).toBe(500);
+        }
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush({ message: 'Internal Server Error' }, { status: 500, statusText: 'Server Error' });
+    });
+
+    it('should handle logout with error', () => {
+      service.logout().subscribe({
+        next: () => { },
+        error: (err) => {
+          expect(err).toBeDefined();
+        }
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/logout');
+      req.error(new ErrorEvent('Network error'));
+    });
+
+    it('should emit currentUser$ when user data changes', (done) => {
+      let emissionCount = 0;
+      service.currentUser$.subscribe(() => {
+        emissionCount++;
+        if (emissionCount === 2) {
+          done();
+        }
+      });
+
+      service.fetchCurrentUser().subscribe();
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(mockUser);
+    });
+
+    it('should preserve currentUser$ data after error in fetchCurrentUser', (done) => {
+      // First, set a user
+      service.fetchCurrentUser().subscribe();
+      let req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(mockUser);
+
+      // Then try to fetch again with error
+      setTimeout(() => {
+        service.fetchCurrentUser().subscribe({
+          error: () => {
+            setTimeout(() => {
+              service.currentUser$.subscribe(user => {
+                expect(user).toEqual(mockUser);
+                done();
+              });
+            }, 50);
+          }
+        });
+        req = httpMock.expectOne('https://localhost:8443/api/users/me');
+        req.flush({ message: 'Error' }, { status: 500, statusText: 'Server Error' });
+      }, 100);
+    });
+
+    it('should handle multiple consecutive login attempts', () => {
+      const firstLogin = mockCredentials;
+      const secondLogin = { email: 'jane@example.com', password: 'password456' };
+
+      service.login(firstLogin).subscribe();
+      let req = httpMock.expectOne('https://localhost:8443/api/auth/login');
+      req.flush({ success: true });
+
+      req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(mockUser);
+
+      service.login(secondLogin).subscribe();
+      req = httpMock.expectOne('https://localhost:8443/api/auth/login');
+      req.flush({ success: true });
+
+      req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      const janeDoe = { ...mockUser, email: 'jane@example.com' };
+      req.flush(janeDoe);
+
+      service.currentUser$.subscribe(user => {
+        if (user) {
+          expect(user.email).toBe('jane@example.com');
+        }
+      });
+    });
+
+    it('should handle register with empty password', () => {
+      const formData = new FormData();
+      formData.append('email', 'test@example.com');
+      formData.append('password', '');
+
+      service.register(formData).subscribe({
+        next: () => { },
+        error: (err) => {
+          expect(err).toBeDefined();
+        }
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/auth/register');
+      req.flush({ message: 'Password is required' }, { status: 400, statusText: 'Bad Request' });
+    });
+
+    it('should handle fetchCurrentUser with malformed response', () => {
+      service.fetchCurrentUser().subscribe({
+        next: (user) => {
+          expect(user).toBeTruthy();
+        },
+        error: () => { }
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush({ incomplete: 'data' });
+    });
   });
 });

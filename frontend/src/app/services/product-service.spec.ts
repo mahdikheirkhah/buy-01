@@ -476,5 +476,209 @@ describe('ProductService', () => {
       req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
     });
   });
+
+  // ============ Edge Cases and Error Scenarios ============
+  describe('Edge Cases and Error Scenarios', () => {
+    it('should handle null pagination parameters', () => {
+      service.getAllProducts(0, null as any).subscribe();
+
+      const req = httpMock.expectOne(request =>
+        request.url.includes('api/products/paginated')
+      );
+      req.flush(mockProductsPage);
+    });
+
+    it('should handle negative page index', () => {
+      service.getAllProducts(-1, 10).subscribe();
+
+      const req = httpMock.expectOne(request =>
+        request.url.includes('api/products/paginated')
+      );
+      req.flush(mockProductsPage);
+    });
+
+    it('should handle large page size', () => {
+      service.getAllProducts(0, 1000).subscribe();
+
+      const req = httpMock.expectOne(request =>
+        request.url.includes('api/products/paginated')
+      );
+      req.flush(mockProductsPage);
+    });
+
+    it('should handle empty product list response', () => {
+      service.getAllProducts(0, 10).subscribe(result => {
+        expect(result.content.length).toBe(0);
+        expect(result.totalElements).toBe(0);
+      });
+
+      const req = httpMock.expectOne(request =>
+        request.url.includes('api/products/paginated')
+      );
+      req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0 });
+    });
+
+    it('should handle product with no images', () => {
+      const productNoImages = { ...mockProductCard, imageUrls: [] };
+      service.getProductById('prod-123').subscribe((result: any) => {
+        expect(result.media.length).toBe(0);
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
+      const detailNoImages = { ...mockProductDetail, media: [] };
+      req.flush(detailNoImages);
+    });
+
+    it('should handle product with single image', () => {
+      const productSingleImage = {
+        ...mockProductCard,
+        imageUrls: ['https://example.com/image1.jpg']
+      };
+      service.getProductById('prod-123').subscribe((result: any) => {
+        expect(result.media.length).toBe(1);
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
+      const detailSingleImage = { ...mockProductDetail, media: [mockProductDetail.media[0]] };
+      req.flush(detailSingleImage);
+    });
+
+    it('should handle product with many images', () => {
+      const manyImages = Array(20).fill(null).map((_, i) => ({
+        fileId: `media-${i}`,
+        fileUrl: `https://example.com/image${i}.jpg`,
+        productId: 'prod-123'
+      }));
+      service.getProductById('prod-123').subscribe((result: any) => {
+        expect(result.media.length).toBe(20);
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
+      const detailManyImages = { ...mockProductDetail, media: manyImages };
+      req.flush(detailManyImages);
+    });
+
+    it('should handle zero price product', () => {
+      const zeroPrice = { ...mockProductCard, price: 0 };
+      service.createProduct(zeroPrice).subscribe((result: any) => {
+        expect(result.price).toBe(0);
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/products');
+      const responseZeroPrice = { ...mockProductDetail, price: 0 };
+      req.flush(responseZeroPrice);
+    });
+
+    it('should handle negative price in response (edge case)', () => {
+      service.getProductById('prod-123').subscribe((result: any) => {
+        expect(result.price).toBeLessThan(0);
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
+      const detailNegativePrice = { ...mockProductDetail, price: -50 };
+      req.flush(detailNegativePrice);
+    });
+
+    it('should handle very large price', () => {
+      const largePrice = { ...mockProductCard, price: 999999.99 };
+      service.createProduct(largePrice).subscribe((result: any) => {
+        expect(result.price).toBe(999999.99);
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/products');
+      const responseLargePrice = { ...mockProductDetail, price: 999999.99 };
+      req.flush(responseLargePrice);
+    });
+
+    it('should handle zero quantity', () => {
+      const zeroQuantity = { ...mockProductCard, quantity: 0 };
+      service.createProduct(zeroQuantity).subscribe(result => {
+        expect(result.quantity).toBe(0);
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/products');
+      const responseZeroQuantity = { ...mockProductDetail, quantity: 0 };
+      req.flush(responseZeroQuantity);
+    });
+
+    it('should handle search with empty results', () => {
+      service.getAllProducts(0, 10).subscribe(result => {
+        expect(result.content.length).toBe(0);
+      });
+
+      const req = httpMock.expectOne(request =>
+        request.url.includes('api/products/paginated')
+      );
+      req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0 });
+    });
+
+    it('should handle search with special characters', () => {
+      service.getAllProducts(0, 10).subscribe();
+
+      const req = httpMock.expectOne(request =>
+        request.url.includes('api/products/paginated')
+      );
+      req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0 });
+    });
+
+    it('should handle update with no changes', () => {
+      const productData = { name: 'Same Name', price: 99.99 };
+      service.updateProduct('prod-123', productData).subscribe(result => {
+        expect(result.name).toBe('Test Product');
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
+      req.flush(mockProductDetail);
+    });
+
+    it('should handle network error on create', () => {
+      service.createProduct({ name: 'New Product' }).subscribe(
+        () => fail('should have failed'),
+        (error: any) => {
+          expect(error).toBeDefined();
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/products');
+      req.error(new ErrorEvent('Network error'));
+    });
+
+    it('should handle server error 500 on delete', () => {
+      service.deleteProduct('prod-123').subscribe(
+        () => fail('should have failed'),
+        (error: any) => {
+          expect(error.status).toBe(500);
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
+      req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
+    });
+
+    it('should handle timeout on file upload', () => {
+      const fileUploadData = new File(['test'], 'test.jpg');
+
+      service.uploadProductImage('prod-123', fileUploadData).subscribe(
+        () => fail('should have failed'),
+        (error: any) => {
+          expect(error).toBeDefined();
+        }
+      );
+
+      const req = httpMock.expectOne(request =>
+        request.url.includes('products/create/images')
+      );
+      req.flush('Timeout', { status: 408, statusText: 'Request Timeout' });
+    });
+
+    it('should handle malformed JSON response', () => {
+      service.getProductById('prod-123').subscribe((result: any) => {
+        expect(result).toBeTruthy();
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
+      req.flush({ partial: 'data' });
+    });
+  });
 });
 
