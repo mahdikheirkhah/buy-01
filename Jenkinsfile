@@ -332,7 +332,7 @@ pipeline {
                           --cap-add=SYS_ADMIN \\
                           --user root \\
                           zenika/alpine-chrome:latest \\
-                          sh -c 'npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage' || {
+                          sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage" || {
                             EXIT_CODE=$?
                             if [ $EXIT_CODE -eq 124 ]; then
                                 echo "⚠️ Test execution timed out after 180 seconds"
@@ -406,7 +406,7 @@ pipeline {
                                   --cap-add=SYS_ADMIN \
                                   --user root \
                                   zenika/alpine-chrome:latest \
-                                  sh -c 'npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage' || {
+                                  sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage" || {
                                     echo "⚠️ Frontend tests failed, but continuing with analysis"
                                     echo "Coverage file may not be generated"
                                 }
