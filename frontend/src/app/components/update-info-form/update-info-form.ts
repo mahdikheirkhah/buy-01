@@ -24,8 +24,124 @@ import { MatDividerModule } from '@angular/material/divider';
     MatProgressSpinnerModule,
     MatDividerModule
   ],
-  templateUrl: './update-info-form.html',
-  styleUrls: ['./update-info-form.css']
+  template: `
+    <form [formGroup]="updateForm" (ngSubmit)="onSubmit()" class="update-form">
+      <h3>Update Your Information</h3>
+      <p>Only fill in the fields you wish to change.</p>
+
+      <mat-form-field appearance="fill">
+        <mat-label>First Name</mat-label>
+        <input matInput formControlName="firstName">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Last Name</mat-label>
+        <input matInput formControlName="lastName">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email">
+      </mat-form-field>
+
+      <mat-divider></mat-divider>
+
+      <p class="password-note">
+        To change your <strong>Email</strong> or <strong>Password</strong>,
+        you must provide your Current Password.
+      </p>
+
+      <mat-form-field appearance="fill">
+        <mat-label>New Password</mat-label>
+        <input matInput type="password" formControlName="newPassword" placeholder="Fill to change password">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Current Password</mat-label>
+        <input matInput type="password" formControlName="currentPassword">
+        <mat-error *ngIf="updateForm.controls['currentPassword'].hasError('required')">
+          Current Password is required for this change
+        </mat-error>
+      </mat-form-field>
+
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+      <div *ngIf="successMessage" class="success-message">
+        {{ successMessage }}
+      </div>
+
+      <div class="form-actions" *ngIf="!isLoading">
+        <button mat-button type="button" (click)="onCancel()">Cancel</button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="updateForm.pristine">
+          Save Changes
+        </button>
+      </div>
+
+      <div *ngIf="isLoading" class="spinner-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <span>Updating...</span>
+      </div>
+    </form>
+  `,
+  styles: [`
+    .update-form {
+      padding: 24px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+    }
+
+    h3 {
+      margin-top: 0;
+      color: var(--navy);
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    .password-note {
+      font-size: 0.9rem;
+      color: #555;
+      background-color: #f0f0f0;
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .error-message, .success-message {
+      padding: 12px;
+      border-radius: 4px;
+      margin: 16px 0;
+      text-align: center;
+    }
+
+    .error-message {
+      background-color: #fff0f0;
+      color: #c51111;
+      border: 1px solid #fcc;
+    }
+
+    .success-message {
+      background-color: #f0fff0;
+      color: #0c6e0c;
+      border: 1px solid #cfc;
+    }
+
+    .spinner-container {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+  `]
 })
 export class UpdateInfoForm implements OnInit {
   @Input() currentUser!: User; // We receive the current user

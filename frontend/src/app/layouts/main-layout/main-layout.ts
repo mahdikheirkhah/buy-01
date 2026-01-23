@@ -7,14 +7,38 @@ import { SidenavComponent } from '../../components/sidenav/sidenav.component';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  // ✅ Add all the necessary imports here
   imports: [
     RouterOutlet,
     MatSidenavModule,
     NavbarComponent,
     SidenavComponent
   ],
-  templateUrl: './main-layout.html',
-  styleUrls: ['./main-layout.css']
+  template: `
+    <mat-sidenav-container class="sidenav-container">
+      <mat-sidenav #sidenav mode="over" class="sidenav">
+        <app-sidenav (closeSidenav)="sidenav.close()"></app-sidenav>
+      </mat-sidenav>
+
+      <mat-sidenav-content>
+        <app-navbar (toggleSidenav)="sidenav.toggle()"></app-navbar>
+        <main>
+          <router-outlet></router-outlet>
+        </main>
+      </mat-sidenav-content>
+    </mat-sidenav-container>
+  `,
+  styles: [`
+    .sidenav-container {
+      height: 100vh;
+    }
+
+    main {
+      padding-top: 64px;
+    }
+
+    .sidenav {
+      width: 250px;
+    }
+  `]
 })
-export class MainLayout {}
+export class MainLayout { }

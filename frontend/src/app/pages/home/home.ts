@@ -14,10 +14,79 @@ import { User } from '../../models/user.model';
   imports: [
     CommonModule,
     MatPaginatorModule,
-    ProductCard // Import the reusable card component
+    ProductCard
   ],
-  templateUrl: './home.html',
-  styleUrls: ['./home.css']
+  template: `
+    <div class="home-container">
+      <div *ngIf="currentUser" class="welcome-banner">
+        <h2>Welcome back, {{ currentUser.firstName }}!</h2>
+        <p>Check out the latest products from all our sellers.</p>
+      </div>
+      <div *ngIf="errorMessage" class="error-banner">
+        <p>{{ errorMessage }}</p>
+      </div>
+
+      <div class="product-grid" *ngIf="products.length > 0; else noProducts">
+        <app-product-card
+          *ngFor="let product of products"
+          [product]="product"
+          (edit)="onProductUpdated()"
+          (delete)="onProductDeleted()">
+        </app-product-card>
+      </div>
+
+      <ng-template #noProducts>
+        <p>No products have been listed yet. Check back soon!</p>
+      </ng-template>
+
+      <mat-paginator
+        [length]="totalElements"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 20]"
+        (page)="onPageChange($event)">
+      </mat-paginator>
+    </div>
+  `,
+  styles: [`
+    .home-container {
+      max-width: 1200px;
+      margin: 80px auto 40px;
+      padding: 24px;
+    }
+
+    .welcome-banner {
+      background-color: var(--white);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .welcome-banner h2 {
+      margin-top: 0;
+      color: var(--navy);
+    }
+
+    .error-banner {
+      background-color: #fff0f0;
+      color: #c51111;
+      border: 1px solid #fcc;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    mat-paginator {
+      margin-top: 24px;
+      background-color: var(--background-light);
+    }
+  `]
 })
 export class HomeComponent implements OnInit {
   // User data state
@@ -35,7 +104,7 @@ export class HomeComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private productService: ProductService // Inject ProductService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // 1. Fetch the user (like before)
@@ -44,8 +113,8 @@ export class HomeComponent implements OnInit {
         this.currentUser = user;
       },
       error: (err) => {
-         console.error('Failed to fetch current user:', err);
-         this.errorMessage = 'Could not load user data.';
+        console.error('Failed to fetch current user:', err);
+        this.errorMessage = 'Could not load user data.';
       }
     });
 
@@ -58,7 +127,7 @@ export class HomeComponent implements OnInit {
       this.products = page.content;
       this.totalElements = page.totalElements;
     });
-   console.log("image urls", this.products);
+    console.log("image urls", this.products);
   }
 
   // This is called by the <mat-paginator>
@@ -75,7 +144,7 @@ export class HomeComponent implements OnInit {
     // You could navigate to an edit page here
   }
 
-onProductDeleted(): void {
+  onProductDeleted(): void {
     console.log('Product deleted from home, refreshing list...');
     this.fetchProducts();
   }
