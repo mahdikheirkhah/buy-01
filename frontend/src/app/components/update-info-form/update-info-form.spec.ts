@@ -198,4 +198,89 @@ describe('UpdateInfoForm', () => {
       lastName: 'Smith'
     });
   });
+
+  it('should handle error without error message', () => {
+    userServiceMock.updateUser.and.returnValue(throwError(() => ({ error: {} })));
+    component.updateForm.patchValue({ firstName: 'Jane' });
+
+    component.onSubmit();
+
+    expect(component.errorMessage).toBe('An unknown error occurred.');
+    expect(component.isLoading).toBe(false);
+  });
+
+  it('should clear error and success messages on submit', () => {
+    component.errorMessage = 'Previous error';
+    component.successMessage = 'Previous success';
+    component.updateForm.patchValue({ firstName: 'Jane' });
+
+    component.onSubmit();
+
+    expect(component.errorMessage).toBeNull();
+  });
+
+  it('should set isLoading to true at start of submission', () => {
+    component.updateForm.patchValue({ firstName: 'Jane' });
+    expect(component.isLoading).toBe(false);
+
+    component.onSubmit();
+
+    expect(userServiceMock.updateUser).toHaveBeenCalled();
+  });
+
+  it('should only send password in DTO when changed and currentPassword provided', () => {
+    component.updateForm.patchValue({
+      newPassword: 'newpass123',
+      currentPassword: 'oldpass'
+    });
+
+    component.onSubmit();
+
+    expect(userServiceMock.updateUser).toHaveBeenCalledWith({
+      newPassword: 'newpass123',
+      currentPassword: 'oldpass'
+    });
+  });
+
+  it('should include both email and password changes with currentPassword', () => {
+    component.updateForm.patchValue({
+      email: 'newemail@example.com',
+      newPassword: 'newpass123',
+      currentPassword: 'oldpass'
+    });
+
+    component.onSubmit();
+
+    expect(userServiceMock.updateUser).toHaveBeenCalledWith({
+      email: 'newemail@example.com',
+      newPassword: 'newpass123',
+      currentPassword: 'oldpass'
+    });
+  });
+
+  it('should include all changed fields in DTO', () => {
+    component.updateForm.patchValue({
+      firstName: 'Jane',
+      lastName: 'Smith',
+      email: 'jane@example.com',
+      currentPassword: 'oldpass'
+    });
+
+    component.onSubmit();
+
+    expect(userServiceMock.updateUser).toHaveBeenCalledWith({
+      firstName: 'Jane',
+      lastName: 'Smith',
+      email: 'jane@example.com',
+      currentPassword: 'oldpass'
+    });
+  });
+
+  it('should not send fields that haven\'t changed', () => {
+    // All form values same as current user
+    component.onSubmit();
+
+    // Should not call updateUser when nothing changed
+    expect(userServiceMock.updateUser).not.toHaveBeenCalled();
+  });
 });

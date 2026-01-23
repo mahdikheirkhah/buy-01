@@ -262,4 +262,111 @@ describe('ProductCard', () => {
     expect(mockEvent.stopPropagation).toHaveBeenCalled();
     expect(dialogMock.open).not.toHaveBeenCalled();
   });
+
+  it('should log error on delete failure', () => {
+    const mockEvent = new MouseEvent('click');
+    spyOn(console, 'error');
+    productServiceMock.deleteProduct.and.returnValue(throwError(() => new Error('Delete failed')));
+
+    const dialogRefMock = { afterClosed: () => of(true) };
+    dialogMock.open.and.returnValue(dialogRefMock as any);
+
+    component.onDelete(mockEvent);
+
+    expect(console.error).toHaveBeenCalledWith('Failed to delete product', jasmine.any(Error));
+  });
+
+  it('should log success message on delete', () => {
+    const mockEvent = new MouseEvent('click');
+    spyOn(console, 'log');
+    productServiceMock.deleteProduct.and.returnValue(of('Product deleted successfully'));
+
+    const dialogRefMock = { afterClosed: () => of(true) };
+    dialogMock.open.and.returnValue(dialogRefMock as any);
+
+    component.onDelete(mockEvent);
+
+    expect(console.log).toHaveBeenCalledWith('Product deleted successfully');
+  });
+
+  it('should not call navigate if product is null on card click', () => {
+    component.product = null;
+
+    component.onCardClick();
+
+    expect(routerMock.navigate).not.toHaveBeenCalled();
+  });
+
+  it('should start carousel with multiple images', fakeAsync(() => {
+    component.product = { ...mockProduct, imageUrls: ['/img1.jpg', '/img2.jpg', '/img3.jpg'] };
+    component.currentImageIndex = 0;
+
+    component.ngOnInit();
+    tick(3000);
+
+    expect(component.currentImageIndex).toBe(1);
+
+    tick(3000);
+    expect(component.currentImageIndex).toBe(2);
+
+    tick(3000);
+    expect(component.currentImageIndex).toBe(0); // Wraps around
+
+    component.ngOnDestroy();
+  }));
+
+  it('should not start carousel with single image', fakeAsync(() => {
+    component.product = { ...mockProduct, imageUrls: ['/img1.jpg'] };
+    component.currentImageIndex = 0;
+
+    component.ngOnInit();
+    tick(3000);
+
+    expect(component.currentImageIndex).toBe(0); // Doesn't change
+
+    component.ngOnDestroy();
+  }));
+
+  it('should pause carousel on mouse enter', fakeAsync(() => {
+    component.product = { ...mockProduct, imageUrls: ['/img1.jpg', '/img2.jpg'] };
+    component.currentImageIndex = 0;
+
+    component.ngOnInit();
+    tick(1500); // Half way through interval
+
+    component.onMouseEnter(); // Pause
+
+    tick(3000); // Wait longer than interval
+    expect(component.currentImageIndex).toBe(0); // Hasn't advanced
+
+    component.ngOnDestroy();
+  }));
+
+  it('should restart carousel on mouse leave', fakeAsync(() => {
+    component.product = { ...mockProduct, imageUrls: ['/img1.jpg', '/img2.jpg'] };
+    component.currentImageIndex = 0;
+
+    component.onMouseEnter(); // Pause (no carousel running)
+    component.onMouseLeave(); // Restart
+
+    tick(3000);
+    expect(component.currentImageIndex).toBe(1);
+
+    component.ngOnDestroy();
+  }));
+
+  it('should clear interval on destroy', () => {
+    spyOn(window, 'clearInterval');
+    component.imageChangeInterval = 123;
+
+    component.ngOnDestroy();
+
+    expect(clearInterval).toHaveBeenCalledWith(123);
+  });
+
+  it('should not clear interval if none exists', () => {
+    component.imageChangeInterval = null;
+
+    expect(() => component.ngOnDestroy()).not.toThrow();
+  });
 });
