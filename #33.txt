@@ -1,0 +1,600 @@
+Branch indexing
+19:40:18 Connecting to https://api.github.com using mahdikheirkhah/****** (multi branch for buy-02)
+Obtained Jenkinsfile from 5eec935bd00998628cd65b84a66590426a5a3af9
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins
+ in /var/jenkins_home/workspace/buy-01-multibranch_main
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Declarative: Checkout SCM)
+[Pipeline] checkout
+The recommended git tool is: git
+using credential multi-branch-github
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/buy-01-multibranch_main/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/mahdikheirkhah/buy-01.git # timeout=10
+Fetching without tags
+Fetching upstream changes from https://github.com/mahdikheirkhah/buy-01.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+using GIT_ASKPASS to set credentials multi branch for buy-02
+ > git fetch --no-tags --force --progress -- https://github.com/mahdikheirkhah/buy-01.git +refs/heads/main:refs/remotes/origin/main # timeout=10
+Checking out Revision 5eec935bd00998628cd65b84a66590426a5a3af9 (main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 5eec935bd00998628cd65b84a66590426a5a3af9 # timeout=10
+Commit message: "test(user-service): add AuthController login/register tests; align Role and DTO usage"
+ > git rev-list --no-walk c8c8c312640ca5874d3e6f25afd50cd86890be11 # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $GITHUB_TOKEN or $GITHUB_TOKEN_PSW
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] timeout
+Timeout set to expire in 2 hr 0 min
+[Pipeline] {
+[Pipeline] timestamps
+[Pipeline] {
+[Pipeline] ansiColor
+[Pipeline] {
+19:40:24  
+[Pipeline] stage
+[Pipeline] { (⏳ Initialization)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+19:40:24  ==========================================
+[Pipeline] echo
+19:40:24  🚀 Buy-01 E-Commerce CI/CD Pipeline
+[Pipeline] echo
+19:40:24  ==========================================
+[Pipeline] echo
+19:40:24  Branch: main
+[Pipeline] echo
+19:40:24  Build: #35
+[Pipeline] echo
+19:40:24  Image Tag: 35
+[Pipeline] echo
+19:40:24  Run Tests: true
+[Pipeline] echo
+19:40:24  Run Integration Tests: false
+[Pipeline] echo
+19:40:24  Deploy Locally: true
+[Pipeline] echo
+19:40:24  ==========================================
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (📥 Checkout)
+[Pipeline] echo
+19:40:24  📥 Checking out branch: main
+[Pipeline] checkout
+19:40:24  The recommended git tool is: git
+19:40:24  using credential gitea-credentials
+19:40:24   > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/buy-01-multibranch_main/.git # timeout=10
+19:40:24  Fetching changes from the remote Git repository
+19:40:24   > git config remote.origin.url https://01.gritlab.ax/git/mkheirkh/buy-01.git # timeout=10
+19:40:24  Fetching upstream changes from https://01.gritlab.ax/git/mkheirkh/buy-01.git
+19:40:24   > git --version # timeout=10
+19:40:24   > git --version # 'git version 2.47.3'
+19:40:24  using GIT_ASKPASS to set credentials Gitea Access Token for Buy-01
+19:40:24   > git fetch --tags --force --progress -- https://01.gritlab.ax/git/mkheirkh/buy-01.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+19:40:25   > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+19:40:25  Checking out Revision 5eec935bd00998628cd65b84a66590426a5a3af9 (refs/remotes/origin/main)
+19:40:25   > git config core.sparsecheckout # timeout=10
+19:40:25   > git checkout -f 5eec935bd00998628cd65b84a66590426a5a3af9 # timeout=10
+19:40:25  Commit message: "test(user-service): add AuthController login/register tests; align Role and DTO usage"
+19:40:25   > git rev-list --no-walk c8c8c312640ca5874d3e6f25afd50cd86890be11 # timeout=10
+[Pipeline] echo
+19:40:26  ✅ Checkout completed from Gitea
+[Pipeline] sh
+19:40:26  + git log --oneline -5
+19:40:26  5eec935 test(user-service): add AuthController login/register tests; align Role and DTO usage
+19:40:26  c8c8c31 fix: resolve UserControllerTest compilation errors
+19:40:26  d274a5d chore: add all test improvements and frontend updates
+19:40:26  6108b36 fix: resolve UserServiceUnitTest compilation and stubbing issues
+19:40:26  621d93d fix: eliminate code duplication in product-service validation messages
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🚀 Start SonarQube Early)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+19:40:26  🚀 Starting SonarQube service early (before tests)...
+[Pipeline] sh
+19:40:26  ✅ SonarQube is already running
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🏗️ Build)
+[Pipeline] parallel
+[Pipeline] { (Branch: Backend Build)
+[Pipeline] { (Branch: Frontend Build)
+[Pipeline] stage
+[Pipeline] { (Backend Build)
+[Pipeline] stage
+[Pipeline] { (Frontend Build)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+19:40:26  🏗️ Building backend microservices...
+[Pipeline] sh
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+19:40:27  🏗️ Building frontend...
+[Pipeline] sh
+19:40:27  + docker run --rm --volumes-from jenkins-cicd -w /var/jenkins_home/workspace/buy-01-multibranch_main/backend -v jenkins_m2_cache:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -e TESTCONTAINERS_RYUK_DISABLED=true --network host maven:3.9.6-amazoncorretto-17 mvn clean install -B -DskipTests
+19:40:27  + export NODE_OPTIONS=--max-old-space-size=4096
+19:40:27  + docker run --rm --volumes-from jenkins-cicd -w /var/jenkins_home/workspace/buy-01-multibranch_main/frontend -e NODE_OPTIONS=--max-old-space-size=4096 node:22 sh -c npm install --legacy-peer-deps && npm run build
+19:40:31  [INFO] Scanning for projects...
+19:40:31  
+19:40:31  up to date, audited 558 packages in 3s
+19:40:31  
+19:40:31  108 packages are looking for funding
+19:40:31    run `npm fund` for details
+19:40:31  
+19:40:31  found 0 vulnerabilities
+19:40:31  npm notice
+19:40:31  npm notice New major version of npm available! 10.9.4 -> 11.8.0
+19:40:31  npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.8.0
+19:40:31  npm notice To update run: npm install -g npm@11.8.0
+19:40:31  npm notice
+19:40:31  
+19:40:31  > frontend@0.0.0 build
+19:40:31  > ng build
+19:40:31  
+19:40:31  [INFO] ------------------------------------------------------------------------
+19:40:31  [INFO] Reactor Build Order:
+19:40:31  [INFO] 
+19:40:31  [INFO] backend                                                            [pom]
+19:40:31  [INFO] common                                                             [jar]
+19:40:31  [INFO] discovery-service                                                  [jar]
+19:40:31  [INFO] API Gateway                                                        [jar]
+19:40:31  [INFO] user-service                                                       [jar]
+19:40:31  [INFO] product-service                                                    [jar]
+19:40:31  [INFO] media-service                                                      [jar]
+19:40:31  [INFO] dummy-data                                                         [jar]
+19:40:31  [INFO] 
+19:40:31  [INFO] ------------------------< com.backend:backend >-------------------------
+19:40:31  [INFO] Building backend 0.0.1-SNAPSHOT                                    [1/8]
+19:40:31  [INFO]   from pom.xml
+19:40:31  [INFO] --------------------------------[ pom ]---------------------------------
+19:40:31  [INFO] 
+19:40:31  [INFO] --- clean:3.2.0:clean (default-clean) @ backend ---
+19:40:31  [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/target
+19:40:31  [INFO] 
+19:40:31  [INFO] --- jacoco:0.8.11:prepare-agent (prepare-agent) @ backend ---
+19:40:32  [INFO] argLine set to -javaagent:/root/.m2/repository/org/jacoco/org.jacoco.agent/0.8.11/org.jacoco.agent-0.8.11-runtime.jar=destfile=/var/jenkins_home/workspace/buy-01-multibranch_main/backend/target/jacoco.exec
+19:40:32  [INFO] 
+19:40:32  [INFO] --- jacoco:0.8.11:report (report) @ backend ---
+19:40:32  [INFO] Skipping JaCoCo execution due to missing execution data file.
+19:40:32  [INFO] 
+19:40:32  [INFO] --- install:3.1.1:install (default-install) @ backend ---
+19:40:32  [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/pom.xml to /root/.m2/repository/com/backend/backend/0.0.1-SNAPSHOT/backend-0.0.1-SNAPSHOT.pom
+19:40:32  [INFO] 
+19:40:32  [INFO] -------------------------< com.backend:common >-------------------------
+19:40:32  [INFO] Building common 0.0.1-SNAPSHOT                                     [2/8]
+19:40:32  [INFO]   from common/pom.xml
+19:40:32  [INFO] --------------------------------[ jar ]---------------------------------
+19:40:32  [INFO] 
+19:40:32  [INFO] --- clean:3.2.0:clean (default-clean) @ common ---
+19:40:32  [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/common/target
+19:40:32  [INFO] 
+19:40:32  [INFO] --- jacoco:0.8.11:prepare-agent (prepare-agent) @ common ---
+19:40:32  [INFO] argLine set to -javaagent:/root/.m2/repository/org/jacoco/org.jacoco.agent/0.8.11/org.jacoco.agent-0.8.11-runtime.jar=destfile=/var/jenkins_home/workspace/buy-01-multibranch_main/backend/common/target/jacoco.exec
+19:40:32  [INFO] 
+19:40:32  [INFO] --- resources:3.3.1:resources (default-resources) @ common ---
+19:40:33  [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+19:40:33  [INFO] Copying 1 resource from src/main/resources to target/classes
+19:40:33  [INFO] 
+19:40:33  [INFO] --- compiler:3.13.0:compile (default-compile) @ common ---
+19:40:33  [INFO] Recompiling the module because of changed source code.
+19:40:33  [INFO] Compiling 10 source files with javac [debug release 17] to target/classes
+19:40:33  ❯ Building...
+
+19:40:35  [INFO] 
+19:40:35  [INFO] --- resources:3.3.1:testResources (default-testResources) @ common ---
+19:40:35  [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+19:40:35  [INFO] skip non existing resourceDirectory /var/jenkins_home/workspace/buy-01-multibranch_main/backend/common/src/test/resources
+19:40:35  [INFO] 
+19:40:35  [INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ common ---
+19:40:35  [INFO] No sources to compile
+19:40:35  [INFO] 
+19:40:35  [INFO] --- surefire:3.2.2:test (default-test) @ common ---
+19:40:36  [INFO] Tests are skipped.
+19:40:36  [INFO] 
+19:40:36  [INFO] --- jacoco:0.8.11:report (report) @ common ---
+19:40:36  [INFO] Skipping JaCoCo execution due to missing execution data file.
+19:40:36  [INFO] 
+19:40:36  [INFO] --- jar:3.3.0:jar (default-jar) @ common ---
+19:40:36  [INFO] Building jar: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/common/target/common-0.0.1-SNAPSHOT.jar
+19:40:36  [INFO] 
+19:40:36  [INFO] --- install:3.1.1:install (default-install) @ common ---
+19:40:36  [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/common/pom.xml to /root/.m2/repository/com/backend/common/0.0.1-SNAPSHOT/common-0.0.1-SNAPSHOT.pom
+19:40:36  [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/common/target/common-0.0.1-SNAPSHOT.jar to /root/.m2/repository/com/backend/common/0.0.1-SNAPSHOT/common-0.0.1-SNAPSHOT.jar
+19:40:36  [INFO] 
+19:40:36  [INFO] -------------------< com.backend:discovery-service >--------------------
+19:40:36  [INFO] Building discovery-service 0.0.1-SNAPSHOT                          [3/8]
+19:40:36  [INFO]   from discovery-service/pom.xml
+19:40:36  [INFO] --------------------------------[ jar ]---------------------------------
+
+19:40:36  [INFO] 
+19:40:36  [INFO] --- clean:3.2.0:clean (default-clean) @ discovery-service ---
+19:40:36  [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/target
+19:40:36  [INFO] 
+19:40:36  [INFO] --- jacoco:0.8.11:prepare-agent (prepare-agent) @ discovery-service ---
+19:40:36  [INFO] argLine set to -javaagent:/root/.m2/repository/org/jacoco/org.jacoco.agent/0.8.11/org.jacoco.agent-0.8.11-runtime.jar=destfile=/var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/target/jacoco.exec
+19:40:36  [INFO] 
+19:40:36  [INFO] --- resources:3.3.1:resources (default-resources) @ discovery-service ---
+19:40:36  [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+19:40:36  [INFO] Copying 4 resources from src/main/resources to target/classes
+19:40:36  [INFO] 
+19:40:36  [INFO] --- compiler:3.13.0:compile (default-compile) @ discovery-service ---
+19:40:36  [INFO] Recompiling the module because of changed dependency.
+19:40:36  [INFO] Compiling 2 source files with javac [debug release 17] to target/classes
+19:40:37  [INFO] 
+19:40:37  [INFO] --- resources:3.3.1:testResources (default-testResources) @ discovery-service ---
+19:40:37  [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+19:40:37  [INFO] skip non existing resourceDirectory /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/src/test/resources
+19:40:37  [INFO] 
+19:40:37  [INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ discovery-service ---
+19:40:37  [INFO] Recompiling the module because of changed dependency.
+19:40:37  [INFO] Compiling 1 source file with javac [debug release 17] to target/test-classes
+
+19:40:37  [INFO] 
+19:40:37  [INFO] --- surefire:3.2.2:test (default-test) @ discovery-service ---
+19:40:37  [INFO] Tests are skipped.
+19:40:37  [INFO] 
+19:40:37  [INFO] --- jacoco:0.8.11:report (report) @ discovery-service ---
+19:40:37  [INFO] Skipping JaCoCo execution due to missing execution data file.
+19:40:37  [INFO] 
+19:40:37  [INFO] --- jar:3.3.0:jar (default-jar) @ discovery-service ---
+19:40:37  [INFO] Building jar: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/target/discovery-service-0.0.1-SNAPSHOT.jar
+19:40:37  [INFO] 
+19:40:37  [INFO] --- spring-boot:3.2.8:repackage (default) @ discovery-service ---
+19:40:38  [INFO] Replacing main artifact /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/target/discovery-service-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+19:40:38  [INFO] The original artifact has been renamed to /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/target/discovery-service-0.0.1-SNAPSHOT.jar.original
+19:40:38  [INFO] 
+19:40:38  [INFO] --- install:3.1.1:install (default-install) @ discovery-service ---
+19:40:38  [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/pom.xml to /root/.m2/repository/com/backend/discovery-service/0.0.1-SNAPSHOT/discovery-service-0.0.1-SNAPSHOT.pom
+19:40:38  [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/target/discovery-service-0.0.1-SNAPSHOT.jar to /root/.m2/repository/com/backend/discovery-service/0.0.1-SNAPSHOT/discovery-service-0.0.1-SNAPSHOT.jar
+
+19:40:38  [INFO] 
+19:40:38  [INFO] ----------------------< com.backend:api-gateway >-----------------------
+19:40:38  [INFO] Building API Gateway 0.0.1-SNAPSHOT                                [4/8]
+19:40:38  [INFO]   from api-gateway/pom.xml
+19:40:38  [INFO] --------------------------------[ jar ]---------------------------------
+19:40:38  [INFO] 
+19:40:38  [INFO] --- clean:3.2.0:clean (default-clean) @ api-gateway ---
+19:40:38  [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/target
+19:40:38  [INFO] 
+19:40:38  [INFO] --- jacoco:0.8.11:prepare-agent (prepare-agent) @ api-gateway ---
+19:40:38  [INFO] argLine set to -javaagent:/root/.m2/repository/org/jacoco/org.jacoco.agent/0.8.11/org.jacoco.agent-0.8.11-runtime.jar=destfile=/var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/target/jacoco.exec
+19:40:38  [INFO] 
+19:40:38  [INFO] --- resources:3.3.1:resources (default-resources) @ api-gateway ---
+19:40:38  [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+19:40:38  [INFO] Copying 4 resources from src/main/resources to target/classes
+19:40:38  [INFO] 
+19:40:38  [INFO] --- compiler:3.13.0:compile (default-compile) @ api-gateway ---
+19:40:38  [INFO] Recompiling the module because of changed dependency.
+19:40:38  [INFO] Compiling 9 source files with javac [debug release 17] to target/classes
+19:40:39  [INFO] 
+19:40:39  [INFO] --- resources:3.3.1:testResources (default-testResources) @ api-gateway ---
+19:40:39  [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+19:40:39  [INFO] skip non existing resourceDirectory /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/src/test/resources
+19:40:39  [INFO] 
+19:40:39  [INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ api-gateway ---
+19:40:39  [INFO] Recompiling the module because of changed dependency.
+19:40:39  [INFO] Compiling 1 source file with javac [debug release 17] to target/test-classes
+19:40:39  [INFO] 
+19:40:39  [INFO] --- surefire:3.2.2:test (default-test) @ api-gateway ---
+19:40:39  [INFO] Tests are skipped.
+19:40:39  [INFO] 
+19:40:39  [INFO] --- jacoco:0.8.11:report (report) @ api-gateway ---
+19:40:39  [INFO] Skipping JaCoCo execution due to missing execution data file.
+19:40:39  [INFO] 
+19:40:39  [INFO] --- jar:3.3.0:jar (default-jar) @ api-gateway ---
+19:40:39  [INFO] Building jar: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar
+19:40:39  [INFO] 
+19:40:39  [INFO] --- spring-boot:3.2.8:repackage (default) @ api-gateway ---
+
+19:40:39  [INFO] Replacing main artifact /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+19:40:39  [INFO] The original artifact has been renamed to /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar.original
+19:40:39  [INFO] 
+19:40:39  [INFO] --- install:3.1.1:install (default-install) @ api-gateway ---
+19:40:39  [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/pom.xml to /root/.m2/repository/com/backend/api-gateway/0.0.1-SNAPSHOT/api-gateway-0.0.1-SNAPSHOT.pom
+19:40:39  [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar to /root/.m2/repository/com/backend/api-gateway/0.0.1-SNAPSHOT/api-gateway-0.0.1-SNAPSHOT.jar
+19:40:39  [INFO] 
+19:40:39  [INFO] ----------------------< com.backend:user-service >----------------------
+19:40:39  [INFO] Building user-service 0.0.1-SNAPSHOT                               [5/8]
+19:40:39  [INFO]   from user-service/pom.xml
+19:40:39  [INFO] --------------------------------[ jar ]---------------------------------
+19:40:39  [INFO] 
+19:40:39  [INFO] --- clean:3.2.0:clean (default-clean) @ user-service ---
+19:40:39  [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target
+19:40:39  [INFO] 
+19:40:39  [INFO] --- jacoco:0.8.11:prepare-agent (prepare-agent) @ user-service ---
+19:40:40  ✔ Building...
+19:40:40  Initial chunk files   | Names         |  Raw size | Estimated transfer size
+19:40:40  main-MWC6RIM6.js      | main          | 933.82 kB |               191.86 kB
+19:40:40  styles-Q77YOUOS.css   | styles        |  96.44 kB |                 7.22 kB
+19:40:40  polyfills-5CFQRCPP.js | polyfills     |  34.59 kB |                11.33 kB
+19:40:40  
+19:40:40                        | Initial total |   1.06 MB |               210.41 kB
+19:40:40  
+19:40:40  Application bundle generation complete. [6.567 seconds] - 2026-01-22T17:40:39.894Z
+19:40:40  
+19:40:40  ▲ [WARNING] NG8113: EditProductModal is not used within the template of ProductCard [plugin angular-compiler]
+19:40:40  
+19:40:40      src/app/components/product-card/product-card.ts:25:4:
+19:40:40        25 │     EditProductModal
+19:40:40           ╵     ~~~~~~~~~~~~~~~~
+19:40:40  
+19:40:40  
+19:40:40  ▲ [WARNING] NG8113: RouterLink is not used within the template of CreateProduct [plugin angular-compiler]
+19:40:40  
+19:40:40      src/app/pages/create-product/create-product.ts:19:4:
+19:40:40        19 │     RouterLink,
+19:40:40           ╵     ~~~~~~~~~~
+19:40:40  
+19:40:40  
+19:40:40  ▲ [WARNING] NG8113: PasswordConfirmDialog is not used within the template of MyInfo [plugin angular-compiler]
+19:40:40  
+19:40:40      src/app/pages/my-info/my-info.ts:32:4:
+19:40:40        32 │     PasswordConfirmDialog,
+19:40:40           ╵     ~~~~~~~~~~~~~~~~~~~~~
+19:40:40  
+19:40:40  
+19:40:40  ▲ [WARNING] NG8113: ConfirmDialog is not used within the template of MyInfo [plugin angular-compiler]
+19:40:40  
+19:40:40      src/app/pages/my-info/my-info.ts:33:4:
+19:40:40        33 │     ConfirmDialog,
+19:40:40           ╵     ~~~~~~~~~~~~~
+19:40:40  
+19:40:40  
+19:40:40  Output location: /var/jenkins_home/workspace/buy-01-multibranch_main/frontend/dist/frontend
+19:40:40  
+19:40:40  [INFO] argLine set to -javaagent:/root/.m2/repository/org/jacoco/org.jacoco.agent/0.8.11/org.jacoco.agent-0.8.11-runtime.jar=destfile=/var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target/jacoco.exec
+19:40:40  [INFO] 
+19:40:40  [INFO] --- resources:3.3.1:resources (default-resources) @ user-service ---
+19:40:40  [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+19:40:40  [INFO] Copying 4 resources from src/main/resources to target/classes
+19:40:40  [INFO] 
+19:40:40  [INFO] --- compiler:3.11.0:compile (default-compile) @ user-service ---
+19:40:40  [INFO] Changes detected - recompiling the module! :dependency
+19:40:40  [INFO] Compiling 14 source files with javac [debug release 17] to target/classes
+
+19:40:40  + [ -d /var/jenkins_home/workspace/buy-01-multibranch_main/frontend/dist ]
+19:40:40  + echo ✅ Frontend dist created
+19:40:40  ✅ Frontend dist created
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+19:40:41  [WARNING] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/src/main/java/com/backend/user_service/repository/UserMapper.java:[12,10] Unmapped target properties: "id, password, role, avatarUrl".
+19:40:41  [INFO] 
+19:40:41  [INFO] --- resources:3.3.1:testResources (default-testResources) @ user-service ---
+19:40:41  [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+19:40:41  [INFO] Copying 2 resources from src/test/resources to target/test-classes
+19:40:41  [INFO] 
+19:40:41  [INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ user-service ---
+19:40:41  [INFO] Changes detected - recompiling the module! :dependency
+19:40:41  [INFO] Compiling 5 source files with javac [debug release 17] to target/test-classes
+
+19:40:42  [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/src/test/java/com/backend/user_service/service/UserServiceUnitTest.java: Some input files use unchecked or unsafe operations.
+19:40:42  [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/src/test/java/com/backend/user_service/service/UserServiceUnitTest.java: Recompile with -Xlint:unchecked for details.
+19:40:42  [INFO] 
+19:40:42  [INFO] --- surefire:3.2.2:test (default-test) @ user-service ---
+19:40:42  [INFO] Tests are skipped.
+19:40:42  [INFO] 
+19:40:42  [INFO] --- jacoco:0.8.11:report (report) @ user-service ---
+19:40:42  [INFO] Skipping JaCoCo execution due to missing execution data file.
+19:40:42  [INFO] 
+19:40:42  [INFO] --- jar:3.3.0:jar (default-jar) @ user-service ---
+19:40:42  [INFO] Building jar: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target/user-service-0.0.1-SNAPSHOT.jar
+19:40:42  [INFO] 
+19:40:42  [INFO] --- spring-boot:3.2.8:repackage (default) @ user-service ---
+19:40:42  [INFO] Replacing main artifact /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target/user-service-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+19:40:42  [INFO] The original artifact has been renamed to /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target/user-service-0.0.1-SNAPSHOT.jar.original
+19:40:42  [INFO] 
+19:40:42  [INFO] --- install:3.1.1:install (default-install) @ user-service ---
+19:40:42  [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/pom.xml to /root/.m2/repository/com/backend/user-service/0.0.1-SNAPSHOT/user-service-0.0.1-SNAPSHOT.pom
+19:40:42  [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target/user-service-0.0.1-SNAPSHOT.jar to /root/.m2/repository/com/backend/user-service/0.0.1-SNAPSHOT/user-service-0.0.1-SNAPSHOT.jar
+
+19:40:42  [INFO] 
+19:40:42  [INFO] --------------------< com.backend:product-service >---------------------
+19:40:42  [INFO] Building product-service 0.0.1-SNAPSHOT                            [6/8]
+19:40:42  [INFO]   from product-service/pom.xml
+19:40:42  [INFO] --------------------------------[ jar ]---------------------------------
+19:40:42  [INFO] 
+19:40:42  [INFO] --- clean:3.2.0:clean (default-clean) @ product-service ---
+19:40:42  [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/target
+19:40:42  [INFO] 
+19:40:42  [INFO] --- jacoco:0.8.11:prepare-agent (prepare-agent) @ product-service ---
+19:40:42  [INFO] argLine set to -javaagent:/root/.m2/repository/org/jacoco/org.jacoco.agent/0.8.11/org.jacoco.agent-0.8.11-runtime.jar=destfile=/var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/target/jacoco.exec
+19:40:42  [INFO] 
+19:40:42  [INFO] --- resources:3.3.1:resources (default-resources) @ product-service ---
+19:40:42  [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+19:40:42  [INFO] Copying 4 resources from src/main/resources to target/classes
+19:40:42  [INFO] 
+19:40:42  [INFO] --- compiler:3.11.0:compile (default-compile) @ product-service ---
+19:40:42  [INFO] Changes detected - recompiling the module! :dependency
+19:40:42  [INFO] Compiling 15 source files with javac [debug release 17] to target/classes
+
+19:40:43  [WARNING] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/src/main/java/com/backend/product_service/service/ProductMapper.java:[14,10] Unmapped target properties: "id, sellerID, createdAt, updatedAt".
+19:40:43  [INFO] 
+19:40:43  [INFO] --- resources:3.3.1:testResources (default-testResources) @ product-service ---
+19:40:43  [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+19:40:43  [INFO] Copying 1 resource from src/test/resources to target/test-classes
+19:40:43  [INFO] 
+19:40:43  [INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ product-service ---
+19:40:43  [INFO] Changes detected - recompiling the module! :dependency
+19:40:43  [INFO] Compiling 5 source files with javac [debug release 17] to target/test-classes
+19:40:44  [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/src/test/java/com/backend/product_service/TestKafkaConfig.java: Some input files use unchecked or unsafe operations.
+19:40:44  [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/src/test/java/com/backend/product_service/TestKafkaConfig.java: Recompile with -Xlint:unchecked for details.
+19:40:44  [INFO] -------------------------------------------------------------
+19:40:44  [ERROR] COMPILATION ERROR : 
+19:40:44  [INFO] -------------------------------------------------------------
+19:40:44  [ERROR] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/src/test/java/com/backend/product_service/service/ProductServiceUnitTest.java:[538,10] method testCreateImageWithEmptyFile() is already defined in class com.backend.product_service.service.ProductServiceUnitTest
+19:40:44  [INFO] 1 error
+19:40:44  [INFO] -------------------------------------------------------------
+19:40:44  [INFO] ------------------------------------------------------------------------
+19:40:44  [INFO] Reactor Summary for backend 0.0.1-SNAPSHOT:
+19:40:44  [INFO] 
+19:40:44  [INFO] backend ............................................ SUCCESS [  0.417 s]
+19:40:44  [INFO] common ............................................. SUCCESS [  4.021 s]
+19:40:44  [INFO] discovery-service .................................. SUCCESS [  2.438 s]
+19:40:44  [INFO] API Gateway ........................................ SUCCESS [  1.238 s]
+19:40:44  [INFO] user-service ....................................... SUCCESS [  2.771 s]
+19:40:44  [INFO] product-service .................................... FAILURE [  1.393 s]
+19:40:44  [INFO] media-service ...................................... SKIPPED
+19:40:44  [INFO] dummy-data ......................................... SKIPPED
+19:40:44  [INFO] ------------------------------------------------------------------------
+19:40:44  [INFO] BUILD FAILURE
+19:40:44  [INFO] ------------------------------------------------------------------------
+19:40:44  [INFO] Total time:  12.846 s
+19:40:44  [INFO] Finished at: 2026-01-22T17:40:43Z
+19:40:44  [INFO] ------------------------------------------------------------------------
+19:40:44  [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:testCompile (default-testCompile) on project product-service: Compilation failure
+19:40:44  [ERROR] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/src/test/java/com/backend/product_service/service/ProductServiceUnitTest.java:[538,10] method testCreateImageWithEmptyFile() is already defined in class com.backend.product_service.service.ProductServiceUnitTest
+19:40:44  [ERROR] -> [Help 1]
+19:40:44  [ERROR] 
+19:40:44  [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+19:40:44  [ERROR] Re-run Maven using the -X switch to enable full debug logging.
+19:40:44  [ERROR] 
+19:40:44  [ERROR] For more information about the errors and possible solutions, please read the following articles:
+19:40:44  [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+19:40:44  [ERROR] 
+19:40:44  [ERROR] After correcting the problems, you can resume the build with the command
+19:40:44  [ERROR]   mvn <args> -rf :product-service
+[Pipeline] error
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+19:40:44  Failed in branch Backend Build
+[Pipeline] // parallel
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🧪 Test Backend (Unit))
+Stage "🧪 Test Backend (Unit)" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🧪 Test Backend (Integration))
+Stage "🧪 Test Backend (Integration)" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🧪 Test Frontend)
+Stage "🧪 Test Frontend" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (📊 SonarQube Analysis)
+Stage "📊 SonarQube Analysis" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (📊 Quality Gate)
+Stage "📊 Quality Gate" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (�🐳 Dockerize & Push)
+Stage "�🐳 Dockerize & Push" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🚀 Deploy Locally)
+Stage "🚀 Deploy Locally" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🚀 Deploy Remote)
+Stage "🚀 Deploy Remote" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (✅ Post-Deployment Verification)
+Stage "✅ Post-Deployment Verification" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (📦 Archive Artifacts)
+Stage "📦 Archive Artifacts" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+19:40:45  🧹 Pipeline execution completed
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+19:40:45  ❌ Pipeline failed!
+[Pipeline] sh
+19:40:45  + cat .backup/latest-backup-path.txt
+19:40:45  + echo 
+[Pipeline] echo
+19:40:45  Rollback info captured: NO
+[Pipeline] emailext
+
+19:40:45  Sending email to: mohammad.kheirkhah@gritlab.ax
+
+[Pipeline] echo
+19:40:47  ⏭️  Skipping GitHub status reporting (SKIP_GITHUB_STATUS=true)
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+19:40:47  
+[Pipeline] // ansiColor
+[Pipeline] }
+[Pipeline] // timestamps
+[Pipeline] }
+[Pipeline] // timeout
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+ERROR: ❌ Backend build failed: script returned exit code 1
+
+
+GitHub has been notified of this commit’s build result
+
+Finished: FAILURE

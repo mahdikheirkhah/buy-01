@@ -79,6 +79,7 @@ describe('ProductService', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(productData);
       expect(req.request.withCredentials).toBe(true);
+      expect(req.request.withCredentials).toBe(true);
 
       req.flush(mockProductDetail);
     });

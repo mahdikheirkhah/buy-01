@@ -8,6 +8,7 @@ import { AuthService } from '../../services/auth';
 
 describe('MainLayout', () => {
   let component: MainLayout;
+  let fixture: ComponentFixture<MainLayout>;
 
   beforeEach(async () => {
     const authServiceMock = jasmine.createSpyObj('AuthService', ['init']);
@@ -22,11 +23,18 @@ describe('MainLayout', () => {
       ],
       schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
+
+    fixture = TestBed.createComponent(MainLayout);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
   });
 
   it('should create', () => {
-    const fixture = TestBed.createComponent(MainLayout);
-    component = fixture.componentInstance;
     expect(component).toBeTruthy();
+  });
+
+  it('should have router-outlet', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('router-outlet')).toBeDefined();
   });
 });
