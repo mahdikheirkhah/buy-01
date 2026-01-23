@@ -28,6 +28,18 @@ describe('MyProducts', () => {
       number: 0
     } as any));
 
+    // Override component to use inline template
+    TestBed.overrideComponent(MyProducts, {
+      set: {
+        template: `
+          <div *ngFor="let product of myProducts">
+            {{ product.name }} - {{ product.price }}
+          </div>
+        `,
+        templateUrl: undefined
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [MyProducts, HttpClientTestingModule, CommonModule],
       providers: [

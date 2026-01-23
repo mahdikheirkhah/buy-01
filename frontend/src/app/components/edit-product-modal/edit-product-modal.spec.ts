@@ -49,6 +49,23 @@ describe('EditProductModal', () => {
 
     dialogRefMock = jasmine.createSpyObj('MatDialogRef', ['close']);
 
+    // Override component to use inline template
+    TestBed.overrideComponent(EditProductModal, {
+      set: {
+        template: `
+          <form [formGroup]="editForm">
+            <input formControlName="name" />
+            <input formControlName="description" />
+            <input formControlName="price" />
+            <input formControlName="quantity" />
+            <button (click)="onSave()">Save</button>
+            <button (click)="onCancel()">Cancel</button>
+          </form>
+        `,
+        templateUrl: undefined
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [
         EditProductModal,
