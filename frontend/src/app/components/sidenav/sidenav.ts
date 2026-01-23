@@ -14,13 +14,23 @@ import { AuthService } from '../../services/auth';
     MatListModule,
     MatDividerModule
   ],
-  templateUrl: './sidenav.html',
-  styleUrl: './sidenav.css'
+  template: `
+    <mat-nav-list>
+      <a mat-list-item routerLink="/my-info" (click)="closeSidenav.emit()">My Information</a>
+      <ng-container *ngIf="isSeller()">
+        <a mat-list-item routerLink="/my-products" (click)="closeSidenav.emit()">My Products</a>
+        <a mat-list-item routerLink="/create-product" (click)="closeSidenav.emit()">Create a new product</a>
+      </ng-container>
+      <mat-divider></mat-divider>
+      <a mat-list-item (click)="logout()">Logout</a>
+    </mat-nav-list>
+  `,
+  styles: []
 })
 export class SidenavComponent {
   @Output() closeSidenav = new EventEmitter<void>();
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) { }
 
   isSeller(): boolean {
     return this.authService.currentUserRole === 'SELLER';

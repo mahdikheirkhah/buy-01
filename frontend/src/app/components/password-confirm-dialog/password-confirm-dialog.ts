@@ -16,14 +16,37 @@ export interface PasswordDialogData {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule, // <-- Add FormsModule for [(ngModel)]
+    FormsModule,
     MatDialogModule,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule
   ],
-  templateUrl: './password-confirm-dialog.html',
-  styleUrls: ['./password-confirm-dialog.css']
+  template: `
+    <h2 mat-dialog-title>{{ data.title }}</h2>
+    <div mat-dialog-content>
+      <p>{{ data.message }}</p>
+      <mat-form-field appearance="fill">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" [(ngModel)]="password" (keyup.enter)="onConfirm()">
+      </mat-form-field>
+    </div>
+    <div mat-dialog-actions align="end">
+      <button mat-button (click)="onCancel()">Cancel</button>
+      <button mat-flat-button color="warn" [disabled]="!password" (click)="onConfirm()">
+        Delete My Account
+      </button>
+    </div>
+  `,
+  styles: [`
+    mat-form-field {
+      width: 100%;
+    }
+
+    div[mat-dialog-actions] {
+      padding: 0 24px 20px 24px;
+    }
+  `]
 })
 export class PasswordConfirmDialog {
   password = '';
@@ -31,7 +54,7 @@ export class PasswordConfirmDialog {
   constructor(
     public dialogRef: MatDialogRef<PasswordConfirmDialog>,
     @Inject(MAT_DIALOG_DATA) public data: PasswordDialogData
-  ) {}
+  ) { }
 
   onCancel(): void {
     this.dialogRef.close(); // Close without any data

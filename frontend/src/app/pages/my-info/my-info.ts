@@ -34,14 +34,222 @@ import { ImageCropperModal } from '../../components/image-cropper-modal/image-cr
     ImageCropperModal,
     UpdateInfoForm
   ],
-  templateUrl: './my-info.html',
-  styleUrls: ['./my-info.css']
+  template: `
+    <div class="my-info-container">
+      <h2>My Information</h2>
+
+      <div *ngIf="isLoading" class="spinner-container">
+        <mat-spinner></mat-spinner>
+      </div>
+
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
+      <mat-card *ngIf="currentUser && !isLoading">
+        <ng-container *ngIf="!isEditingInfo">
+          <div class="avatar-section">
+            <h3>Avatar</h3>
+            <img *ngIf="currentUser.avatarUrl"
+                 [src]="getAvatarUrl(currentUser.avatarUrl)"
+                 alt="Your Avatar"
+                 class="avatar-image">
+            <div *ngIf="!currentUser.avatarUrl" class="avatar-placeholder">
+              <mat-icon>person</mat-icon>
+            </div>
+
+            <div class="avatar-actions">
+              <button mat-stroked-button color="primary" (click)="avatarUploadInput.click()">
+                <mat-icon>upload</mat-icon>
+                Change Photo
+              </button>
+
+              <input
+                type="file"
+                hidden
+                #avatarUploadInput
+                id="avatar-upload-input"
+                (change)="onFileSelect($event)"
+                accept="image/*" />
+
+              <button mat-stroked-button color="warn" *ngIf="currentUser.avatarUrl" (click)="onDeleteAvatar()">
+                <mat-icon>delete</mat-icon>
+                Delete Photo
+              </button>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <mat-card-content class="details-section">
+            <h3>Details</h3>
+            <div class="info-row">
+              <strong>First Name:</strong>
+              <span>{{ currentUser.firstName }}</span>
+            </div>
+            <div class="info-row">
+              <strong>Last Name:</strong>
+              <span>{{ currentUser.lastName }}</span>
+            </div>
+            <div class="info-row">
+              <strong>Email:</strong>
+              <span>{{ currentUser.email }}</span>
+            </div>
+            <div class="info-row">
+              <strong>Role:</strong>
+              <span>{{ currentUser.role | titlecase }}</span>
+            </div>
+          </mat-card-content>
+
+          <mat-divider></mat-divider>
+
+          <mat-card-actions class="account-actions">
+            <button mat-flat-button color="primary" (click)="isEditingInfo = true">
+              <mat-icon>edit</mat-icon>
+              Update Information
+            </button>
+
+            <button mat-flat-button color="warn" class="delete-me-btn" (click)="onDeleteMe()">
+              <mat-icon>warning</mat-icon>
+              Delete My Account
+            </button>
+          </mat-card-actions>
+        </ng-container>
+
+        <app-update-info-form
+          *ngIf="isEditingInfo"
+          [currentUser]="currentUser"
+          (close)="onFormClosed($event)">
+        </app-update-info-form>
+      </mat-card>
+    </div>
+
+    <app-image-cropper-modal
+      *ngIf="showCropper"
+      [imageChangedEvent]="imageChangedEvent"
+      (croppedImageBlob)="handleAvatarBlob($event)"
+      (modalClosed)="handleModalClose()">
+    </app-image-cropper-modal>
+  `,
+  styles: [`
+    .my-info-container {
+      max-width: 800px;
+      margin: 80px auto 40px;
+      padding: 24px;
+    }
+
+    h2 {
+      color: var(--navy);
+      text-align: center;
+    }
+
+    .spinner-container {
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    mat-card {
+      padding: 0;
+    }
+
+    mat-card h3 {
+      color: var(--navy-light);
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0 0 16px 0;
+    }
+
+    .avatar-section {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .avatar-image {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid #eee;
+    }
+
+    .avatar-placeholder {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background-color: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .avatar-placeholder mat-icon {
+      font-size: 80px;
+      width: 80px;
+      height: 80px;
+      color: #aaa;
+    }
+
+    .avatar-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .details-section {
+      padding: 24px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-row strong {
+      color: #333;
+    }
+
+    .info-row span {
+      color: #555;
+    }
+
+    .account-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      padding: 24px;
+      background-color: #f9f9f9;
+    }
+
+    .delete-me-btn {
+      background-color: #d32f2f;
+      color: white;
+    }
+
+    .error-message {
+      background-color: #fff0f0;
+      color: #c51111;
+      border: 1px solid #fcc;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+  `]
 })
 export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
   currentUser: User | null = null;
   isLoading = true;
   errorMessage: string | null = null;
-   isEditingInfo = false;
+  isEditingInfo = false;
   // --- State for the cropper ---
   imageChangedEvent: any = '';
   showCropper = false;
@@ -81,7 +289,7 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
 
     this.userService.updateAvatar(avatarFile).subscribe({
       next: (updatedUser: User) => {
-       this.ngOnInit();
+        this.ngOnInit();
         this.authService.fetchCurrentUser().subscribe(); // Re-sync global state
       },
       error: (err) => console.error('Failed to update avatar', err)
@@ -124,7 +332,7 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
       }
     });
   }
-// --- Delete User Logic ---
+  // --- Delete User Logic ---
   onDeleteMe(): void {
     // 1. Open the password dialog
     const dialogRef = this.dialog.open(PasswordConfirmDialog, {
@@ -161,9 +369,9 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
     this.isEditingInfo = true;
   }
   onFormClosed(isSuccess: boolean): void {
-      this.isEditingInfo = false;
-      if (isSuccess) {
-        this.ngOnInit();
-      }
+    this.isEditingInfo = false;
+    if (isSuccess) {
+      this.ngOnInit();
     }
+  }
 }

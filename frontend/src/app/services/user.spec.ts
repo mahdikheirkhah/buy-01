@@ -632,5 +632,333 @@ describe('UserService', () => {
       deleteReq.flush({ message: 'deleted' });
     });
   });
+
+  // ============ Additional Comprehensive Tests ============
+  describe('Update Avatar Tests', () => {
+    it('should update avatar with File', () => {
+      const mockFile = new File(['test'], 'test.png', { type: 'image/png' });
+
+      service.updateAvatar(mockFile).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/newAvatar');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.withCredentials).toBe(true);
+
+      req.flush({ avatarUrl: '/uploads/avatar.png' });
+    });
+
+    it('should handle update avatar error', () => {
+      const mockFile = new File(['test'], 'test.png', { type: 'image/png' });
+
+      service.updateAvatar(mockFile).subscribe(
+        () => fail('should have failed'),
+        (error: any) => {
+          expect(error.status).toBe(400);
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/newAvatar');
+      req.flush('Invalid file', { status: 400, statusText: 'Bad Request' });
+    });
+
+    it('should handle file too large error', () => {
+      const mockFile = new File(['x'.repeat(10000000)], 'large.png', { type: 'image/png' });
+
+      service.updateAvatar(mockFile).subscribe(
+        () => fail('should have failed'),
+        (error: any) => {
+          expect(error.status).toBe(413);
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/newAvatar');
+      req.flush('File too large', { status: 413, statusText: 'Payload Too Large' });
+    });
+
+    it('should handle unsupported file type', () => {
+      const mockFile = new File(['test'], 'test.txt', { type: 'text/plain' });
+
+      service.updateAvatar(mockFile).subscribe(
+        () => fail('should have failed'),
+        (error: any) => {
+          expect(error.status).toBe(400);
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/newAvatar');
+      req.flush('Unsupported file type', { status: 400, statusText: 'Bad Request' });
+    });
+
+    it('should send FormData with avatarFile key', () => {
+      const mockFile = new File(['test'], 'test.png', { type: 'image/png' });
+
+      service.updateAvatar(mockFile).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/newAvatar');
+      expect(req.request.body).toEqual(jasmine.any(FormData));
+      req.flush({ avatarUrl: '/uploads/avatar.png' });
+    });
+  });
+
+  describe('Update User Validation Tests', () => {
+    it('should handle update with only firstName changed', () => {
+      const dto: UpdateUserDTO = {
+        firstName: 'Jane'
+      };
+
+      service.updateUser(dto).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      expect(req.request.body.firstName).toBe('Jane');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle update with only lastName changed', () => {
+      const dto: UpdateUserDTO = {
+        lastName: 'Smith'
+      };
+
+      service.updateUser(dto).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      expect(req.request.body.lastName).toBe('Smith');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle update with only email changed', () => {
+      const dto: UpdateUserDTO = {
+        email: 'newemail@example.com'
+      };
+
+      service.updateUser(dto).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      expect(req.request.body.email).toBe('newemail@example.com');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle update with empty values', () => {
+      const dto: UpdateUserDTO = {};
+
+      service.updateUser(dto).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      expect(req.request.body).toEqual({});
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle update with very long names', () => {
+      const longName = 'A'.repeat(255);
+      const dto: UpdateUserDTO = {
+        firstName: longName,
+        lastName: longName
+      };
+
+      service.updateUser(dto).subscribe();
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      expect(req.request.body.firstName.length).toBe(255);
+      req.flush(mockUpdatedUser);
+    });
+  });
+
+  describe('Delete User Password Validation Tests', () => {
+    it('should handle delete with empty password', () => {
+      service.deleteUser('').subscribe(
+        () => fail('should have failed'),
+        (error: any) => {
+          expect(error.status).toBe(400);
+        }
+      );
+
+      const req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      req.flush('Password required', { status: 400, statusText: 'Bad Request' });
+    });
+
+    it('should handle delete with special characters in password', () => {
+      const specialPassword = 'p@$$w0rd!#%&*()';
+      service.deleteUser(specialPassword).subscribe();
+
+      const req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users' &&
+        request.params.get('password') === specialPassword
+      );
+      expect(req.request.params.get('password')).toBe(specialPassword);
+      req.flush({ message: 'deleted' });
+    });
+
+    it('should handle delete with very long password', () => {
+      const longPassword = 'a'.repeat(500);
+      service.deleteUser(longPassword).subscribe();
+
+      const req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      const passwordParam = req.request.params.get('password');
+      expect(passwordParam ? passwordParam.length : 0).toBe(500);
+      req.flush({ message: 'deleted' });
+    });
+
+    it('should handle multiple failed delete attempts', () => {
+      service.deleteUser('wrongPassword1').subscribe(
+        () => fail('should have failed'),
+        () => { }
+      );
+
+      let req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      req.flush('Invalid password', { status: 401, statusText: 'Unauthorized' });
+
+      service.deleteUser('wrongPassword2').subscribe(
+        () => fail('should have failed'),
+        () => { }
+      );
+
+      req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      req.flush('Invalid password', { status: 401, statusText: 'Unauthorized' });
+
+      service.deleteUser('correctPassword').subscribe();
+
+      req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      req.flush({ message: 'User deleted' });
+    });
+  });
+
+  describe('Delete Avatar Error Handling', () => {
+    it('should handle delete avatar when no avatar exists', () => {
+      service.deleteAvatar().subscribe(
+        () => fail('should have failed'),
+        (error) => {
+          expect(error.status).toBe(404);
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/avatar');
+      req.flush('Avatar not found', { status: 404, statusText: 'Not Found' });
+    });
+
+    it('should handle delete avatar server error', () => {
+      service.deleteAvatar().subscribe(
+        () => fail('should have failed'),
+        (error) => {
+          expect(error.status).toBe(500);
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/avatar');
+      req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
+    });
+  });
+
+  describe('URL and Credentials Tests', () => {
+    it('should use HTTPS for all requests', () => {
+      service.updateUser(mockUpdateUserDTO).subscribe();
+      service.deleteUser('password').subscribe();
+      service.deleteAvatar().subscribe();
+
+      const requests = httpMock.match(req => req.url.includes('https'));
+      expect(requests.length).toBeGreaterThan(0);
+      requests.forEach(req => req.flush({}));
+    });
+
+    it('should include credentials in all requests', () => {
+      service.updateUser(mockUpdateUserDTO).subscribe();
+      const updateReq = httpMock.expectOne('https://localhost:8443/api/users/me');
+      expect(updateReq.request.withCredentials).toBe(true);
+      updateReq.flush(mockUpdatedUser);
+
+      service.deleteUser('password').subscribe();
+      const deleteReq = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      expect(deleteReq.request.withCredentials).toBe(true);
+      deleteReq.flush({ message: 'deleted' });
+
+      service.deleteAvatar().subscribe();
+      const deleteAvatarReq = httpMock.expectOne('https://localhost:8443/api/users/avatar');
+      expect(deleteAvatarReq.request.withCredentials).toBe(true);
+      deleteAvatarReq.flush('deleted');
+    });
+  });
+
+  describe('Response Type Tests', () => {
+    it('should handle JSON response from updateUser', () => {
+      service.updateUser(mockUpdateUserDTO).subscribe((result: any) => {
+        expect(typeof result).toBe('object');
+        expect(result.id).toBeDefined();
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.flush(mockUpdatedUser);
+    });
+
+    it('should handle text response from deleteAvatar', () => {
+      service.deleteAvatar().subscribe((result: any) => {
+        expect(typeof result).toBe('string');
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/avatar');
+      req.flush('Avatar deleted');
+    });
+
+    it('should handle JSON response from updateAvatar', () => {
+      const mockFile = new File(['test'], 'test.png', { type: 'image/png' });
+      service.updateAvatar(mockFile).subscribe((result: any) => {
+        expect(typeof result).toBe('object');
+        expect(result.avatarUrl).toBeDefined();
+      });
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/newAvatar');
+      req.flush({ avatarUrl: '/uploads/avatar.png' });
+    });
+  });
+
+  describe('Network Resilience Tests', () => {
+    it('should handle timeout error on updateUser', () => {
+      service.updateUser(mockUpdateUserDTO).subscribe(
+        () => fail('should have timed out'),
+        (error: any) => {
+          expect(error).toBeDefined();
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/me');
+      req.error(new ProgressEvent('Network timeout'));
+    });
+
+    it('should handle connection refused error on deleteUser', () => {
+      service.deleteUser('password').subscribe(
+        () => fail('should have failed'),
+        (error: any) => {
+          expect(error).toBeDefined();
+        }
+      );
+
+      const req = httpMock.expectOne(request =>
+        request.url === 'https://localhost:8443/api/users'
+      );
+      req.error(new ProgressEvent('Connection refused'));
+    });
+
+    it('should handle CORS error on updateAvatar', () => {
+      const mockFile = new File(['test'], 'test.png', { type: 'image/png' });
+      service.updateAvatar(mockFile).subscribe(
+        () => fail('should have failed'),
+        (error: any) => {
+          expect(error).toBeDefined();
+        }
+      );
+
+      const req = httpMock.expectOne('https://localhost:8443/api/users/newAvatar');
+      req.error(new ProgressEvent('CORS error'));
+    });
+  });
 });
 
