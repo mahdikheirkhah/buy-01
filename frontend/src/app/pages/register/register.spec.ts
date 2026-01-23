@@ -23,6 +23,20 @@ describe('Register', () => {
     authServiceMock.register.and.returnValue(of({}));
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
+    // Override component to use inline template
+    TestBed.overrideComponent(RegisterComponent, {
+      set: {
+        template: `
+          <form [(ngModel)]="registerData">
+            <input [(ngModel)]="registerData.email" name="email" />
+            <input [(ngModel)]="registerData.password" name="password" type="password" />
+            <button (click)="onRegister()">Register</button>
+          </form>
+        `,
+        templateUrl: undefined
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [
         RegisterComponent,

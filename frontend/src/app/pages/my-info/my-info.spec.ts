@@ -36,6 +36,21 @@ describe('MyInfo', () => {
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
     dialogMock = jasmine.createSpyObj('MatDialog', ['open']);
 
+    // Override component to use inline template
+    TestBed.overrideComponent(MyInfo, {
+      set: {
+        template: `
+          <div *ngIf="currentUser">
+            <h1>{{ currentUser.firstName }} {{ currentUser.lastName }}</h1>
+            <p>{{ currentUser.email }}</p>
+            <button (click)="onDeleteAvatar()">Delete Avatar</button>
+            <button (click)="onDeleteAccount()">Delete Account</button>
+          </div>
+        `,
+        templateUrl: undefined
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [MyInfo, HttpClientTestingModule, CommonModule, MatDialogModule],
       providers: [

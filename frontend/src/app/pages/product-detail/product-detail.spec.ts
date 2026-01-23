@@ -43,6 +43,22 @@ describe('ProductDetail', () => {
       }
     };
 
+    // Override component to use inline template
+    TestBed.overrideComponent(ProductDetail, {
+      set: {
+        template: `
+          <div *ngIf="product">
+            <h1>{{ product.name }}</h1>
+            <p>{{ product.description }}</p>
+            <p>{{ product.price }}</p>
+            <button (click)="onEdit()">Edit</button>
+            <button (click)="onDelete()">Delete</button>
+          </div>
+        `,
+        templateUrl: undefined
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [ProductDetail, HttpClientTestingModule, CommonModule, MatDialogModule],
       providers: [

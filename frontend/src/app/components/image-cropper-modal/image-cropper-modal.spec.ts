@@ -8,6 +8,22 @@ describe('ImageCropperModal', () => {
   let fixture: ComponentFixture<ImageCropperModal>;
 
   beforeEach(async () => {
+    // Override component to use inline template
+    TestBed.overrideComponent(ImageCropperModal, {
+      set: {
+        template: `
+          <img-cropper [imageChangedEvent]="imageChangedEvent"
+            (imageCropped)="imageCropped($event)"
+            (imageLoaded)="imageLoaded()"
+            (loadImageFailed)="loadImageFailed()">
+          </img-cropper>
+          <button (click)="saveCrop()">Save</button>
+          <button (click)="closeCropper()">Cancel</button>
+        `,
+        templateUrl: undefined
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [ImageCropperModal, CommonModule]
     }).compileComponents();

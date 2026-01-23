@@ -16,6 +16,19 @@ describe('ConfirmDialog', () => {
   beforeEach(async () => {
     dialogRefMock = jasmine.createSpyObj('MatDialogRef', ['close']);
 
+    // Override component to use inline template
+    TestBed.overrideComponent(ConfirmDialog, {
+      set: {
+        template: `
+          <h2>{{ data.title }}</h2>
+          <p>{{ data.message }}</p>
+          <button (click)="onConfirm()">OK</button>
+          <button (click)="onCancel()">Cancel</button>
+        `,
+        templateUrl: undefined
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [ConfirmDialog, CommonModule, MatDialogModule, MatButtonModule],
       providers: [

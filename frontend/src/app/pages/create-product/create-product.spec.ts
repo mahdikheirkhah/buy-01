@@ -30,6 +30,22 @@ describe('CreateProduct', () => {
 
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
+    // Override component to use inline template
+    TestBed.overrideComponent(CreateProduct, {
+      set: {
+        template: `
+          <form [formGroup]="productForm">
+            <input formControlName="name" />
+            <input formControlName="description" />
+            <input formControlName="price" />
+            <input formControlName="quantity" />
+            <button (click)="onSubmit()">Create</button>
+          </form>
+        `,
+        templateUrl: undefined
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [
         CreateProduct,

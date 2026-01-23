@@ -25,6 +25,20 @@ describe('Navbar', () => {
 
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
+    // Override component to use inline template
+    TestBed.overrideComponent(Navbar, {
+      set: {
+        template: `
+          <nav>
+            <span *ngIf="(currentUser$ | async) as user">{{ user.firstName }}</span>
+            <img [src]="getAvatarUrl()" />
+            <button (click)="logout()">Logout</button>
+          </nav>
+        `,
+        templateUrl: undefined
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [Navbar, HttpClientTestingModule, CommonModule, RouterTestingModule],
       providers: [

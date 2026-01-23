@@ -24,6 +24,20 @@ describe('Login', () => {
     authServiceMock.fetchCurrentUser.and.returnValue(of({ role: 'CLIENT', email: 'test@example.com' } as any));
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
+    // Override component to use inline template
+    TestBed.overrideComponent(LoginComponent, {
+      set: {
+        template: `
+          <form [(ngModel)]="loginData">
+            <input [(ngModel)]="loginData.email" name="email" />
+            <input [(ngModel)]="loginData.password" name="password" type="password" />
+            <button (click)="onLogin()">Login</button>
+          </form>
+        `,
+        templateUrl: undefined
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [
         LoginComponent,

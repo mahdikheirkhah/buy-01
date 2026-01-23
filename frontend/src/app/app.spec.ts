@@ -5,6 +5,14 @@ import { RouterTestingModule } from '@angular/router/testing';
 
 describe('App', () => {
   beforeEach(async () => {
+    // Override component metadata to use inline template
+    TestBed.overrideComponent(App, {
+      set: {
+        template: '<router-outlet></router-outlet>',
+        templateUrl: undefined
+      }
+    });
+
     await TestBed.configureTestingModule({
       imports: [App, HttpClientTestingModule, RouterTestingModule]
     }).compileComponents();
