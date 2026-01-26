@@ -44,6 +44,7 @@ pipeline {
         // Build tools
         MAVEN_IMAGE = "maven:3.9.6-amazoncorretto-17"
         NODE_IMAGE = "node:22-alpine"
+        CHROME_IMAGE = "zenika/alpine-chrome:with-node-22"
 
         // Paths
         BACKEND_DIR = 'backend'
@@ -331,7 +332,7 @@ pipeline {
                           -w ${WORKSPACE}/frontend \\
                           --cap-add=SYS_ADMIN \\
                           --user 1000:1000 \\
-                          zenika/alpine-chrome:latest \\
+                          ${CHROME_IMAGE} \\
                           sh -s <<'EOF'
 npm install --legacy-peer-deps
 CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
@@ -409,7 +410,7 @@ EOF
                                                                         -w ${WORKSPACE}/frontend \
                                                                         --cap-add=SYS_ADMIN \
                                                                         --user 1000:1000 \
-                                                                        zenika/alpine-chrome:latest \
+                                                                        ${CHROME_IMAGE} \
                                                                         sh -s <<'EOF'
 npm install --legacy-peer-deps
 CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
@@ -493,9 +494,22 @@ EOF
                             // Frontend Analysis
                             sh '''
                                 echo "🔍 Frontend analysis..."
+                                
+                                # Verify coverage file exists in the expected location
+                                if [ -f ${WORKSPACE}/frontend/coverage/frontend/lcov.info ]; then
+                                    echo "✅ Coverage file confirmed at: ${WORKSPACE}/frontend/coverage/frontend/lcov.info"
+                                    COVERAGE_SIZE=$(du -h ${WORKSPACE}/frontend/coverage/frontend/lcov.info | cut -f1)
+                                    echo "   Coverage file size: $COVERAGE_SIZE"
+                                else
+                                    echo "⚠️ WARNING: Coverage file NOT found at ${WORKSPACE}/frontend/coverage/frontend/lcov.info"
+                                    echo "   Checking directory structure:"
+                                    find ${WORKSPACE}/frontend/coverage -type f 2>/dev/null | head -20 || echo "   No coverage directory found"
+                                fi
+                                
                                 docker run --rm \
                                   --volumes-from jenkins-cicd \
-                                  -w ${WORKSPACE}/frontend \
+                                  -v ${WORKSPACE}/frontend:/workspace/frontend \
+                                  -w /workspace/frontend \
                                   --network buy-01_BACKEND \
                                   -e SONAR_HOST_URL=http://sonarqube:9000 \
                                   -e SONAR_TOKEN=${SONAR_TOKEN} \
