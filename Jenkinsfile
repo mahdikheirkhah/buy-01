@@ -327,16 +327,37 @@ pipeline {
                 script {
                     echo "🧪 Running frontend unit tests..."
                     sh '''
+                        # Find the actual workspace path (might have @2, @3 suffix)
+                        WORKSPACE_PATH=""
+                        for ws_dir in $(docker exec jenkins-cicd bash -c "ls -d /var/jenkins_home/workspace/buy-01-multibranch_main* 2>/dev/null | sort -V | tail -1"); do
+                            WORKSPACE_PATH="$ws_dir"
+                            break
+                        done
+                        
+                        if [ -z "$WORKSPACE_PATH" ]; then
+                            WORKSPACE_PATH="/var/jenkins_home/workspace/buy-01-multibranch_main"
+                        fi
+                        
+                        echo "   Using workspace path: $WORKSPACE_PATH"
+                        FRONTEND_PATH="${WORKSPACE_PATH}/frontend"
+                        
+                        # Use node:22-alpine with Chrome installed for npm tests
                         timeout 180 docker run --rm \\
                           --volumes-from jenkins-cicd \\
-                          -w ${WORKSPACE}/frontend \\
+                          -v /var/jenkins_home/workspace:/workspace \\
+                          -w /workspace/$(basename "$WORKSPACE_PATH")/frontend \\
                           --cap-add=SYS_ADMIN \\
                           --user 1000:1000 \\
-                          ${CHROME_IMAGE} \\
-                          sh -s <<'EOF'
-npm install --legacy-peer-deps
-CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
-EOF
+                          -e DBUS_SYSTEM_BUS_ADDRESS=unix:path=/dev/null \\
+                          node:22-alpine \\
+                          sh -c '
+# Install chromium-browser for testing
+apk add --no-cache chromium chromium-swiftshader
+# Run tests with coverage
+npm install --legacy-peer-deps && \
+CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
+'
+                        
                         EXIT_CODE=$?
                         if [ $EXIT_CODE -eq 124 ]; then
                             echo "⚠️ Test execution timed out after 180 seconds"
@@ -348,16 +369,16 @@ EOF
 
                         echo "✅ Frontend unit tests passed"
                         
-                        # Verify coverage file was generated in the current workspace
-                        COVERAGE_FILE="${WORKSPACE}/frontend/coverage/frontend/lcov.info"
+                        # Verify coverage file was generated
+                        COVERAGE_FILE="${FRONTEND_PATH}/coverage/frontend/lcov.info"
                         if [ -f "$COVERAGE_FILE" ]; then
                             SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
-                            echo "✅ Coverage file verified in current workspace: $SIZE at $COVERAGE_FILE"
+                            echo "✅ Coverage file verified: $SIZE at $COVERAGE_FILE"
                         else
                             echo "❌ CRITICAL: Coverage file NOT found after tests completed!"
                             echo "   Expected at: $COVERAGE_FILE"
                             echo "   Listing directory contents:"
-                            find ${WORKSPACE}/frontend/coverage -type f 2>/dev/null || echo "   No coverage directory exists"
+                            docker exec jenkins-cicd find "${FRONTEND_PATH}/coverage" -type f 2>/dev/null | head -10 || echo "   No coverage directory found"
                             exit 1
                         fi
                     '''
@@ -517,33 +538,42 @@ EOF
 
                             // Frontend Analysis
                             sh '''
-                                echo "🔍 Frontend analysis..."
-                                
-                                # Run frontend tests in the analysis stage to ensure coverage is generated locally
                                 echo "🔍 Frontend analysis with SonarQube..."
                                 
-                                COVERAGE_FILE="${WORKSPACE}/frontend/coverage/frontend/lcov.info"
+                                # Find the actual workspace path (might have @2, @3 suffix)
+                                WORKSPACE_PATH=""
+                                for ws_dir in $(docker exec jenkins-cicd bash -c "ls -d /var/jenkins_home/workspace/buy-01-multibranch_main* 2>/dev/null | sort -V | tail -1"); do
+                                    WORKSPACE_PATH="$ws_dir"
+                                    break
+                                done
+                                
+                                if [ -z "$WORKSPACE_PATH" ]; then
+                                    WORKSPACE_PATH="/var/jenkins_home/workspace/buy-01-multibranch_main"
+                                fi
+                                
+                                COVERAGE_FILE="${WORKSPACE_PATH}/frontend/coverage/frontend/lcov.info"
+                                echo "   Using workspace: $WORKSPACE_PATH"
+                                
                                 if [ ! -f "$COVERAGE_FILE" ]; then
                                     echo "❌ ERROR: Coverage file NOT found!"
                                     echo "   Expected: $COVERAGE_FILE"
                                     echo "   Test Frontend stage may not have executed successfully"
-                                    echo "   Workspace directory: ${WORKSPACE}"
                                     echo ""
-                                    echo "   Directory structure:"
-                                    ls -la "${WORKSPACE}/frontend/" 2>/dev/null || echo "   frontend/ does not exist"
+                                    echo "   Checking frontend directory:"
+                                    docker exec jenkins-cicd ls -la "${WORKSPACE_PATH}/frontend/" 2>/dev/null || echo "   frontend/ does not exist"
                                     echo ""
-                                    echo "   Coverage directory:"
-                                    ls -la "${WORKSPACE}/frontend/coverage/" 2>/dev/null || echo "   coverage/ does not exist"
+                                    echo "   Checking coverage directory:"
+                                    docker exec jenkins-cicd ls -la "${WORKSPACE_PATH}/frontend/coverage/" 2>/dev/null || echo "   coverage/ does not exist"
                                     exit 1
                                 fi
                                 
-                                COVERAGE_SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
+                                COVERAGE_SIZE=$(docker exec jenkins-cicd du -h "$COVERAGE_FILE" | cut -f1)
                                 echo "✅ Coverage file ready: $COVERAGE_SIZE at $COVERAGE_FILE"
                                 
                                 docker run --rm \
                                   --volumes-from jenkins-cicd \
-                                  -v ${WORKSPACE}/frontend:/workspace/frontend \
-                                  -w /workspace/frontend \
+                                  -v /var/jenkins_home/workspace:/workspace \
+                                  -w /workspace/$(basename "$WORKSPACE_PATH")/frontend \
                                   --network buy-01_BACKEND \
                                   -e SONAR_HOST_URL=http://sonarqube:9000 \
                                   -e SONAR_TOKEN=${SONAR_TOKEN} \
