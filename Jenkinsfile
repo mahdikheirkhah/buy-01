@@ -481,6 +481,19 @@ EOF
                             sh '''
                                 echo "🔍 Frontend analysis..."
                                 
+                                # Run frontend tests in the analysis stage to ensure coverage is generated locally
+                                echo "🧪 Running frontend unit tests in analysis stage..."
+                                docker run --rm \
+                                  --volumes-from jenkins-cicd \
+                                  -w ${WORKSPACE}/frontend \
+                                  --cap-add=SYS_ADMIN \
+                                  --user 1000:1000 \
+                                  ${CHROME_IMAGE} \
+                                  sh -s <<'TESTEOF'
+npm install --legacy-peer-deps
+CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
+TESTEOF
+                                
                                 # Verify coverage file exists in the expected location
                                 if [ -f ${WORKSPACE}/frontend/coverage/frontend/lcov.info ]; then
                                     echo "✅ Coverage file confirmed at: ${WORKSPACE}/frontend/coverage/frontend/lcov.info"
