@@ -382,8 +382,23 @@ EOF
                                 echo "📁 Creating SonarQube projects if they don't exist..."
                                 
                                 echo "Token: ${SONAR_TOKEN:0:10}... (first 10 chars)"
+                                
+                                # Delete old aggregated projects (if they exist)
+                                # These were from the old approach and should not coexist with individual service projects
+                                echo "🗑️  Cleaning up old aggregated projects (if they exist)..."
+                                for old_key in "backend" "buy-01-backend" "buy-01-frontend"; do
+                                    OLD_PROJECT=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=$old_key | grep -o "\"key\":\"[^\"]*\"" | head -1)
+                                    if [ ! -z "$OLD_PROJECT" ]; then
+                                        OLD_KEY=$(echo $OLD_PROJECT | sed 's/.*"key":"\([^"]*\)".*/\1/')
+                                        echo "   Found old project: $OLD_KEY, deleting..."
+                                        curl -s -X POST -u ${SONAR_TOKEN}: \
+                                          http://sonarqube:9000/api/projects/delete?project=$OLD_KEY > /dev/null
+                                        echo "   ✅ Deleted $OLD_KEY"
+                                    fi
+                                done
 
-                                # Create individual service projects
+                                # Create individual service projects (these are the main ones)
+                                echo "Creating individual service projects..."
                                 for service in user-service product-service media-service api-gateway discovery-service frontend; do
                                     echo "Checking if $service project exists..."
                                     PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=$service | grep -o "\"key\":\"$service\"" || echo "")
