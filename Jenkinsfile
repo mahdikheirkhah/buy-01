@@ -327,12 +327,8 @@ pipeline {
                 script {
                     echo "🧪 Running frontend unit tests..."
                     sh '''
-                        # Find the actual workspace path (might have @2, @3 suffix)
-                        WORKSPACE_PATH=""
-                        for ws_dir in $(docker exec jenkins-cicd bash -c "ls -d /var/jenkins_home/workspace/buy-01-multibranch_main* 2>/dev/null | sort -V | tail -1"); do
-                            WORKSPACE_PATH="$ws_dir"
-                            break
-                        done
+                        # Find the actual workspace path (exclude @tmp, @2@tmp, etc. - find the real workspace)
+                        WORKSPACE_PATH=$(docker exec jenkins-cicd bash -c "ls -d /var/jenkins_home/workspace/buy-01-multibranch_main 2>/dev/null; ls -d /var/jenkins_home/workspace/buy-01-multibranch_main@* 2>/dev/null | grep -v '@tmp' | sort -V | tail -1" | sort -V | tail -1)
                         
                         if [ -z "$WORKSPACE_PATH" ]; then
                             WORKSPACE_PATH="/var/jenkins_home/workspace/buy-01-multibranch_main"
@@ -342,12 +338,12 @@ pipeline {
                         FRONTEND_PATH="${WORKSPACE_PATH}/frontend"
                         
                         # Use node:22-alpine with Chrome installed for npm tests
+                        # Run as root to avoid npm permission issues with Jenkins-owned files
                         timeout 180 docker run --rm \\
                           --volumes-from jenkins-cicd \\
                           -v /var/jenkins_home/workspace:/workspace \\
                           -w /workspace/$(basename "$WORKSPACE_PATH")/frontend \\
                           --cap-add=SYS_ADMIN \\
-                          --user 1000:1000 \\
                           -e DBUS_SYSTEM_BUS_ADDRESS=unix:path=/dev/null \\
                           node:22-alpine \\
                           sh -c '
@@ -540,12 +536,8 @@ CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHead
                             sh '''
                                 echo "🔍 Frontend analysis with SonarQube..."
                                 
-                                # Find the actual workspace path (might have @2, @3 suffix)
-                                WORKSPACE_PATH=""
-                                for ws_dir in $(docker exec jenkins-cicd bash -c "ls -d /var/jenkins_home/workspace/buy-01-multibranch_main* 2>/dev/null | sort -V | tail -1"); do
-                                    WORKSPACE_PATH="$ws_dir"
-                                    break
-                                done
+                                # Find the actual workspace path (exclude @tmp directories)
+                                WORKSPACE_PATH=$(docker exec jenkins-cicd bash -c "ls -d /var/jenkins_home/workspace/buy-01-multibranch_main 2>/dev/null; ls -d /var/jenkins_home/workspace/buy-01-multibranch_main@* 2>/dev/null | grep -v '@tmp' | sort -V | tail -1" | sort -V | tail -1)
                                 
                                 if [ -z "$WORKSPACE_PATH" ]; then
                                     WORKSPACE_PATH="/var/jenkins_home/workspace/buy-01-multibranch_main"
