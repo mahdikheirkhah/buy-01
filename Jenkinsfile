@@ -386,6 +386,12 @@ EOF
                                 # Delete old aggregated projects (if they exist)
                                 # These were from the old approach and should not coexist with individual service projects
                                 echo "🗑️  Cleaning up old aggregated projects (if they exist)..."
+                                
+                                # First, list all projects to diagnose
+                                echo "📋 Current projects in SonarQube:"
+                                ALL_PROJECTS=$(curl -s -u ${SONAR_TOKEN}: "http://sonarqube:9000/api/projects/search")
+                                echo "$ALL_PROJECTS" | grep -o '"key":"[^"]*"' | sed 's/"key":"/Project Key: /' | sed 's/"$//' || echo "   No projects found"
+                                
                                 # Try to delete projects with various naming patterns
                                 for old_key in "backend" "buy-01-backend" "buy-01-frontend" "buy01-backend" "buy01-frontend" "buy-01_Backend" "buy-01_Frontend"; do
                                     # Search for project (case-insensitive via SonarQube API)
@@ -502,8 +508,16 @@ EOF
                                 
                                 # Run frontend tests in the analysis stage to ensure coverage is generated locally
                                 echo "🧪 Running frontend unit tests in analysis stage..."
-                                FRONTEND_CMD="npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage"
-                                docker run --rm --volumes-from jenkins-cicd -w ${WORKSPACE}/frontend --cap-add=SYS_ADMIN --user 1000:1000 ${CHROME_IMAGE} /bin/sh -c "$FRONTEND_CMD"
+                                timeout 180 docker run --rm \\
+                                  --volumes-from jenkins-cicd \\
+                                  -w ${WORKSPACE}/frontend \\
+                                  --cap-add=SYS_ADMIN \\
+                                  --user 1000:1000 \\
+                                  ${CHROME_IMAGE} \\
+                                  sh -s <<'TESTEOF'
+npm install --legacy-peer-deps
+CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
+TESTEOF
                                 
                                 # Verify coverage file exists in the expected location
                                 if [ -f ${WORKSPACE}/frontend/coverage/frontend/lcov.info ]; then
