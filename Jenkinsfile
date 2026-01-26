@@ -342,13 +342,16 @@ pipeline {
                         timeout 180 docker run --rm \\
                           --volumes-from jenkins-cicd \\
                           -v /var/jenkins_home/workspace:/workspace \\
-                          -w /workspace/$(basename "$WORKSPACE_PATH")/frontend \\
                           --cap-add=SYS_ADMIN \\
                           -e DBUS_SYSTEM_BUS_ADDRESS=unix:path=/dev/null \\
                           node:22-alpine \\
                           sh -c '
+# Change to frontend directory
+cd /workspace/'"$(basename "$WORKSPACE_PATH")"'/frontend
+
 # Install chromium-browser for testing
 apk add --no-cache chromium chromium-swiftshader
+
 # Run tests with coverage
 npm install --legacy-peer-deps && \
 CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
@@ -565,11 +568,11 @@ CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHead
                                 docker run --rm \
                                   --volumes-from jenkins-cicd \
                                   -v /var/jenkins_home/workspace:/workspace \
-                                  -w /workspace/$(basename "$WORKSPACE_PATH")/frontend \
                                   --network buy-01_BACKEND \
                                   -e SONAR_HOST_URL=http://sonarqube:9000 \
                                   -e SONAR_TOKEN=${SONAR_TOKEN} \
                                   sonarsource/sonar-scanner-cli:latest \
+                                  -Dsonar.projectBaseDir=/workspace/$(basename "$WORKSPACE_PATH")/frontend \
                                   -Dsonar.projectKey=frontend \
                                   -Dsonar.projectName="Frontend" \
                                   -Dsonar.sources=src \
