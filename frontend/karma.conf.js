@@ -17,7 +17,7 @@ module.exports = function (config) {
     },
     reporters: ['progress', 'kjhtml', 'coverage'],
     coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/frontend'),
+      dir: require('path').join(__dirname, './coverage'),
       reporters: [
         { type: 'html' },
         { type: 'lcovonly', subdir: '.' },
