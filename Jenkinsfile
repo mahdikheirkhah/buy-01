@@ -489,10 +489,10 @@ EOF
                                   --cap-add=SYS_ADMIN \
                                   --user 1000:1000 \
                                   ${CHROME_IMAGE} \
-                                  sh -s <<'TESTEOF'
-npm install --legacy-peer-deps
-CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
-TESTEOF
+                                  /bin/sh -c '
+                                    npm install --legacy-peer-deps
+                                    CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
+                                  '
                                 
                                 # Verify coverage file exists in the expected location
                                 if [ -f ${WORKSPACE}/frontend/coverage/frontend/lcov.info ]; then
@@ -516,8 +516,6 @@ TESTEOF
                                   -Dsonar.projectKey=frontend \
                                   -Dsonar.projectName="Frontend" \
                                   -Dsonar.sources=src \
-                                  -Dsonar.tests=src \
-                                  -Dsonar.test.inclusions="**/*.spec.ts" \
                                   -Dsonar.exclusions="node_modules/**,dist/**,coverage/**,**/*.spec.ts" \
                                   -Dsonar.coverage.exclusions="**/app.config.ts,**/app.routes.ts,**/app.ts,**/main.ts,**/models/**,**/guards/**,**/interceptors/**,**/layouts/**,**/components/sidenav/**,**/components/navbar/**,**/components/confirm-dialog/**,**/components/password-confirm-dialog/**,**/components/image-cropper-modal/**,**/components/product-card/**,**/components/update-info-form/**,**/components/edit-product-modal/**" \
                                   -Dsonar.javascript.lcov.reportPaths=coverage/frontend/lcov.info \
