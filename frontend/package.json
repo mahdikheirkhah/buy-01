@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "sonar": "sonar-scanner -Dsonar.projectKey=buy-01-frontend -Dsonar.sources=src -Dsonar.host.url=http://localhost:9000 -Dsonar.login=$SONAR_TOKEN"
+    "sonar": "sonar-scanner -Dsonar.projectKey=frontend -Dsonar.sources=src -Dsonar.host.url=http://localhost:9000 -Dsonar.login=$SONAR_TOKEN"
   },
   "prettier": {
     "printWidth": 100,
