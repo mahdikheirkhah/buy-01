@@ -517,7 +517,19 @@ EOF
                                   sh -s <<'TESTEOF'
 npm install --legacy-peer-deps
 CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ]; then
+    echo "❌ Frontend tests failed with exit code: $EXIT_CODE"
+    exit $EXIT_CODE
+fi
 TESTEOF
+                                
+                                TEST_EXIT=$?
+                                if [ $TEST_EXIT -ne 0 ]; then
+                                    echo "❌ Frontend unit tests failed in analysis stage"
+                                    exit $TEST_EXIT
+                                fi
+                                echo "✅ Frontend unit tests passed in analysis stage"
                                 
                                 # Verify coverage file exists in the expected location
                                 if [ -f ${WORKSPACE}/frontend/coverage/frontend/lcov.info ]; then
