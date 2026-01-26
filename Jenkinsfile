@@ -403,38 +403,17 @@ EOF
                                 sleep 3
                             
                             // Run frontend tests with coverage before analysis
-                            echo "Running frontend tests with coverage..."
+                            echo "Checking for frontend coverage file from Test stage..."
                             if [ -d ${WORKSPACE}/frontend ]; then
-                                # Check if coverage was already generated from earlier test stage
                                 if [ -f ${WORKSPACE}/frontend/coverage/frontend/lcov.info ]; then
-                                    echo "✅ Coverage file already exists from Test Frontend stage"
-                                    ls -lh ${WORKSPACE}/frontend/coverage/frontend/lcov.info
+                                    echo "✅ Coverage file found from Test Frontend stage"
+                                    COVERAGE_SIZE=$(du -h ${WORKSPACE}/frontend/coverage/frontend/lcov.info | cut -f1)
+                                    echo "   Coverage file size: $COVERAGE_SIZE"
+                                    echo "   File location: ${WORKSPACE}/frontend/coverage/frontend/lcov.info"
                                 else
-                                    echo "Generating coverage file..."
-                                    docker run --rm \
-                                        --volumes-from jenkins-cicd \
-                                        -w ${WORKSPACE}/frontend \
-                                        --cap-add=SYS_ADMIN \
-                                        --user 1000:1000 \
-                                        ${CHROME_IMAGE} \
-                                        sh -s <<'EOF'
-npm install --legacy-peer-deps
-CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
-EOF
-                                    if [ $? -ne 0 ]; then
-                                        echo "⚠️ Frontend tests failed, but continuing with analysis"
-                                        echo "Coverage file may not be generated"
-                                    fi
-                                    
-                                    # Check if coverage was generated
-                                    if [ -f ${WORKSPACE}/frontend/coverage/frontend/lcov.info ]; then
-                                        echo "✅ Frontend coverage file generated"
-                                        ls -lh ${WORKSPACE}/frontend/coverage/frontend/lcov.info
-                                    else
-                                        echo "⚠️ Frontend coverage file NOT found at coverage/frontend/lcov.info"
-                                        echo "Checking coverage directory structure:"
-                                        find ${WORKSPACE}/frontend/coverage -type f 2>/dev/null | head -20 || echo "No coverage directory found"
-                                    fi
+                                    echo "⚠️ Coverage file NOT found"
+                                    echo "   Test Frontend stage may not have executed or coverage directory not shared"
+                                    find ${WORKSPACE}/frontend -name "lcov.info" 2>/dev/null || echo "   No lcov.info files found anywhere"
                                 fi
                             fi
                             '''
