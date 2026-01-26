@@ -387,13 +387,15 @@ EOF
                                 # These were from the old approach and should not coexist with individual service projects
                                 echo "🗑️  Cleaning up old aggregated projects (if they exist)..."
                                 for old_key in "backend" "buy-01-backend" "buy-01-frontend"; do
-                                    OLD_PROJECT=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=$old_key | grep -o "\"key\":\"[^\"]*\"" | head -1)
+                                    OLD_PROJECT=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=$old_key | grep -o '"key":"[^"]*"' | head -1)
                                     if [ ! -z "$OLD_PROJECT" ]; then
-                                        OLD_KEY=$(echo $OLD_PROJECT | sed 's/.*"key":"\([^"]*\)".*/\1/')
-                                        echo "   Found old project: $OLD_KEY, deleting..."
-                                        curl -s -X POST -u ${SONAR_TOKEN}: \
-                                          http://sonarqube:9000/api/projects/delete?project=$OLD_KEY > /dev/null
-                                        echo "   ✅ Deleted $OLD_KEY"
+                                        OLD_KEY=$(echo "$OLD_PROJECT" | grep -o '"[^"]*"$' | tr -d '"')
+                                        if [ ! -z "$OLD_KEY" ]; then
+                                            echo "   Found old project: $OLD_KEY, deleting..."
+                                            curl -s -X POST -u ${SONAR_TOKEN}: \
+                                              http://sonarqube:9000/api/projects/delete?project=$OLD_KEY > /dev/null
+                                            echo "   ✅ Deleted $OLD_KEY"
+                                        fi
                                     fi
                                 done
 
