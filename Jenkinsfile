@@ -44,7 +44,7 @@ pipeline {
         // Build tools
         MAVEN_IMAGE = "maven:3.9.6-amazoncorretto-17"
         NODE_IMAGE = "node:22-alpine"
-        CHROME_IMAGE = "zenika/alpine-chrome:with-node-22"
+        CHROME_IMAGE = "zenika/alpine-chrome:latest"
 
         // Paths
         BACKEND_DIR = 'backend'
