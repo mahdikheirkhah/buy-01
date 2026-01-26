@@ -489,10 +489,7 @@ EOF
                                   --cap-add=SYS_ADMIN \
                                   --user 1000:1000 \
                                   ${CHROME_IMAGE} \
-                                  /bin/sh -c '
-                                    npm install --legacy-peer-deps
-                                    CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
-                                  '
+                                  /bin/sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage"
                                 
                                 # Verify coverage file exists in the expected location
                                 if [ -f ${WORKSPACE}/frontend/coverage/frontend/lcov.info ]; then
