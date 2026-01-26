@@ -405,11 +405,11 @@ EOF
                             // Run frontend tests with coverage before analysis
                             echo "Checking for frontend coverage file from Test stage..."
                             if [ -d ${WORKSPACE}/frontend ]; then
-                                if [ -f ${WORKSPACE}/frontend/coverage/frontend/lcov.info ]; then
+                                if [ -f ${WORKSPACE}/frontend/coverage/lcov.info ]; then
                                     echo "✅ Coverage file found from Test Frontend stage"
-                                    COVERAGE_SIZE=$(du -h ${WORKSPACE}/frontend/coverage/frontend/lcov.info | cut -f1)
+                                    COVERAGE_SIZE=$(du -h ${WORKSPACE}/frontend/coverage/lcov.info | cut -f1)
                                     echo "   Coverage file size: $COVERAGE_SIZE"
-                                    echo "   File location: ${WORKSPACE}/frontend/coverage/frontend/lcov.info"
+                                    echo "   File location: ${WORKSPACE}/frontend/coverage/lcov.info"
                                 else
                                     echo "⚠️ Coverage file NOT found"
                                     echo "   Test Frontend stage may not have executed or coverage directory not shared"
@@ -482,12 +482,12 @@ EOF
                                 echo "🔍 Frontend analysis..."
                                 
                                 # Verify coverage file exists in the expected location
-                                if [ -f ${WORKSPACE}/frontend/coverage/frontend/lcov.info ]; then
-                                    echo "✅ Coverage file confirmed at: ${WORKSPACE}/frontend/coverage/frontend/lcov.info"
-                                    COVERAGE_SIZE=$(du -h ${WORKSPACE}/frontend/coverage/frontend/lcov.info | cut -f1)
+                                if [ -f ${WORKSPACE}/frontend/coverage/lcov.info ]; then
+                                    echo "✅ Coverage file confirmed at: ${WORKSPACE}/frontend/coverage/lcov.info"
+                                    COVERAGE_SIZE=$(du -h ${WORKSPACE}/frontend/coverage/lcov.info | cut -f1)
                                     echo "   Coverage file size: $COVERAGE_SIZE"
                                 else
-                                    echo "⚠️ WARNING: Coverage file NOT found at ${WORKSPACE}/frontend/coverage/frontend/lcov.info"
+                                    echo "⚠️ WARNING: Coverage file NOT found at ${WORKSPACE}/frontend/coverage/lcov.info"
                                     echo "   Checking directory structure:"
                                     find ${WORKSPACE}/frontend/coverage -type f 2>/dev/null | head -20 || echo "   No coverage directory found"
                                 fi
@@ -503,9 +503,12 @@ EOF
                                   -Dsonar.projectKey=frontend \
                                   -Dsonar.projectName="Frontend" \
                                   -Dsonar.sources=src \
+                                  -Dsonar.tests=src \
+                                  -Dsonar.test.inclusions="**/*.spec.ts" \
                                   -Dsonar.exclusions="node_modules/**,dist/**,coverage/**,**/*.spec.ts" \
                                   -Dsonar.coverage.exclusions="**/app.config.ts,**/app.routes.ts,**/app.ts,**/main.ts,**/models/**,**/guards/**,**/interceptors/**,**/layouts/**,**/components/sidenav/**,**/components/navbar/**,**/components/confirm-dialog/**,**/components/password-confirm-dialog/**,**/components/image-cropper-modal/**,**/components/product-card/**,**/components/update-info-form/**,**/components/edit-product-modal/**" \
-                                  -Dsonar.javascript.lcov.reportPaths=coverage/frontend/lcov.info
+                                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                                  -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info
 
                                 echo "✅ Frontend analysis completed"
                             '''
