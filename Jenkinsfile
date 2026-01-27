@@ -143,9 +143,11 @@ EOF
                             }
                                         break
                                     fi
-                                    if [ $((i % 10)) -eq 0 ]; then
-                                        echo "⏳ Still waiting... ($i/120 seconds)"
-                                    fi
+                                    sh '''
+                                        if [ $((i % 10)) -eq 0 ]; then
+                                            echo "⏳ Still waiting... ($i/120 seconds)"
+                                        fi
+                                    '''
                                     sleep 1
                                 done
                                 
