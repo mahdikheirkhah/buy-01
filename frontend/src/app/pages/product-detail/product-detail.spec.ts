@@ -27,7 +27,6 @@ describe('ProductDetail', () => {
       name: 'Test Product',
       price: 99.99,
       description: 'Test description',
-      category: 'ELECTRONICS',
       stock: 10,
       media: [{ fileUrl: '/images/test.jpg' }]
     } as any));

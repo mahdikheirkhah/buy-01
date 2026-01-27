@@ -1,4 +1,5 @@
 /* Karma configuration to ensure lcov coverage output for SonarQube */
+
 module.exports = function (config) {
   config.set({
     basePath: '',
@@ -8,6 +9,11 @@ module.exports = function (config) {
       require('karma-chrome-launcher'),
       require('karma-jasmine-html-reporter'),
       require('karma-coverage'),
+    ],
+    files: [
+      // ADD THIS SECTION! Tells Karma to serve your template files
+      { pattern: 'src/**/*.html', watched: true, included: false, served: true },
+      { pattern: 'src/**/*.css', watched: true, included: false, served: true }
     ],
     client: {
       jasmine: {
@@ -30,28 +36,28 @@ module.exports = function (config) {
           branches: 0,
           functions: 0,
           lines: 0
-        }
+        },
+        // Exclude files that are not directly testable or are configuration/routing
+        exclude: [
+          'src/main.ts',
+          'src/app/app.config.ts',
+          'src/app/app.routes.ts',
+          'src/app/app.ts',
+          'src/app/models/**/*.ts',
+          'src/app/guards/**/*.ts',
+          'src/app/interceptors/**/*.ts',
+          'src/app/layouts/**/*.ts',
+          'src/app/components/sidenav/**/*.ts',
+          'src/app/components/navbar/**/*.ts',
+          'src/app/components/confirm-dialog/**/*.ts',
+          'src/app/components/password-confirm-dialog/**/*.ts',
+          'src/app/components/image-cropper-modal/**/*.ts',
+          'src/app/components/product-card/**/*.ts',
+          'src/app/components/update-info-form/**/*.ts',
+          'src/app/components/edit-product-modal/**/*.ts',
+          '**/*.spec.ts'
+        ],
       },
-      // Exclude files that are not directly testable or are configuration/routing
-      exclude: [
-        'src/main.ts',
-        'src/app/app.config.ts',
-        'src/app/app.routes.ts',
-        'src/app/app.ts',
-        'src/app/models/**/*.ts',
-        'src/app/guards/**/*.ts',
-        'src/app/interceptors/**/*.ts',
-        'src/app/layouts/**/*.ts',
-        'src/app/components/sidenav/**/*.ts',
-        'src/app/components/navbar/**/*.ts',
-        'src/app/components/confirm-dialog/**/*.ts',
-        'src/app/components/password-confirm-dialog/**/*.ts',
-        'src/app/components/image-cropper-modal/**/*.ts',
-        'src/app/components/product-card/**/*.ts',
-        'src/app/components/update-info-form/**/*.ts',
-        'src/app/components/edit-product-modal/**/*.ts',
-        '**/*.spec.ts'
-      ]
     },
     port: 9876,
     colors: true,
@@ -67,7 +73,8 @@ module.exports = function (config) {
           '--disable-dev-shm-usage',
           '--disable-gpu',
           '--remote-debugging-port=9222',
-          '--single-process',
+          '--disable-extensions',
+          '--disable-dev-tools'
         ],
       },
     },
