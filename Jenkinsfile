@@ -43,7 +43,7 @@ pipeline {
 
         // Build tools
         MAVEN_IMAGE = "maven:3.9.6-amazoncorretto-17"
-        NODE_IMAGE = "node:22-alpine"
+        NODE_IMAGE = "node:20-alpine"
         CHROME_IMAGE = "zenika/alpine-chrome:latest"
 
         // Paths
@@ -114,39 +114,33 @@ pipeline {
                 script {
                     echo "🚀 Starting SonarQube service early (before tests)..."
                     try {
-                        sh '''#!/bin/bash
-                            set -e
-                            
-                            # Check if SonarQube is already running
-                            if docker ps | grep -q sonarqube; then
-                                echo "✅ SonarQube is already running"
-                            else
-                                echo "🔄 Starting SonarQube from docker-compose..."
-                                
-                                # Navigate to workspace and start SonarQube using docker-compose
-                                cd ${WORKSPACE}
-                                
-                                # Ensure .env file exists with IMAGE_TAG
-                                if [ ! -f .env ]; then
-                                    echo "IMAGE_TAG=${BUILD_NUMBER}" > .env
-                                else
-                                    if ! grep -q "IMAGE_TAG" .env; then
-                                        echo "IMAGE_TAG=${BUILD_NUMBER}" >> .env
+
+                            def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'dummy-data']
+                            services.each { service ->
+                                sh """
+                                    if [ -f \"\${WORKSPACE}/backend/\${service}/target/*.jar\" ]; then
+                                        cat > Dockerfile.tmp <<EOF
+FROM amazoncorretto:21-alpine
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY backend/\${service}/target/*.jar app.jar
+EXPOSE 8080 8443
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 \\
+    CMD curl -f http://localhost:8080/actuator/health || exit 0
+ENTRYPOINT [\"java\", \"-Dcom.sun.management.jmxremote\", \"-jar\", \"app.jar\"]
+EOF
+                                        docker build -t \${DOCKER_REPO}/\${service}:\${IMAGE_TAG} -f Dockerfile.tmp .
+                                        docker push \${DOCKER_REPO}/\${service}:\${IMAGE_TAG}
+                                        docker tag \${DOCKER_REPO}/\${service}:\${IMAGE_TAG} \${DOCKER_REPO}/\${service}:\${STABLE_TAG}
+                                        docker push \${DOCKER_REPO}/\${service}:\${STABLE_TAG}
+                                        rm Dockerfile.tmp
+                                        echo \"✅ Pushed \${DOCKER_REPO}/\${service}:\${IMAGE_TAG}\"
+                                    else
+                                        echo \"⚠️ \${service} JAR not found, skipping...\"
                                     fi
-                                fi
-                                
-                                echo "Running: docker compose up -d sonarqube"
-                                docker compose up -d sonarqube
-                                
-                                echo "⏳ Waiting for SonarQube to be healthy (up to 120 seconds)..."
-                                
-                                # Wait for SonarQube to be healthy (using seq for POSIX compatibility)
-                                READY=false
-                                for i in $(seq 1 120); do
-                                    RESPONSE=$(timeout 2 curl -s http://localhost:9000/api/system/status 2>/dev/null || echo "")
-                                    if echo "$RESPONSE" | grep -q '"status":"UP"'; then
-                                        echo "✅ SonarQube is ready!"
-                                        READY=true
+                                    cd \${WORKSPACE}
+                                """
+                            }
                                         break
                                     fi
                                     if [ $((i % 10)) -eq 0 ]; then
@@ -211,21 +205,21 @@ pipeline {
                 }
 
                 stage('Frontend Build') {
-                    when {
-                        expression { params.SKIP_FRONTEND_BUILD == false }
-                    }
-                    steps {
-                        script {
-                            echo "🏗️ Building frontend..."
-                            try {
                                 sh '''
                                     export NODE_OPTIONS="--max-old-space-size=4096"
-                                    docker run --rm \\
-                                      --volumes-from jenkins-cicd \\
-                                      -w ${WORKSPACE}/frontend \\
-                                      -e NODE_OPTIONS="--max-old-space-size=4096" \\
-                                      node:22 \\
-                                      sh -c "npm install --legacy-peer-deps && npm run build"
+                                    docker run --rm \
+                                      --volumes-from jenkins-cicd \
+                                      -w ${WORKSPACE}/frontend \
+                                      -e NODE_OPTIONS="--max-old-space-size=4096" \
+                                      node:20 \
+                                      sh -c "npm install --legacy-peer-deps && npm run build -- --configuration production"
+
+                                    if [ -d ${WORKSPACE}/frontend/dist ]; then
+                                        echo "✅ Frontend dist created"
+                                    else
+                                        echo "⚠️ Warning: dist directory not found"
+                                    fi
+                                '''
 
                                     if [ -d ${WORKSPACE}/frontend/dist ]; then
                                         echo "✅ Frontend dist created"
@@ -746,33 +740,45 @@ EOF
                                 '''
                             }
 
-                            // Frontend
+                            // Frontend Analysis (refactored to use absolute paths)
                             sh '''
-                                if [ -d ${WORKSPACE}/frontend/dist ]; then
-                                    docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} -f ${WORKSPACE}/frontend/Dockerfile ${WORKSPACE}/frontend/
-                                    docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
+                                echo "🔍 Frontend analysis with SonarQube (using absolute paths)..."
 
-                                    docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
-                                    docker push ${DOCKER_REPO}/frontend:${STABLE_TAG}
+                                # Use the workspace that's mounted at /workspace
+                                FRONTEND_PATH="/workspace/$(basename ${WORKSPACE})/frontend"
+                                COVERAGE_FILE="${FRONTEND_PATH}/coverage/frontend/lcov.info"
 
-                                    echo "✅ Pushed frontend:${IMAGE_TAG}"
-                                else
-                                    echo "⚠️ Frontend dist not found, skipping..."
+                                echo "   Using FRONTEND_PATH: $FRONTEND_PATH"
+                                echo "   Using COVERAGE_FILE: $COVERAGE_FILE"
+
+                                if [ ! -f "$COVERAGE_FILE" ]; then
+                                    echo "❌ CRITICAL: Coverage file NOT found after tests completed!"
+                                    echo "   Expected at: $COVERAGE_FILE"
+                                    echo "   Listing directory contents:"
+                                    find "${FRONTEND_PATH}/coverage" -type f 2>/dev/null | head -10 || echo "   No coverage directory found"
+                                    exit 1
                                 fi
+
+                                COVERAGE_SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
+                                echo "✅ Coverage file ready: $COVERAGE_SIZE at $COVERAGE_FILE"
+
+                                docker run --rm \
+                                  --volumes-from jenkins-cicd \
+                                  -w "$FRONTEND_PATH" \
+                                  -e SONAR_TOKEN=${SONAR_TOKEN} \
+                                  sonarsource/sonar-scanner-cli:latest \
+                                  sonar-scanner \
+                                    -Dsonar.projectKey=frontend \
+                                    -Dsonar.sources=. \
+                                    -Dsonar.host.url=http://sonarqube:9000 \
+                                    -Dsonar.login=${SONAR_TOKEN} \
+                                    -Dsonar.projectBaseDir=${FRONTEND_PATH} \
+                                    -Dsonar.javascript.lcov.reportPaths=${FRONTEND_PATH}/coverage/frontend/lcov.info \
+                                    -Dsonar.typescript.lcov.reportPaths=${FRONTEND_PATH}/coverage/frontend/lcov.info \
+                                    -Dsonar.sourceEncoding=UTF-8
+
+                                echo "✅ Frontend analysis completed"
                             '''
-
-                            echo "✅ Docker build and push completed!"
-                        }
-                    } catch (Exception e) {
-                        echo "⚠️ Docker issue: ${e.message}"
-                        echo "Continuing with deployment..."
-                    }
-                }
-            }
-        }
-
-        stage('🚀 Deploy Locally') {
-            when {
                 allOf {
                     expression { params.DEPLOY_LOCALLY == true }
                     expression { params.SKIP_DEPLOY == false }
