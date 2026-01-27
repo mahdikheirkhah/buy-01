@@ -34,7 +34,8 @@ xdescribe('Home', () => {
         template: `
           <div *ngFor="let product of products">{{ product.name }} - {{ product.price }}</div>
           <app-product-card *ngFor="let product of products" [product]="product"></app-product-card>
-        `
+        `,
+        styles: []
       }
     });
 
