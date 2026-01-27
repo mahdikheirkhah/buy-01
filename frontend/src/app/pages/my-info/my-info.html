@@ -87,22 +87,6 @@
   </mat-card>
 </div>
 
-<app-image-cropper-modal
-  *ngIf="showCropper"
-  [imageChangedEvent]="imageChangedEvent"
-  (croppedImageBlob)="handleAvatarBlob($event)"
-  (modalClosed)="handleModalClose()">
-</app-image-cropper-modal>
-    -->
-    <app-update-info-form
-      *ngIf="isEditingInfo"
-      [currentUser]="currentUser"
-      (close)="onFormClosed($event)">
-    </app-update-info-form>
-
-  </mat-card>
-</div>
-
 <!-- This modal stays outside the mat-card, as it's a global overlay -->
 <app-image-cropper-modal
   *ngIf="showCropper"
