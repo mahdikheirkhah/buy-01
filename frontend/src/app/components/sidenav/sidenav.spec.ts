@@ -1,40 +1,43 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { SidenavComponent } from './sidenav';
 import { AuthService } from '../../services/auth';
 import { User } from '../../models/user.model';
-import { CommonModule } from '@angular/common';
-import { RouterTestingModule } from '@angular/router/testing';
 
 describe('SidenavComponent', () => {
   let component: SidenavComponent;
   let fixture: ComponentFixture<SidenavComponent>;
   let authServiceMock: jasmine.SpyObj<AuthService>;
-  let routerMock: jasmine.SpyObj<Router>;
+  let router: Router;
   let currentUserSubject: BehaviorSubject<User | null>;
 
   beforeEach(async () => {
     currentUserSubject = new BehaviorSubject<User | null>(null);
+
     authServiceMock = jasmine.createSpyObj('AuthService', ['logout']);
     authServiceMock.logout.and.returnValue(of(void 0));
     Object.defineProperty(authServiceMock, 'currentUser$', {
       get: () => currentUserSubject.asObservable()
     });
-    routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-      imports: [SidenavComponent, HttpClientTestingModule, CommonModule, RouterTestingModule],
+      imports: [
+        SidenavComponent,
+        HttpClientTestingModule
+      ],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
-        { provide: Router, useValue: routerMock },
-        { provide: ActivatedRoute, useValue: { snapshot: { params: {} } } }
+        provideRouter([])  // ✅ FIX: Use provideRouter instead of RouterTestingModule + mock
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SidenavComponent);
     component = fixture.componentInstance;
+    router = TestBed.inject(Router);
+    spyOn(router, 'navigate');  // Spy on the real router
     fixture.detectChanges();
   });
 
@@ -49,7 +52,6 @@ describe('SidenavComponent', () => {
     });
 
     const result = component.isSeller();
-
     expect(result).toBe(true);
   });
 
@@ -60,7 +62,6 @@ describe('SidenavComponent', () => {
     });
 
     const result = component.isSeller();
-
     expect(result).toBe(false);
   });
 
@@ -71,7 +72,7 @@ describe('SidenavComponent', () => {
 
     expect(authServiceMock.logout).toHaveBeenCalled();
     expect(component.closeSidenav.emit).toHaveBeenCalled();
-    expect(routerMock.navigate).toHaveBeenCalledWith(['/login']);
+    expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
 
   it('should handle isSeller with ADMIN role', () => {
@@ -81,7 +82,6 @@ describe('SidenavComponent', () => {
     });
 
     const result = component.isSeller();
-
     expect(result).toBe(false);
   });
 
@@ -92,7 +92,6 @@ describe('SidenavComponent', () => {
     });
 
     const result = component.isSeller();
-
     expect(result).toBe(false);
   });
 
@@ -104,7 +103,6 @@ describe('SidenavComponent', () => {
 
     component.logout();
     expect(authServiceMock.logout).toHaveBeenCalledTimes(2);
-
     expect(component.closeSidenav.emit).toHaveBeenCalledTimes(2);
   });
 
@@ -112,7 +110,7 @@ describe('SidenavComponent', () => {
     spyOn(component.closeSidenav, 'emit');
 
     component.closeSidenav.subscribe(() => {
-      expect(routerMock.navigate).not.toHaveBeenCalled();
+      expect(router.navigate).not.toHaveBeenCalled();
       done();
     });
 
@@ -125,10 +123,9 @@ describe('SidenavComponent', () => {
         error({ status: 500 });
       }
     } as any);
+
     spyOn(component.closeSidenav, 'emit');
-
     component.logout();
-
     expect(authServiceMock.logout).toHaveBeenCalled();
   });
 
