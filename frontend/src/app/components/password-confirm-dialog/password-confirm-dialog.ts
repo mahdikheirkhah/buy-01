@@ -22,31 +22,8 @@ export interface PasswordDialogData {
     MatFormFieldModule,
     MatInputModule
   ],
-  template: `
-    <h2 mat-dialog-title>{{ data.title }}</h2>
-    <div mat-dialog-content>
-      <p>{{ data.message }}</p>
-      <mat-form-field appearance="fill">
-        <mat-label>Password</mat-label>
-        <input matInput type="password" [(ngModel)]="password" (keyup.enter)="onConfirm()">
-      </mat-form-field>
-    </div>
-    <div mat-dialog-actions align="end">
-      <button mat-button (click)="onCancel()">Cancel</button>
-      <button mat-flat-button color="warn" [disabled]="!password" (click)="onConfirm()">
-        Delete My Account
-      </button>
-    </div>
-  `,
-  styles: [`
-    mat-form-field {
-      width: 100%;
-    }
-
-    div[mat-dialog-actions] {
-      padding: 0 24px 20px 24px;
-    }
-  `]
+  templateUrl: './password-confirm-dialog.html',
+  styleUrls: ['./password-confirm-dialog.css']
 })
 export class PasswordConfirmDialog {
   password = '';
