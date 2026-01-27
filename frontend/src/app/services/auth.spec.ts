@@ -1043,12 +1043,16 @@ describe('AuthService', () => {
     });
 
     it('should handle register with email already in use', () => {
-      const registerData = {
-        email: 'john@example.com',
-        password: 'password123',
-        firstName: 'John',
-        lastName: 'Doe'
-      };
+
+      const registerData = new FormData();
+      registerData.append('userDto', new Blob([
+        JSON.stringify({
+          email: 'john@example.com',
+          password: 'password123',
+          firstName: 'John',
+          lastName: 'Doe'
+        })
+      ], { type: 'application/json' }));
 
       service.register(registerData).subscribe(
         () => fail('should have failed'),
@@ -1062,12 +1066,16 @@ describe('AuthService', () => {
     });
 
     it('should handle register with weak password validation', () => {
-      const registerData = {
-        email: 'new@example.com',
-        password: 'weak',
-        firstName: 'John',
-        lastName: 'Doe'
-      };
+
+      const registerData = new FormData();
+      registerData.append('userDto', new Blob([
+        JSON.stringify({
+          email: 'new@example.com',
+          password: 'weak',
+          firstName: 'John',
+          lastName: 'Doe'
+        })
+      ], { type: 'application/json' }));
 
       service.register(registerData).subscribe(
         () => fail('should have failed'),
@@ -1123,12 +1131,16 @@ describe('AuthService', () => {
     });
 
     it('should handle timeout on register', () => {
-      const registerData = {
-        email: 'new@example.com',
-        password: 'password123',
-        firstName: 'John',
-        lastName: 'Doe'
-      };
+
+      const registerData = new FormData();
+      registerData.append('userDto', new Blob([
+        JSON.stringify({
+          email: 'new@example.com',
+          password: 'password123',
+          firstName: 'John',
+          lastName: 'Doe'
+        })
+      ], { type: 'application/json' }));
 
       service.register(registerData).subscribe(
         () => fail('should have failed'),
