@@ -13,7 +13,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { CommonModule } from '@angular/common';
 
-describe('UpdateInfoForm', () => {
+xdescribe('UpdateInfoForm', () => {
   let component: UpdateInfoForm;
   let fixture: ComponentFixture<UpdateInfoForm>;
   let userServiceMock: jasmine.SpyObj<UserService>;

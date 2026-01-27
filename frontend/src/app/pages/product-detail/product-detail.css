@@ -1,16 +1,11 @@
 .product-detail-container {
   max-width: 1200px;
-  margin: 80px auto 40px; /* 80px top padding for navbar */
+  margin: 80px auto 40px;
   padding: 24px;
-  .product-detail-container {
-    max-width: 1200px;
-    margin: 80px auto 40px;
-    padding: 24px;
-    background-color: var(--white);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    min-height: 60vh;
-  }
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  min-height: 60vh;
 
   .spinner-container, .error-container {
     display: flex;
@@ -123,3 +118,4 @@
       grid-template-columns: 1fr;
     }
   }
+}
