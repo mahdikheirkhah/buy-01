@@ -1,6 +1,6 @@
 // CI/CD Pipeline for Buy-01 E-Commerce Platform
 // Last updated: 2026-01-27
-// FIXED VERSION - All syntax errors corrected - FRONTEND TEST FIX APPLIED
+// FIXED VERSION - Frontend Test Docker Path Issue Resolved
 
 pipeline {
     agent any
@@ -243,28 +243,25 @@ pipeline {
                     sh '''
                         FRONTEND_PATH="${WORKSPACE}/frontend"
                         COVERAGE_FILE="${FRONTEND_PATH}/coverage/frontend/lcov.info"
-                        WORKSPACE_BASENAME=$(basename ${WORKSPACE})
                         
                         echo "   Using frontend path: $FRONTEND_PATH"
-                        echo "   Workspace basename: $WORKSPACE_BASENAME"
+                        echo "   Jenkins workspace: ${WORKSPACE}"
                         
                         timeout 180 docker run --rm \\
                           --volumes-from jenkins-cicd \\
-                          -v /var/jenkins_home/workspace:/workspace \\
+                          -w /jenkins-workspace/frontend \\
                           --cap-add=SYS_ADMIN \\
                           -e DBUS_SYSTEM_BUS_ADDRESS=unix:path=/dev/null \\
                           ${NODE_IMAGE} \\
                           sh -c "
-cd /workspace/${WORKSPACE_BASENAME}/frontend
-
-# Clean up any stale npm cache
-rm -rf node_modules/.package-lock.json 2>/dev/null || true
-
-apk add --no-cache chromium chromium-swiftshader
-
-npm install --legacy-peer-deps && \\
-CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
-"
+                                # Clean up any stale npm cache
+                                rm -rf node_modules/.package-lock.json 2>/dev/null || true
+                                
+                                apk add --no-cache chromium chromium-swiftshader
+                                
+                                npm install --legacy-peer-deps && \\
+                                CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
+                                "
                         
                         EXIT_CODE=$?
                         if [ $EXIT_CODE -eq 124 ]; then
@@ -376,7 +373,7 @@ CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHead
                                 echo "🔍 Frontend analysis with SonarQube..."
                                 
                                 # Use absolute path to the workspace
-                                FRONTEND_PATH="/workspace/$(basename ${WORKSPACE})/frontend"
+                                FRONTEND_PATH="/jenkins-workspace/frontend"
                                 COVERAGE_FILE="${FRONTEND_PATH}/coverage/frontend/lcov.info"
                                 
                                 echo "   Using frontend path: $FRONTEND_PATH"
@@ -393,7 +390,7 @@ CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHead
                                 
                                 docker run --rm \\
                                   --volumes-from jenkins-cicd \\
-                                  -v /var/jenkins_home/workspace:/workspace \\
+                                  -w /jenkins-workspace/frontend \\
                                   --network buy-01_BACKEND \\
                                   -e SONAR_HOST_URL=http://sonarqube:9000 \\
                                   -e SONAR_TOKEN=${SONAR_TOKEN} \\
