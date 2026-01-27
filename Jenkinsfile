@@ -247,21 +247,15 @@ pipeline {
                         echo "   Using frontend path: $FRONTEND_PATH"
                         echo "   Jenkins workspace: ${WORKSPACE}"
                         
-                        timeout 180 docker run --rm \\
-                          --volumes-from jenkins-cicd \\
-                          -w /jenkins-workspace/frontend \\
-                          --cap-add=SYS_ADMIN \\
-                          -e DBUS_SYSTEM_BUS_ADDRESS=unix:path=/dev/null \\
-                          ${NODE_IMAGE} \\
-                          sh -c "
-                                # Clean up any stale npm cache
-                                rm -rf node_modules/.package-lock.json 2>/dev/null || true
-                                
-                                apk add --no-cache chromium chromium-swiftshader
-                                
-                                npm install --legacy-peer-deps && \\
-                                CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
-                                "
+                            timeout 180 docker run --rm --volumes-from jenkins-cicd \
+                            -w ${WORKSPACE}/frontend \
+                            --cap-add=SYS_ADMIN \
+                            -e DBUS_SYSTEM_BUS_ADDRESS=unix:path=/dev/null \
+                            node:22-alpine sh -c \
+                            'rm -rf node_modules/.package-lock.json 2>/dev/null || true; \
+                            apk add --no-cache chromium chromium-swiftshader; \
+                            npm install --legacy-peer-deps && \
+                            CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage'
                         
                         EXIT_CODE=$?
                         if [ $EXIT_CODE -eq 124 ]; then
@@ -388,22 +382,14 @@ pipeline {
                                 COVERAGE_SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
                                 echo "✅ Coverage file ready: $COVERAGE_SIZE at $COVERAGE_FILE"
                                 
-                                docker run --rm \\
-                                  --volumes-from jenkins-cicd \\
-                                  -w /jenkins-workspace/frontend \\
-                                  --network buy-01_BACKEND \\
-                                  -e SONAR_HOST_URL=http://sonarqube:9000 \\
-                                  -e SONAR_TOKEN=${SONAR_TOKEN} \\
-                                  sonarsource/sonar-scanner-cli:latest \\
-                                  -Dsonar.projectBaseDir=${FRONTEND_PATH} \\
-                                  -Dsonar.projectKey=frontend \\
-                                  -Dsonar.projectName="Frontend" \\
-                                  -Dsonar.sources=src \\
-                                  -Dsonar.exclusions="node_modules/**,dist/**,coverage/**,**/*.spec.ts" \\
-                                  -Dsonar.coverage.exclusions="**/app.config.ts,**/app.routes.ts,**/app.ts,**/main.ts,**/models/**,**/guards/**,**/interceptors/**,**/layouts/**,**/components/sidenav/**,**/components/navbar/**,**/components/confirm-dialog/**,**/components/password-confirm-dialog/**,**/components/image-cropper-modal/**,**/components/product-card/**,**/components/update-info-form/**,**/components/edit-product-modal/**" \\
-                                  -Dsonar.javascript.lcov.reportPaths=${FRONTEND_PATH}/coverage/frontend/lcov.info \\
-                                  -Dsonar.typescript.lcov.reportPaths=${FRONTEND_PATH}/coverage/frontend/lcov.info
-
+                                    sonar-scanner \
+                                    -Dsonar.projectKey=frontend \
+                                    -Dsonar.projectName="Frontend" \
+                                    -Dsonar.sources=src/app \
+                                    -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,**/*.d.ts,node_modules/**,dist/**,coverage/**,**/.env,**/.env*,src/environments/**,src/assets/** \
+                                    -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,node_modules/** \
+                                    -Dsonar.host.url=http://sonarqube:9000 \
+                                    -Dsonar.token=${SONAR_TOKEN}
                                 echo "✅ Frontend analysis completed"
                             '''
                             
