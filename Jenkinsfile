@@ -243,19 +243,14 @@ stage('🧪 Test Frontend') {
     }
     steps {
         script {
-             sh '''
+        sh '''
             timeout 180 docker run --rm \
               -v ${WORKSPACE}/frontend:/app \
               -w /app \
               --cap-add=SYS_ADMIN \
               --user root \
               zenika/alpine-chrome:with-node \
-              sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
-                EXIT_CODE=$?
-                [ $EXIT_CODE -eq 124 ] && echo "⚠️ Timeout" && exit 124
-                exit $EXIT_CODE
-            }
-            echo "✅ Tests passed"
+              sh -c 'npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage'
         '''
         }
     }
