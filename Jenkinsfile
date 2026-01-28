@@ -247,7 +247,7 @@ stage('🧪 Test Frontend') {
                   --cap-add=SYS_ADMIN \
                   --user root \
                   node:20.19-alpine \
-                  sh -c "apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage" || {
+                  sh -c "apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npm run test" || {
                     EXIT_CODE=$?
                     if [ $EXIT_CODE -eq 124 ]; then
                         echo "⚠️ Test execution timed out after 180 seconds"
