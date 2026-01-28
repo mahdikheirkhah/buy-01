@@ -6,7 +6,7 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   min-height: 60vh;
-
+  }
   .spinner-container, .error-container {
     display: flex;
     flex-direction: column;
@@ -118,4 +118,3 @@
       grid-template-columns: 1fr;
     }
   }
-}
