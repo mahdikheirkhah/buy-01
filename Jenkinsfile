@@ -257,7 +257,6 @@ stage('🧪 Test Frontend') {
     }
 }
 
-
         stage('📊 SonarQube Analysis') {
             when {
                 expression { params.RUN_SONAR == true }
@@ -343,7 +342,7 @@ stage('🧪 Test Frontend') {
                                 
                                 # Use absolute path to the workspace
                                 FRONTEND_PATH="/jenkins-workspace/frontend"
-                                COVERAGE_FILE="${FRONTEND_PATH}/coverage/frontend/lcov.info"
+                                COVERAGE_FILE="${FRONTEND_PATH}/coverage/lcov.info"
                                 
                                 echo "   Using frontend path: $FRONTEND_PATH"
                                 
