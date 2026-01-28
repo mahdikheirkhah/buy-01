@@ -243,7 +243,7 @@ stage('🧪 Test Frontend') {
     }
     steps {
         script {
-            sh '''
+        sh '''
             if [ -d ${WORKSPACE}/frontend ]; then
                 echo "🧪 Running frontend unit tests..."
                 timeout 180 docker run --rm \
@@ -251,8 +251,8 @@ stage('🧪 Test Frontend') {
                   -w ${WORKSPACE}/frontend \
                   --cap-add=SYS_ADMIN \
                   --user root \
-                  zenika/alpine-chrome:with-node \
-                  sh -c 'npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage'
+                  node:20.19-alpine \
+                  sh -c 'npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage'
                 
                 echo "✅ Frontend unit tests passed"
             else
