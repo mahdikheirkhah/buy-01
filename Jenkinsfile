@@ -237,7 +237,7 @@ stage('🧪 Test Frontend') {
         expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_TESTS == false }
     }
     steps {
-            sh '''
+        sh '''
             if [ -d ${WORKSPACE}/frontend ]; then
                 echo "🧪 Running frontend unit tests..."
                 
@@ -245,8 +245,9 @@ stage('🧪 Test Frontend') {
                   --volumes-from jenkins-cicd \
                   -w ${WORKSPACE}/frontend \
                   --cap-add=SYS_ADMIN \
-                  zenika/alpine-chrome:with-node \
-                  sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test" || {
+                  --user root \
+                  node:20.19-alpine \
+                  sh -c "apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npm run test" || {
                     EXIT_CODE=$?
                     if [ $EXIT_CODE -eq 124 ]; then
                         echo "⚠️ Test execution timed out after 180 seconds"
@@ -264,6 +265,7 @@ stage('🧪 Test Frontend') {
         '''
     }
 }
+
 
         stage('📊 SonarQube Analysis') {
             when {
