@@ -235,14 +235,9 @@ pipeline {
 
 stage('🧪 Test Frontend') {
     when {
-        expression { 
-            params.RUN_TESTS == true && 
-            params.SKIP_FRONTEND_BUILD == false && 
-            params.SKIP_FRONTEND_TESTS == false 
-        }
+        expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_TESTS == false }
     }
     steps {
-        script {
         sh '''
             if [ -d ${WORKSPACE}/frontend ]; then
                 echo "🧪 Running frontend unit tests..."
@@ -252,7 +247,7 @@ stage('🧪 Test Frontend') {
                   --cap-add=SYS_ADMIN \
                   --user root \
                   node:20.19-alpine \
-                  sh -c 'npm install --legacy-peer-deps && npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage'
+                  sh -c 'apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage'
                 
                 echo "✅ Frontend unit tests passed"
             else
@@ -260,9 +255,9 @@ stage('🧪 Test Frontend') {
                 exit 1
             fi
         '''
-        }
     }
 }
+
 
         stage('📊 SonarQube Analysis') {
             when {
