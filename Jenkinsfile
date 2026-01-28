@@ -235,17 +235,18 @@ pipeline {
 
         stage('🧪 Test Frontend') {
             when {
-            expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_BUILD == false && params.SKIP_FRONTEND_TESTS == false }
+                expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_BUILD == false && params.SKIP_FRONTEND_TESTS == false }
             }
             steps {
                 script {
                     echo "🧪 Running frontend unit tests..."
                     sh '''
-                        timeout 180 docker run --rm \\
-                          --volumes-from jenkins-cicd \\
-                          -w ${WORKSPACE}/frontend \\
-                          --cap-add=SYS_ADMIN \\
-                          zenika/alpine-chrome:with-node \\
+                        timeout 180 docker run --rm \
+                          -v ${WORKSPACE}:/workspace \
+                          -w /workspace/frontend \
+                          --cap-add=SYS_ADMIN \
+                          --user root \
+                          zenika/alpine-chrome:with-node \
                           sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
                             EXIT_CODE=$?
                             if [ $EXIT_CODE -eq 124 ]; then
@@ -254,7 +255,7 @@ pipeline {
                             fi
                             exit $EXIT_CODE
                         }
-                         echo "✅ Frontend unit tests passed"
+                        echo "✅ Frontend unit tests passed"
                     '''
                 }
             }
