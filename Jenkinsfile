@@ -237,16 +237,24 @@ stage('🧪 Test Frontend') {
         expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_TESTS == false }
     }
     steps {
-        sh '''
+            sh '''
             if [ -d ${WORKSPACE}/frontend ]; then
                 echo "🧪 Running frontend unit tests..."
+                
                 timeout 180 docker run --rm \
                   --volumes-from jenkins-cicd \
                   -w ${WORKSPACE}/frontend \
                   --cap-add=SYS_ADMIN \
-                  --user root \
-                  node:20.19-alpine \
-                  sh -c 'apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npm run test'
+                  zenika/alpine-chrome:with-node \
+                  sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test" || {
+                    EXIT_CODE=$?
+                    if [ $EXIT_CODE -eq 124 ]; then
+                        echo "⚠️ Test execution timed out after 180 seconds"
+                        exit 124
+                    fi
+                    echo "❌ Tests failed with exit code: $EXIT_CODE"
+                    exit $EXIT_CODE
+                }
                 
                 echo "✅ Frontend unit tests passed"
             else
