@@ -7,7 +7,7 @@ import { AuthService } from '../../services/auth';
 import { CommonModule } from '@angular/common';
 import { RouterTestingModule } from '@angular/router/testing';
 
-xdescribe('MainLayout', () => {
+describe('MainLayout', () => {
   let component: MainLayout;
   let fixture: ComponentFixture<MainLayout>;
 

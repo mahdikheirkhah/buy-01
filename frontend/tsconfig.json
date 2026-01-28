@@ -13,8 +13,9 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext"
+    "module": "es2020",
+    "moduleResolution": "node"
+
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

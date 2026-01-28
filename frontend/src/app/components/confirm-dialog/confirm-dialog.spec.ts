@@ -4,7 +4,7 @@ import { ConfirmDialog, ConfirmDialogData } from './confirm-dialog';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 
-xdescribe('ConfirmDialog', () => {
+describe('ConfirmDialog', () => {
   let component: ConfirmDialog;
   let fixture: ComponentFixture<ConfirmDialog>;
   let dialogRefMock: jasmine.SpyObj<MatDialogRef<ConfirmDialog>>;
