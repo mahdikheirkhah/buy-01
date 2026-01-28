@@ -63,6 +63,10 @@ module.exports = function (config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: false,
+    watchOptions: {                // ✅ NEW: Explicitly disable watch
+      poll: false,
+      ignored: /node_modules/
+    },
     customLaunchers: {
       // CI-friendly headless Chrome with explicit flags to avoid sandbox/dev-shm issues
       ChromeHeadlessCI: {
@@ -74,7 +78,8 @@ module.exports = function (config) {
           '--disable-gpu',
           '--remote-debugging-port=9222',
           '--disable-extensions',
-          '--disable-dev-tools'
+          '--disable-dev-tools',
+          '--disable-translate'
         ],
       },
     },
