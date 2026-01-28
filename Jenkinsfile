@@ -198,24 +198,26 @@ pipeline {
             }
             steps {
                 script {
-                     echo "🧪 Running frontend unit tests..."
-                    sh '''
-                        timeout 180 docker run --rm \\
-                          --volumes-from jenkins-cicd \\
-                          -w ${WORKSPACE}/frontend \\
-                          --cap-add=SYS_ADMIN \\
-                          zenika/alpine-chrome:with-node \\
-                          sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
-                            EXIT_CODE=$?
-                            if [ $EXIT_CODE -eq 124 ]; then
-                                echo "⚠️ Test execution timed out after 180 seconds"
-                                exit 124
-                            fi
-                            exit $EXIT_CODE
-                        }
+                    echo "🧪 Running backend unit tests..."
 
-                        echo "✅ Frontend unit tests passed"
-                    '''
+                    def services = ['user-service', 'product-service', 'media-service']
+                    def failedTests = []
+
+                    services.each { service ->
+                        try {
+                            echo "Testing ${service}..."
+                            sh '''
+                                if [ -d ${WORKSPACE}/backend/''' + service + ''' ]; then
+                                    docker run --rm \\
+                                      --volumes-from jenkins-cicd \\
+                                      -v jenkins_m2_cache:/root/.m2 \\
+                                      -w ${WORKSPACE}/backend \\
+                                      ${MAVEN_IMAGE} \\
+                                      mvn test -B -Dtest=*UnitTest -pl ''' + service + '''
+
+                                    echo "✅ ''' + service + ''' unit tests passed"
+                                fi
+                            '''
                         } catch (Exception e) {
                             echo "⚠️ ${service} unit tests: ${e.message}"
                             failedTests.add(service)
@@ -233,21 +235,30 @@ pipeline {
 
         stage('🧪 Test Frontend') {
             when {
-                expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_BUILD == false && params.SKIP_FRONTEND_TESTS == false }
+            expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_BUILD == false && params.SKIP_FRONTEND_TESTS == false }
             }
             steps {
                 script {
+                    echo "🧪 Running frontend unit tests..."
                     sh '''
-                        echo "🧪 Running frontend tests..."
-                        cd frontend
-                        npm ci
-                        npm run test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
-                        echo "✅ Frontend tests completed"
+                        timeout 180 docker run --rm \\
+                          --volumes-from jenkins-cicd \\
+                          -w ${WORKSPACE}/frontend \\
+                          --cap-add=SYS_ADMIN \\
+                          zenika/alpine-chrome:with-node \\
+                          sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
+                            EXIT_CODE=$?
+                            if [ $EXIT_CODE -eq 124 ]; then
+                                echo "⚠️ Test execution timed out after 180 seconds"
+                                exit 124
+                            fi
+                            exit $EXIT_CODE
+                        }
+                         echo "✅ Frontend unit tests passed"
                     '''
                 }
             }
         }
-
         stage('📊 SonarQube Analysis') {
             when {
                 expression { params.RUN_SONAR == true }
