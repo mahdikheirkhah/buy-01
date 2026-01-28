@@ -240,7 +240,7 @@ services:
     image: mahdikheirkhah/frontend:${IMAGE_TAG:-latest}
     container_name: frontend
     ports:
-      - "80:80"
+      - "4200:4200"
     environment:
       API_GATEWAY_URL: https://localhost:8443
     depends_on:
