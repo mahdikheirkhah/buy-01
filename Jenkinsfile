@@ -247,7 +247,7 @@ stage('🧪 Test Frontend') {
                   --cap-add=SYS_ADMIN \
                   --user root \
                   node:20.19-alpine \
-                  sh -c 'apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage -- --no-sandbox'
+                  sh -c 'apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npm run test'
                 
                 echo "✅ Frontend unit tests passed"
             else
@@ -257,7 +257,6 @@ stage('🧪 Test Frontend') {
         '''
     }
 }
-
 
 
         stage('📊 SonarQube Analysis') {
