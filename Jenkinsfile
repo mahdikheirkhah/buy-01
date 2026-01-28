@@ -244,16 +244,22 @@ stage('🧪 Test Frontend') {
     steps {
         script {
             sh '''
-            cd ${WORKSPACE}/frontend
-            
-            timeout 180 docker run --rm \
-              -v $(pwd):/app \
-              -w /app \
-              --cap-add=SYS_ADMIN \
-              --user root \
-              zenika/alpine-chrome:with-node \
-              sh -c 'npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage'
-            '''
+            if [ -d ${WORKSPACE}/frontend ]; then
+                echo "🧪 Running frontend unit tests..."
+                timeout 180 docker run --rm \
+                  --volumes-from jenkins-cicd \
+                  -w ${WORKSPACE}/frontend \
+                  --cap-add=SYS_ADMIN \
+                  --user root \
+                  zenika/alpine-chrome:with-node \
+                  sh -c 'npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage'
+                
+                echo "✅ Frontend unit tests passed"
+            else
+                echo "⚠️ Frontend directory not found"
+                exit 1
+            fi
+        '''
         }
     }
 }
