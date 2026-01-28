@@ -198,26 +198,24 @@ pipeline {
             }
             steps {
                 script {
-                    echo "🧪 Running backend unit tests..."
+                     echo "🧪 Running frontend unit tests..."
+                    sh '''
+                        timeout 180 docker run --rm \\
+                          --volumes-from jenkins-cicd \\
+                          -w ${WORKSPACE}/frontend \\
+                          --cap-add=SYS_ADMIN \\
+                          zenika/alpine-chrome:with-node \\
+                          sh -c "npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium-browser npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage" || {
+                            EXIT_CODE=$?
+                            if [ $EXIT_CODE -eq 124 ]; then
+                                echo "⚠️ Test execution timed out after 180 seconds"
+                                exit 124
+                            fi
+                            exit $EXIT_CODE
+                        }
 
-                    def services = ['user-service', 'product-service', 'media-service']
-                    def failedTests = []
-
-                    services.each { service ->
-                        try {
-                            echo "Testing ${service}..."
-                            sh '''
-                                if [ -d ${WORKSPACE}/backend/''' + service + ''' ]; then
-                                    docker run --rm \\
-                                      --volumes-from jenkins-cicd \\
-                                      -v jenkins_m2_cache:/root/.m2 \\
-                                      -w ${WORKSPACE}/backend \\
-                                      ${MAVEN_IMAGE} \\
-                                      mvn test -B -Dtest=*UnitTest -pl ''' + service + '''
-
-                                    echo "✅ ''' + service + ''' unit tests passed"
-                                fi
-                            '''
+                        echo "✅ Frontend unit tests passed"
+                    '''
                         } catch (Exception e) {
                             echo "⚠️ ${service} unit tests: ${e.message}"
                             failedTests.add(service)
