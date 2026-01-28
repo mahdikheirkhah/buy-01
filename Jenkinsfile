@@ -232,7 +232,6 @@ pipeline {
                 }
             }
         }
-
 stage('🧪 Test Frontend') {
     when {
         expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_TESTS == false }
