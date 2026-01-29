@@ -369,10 +369,8 @@ stage('🧪 Test Frontend') {
                                 """
                             }
 
-                            // Frontend Analysis - FIXED VERSION
-                           // Frontend Analysis - FIXED VERSION
-                       // Frontend Analysis - DOCKER VERSION (No sonar-scanner installation needed!)
-                      // Frontend Analysis - DOCKER VERSION (Fixed URL)
+
+// Frontend Analysis - DOCKER VERSION (Path Fixed)
 sh '''
     echo "🔍 Frontend analysis with SonarQube..."
     
@@ -397,7 +395,7 @@ sh '''
       sonarsource/sonar-scanner-cli:latest \
       -Dsonar.projectKey=frontend \
       -Dsonar.projectName="Frontend" \
-      -Dsonar.sources=/src/src/app \
+      -Dsonar.sources=/src/app \
       -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,**/*.d.ts,node_modules/**,dist/**,coverage/**,**/.env,**/.env*,src/environments/**,src/assets/** \
       -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,node_modules/** \
       -Dsonar.typescript.lcov.reportPaths=/src/coverage/lcov.info \
@@ -406,6 +404,10 @@ sh '''
     
     echo "✅ Frontend analysis completed"
 '''
+
+sleep(time: 10, unit: 'SECONDS')
+echo "✅ SonarQube analysis completed"
+
 
 sleep(time: 10, unit: 'SECONDS')
 echo "✅ SonarQube analysis completed"
