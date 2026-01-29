@@ -262,15 +262,7 @@ pipeline {
                           --cap-add=SYS_ADMIN \
                           --user root \
                           node:20.19-alpine \
-                          sh -c "apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage --source-map=false" || {
-                            EXIT_CODE=$?
-                            if [ $EXIT_CODE -eq 124 ]; then
-                                echo "❌ Test execution timed out after 180 seconds"
-                                exit 124
-                            fi
-                            echo "❌ Tests failed with exit code: $EXIT_CODE"
-                            exit $EXIT_CODE
-                        }
+                          sh -c "apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage --source-map=false"
                         
                         echo "✅ Frontend unit tests passed"
                     else
@@ -278,6 +270,11 @@ pipeline {
                         exit 1
                     fi
                 '''
+                
+                // ✅ ADD THIS - Publishes frontend tests to [Test Result] tab
+                junit allowEmptyResults: true, testResults: 'frontend/junit-results.xml'
+                
+                // Keep your coverage report
                 publishHTML target: [
                     allowMissing: false,
                     alwaysLinkToLastBuild: true,
@@ -288,6 +285,7 @@ pipeline {
                 ]
             }
         }
+
 
         stage('📊 SonarQube Analysis') {
             when {
