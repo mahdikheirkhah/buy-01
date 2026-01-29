@@ -235,9 +235,8 @@ pipeline {
                             echo "❌ ${service} unit tests FAILED: ${e.message}"
                             failedTests.add(service)
                         }
-                        junit allowEmptyResults: true, testResults: "backend/${service}/target/surefire-reports/*.xml"
                     }
-
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
                     // ✅ FAIL-FAST: If any tests fail, stop the pipeline
                     if (failedTests.size() > 0) {
                         error("❌ Backend unit tests failed for: ${failedTests.join(', ')}")
@@ -279,11 +278,14 @@ pipeline {
                         exit 1
                     fi
                 '''
-                recordCoverage(
-                toolName: 'Cobertura',
-                reportDir: 'frontend/coverage',
-                reportFiles: 'cobertura-coverage.xml'
-                )
+                publishHTML target: [
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'frontend/coverage',
+                    reportFiles: 'index.html',
+                    reportName: 'Frontend Coverage Report'
+                ]
             }
         }
 
