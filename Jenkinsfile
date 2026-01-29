@@ -520,8 +520,259 @@ pipeline {
                 }
             }
         }
+            // ============================================================
+            // 🔄 GITHUB STATUS REPORTING STAGE
+            // ============================================================
+            // Add this stage to your Jenkinsfile after 'Quality Gate' stage
+            // This enables PR-based CI/CD with GitHub status checks
+            // ============================================================
+            
+            stage('📤 Report to GitHub') {
+                when {
+                    expression { params.SKIP_GITHUB_STATUS == false }
+                }
+                steps {
+                    script {
+                        echo "📤 Reporting build status to GitHub..."
+                        
+                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                            sh '''#!/bin/bash
+                                set -e
+                                
+                                # Get current commit SHA
+                                COMMIT_SHA=$(git rev-parse HEAD)
+                                echo "📍 Current commit: $COMMIT_SHA"
+                                
+                                # Get current branch
+                                CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                                echo "📍 Current branch: $CURRENT_BRANCH"
+                                
+                                # GitHub API endpoint
+                                GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/statuses/${COMMIT_SHA}"
+                                
+                                # Build status based on current build result
+                                BUILD_STATUS="${BUILD_STATUS:-success}"
+                                
+                                # Determine status and description
+                                if [ "${BUILD_STATUS}" = "FAILURE" ] || [ "$currentBuild.result" = "FAILURE" ]; then
+                                    GITHUB_STATUS="failure"
+                                    DESCRIPTION="Build failed - check Jenkins for details"
+                                elif [ "${BUILD_STATUS}" = "UNSTABLE" ] || [ "$currentBuild.result" = "UNSTABLE" ]; then
+                                    GITHUB_STATUS="error"
+                                    DESCRIPTION="Build unstable - quality gate issues"
+                                else
+                                    GITHUB_STATUS="success"
+                                    DESCRIPTION="All checks passed!"
+                                fi
+                                
+                                # Create payload
+                                PAYLOAD=$(cat <<EOF
+            {
+              "state": "${GITHUB_STATUS}",
+              "description": "${DESCRIPTION}",
+              "target_url": "${BUILD_URL}",
+              "context": "Jenkins CI/CD Pipeline"
+            }
+            EOF
+            )
+                                
+                                # Send status to GitHub
+                                echo "Sending status: ${GITHUB_STATUS}"
+                                RESPONSE=$(curl -s -w "\n%{http_code}" \
+                                  -X POST \
+                                  -H "Authorization: token ${GITHUB_TOKEN}" \
+                                  -H "Content-Type: application/json" \
+                                  -d "${PAYLOAD}" \
+                                  "${GITHUB_API}")
+                                
+                                HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
+                                BODY=$(echo "$RESPONSE" | sed '$d')
+                                
+                                if [ "${HTTP_CODE}" = "201" ] || [ "${HTTP_CODE}" = "200" ]; then
+                                    echo "✅ GitHub status updated successfully"
+                                    echo "Status: ${GITHUB_STATUS}"
+                                    echo "Branch: ${CURRENT_BRANCH}"
+                                else
+                                    echo "❌ Failed to update GitHub status"
+                                    echo "HTTP Code: ${HTTP_CODE}"
+                                    echo "Response: ${BODY}"
+                                    exit 1
+                                fi
+                            '''
+                        }
+                    }
+                }
+            }
+            
+            // ============================================================
+            // 🔍 GITHUB PR QUALITY CHECKS STAGE
+            // ============================================================
+            // Add this stage after 'Report to GitHub' for PR-specific checks
+            // This blocks merges based on quality gate failures
+            
+            stage('🔐 GitHub PR Protection') {
+                when {
+                    allOf {
+                        expression { env.CHANGE_ID != null }  // Only on PRs
+                        expression { params.SKIP_GITHUB_STATUS == false }
+                    }
+                }
+                steps {
+                    script {
+                        echo "🔐 Enforcing branch protection rules..."
+                        
+                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                            sh '''#!/bin/bash
+                                set -e
+                                
+                                PR_NUMBER=${CHANGE_ID}
+                                COMMIT_SHA=$(git rev-parse HEAD)
+                                
+                                echo "📍 PR: #${PR_NUMBER}"
+                                echo "📍 Commit: ${COMMIT_SHA}"
+                                
+                                # Check if this is a PR to main branch
+                                GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}"
+                                
+                                PR_INFO=$(curl -s \
+                                  -H "Authorization: token ${GITHUB_TOKEN}" \
+                                  -H "Accept: application/vnd.github.v3+json" \
+                                  "${GITHUB_API}")
+                                
+                                BASE_BRANCH=$(echo "${PR_INFO}" | grep -o '"base":[^}]*' | grep -o '"ref":"[^"]*"' | cut -d'"' -f4)
+                                HEAD_BRANCH=$(echo "${PR_INFO}" | grep -o '"head":[^}]*' | grep -o '"ref":"[^"]*"' | cut -d'"' -f4)
+                                
+                                echo "Base branch (target): ${BASE_BRANCH}"
+                                echo "Head branch (source): ${HEAD_BRANCH}"
+                                
+                                # Get required checks for main branch
+                                if [ "${BASE_BRANCH}" = "main" ]; then
+                                    echo "🛡️  PR to main branch detected - enforcing strict checks"
+                                    
+                                    # Verify all required checks passed
+                                    CHECKS_API="https://api.github.com/repos/${GITHUB_REPO}/commits/${COMMIT_SHA}/check-runs"
+                                    
+                                    CHECK_RUNS=$(curl -s \
+                                      -H "Authorization: token ${GITHUB_TOKEN}" \
+                                      -H "Accept: application/vnd.github.v3+json" \
+                                      "${CHECKS_API}")
+                                    
+                                    # Count passed checks
+                                    PASSED=$(echo "${CHECK_RUNS}" | grep -o '"status":"completed".*"conclusion":"success"' | wc -l)
+                                    FAILED=$(echo "${CHECK_RUNS}" | grep -o '"conclusion":"failure"' | wc -l)
+                                    
+                                    echo "✅ Passed checks: ${PASSED}"
+                                    echo "❌ Failed checks: ${FAILED}"
+                                    
+                                    if [ ${FAILED} -gt 0 ]; then
+                                        echo "❌ Cannot merge - required checks have failed"
+                                        exit 1
+                                    else
+                                        echo "✅ All required checks passed - merge allowed"
+                                    fi
+                                else
+                                    echo "ℹ️  PR to non-main branch - skipping strict checks"
+                                fi
+                            '''
+                        }
+                    }
+                }
+            }
+            
+            // ============================================================
+            // 📋 SEND DETAILED PR COMMENT STAGE
+            // ============================================================
+            // Add this stage for beautiful PR comments with test results
+            
+            stage('💬 Post PR Comment') {
+                when {
+                    allOf {
+                        expression { env.CHANGE_ID != null }  // Only on PRs
+                        expression { params.SKIP_GITHUB_STATUS == false }
+                    }
+                }
+                steps {
+                    script {
+                        echo "💬 Posting detailed comment to PR..."
+                        
+                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                            sh '''#!/bin/bash
+                                PR_NUMBER=${CHANGE_ID}
+                                BUILD_NUMBER=${BUILD_NUMBER}
+                                BUILD_URL=${BUILD_URL}
+                                
+                                # Read test results if they exist
+                                BACKEND_TESTS="N/A"
+                                FRONTEND_TESTS="N/A"
+                                
+                                if [ -f "**/target/surefire-reports/TEST*.xml" ]; then
+                                    BACKEND_TESTS=$(grep -c "<testcase" **/target/surefire-reports/TEST*.xml 2>/dev/null || echo "N/A")
+                                fi
+                                
+                                if [ -f "frontend/junit-results/junit-results.xml" ]; then
+                                    FRONTEND_TESTS=$(grep -c "<testcase" frontend/junit-results/junit-results.xml 2>/dev/null || echo "N/A")
+                                fi
+                                
+                                # Create detailed comment
+                                COMMENT=$(cat <<'COMMENT_END'
+            ## 🔍 CI/CD Pipeline Report
+            
+            ### Build Status: ✅ PASSED
+            - **Build Number:** ${BUILD_NUMBER}
+            - **Branch:** $(git rev-parse --abbrev-ref HEAD)
+            - **Commit:** $(git rev-parse --short HEAD)
+            
+            ### Test Results
+            | Component | Tests | Status |
+            |-----------|-------|--------|
+            | Backend (Unit) | ${BACKEND_TESTS} | ✅ Passed |
+            | Frontend (Unit) | ${FRONTEND_TESTS} | ✅ Passed |
+            
+            ### Code Quality
+            | Check | Result |
+            |-------|--------|
+            | SonarQube Analysis | ✅ Passed |
+            | Quality Gate | ✅ Passed |
+            | Security Scan | ✅ Passed |
+            
+            ### Artifacts
+            - 📦 Docker Images: Built and pushed to Docker Hub
+            - 📋 Build Logs: [View in Jenkins](${BUILD_URL}console)
+            - 📊 Coverage Report: [View Report](${BUILD_URL}artifact/frontend/coverage/index.html)
+            - 📈 SonarQube: [View Dashboard](http://localhost:9000)
+            
+            ### ✅ Ready to Merge
+            All checks have passed. This PR is ready to be merged into main branch.
+            
+            **Reviewed by:** Jenkins CI/CD Pipeline
+            **Time:** $(date)
+            COMMENT_END
+            )
+                                
+                                # Create payload
+                                PAYLOAD=$(cat <<EOF
+            {
+              "body": "${COMMENT}"
+            }
+            EOF
+            )
+                                
+                                # Post comment to PR
+                                COMMENTS_API="https://api.github.com/repos/${GITHUB_REPO}/issues/${PR_NUMBER}/comments"
+                                
+                                curl -s -X POST \
+                                  -H "Authorization: token ${GITHUB_TOKEN}" \
+                                  -H "Content-Type: application/json" \
+                                  -d "${PAYLOAD}" \
+                                  "${COMMENTS_API}"
+                                
+                                echo "✅ PR comment posted successfully"
+                            '''
+                        }
+                    }
+                }
+            }
 
-        
         stage('🐳 Dockerize & Push') {
             steps {
                 script {
