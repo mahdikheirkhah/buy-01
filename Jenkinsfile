@@ -5,6 +5,14 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout()
+        buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10'))
+        timeout(time: 2, unit: 'HOURS')
+        timestamps()
+        ansiColor('xterm')
+    }
+
     triggers {
         githubPush()
     }
@@ -63,21 +71,42 @@ pipeline {
             }
         }
 
-        stage('📥 Checkout') {
-            steps {
-                echo "📥 Checking out branch: ${params.BRANCH}"
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: "*/${params.BRANCH}"]],
-                    userRemoteConfigs: [[
-                        url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
-                        credentialsId: 'gitea-credentials'
-                    ]]
-                ])
-                echo "✅ Checkout completed from Gitea"
-                sh 'git log --oneline -5'
-            }
+       stage('📥 Checkout') {
+    steps {
+        script {
+            // ✅ Force clean checkout
+            deleteDir()
+            
+            echo "📥 Checking out branch: ${params.BRANCH}"
+            checkout([
+                $class: 'GitSCM',
+                branches: [[name: "*/${params.BRANCH}"]],
+                userRemoteConfigs: [[
+                    url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
+                    credentialsId: 'gitea-credentials'
+                ]],
+                // ✅ FORCE fresh clone every time
+                extensions: [
+                    [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                ]
+            ])
+            echo "✅ Checkout completed from Gitea"
+            sh 'git log --oneline -5'
+            
+            // ✅ Verify files were updated
+            sh '''
+                echo "🔍 Verifying config files..."
+                echo "Frontend files:"
+                ls -la ${WORKSPACE}/frontend/karma.conf.js
+                ls -la ${WORKSPACE}/frontend/package.json
+                echo ""
+                echo "Content of karma.conf.js (first 20 lines):"
+                head -20 ${WORKSPACE}/frontend/karma.conf.js
+            '''
         }
+    }
+}
+
 
         stage('🚀 Start SonarQube Early') {
             when {
@@ -247,7 +276,7 @@ stage('🧪 Test Frontend') {
                   --cap-add=SYS_ADMIN \
                   --user root \
                   node:20.19-alpine \
-                  sh -c "apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npm run test" || {
+                  sh -c "apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage --source-map=false" || {
                     EXIT_CODE=$?
                     if [ $EXIT_CODE -eq 124 ]; then
                         echo "⚠️ Test execution timed out after 180 seconds"
@@ -265,6 +294,7 @@ stage('🧪 Test Frontend') {
         '''
     }
 }
+
 
 
         stage('📊 SonarQube Analysis') {
