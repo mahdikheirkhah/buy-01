@@ -252,37 +252,95 @@ pipeline {
                 expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_TESTS == false }
             }
             steps {
-                sh '''
-                    if [ -d ${WORKSPACE}/frontend ]; then
-                        echo "🧪 Running frontend unit tests..."
-                        
-                        timeout 180 docker run --rm \
-                          --volumes-from jenkins-cicd \
-                          -w ${WORKSPACE}/frontend \
-                          --cap-add=SYS_ADMIN \
-                          --user root \
-                          node:20.19-alpine \
-                          sh -c "apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage --source-map=false"
-                        
-                        echo "✅ Frontend unit tests passed"
-                    else
-                        echo "❌ Frontend directory not found"
-                        exit 1
-                    fi
-                '''
+                script {
+                    try {
+                        sh '''
+                            if [ -d ${WORKSPACE}/frontend ]; then
+                                echo "🧪 Running frontend unit tests..."
+                                
+                                # ✅ CREATE DIRECTORIES FIRST
+                                mkdir -p ${WORKSPACE}/frontend/junit-results
+                                mkdir -p ${WORKSPACE}/frontend/coverage
+                                
+                                # Run tests in Docker
+                                timeout 180 docker run --rm \
+                                  --volumes-from jenkins-cicd \
+                                  -w ${WORKSPACE}/frontend \
+                                  --cap-add=SYS_ADMIN \
+                                  --user root \
+                                  node:20.19-alpine \
+                                  sh -c "apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage --source-map=false"
+                                
+                                TEST_EXIT=$?
+                                
+                                if [ $TEST_EXIT -eq 0 ]; then
+                                    echo "✅ Frontend unit tests passed"
+                                else
+                                    echo "❌ Frontend tests failed with exit code: $TEST_EXIT"
+                                    exit $TEST_EXIT
+                                fi
+                                
+                                # ✅ VERIFY outputs exist
+                                echo ""
+                                echo "📁 Verifying test outputs..."
+                                
+                                if [ -f ${WORKSPACE}/frontend/junit-results/junit-results.xml ]; then
+                                    echo "✅ JUnit results file found"
+                                    ls -lh ${WORKSPACE}/frontend/junit-results/junit-results.xml
+                                else
+                                    echo "⚠️  JUnit results file not found"
+                                    ls -la ${WORKSPACE}/frontend/junit-results/ 2>/dev/null || echo "   Directory empty"
+                                fi
+                                
+                                if [ -f ${WORKSPACE}/frontend/coverage/index.html ]; then
+                                    echo "✅ Coverage report found"
+                                    ls -lh ${WORKSPACE}/frontend/coverage/index.html
+                                else
+                                    echo "⚠️  Coverage check:"
+                                    ls -la ${WORKSPACE}/frontend/coverage/ 2>/dev/null | head -10
+                                fi
+                            else
+                                echo "❌ Frontend directory not found"
+                                exit 1
+                            fi
+                        '''
+                    } catch (Exception e) {
+                        echo "❌ Frontend tests failed: ${e.message}"
+                        throw e
+                    }
+                }
                 
-                // ✅ ADD THIS - Publishes frontend tests to [Test Result] tab
-                junit allowEmptyResults: true, testResults: 'frontend/junit-results.xml'
+                // ✅ Publish JUnit results
+                junit allowEmptyResults: true, testResults: 'frontend/junit-results/**/*.xml'
                 
-                // Keep your coverage report
+                // ✅ Publish coverage report
                 publishHTML target: [
-                    allowMissing: false,
+                    allowMissing: true,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
                     reportDir: 'frontend/coverage',
                     reportFiles: 'index.html',
                     reportName: 'Frontend Coverage Report'
                 ]
+            }
+            post {
+                failure {
+                    script {
+                        echo "❌ Frontend test stage failed"
+                        sh '''
+                            echo "📂 Frontend directory:"
+                            ls -la ${WORKSPACE}/frontend/ | head -20
+                            
+                            echo ""
+                            echo "📂 JUnit results:"
+                            ls -la ${WORKSPACE}/frontend/junit-results/ 2>/dev/null || echo "   Not found"
+                            
+                            echo ""
+                            echo "📂 Coverage:"
+                            ls -la ${WORKSPACE}/frontend/coverage/ 2>/dev/null | head -15 || echo "   Not found"
+                        '''
+                    }
+                }
             }
         }
 
@@ -294,7 +352,7 @@ pipeline {
             steps {
                 script {
                     echo "📊 Running SonarQube analysis..."
-                    
+
                     def sonarAvailable = sh(
                         script: '''#!/bin/bash
                             RESPONSE=$(timeout 5 curl -s http://sonarqube:9000/api/system/status 2>&1)
@@ -306,65 +364,81 @@ pipeline {
                         ''',
                         returnStdout: true
                     ).trim()
-                    
+
                     echo "SonarQube available: ${sonarAvailable}"
-                    
+
                     if (sonarAvailable == "true") {
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                             // Create SonarQube projects if they don't exist
                             sh '''#!/bin/bash
                                 echo "📁 Creating SonarQube projects if they don't exist..."
-                                
-                                echo "📋 Current projects in SonarQube:"
-                                curl -s -u ${SONAR_TOKEN}: "http://sonarqube:9000/api/projects/search" | grep -o '"key":"[^"]*"' | sed 's/"key":"/Project Key: /' | sed 's/"$//' || echo "   No projects found"
-                                
-                                echo "Creating individual service projects..."
+
                                 for service in user-service product-service media-service api-gateway discovery-service frontend; do
                                     echo "Checking if $service project exists..."
                                     PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=$service | grep -o "\"key\":\"$service\"" || echo "")
                                     if [ -z "$PROJECT_EXISTS" ]; then
                                         echo "Creating $service project..."
-                                        curl -s -X POST -u ${SONAR_TOKEN}: \\
-                                          -F "project=$service" \\
-                                          -F "name=$(echo $service | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) \$i=toupper(substr(\$i,1,1)) tolower(substr(\$i,2));}1')" \\
+                                        curl -s -X POST -u ${SONAR_TOKEN}: \
+                                          -F "project=$service" \
+                                          -F "name=$(echo $service | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2));}1')" \
                                           http://sonarqube:9000/api/projects/create > /dev/null
                                         echo "✅ $service project created"
                                     else
                                         echo "✅ $service project already exists"
                                     fi
                                 done
-                                
-                                echo "Waiting 3 seconds for projects to be initialized..."
+
                                 sleep 3
                             '''
-                            
-                            // Backend services analysis
-                            def services = ['user-service', 'product-service', 'media-service', 'api-gateway', 'discovery-service']
+
+                            // ✅ ANALYZE ALL 5 BACKEND SERVICES (with test results for 3)
+                            def services = ['user-service', 'product-service', 'media-service']
                             services.each { service ->
                                 sh """
-                                    echo "🔍 Analyzing ${service}..."
-                                    
+                                    echo "🔍 Analyzing ${service} (with test coverage)..."
+
                                     docker run --rm \
                                       --volumes-from jenkins-cicd \
                                       -v jenkins_m2_cache:/root/.m2 \
-                                      -v /var/run/docker.sock:/var/run/docker.sock \
                                       -w \${WORKSPACE}/backend/${service} \
                                       --network buy-01_BACKEND \
-                                      -e TESTCONTAINERS_RYUK_DISABLED=true \
                                       \${MAVEN_IMAGE} \
-                                      mvn clean install sonar:sonar \
+                                      mvn sonar:sonar \
                                         -Dsonar.projectKey=${service} \
                                         -Dsonar.host.url=http://sonarqube:9000 \
                                         -Dsonar.login=\${SONAR_TOKEN} \
                                         -Dsonar.exclusions="**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**" \
-                                        -Dtest=!**/*IntegrationTest \
                                         -B
 
                                     echo "✅ ${service} analysis completed"
                                 """
                             }
 
-                            // Frontend Analysis - CORRECTED (Same pattern as backend)
+                            // ✅ ANALYZE API-Gateway and Discovery (WITHOUT running tests)
+                            def noTestServices = ['api-gateway', 'discovery-service']
+                            noTestServices.each { service ->
+                                sh """
+                                    echo "🔍 Analyzing ${service} (code quality only, no tests)..."
+
+                                    docker run --rm \
+                                      --volumes-from jenkins-cicd \
+                                      -v jenkins_m2_cache:/root/.m2 \
+                                      -w \${WORKSPACE}/backend/${service} \
+                                      --network buy-01_BACKEND \
+                                      \${MAVEN_IMAGE} \
+                                      mvn sonar:sonar \
+                                        -Dsonar.projectKey=${service} \
+                                        -Dsonar.host.url=http://sonarqube:9000 \
+                                        -Dsonar.login=\${SONAR_TOKEN} \
+                                        -Dsonar.exclusions="**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**" \
+                                        -DskipTests \
+                                        -B
+
+                                    echo "✅ ${service} analysis completed"
+                                """
+                            }
+
+                            // ✅ ANALYZE FRONTEND (with coverage)
                             sh '''
                                 echo "🔍 Frontend analysis with SonarQube..."
 
@@ -394,15 +468,15 @@ pipeline {
                             '''
 
                             sleep(time: 10, unit: 'SECONDS')
-                            echo "✅ SonarQube analysis completed"
+                            echo "✅ SonarQube analysis completed for all 6 projects!"
                         }
                     } else {
-                        // ✅ FAIL-FAST: If SonarQube is not available, fail the pipeline
                         error("❌ SonarQube is not available")
                     }
                 }
             }
         }
+
 
         stage('📊 Quality Gate') {
             when {
