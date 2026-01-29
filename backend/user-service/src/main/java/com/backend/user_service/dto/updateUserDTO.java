@@ -1,6 +1,5 @@
 package com.backend.user_service.dto;
 
-import com.backend.common.dto.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
