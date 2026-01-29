@@ -5,14 +5,6 @@
 pipeline {
     agent any
 
-    options {
-        skipDefaultCheckout()
-        buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10'))
-        timeout(time: 2, unit: 'HOURS')
-        timestamps()
-        ansiColor('xterm')
-    }
-
     triggers {
         githubPush()
     }
@@ -47,6 +39,7 @@ pipeline {
     }
 
     options {
+        skipDefaultCheckout()
         buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '10'))
         timeout(time: 2, unit: 'HOURS')
         timestamps()
