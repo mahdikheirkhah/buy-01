@@ -10,6 +10,7 @@ module.exports = function (config) {
       require('karma-jasmine-html-reporter'),
       require('karma-coverage'),
       require('@angular-devkit/build-angular/plugins/karma'),
+      require('karma-junit-reporter'),
     ],
     files: [
       // ADD THIS SECTION! Tells Karma to serve your template files
@@ -22,7 +23,12 @@ module.exports = function (config) {
       },
       clearContext: false, // keep Jasmine Spec Runner output visible in browser
     },
-    reporters: ['progress', 'kjhtml', 'coverage'],
+    junitReporter: {
+    outputDir: 'junit-results',
+    outputFile: 'junit-results.xml',
+    suite: 'Frontend Tests'
+    },
+    reporters: ['progress', 'kjhtml', 'coverage', 'junit'],
     coverageReporter: {
       dir: require('path').join(__dirname, './coverage'),
       reporters: [
