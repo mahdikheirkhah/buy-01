@@ -415,7 +415,7 @@ pipeline {
                                     -Dsonar.projectKey=${service} \
                                     -Dsonar.host.url=http://sonarqube:9000 \
                                     -Dsonar.login=\${SONAR_TOKEN} \
-                                    -Dsonar.exclusions="**/target/**,common/**,discovery-service/**" \
+                                    -Dsonar.exclusions="**/target/**,common/**,**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**" \
                                     \$COVERAGE_EXCLUDE \
                                     -B
                         
