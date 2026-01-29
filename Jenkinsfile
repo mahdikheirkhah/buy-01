@@ -423,36 +423,35 @@ pipeline {
                             """
                         }
                             // ✅ ANALYZE FRONTEND (with coverage)
-                            sh '''
-                                echo "🔍 Frontend analysis with SonarQube..."
+                        sh """
+                            echo "🔍 Frontend analysis with SonarQube..."
 
-                                FRONTEND_PATH="${WORKSPACE}/frontend"
-                                COVERAGE_FILE="${FRONTEND_PATH}/coverage/lcov.info"
+                            FRONTEND_PATH="\${WORKSPACE}/frontend"
+                            COVERAGE_FILE="\${FRONTEND_PATH}/coverage/lcov.info"
 
-                                echo "   Using frontend path: $FRONTEND_PATH"
+                            echo "   Using frontend path: \$FRONTEND_PATH"
 
-                                if [ ! -f "$COVERAGE_FILE" ]; then
-                                    echo "❌ ERROR: Coverage file NOT found!"
-                                    exit 1
-                                fi
+                            if [ ! -f "\$COVERAGE_FILE" ]; then
+                                echo "❌ ERROR: Coverage file NOT found!"
+                                exit 1
+                            fi
 
-                                COVERAGE_SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
-                                echo "✅ Coverage file ready: $COVERAGE_SIZE"
+                            COVERAGE_SIZE=\$(du -h "\$COVERAGE_FILE" | cut -f1)
+                            echo "✅ Coverage file ready: \$COVERAGE_SIZE"
 
-                                echo "🚀 Starting SonarQube analysis..."
-                                docker run --rm \
-                                  --volumes-from jenkins-cicd \
-                                  -w ${WORKSPACE}/frontend \
-                                  --network buy-01_BACKEND \
-                                  -e SONAR_TOKEN=${SONAR_TOKEN} \
-                                  sonarsource/sonar-scanner-cli:latest \
-                                  -Dsonar.host.url=http://sonarqube:9000
+                            echo "🚀 Starting SonarQube analysis..."
+                            docker run --rm \
+                              --volumes-from jenkins-cicd \
+                              -w \${WORKSPACE}/frontend \
+                              --network buy-01_BACKEND \
+                              -e SONAR_TOKEN=\${SONAR_TOKEN} \
+                              sonarsource/sonar-scanner-cli:latest \
+                              -Dsonar.host.url=http://sonarqube:9000
 
-                                echo "✅ Frontend analysis completed"
-                            '''
-
-                            sleep(time: 10, unit: 'SECONDS')
-                            echo "✅ SonarQube analysis completed for all 6 projects!"
+                            echo "✅ Frontend analysis completed"
+                        """
+                        sleep(time: 10, unit: 'SECONDS')
+                        echo "✅ SonarQube analysis completed for all 6 projects!"
                         }
                     } else {
                         error("❌ SonarQube is not available")
