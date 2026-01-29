@@ -1,6 +1,7 @@
 // CI/CD Pipeline for Buy-01 E-Commerce Platform
-// Last updated: 2026-01-27
+// Last updated: 2026-01-29
 // FIXED VERSION - Frontend Test Docker Path Issue Resolved
+// UPDATED - Fail-fast pipeline + Frontend exclusions
 
 pipeline {
     agent any
@@ -13,7 +14,6 @@ pipeline {
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
         booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run unit tests')
         booleanParam(name: 'SKIP_FRONTEND_TESTS', defaultValue: false, description: 'Skip frontend unit tests (for debugging)')
-        booleanParam(name: 'RUN_INTEGRATION_TESTS', defaultValue: false, description: 'Run integration tests (slower, requires Docker)')
         booleanParam(name: 'RUN_SONAR', defaultValue: true, description: 'Run SonarQube analysis')
         booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip deployment')
         booleanParam(name: 'DEPLOY_LOCALLY', defaultValue: true, description: 'Deploy locally without SSH')
@@ -64,42 +64,40 @@ pipeline {
             }
         }
 
-       stage('📥 Checkout') {
-    steps {
-        script {
-            // ✅ Force clean checkout
-            deleteDir()
-            
-            echo "📥 Checking out branch: ${params.BRANCH}"
-            checkout([
-                $class: 'GitSCM',
-                branches: [[name: "*/${params.BRANCH}"]],
-                userRemoteConfigs: [[
-                    url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
-                    credentialsId: 'gitea-credentials'
-                ]],
-                // ✅ FORCE fresh clone every time
-                extensions: [
-                    [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
-                ]
-            ])
-            echo "✅ Checkout completed from Gitea"
-            sh 'git log --oneline -5'
-            
-            // ✅ Verify files were updated
-            sh '''
-                echo "🔍 Verifying config files..."
-                echo "Frontend files:"
-                ls -la ${WORKSPACE}/frontend/karma.conf.js
-                ls -la ${WORKSPACE}/frontend/package.json
-                echo ""
-                echo "Content of karma.conf.js (first 20 lines):"
-                head -20 ${WORKSPACE}/frontend/karma.conf.js
-            '''
+        stage('📥 Checkout') {
+            steps {
+                script {
+                    // ✅ Force clean checkout
+                    deleteDir()
+                    
+                    echo "📥 Checking out branch: ${params.BRANCH}"
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: "*/${params.BRANCH}"]],
+                        userRemoteConfigs: [[
+                            url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
+                            credentialsId: 'gitea-credentials'
+                        ]],
+                        extensions: [
+                            [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                        ]
+                    ])
+                    echo "✅ Checkout completed from Gitea"
+                    sh 'git log --oneline -5'
+                    
+                    // ✅ Verify files were updated
+                    sh '''
+                        echo "🔍 Verifying config files..."
+                        echo "Frontend files:"
+                        ls -la ${WORKSPACE}/frontend/karma.conf.js
+                        ls -la ${WORKSPACE}/frontend/package.json
+                        echo ""
+                        echo "Content of karma.conf.js (first 20 lines):"
+                        head -20 ${WORKSPACE}/frontend/karma.conf.js
+                    '''
+                }
+            }
         }
-    }
-}
-
 
         stage('🚀 Start SonarQube Early') {
             when {
@@ -163,23 +161,19 @@ pipeline {
                     steps {
                         script {
                             echo "🏗️ Building backend microservices..."
-                            try {
-                                sh '''
-                                    docker run --rm \\
-                                      --volumes-from jenkins-cicd \\
-                                      -w ${WORKSPACE}/backend \\
-                                      -v jenkins_m2_cache:/root/.m2 \\
-                                      -v /var/run/docker.sock:/var/run/docker.sock \\
-                                      -e TESTCONTAINERS_RYUK_DISABLED=true \\
-                                      --network host \\
-                                      ${MAVEN_IMAGE} \\
-                                      mvn clean install -B -DskipTests
+                            sh '''
+                                docker run --rm \\
+                                  --volumes-from jenkins-cicd \\
+                                  -w ${WORKSPACE}/backend \\
+                                  -v jenkins_m2_cache:/root/.m2 \\
+                                  -v /var/run/docker.sock:/var/run/docker.sock \\
+                                  -e TESTCONTAINERS_RYUK_DISABLED=true \\
+                                  --network host \\
+                                  ${MAVEN_IMAGE} \\
+                                  mvn clean install -B -DskipTests
 
-                                    echo "✅ Backend build completed"
-                                '''
-                            } catch (Exception e) {
-                                error("❌ Backend build failed: ${e.message}")
-                            }
+                                echo "✅ Backend build completed"
+                            '''
                         }
                     }
                 }
@@ -188,26 +182,22 @@ pipeline {
                     steps {
                         script {
                             echo "🏗️ Building frontend..."
-                            try {
-                                sh '''
-                                    export NODE_OPTIONS="--max-old-space-size=4096"
-                                    docker run --rm \\
-                                      --volumes-from jenkins-cicd \\
-                                      -w ${WORKSPACE}/frontend \\
-                                      -e NODE_OPTIONS="--max-old-space-size=4096" \\
-                                      ${NODE_IMAGE} \\
-                                      sh -c "npm install --legacy-peer-deps && npm run build -- --configuration production"
+                            sh '''
+                                export NODE_OPTIONS="--max-old-space-size=4096"
+                                docker run --rm \\
+                                  --volumes-from jenkins-cicd \\
+                                  -w ${WORKSPACE}/frontend \\
+                                  -e NODE_OPTIONS="--max-old-space-size=4096" \\
+                                  ${NODE_IMAGE} \\
+                                  sh -c "npm install --legacy-peer-deps && npm run build -- --configuration production"
 
-                                    if [ -d ${WORKSPACE}/frontend/dist ]; then
-                                        echo "✅ Frontend dist created"
-                                    else
-                                        echo "⚠️ Warning: dist directory not found"
-                                    fi
-                                '''
-                            } catch (Exception e) {
-                                echo "⚠️ Frontend build failed: ${e.message}"
-                                throw e
-                            }
+                                if [ -d ${WORKSPACE}/frontend/dist ]; then
+                                    echo "✅ Frontend dist created"
+                                else
+                                    echo "⚠️ Warning: dist directory not found"
+                                    exit 1
+                                fi
+                            '''
                         }
                     }
                 }
@@ -240,55 +230,58 @@ pipeline {
                                     echo "✅ ''' + service + ''' unit tests passed"
                                 fi
                             '''
+    
                         } catch (Exception e) {
-                            echo "⚠️ ${service} unit tests: ${e.message}"
+                            echo "❌ ${service} unit tests FAILED: ${e.message}"
                             failedTests.add(service)
                         }
+                        junit allowEmptyResults: true, testResults: "backend/${service}/target/surefire-reports/*.xml"
                     }
 
+                    // ✅ FAIL-FAST: If any tests fail, stop the pipeline
                     if (failedTests.size() > 0) {
-                        echo "⚠️ Some unit tests failed: ${failedTests.join(', ')}"
+                        error("❌ Backend unit tests failed for: ${failedTests.join(', ')}")
                     } else {
-                        echo "✅ All unit tests passed!"
+                        echo "✅ All backend unit tests passed!"
                     }
                 }
             }
         }
-stage('🧪 Test Frontend') {
-    when {
-        expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_TESTS == false }
-    }
-    steps {
-        sh '''
-            if [ -d ${WORKSPACE}/frontend ]; then
-                echo "🧪 Running frontend unit tests..."
-                
-                timeout 180 docker run --rm \
-                  --volumes-from jenkins-cicd \
-                  -w ${WORKSPACE}/frontend \
-                  --cap-add=SYS_ADMIN \
-                  --user root \
-                  node:20.19-alpine \
-                  sh -c "apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage --source-map=false" || {
-                    EXIT_CODE=$?
-                    if [ $EXIT_CODE -eq 124 ]; then
-                        echo "⚠️ Test execution timed out after 180 seconds"
-                        exit 124
+
+        stage('🧪 Test Frontend') {
+            when {
+                expression { params.RUN_TESTS == true && params.SKIP_FRONTEND_TESTS == false }
+            }
+            steps {
+                sh '''
+                    if [ -d ${WORKSPACE}/frontend ]; then
+                        echo "🧪 Running frontend unit tests..."
+                        
+                        timeout 180 docker run --rm \
+                          --volumes-from jenkins-cicd \
+                          -w ${WORKSPACE}/frontend \
+                          --cap-add=SYS_ADMIN \
+                          --user root \
+                          node:20.19-alpine \
+                          sh -c "apk add --no-cache chromium && npm install --legacy-peer-deps && CHROME_BIN=/usr/bin/chromium npx ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage --source-map=false" || {
+                            EXIT_CODE=$?
+                            if [ $EXIT_CODE -eq 124 ]; then
+                                echo "❌ Test execution timed out after 180 seconds"
+                                exit 124
+                            fi
+                            echo "❌ Tests failed with exit code: $EXIT_CODE"
+                            exit $EXIT_CODE
+                        }
+                        
+                        echo "✅ Frontend unit tests passed"
+                    else
+                        echo "❌ Frontend directory not found"
+                        exit 1
                     fi
-                    echo "❌ Tests failed with exit code: $EXIT_CODE"
-                    exit $EXIT_CODE
-                }
-                
-                echo "✅ Frontend unit tests passed"
-            else
-                echo "⚠️ Frontend directory not found"
-                exit 1
-            fi
-        '''
-    }
-}
-
-
+                '''
+                publishCoverage adapters: [coberturaAdapter('frontend/coverage/cobertura-coverage.xml')], sourceFileResolver: sourceFiles('STORE_ALL_SOURCE')
+            }
+        }
 
         stage('📊 SonarQube Analysis') {
             when {
@@ -317,8 +310,6 @@ stage('🧪 Test Frontend') {
                             // Create SonarQube projects if they don't exist
                             sh '''#!/bin/bash
                                 echo "📁 Creating SonarQube projects if they don't exist..."
-                                
-                                echo "Cleaning up old aggregated projects (if they exist)..."
                                 
                                 echo "📋 Current projects in SonarQube:"
                                 curl -s -u ${SONAR_TOKEN}: "http://sonarqube:9000/api/projects/search" | grep -o '"key":"[^"]*"' | sed 's/"key":"/Project Key: /' | sed 's/"$//' || echo "   No projects found"
@@ -364,14 +355,12 @@ stage('🧪 Test Frontend') {
                                         -Dsonar.exclusions="**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**" \
                                         -Dtest=!**/*IntegrationTest \
                                         -B
-                            
+
                                     echo "✅ ${service} analysis completed"
                                 """
                             }
 
-
-
-                         // Frontend Analysis - CORRECTED (Same pattern as backend)
+                            // Frontend Analysis - CORRECTED (Same pattern as backend)
                             sh '''
                                 echo "🔍 Frontend analysis with SonarQube..."
 
@@ -402,11 +391,10 @@ stage('🧪 Test Frontend') {
 
                             sleep(time: 10, unit: 'SECONDS')
                             echo "✅ SonarQube analysis completed"
-
-
                         }
                     } else {
-                        echo "⚠️ SonarQube is not available, skipping analysis"
+                        // ✅ FAIL-FAST: If SonarQube is not available, fail the pipeline
+                        error("❌ SonarQube is not available")
                     }
                 }
             }
@@ -429,6 +417,7 @@ stage('🧪 Test Frontend') {
                             SERVICES="user-service product-service media-service api-gateway discovery-service frontend"
                             PASSED_COUNT=0
                             TOTAL_COUNT=6
+                            FAILED_SERVICES=""
                             
                             for service in $SERVICES; do
                                 echo "Checking $service..."
@@ -443,6 +432,7 @@ stage('🧪 Test Frontend') {
                                     PASSED_COUNT=$((PASSED_COUNT + 1))
                                 else
                                     echo "❌ $service: $STATUS"
+                                    FAILED_SERVICES="$FAILED_SERVICES $service"
                                 fi
                             done
                             
@@ -454,12 +444,14 @@ stage('🧪 Test Frontend') {
                             elif [ $PASSED_COUNT -ge $((TOTAL_COUNT - 1)) ]; then
                                 exit 0
                             else
+                                echo "❌ Failed services:$FAILED_SERVICES"
                                 exit 1
                             fi
                         ''', returnStatus: true)
                         
+                        // ✅ FAIL-FAST: If quality gate fails, stop the pipeline
                         if (qgResult != 0) {
-                            echo "⚠️ Quality Gate check failed for some services"
+                            error("❌ Quality Gate check failed for some services")
                         } else {
                             echo "✅ Quality Gate check passed"
                         }
@@ -473,46 +465,43 @@ stage('🧪 Test Frontend') {
                 script {
                     echo "🐳 Building and pushing Docker images with tag: ${IMAGE_TAG}"
 
-                    try {
-                        withCredentials([usernamePassword(
-                            credentialsId: env.DOCKER_CREDENTIAL_ID,
-                            passwordVariable: 'DOCKER_PASSWORD',
-                            usernameVariable: 'DOCKER_USERNAME'
-                        )]) {
+                    withCredentials([usernamePassword(
+                        credentialsId: env.DOCKER_CREDENTIAL_ID,
+                        passwordVariable: 'DOCKER_PASSWORD',
+                        usernameVariable: 'DOCKER_USERNAME'
+                    )]) {
+                        sh '''
+                            if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
+                                echo "❌ ERROR: Docker credentials not set!"
+                                exit 1
+                            fi
+
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                            if [ $? -ne 0 ]; then
+                                echo "❌ Docker login failed!"
+                                exit 1
+                            fi
+                            echo "✅ Docker Hub login successful"
+                        '''
+
+                        def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service']
+
+                        services.each { service ->
                             sh '''
-                                if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
-                                    echo "❌ ERROR: Docker credentials not set!"
+                                cd ${WORKSPACE}/${BACKEND_DIR}/''' + service + '''
+                                
+                                if [ -f target/*.jar ]; then
+                                    docker build -t ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} .
+                                    docker push ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}
+                                    docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
+                                    docker push ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
+                                    echo "✅ Pushed ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}"
+                                else
+                                    echo "❌ ''' + service + ''' JAR not found!"
                                     exit 1
                                 fi
-
-                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                                if [ $? -ne 0 ]; then
-                                    echo "❌ Docker login failed!"
-                                    exit 1
-                                fi
-                                echo "✅ Docker Hub login successful"
                             '''
-
-                            def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service']
-
-                            services.each { service ->
-                                sh '''
-                                    cd ${WORKSPACE}/${BACKEND_DIR}/''' + service + '''
-                                    
-                                    if [ -f target/*.jar ]; then
-                                        docker build -t ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} .
-                                        docker push ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}
-                                        docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
-                                        docker push ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
-                                        echo "✅ Pushed ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}"
-                                    else
-                                        echo "⚠️  ''' + service + ''' JAR not found, skipping..."
-                                    fi
-                                '''
-                            }
                         }
-                    } catch (Exception e) {
-                        echo "⚠️ Docker build/push failed: ${e.message}"
                     }
                 }
             }
@@ -529,35 +518,30 @@ stage('🧪 Test Frontend') {
                 script {
                     echo "🚀 Deploying locally with tag ${IMAGE_TAG}..."
                     
-                    try {
-                        sh '''
-                            export IMAGE_TAG=${IMAGE_TAG}
-                            cd ${WORKSPACE}
-                            
-                            echo "Pulling latest images..."
-                            docker compose pull
-                            
-                            echo "Starting services..."
-                            docker compose up -d --remove-orphans
-                            
-                            echo "Waiting for services to start (30 seconds)..."
-                            sleep 30
-                            
-                            echo "Service status:"
-                            docker compose ps
-                            
-                            echo ""
-                            echo "✅ Local deployment successful!"
-                            echo "Access your application at:"
-                            echo "  - Frontend: http://localhost:4200"
-                            echo "  - API Gateway: http://localhost:8443"
-                            echo "  - Eureka: http://localhost:8761"
-                            echo "  - SonarQube: http://localhost:9000"
-                        '''
-                    } catch (Exception e) {
-                        echo "❌ Local deployment failed: ${e.message}"
-                        throw e
-                    }
+                    sh '''
+                        export IMAGE_TAG=${IMAGE_TAG}
+                        cd ${WORKSPACE}
+                        
+                        echo "Pulling latest images..."
+                        docker compose pull
+                        
+                        echo "Starting services..."
+                        docker compose up -d --remove-orphans
+                        
+                        echo "Waiting for services to start (30 seconds)..."
+                        sleep 30
+                        
+                        echo "Service status:"
+                        docker compose ps
+                        
+                        echo ""
+                        echo "✅ Local deployment successful!"
+                        echo "Access your application at:"
+                        echo "  - Frontend: http://localhost:4200"
+                        echo "  - API Gateway: http://localhost:8443"
+                        echo "  - Eureka: http://localhost:8761"
+                        echo "  - SonarQube: http://localhost:9000"
+                    '''
                 }
             }
         }
@@ -565,6 +549,7 @@ stage('🧪 Test Frontend') {
 
     post {
         always {
+            archiveArtifacts allowEmptyArchive: true, artifacts: '**/target/surefire-reports/**, frontend/coverage/**'
             script {
                 echo "Pipeline execution completed"
             }
