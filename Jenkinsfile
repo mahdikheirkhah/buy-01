@@ -535,7 +535,7 @@ pipeline {
                     script {
                         echo "📤 Reporting build status to GitHub..."
                         
-                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                        withCredentials([string(credentialsId: 'multi-branch-github', variable: 'GITHUB_TOKEN')]) {
                             sh '''#!/bin/bash
                                 set -e
                                 
@@ -621,7 +621,7 @@ pipeline {
                     script {
                         echo "🔐 Enforcing branch protection rules..."
                         
-                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                        withCredentials([string(credentialsId: 'multi-branch-github', variable: 'GITHUB_TOKEN')]) {
                             sh '''#!/bin/bash
                                 set -e
                                 
@@ -695,7 +695,7 @@ pipeline {
                     script {
                         echo "💬 Posting detailed comment to PR..."
                         
-                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                        withCredentials([string(credentialsId: 'multi-branch-github', variable: 'GITHUB_TOKEN')]) {
                             sh '''#!/bin/bash
                                 PR_NUMBER=${CHANGE_ID}
                                 BUILD_NUMBER=${BUILD_NUMBER}
