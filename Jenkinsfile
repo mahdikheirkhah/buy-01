@@ -18,7 +18,7 @@ pipeline {
         booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip deployment')
         booleanParam(name: 'DEPLOY_LOCALLY', defaultValue: true, description: 'Deploy locally without SSH')
         booleanParam(name: 'SKIP_FRONTEND_BUILD', defaultValue: false, description: 'Skip frontend build')
-        booleanParam(name: 'SKIP_GITHUB_STATUS', defaultValue: true, description: 'Skip GitHub status reporting')
+        booleanParam(name: 'SKIP_GITHUB_STATUS', defaultValue: false, description: 'Skip GitHub status reporting')
     }
 
     environment {
