@@ -371,43 +371,46 @@ stage('🧪 Test Frontend') {
 
                             // Frontend Analysis - FIXED VERSION
                            // Frontend Analysis - FIXED VERSION
-                        sh '''
-                            echo "🔍 Frontend analysis with SonarQube..."
-                            
-                            # ✅ Use correct Jenkins workspace variable
-                            FRONTEND_PATH="${WORKSPACE}/frontend"
-                            COVERAGE_FILE="${FRONTEND_PATH}/coverage/lcov.info"
-                            
-                            echo "   Using frontend path: $FRONTEND_PATH"
-                            
-                            # Debug: Show what files exist
-                            echo "📁 Coverage directory contents:"
-                            ls -la ${FRONTEND_PATH}/coverage/ 2>/dev/null || echo "   (coverage directory not found)"
-                            
-                            if [ ! -f "$COVERAGE_FILE" ]; then
-                                echo "❌ ERROR: Coverage file NOT found!"
-                                echo "   Expected: $COVERAGE_FILE"
-                                echo "   Available files in coverage:"
-                                find ${FRONTEND_PATH}/coverage -type f 2>/dev/null | head -20 || echo "   (No coverage files found)"
-                                exit 1
-                            fi
-                            
-                            COVERAGE_SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
-                            echo "✅ Coverage file ready: $COVERAGE_SIZE at $COVERAGE_FILE"
-                            
-                            npx sonarqube-scanner \
-                              -Dsonar.projectKey=frontend \
-                              -Dsonar.projectName="Frontend" \
-                              -Dsonar.sources=${FRONTEND_PATH}/src/app \
-                              -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,**/*.d.ts,node_modules/**,dist/**,coverage/**,**/.env,**/.env*,src/environments/**,src/assets/** \
-                              -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,node_modules/** \
-                              -Dsonar.typescript.lcov.reportPaths=${COVERAGE_FILE} \
-                              -Dsonar.host.url=http://sonarqube:9000 \
-                              -Dsonar.token=${SONAR_TOKEN} \
-                              -Dsonar.baseDir=${FRONTEND_PATH}
-                            
-                            echo "✅ Frontend analysis completed"
-                        '''
+                       // Frontend Analysis - DOCKER VERSION (No sonar-scanner installation needed!)
+sh '''
+    echo "🔍 Frontend analysis with SonarQube..."
+    
+    FRONTEND_PATH="${WORKSPACE}/frontend"
+    COVERAGE_FILE="${FRONTEND_PATH}/coverage/lcov.info"
+    
+    echo "   Using frontend path: $FRONTEND_PATH"
+    
+    if [ ! -f "$COVERAGE_FILE" ]; then
+        echo "❌ ERROR: Coverage file NOT found!"
+        ls -la ${FRONTEND_PATH}/coverage/ 2>/dev/null || echo "   (No coverage)"
+        exit 1
+    fi
+    
+    COVERAGE_SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
+    echo "✅ Coverage file ready: $COVERAGE_SIZE"
+    
+    # ✅ Use Docker - no installation needed!
+    echo "🚀 Starting SonarQube analysis..."
+    docker run --rm \
+      --network host \
+      -v ${FRONTEND_PATH}:/src:ro \
+      -e SONAR_TOKEN=${SONAR_TOKEN} \
+      sonarsource/sonar-scanner-cli:latest \
+      -Dsonar.projectKey=frontend \
+      -Dsonar.projectName="Frontend" \
+      -Dsonar.sources=/src/src/app \
+      -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,**/*.d.ts,node_modules/**,dist/**,coverage/**,**/.env,**/.env*,src/environments/**,src/assets/** \
+      -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,node_modules/** \
+      -Dsonar.typescript.lcov.reportPaths=/src/coverage/lcov.info \
+      -Dsonar.host.url=http://sonarqube:9000 \
+      -Dsonar.sourceEncoding=UTF-8
+    
+    echo "✅ Frontend analysis completed"
+'''
+
+sleep(time: 10, unit: 'SECONDS')
+echo "✅ SonarQube analysis completed"
+
 
                             
                             sleep(time: 10, unit: 'SECONDS')
