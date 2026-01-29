@@ -395,7 +395,7 @@ stage('🧪 Test Frontend') {
                             COVERAGE_SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
                             echo "✅ Coverage file ready: $COVERAGE_SIZE at $COVERAGE_FILE"
                             
-                            sonar-scanner \
+                            npx sonarqube-scanner \
                               -Dsonar.projectKey=frontend \
                               -Dsonar.projectName="Frontend" \
                               -Dsonar.sources=${FRONTEND_PATH}/src/app \
