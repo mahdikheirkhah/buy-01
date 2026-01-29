@@ -423,7 +423,7 @@ pipeline {
                             """
                         }
                             // ✅ ANALYZE FRONTEND (with coverage)
-                            sh """
+                            sh '''
                                 echo "🔍 Frontend analysis with SonarQube..."
 
                                 FRONTEND_PATH="${WORKSPACE}/frontend"
@@ -449,7 +449,7 @@ pipeline {
                                   -Dsonar.host.url=http://sonarqube:9000
 
                                 echo "✅ Frontend analysis completed"
-                            """
+                            '''
 
                             sleep(time: 10, unit: 'SECONDS')
                             echo "✅ SonarQube analysis completed for all 6 projects!"
