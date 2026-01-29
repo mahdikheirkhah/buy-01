@@ -523,11 +523,10 @@ pipeline {
 
         
         stage('🐳 Dockerize & Push') {
-    steps {
-        script {
-            echo "🐳 Building and pushing Docker images with tag: ${IMAGE_TAG}"
-
-            try {
+            steps {
+                script {
+                echo "🐳 Building and pushing Docker images with tag: ${IMAGE_TAG}"
+                try {
                 withCredentials([usernamePassword(
                     credentialsId: env.DOCKER_CREDENTIAL_ID,
                     passwordVariable: 'DOCKER_PASSWORD',
@@ -552,7 +551,7 @@ pipeline {
                     '''
 
                     // ✅ Backend services
-                    def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service']
+                    def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'dummy-data']
 
                     services.each { service ->
                         sh """
