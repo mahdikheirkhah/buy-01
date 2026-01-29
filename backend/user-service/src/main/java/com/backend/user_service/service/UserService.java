@@ -27,10 +27,11 @@ import com.backend.common.dto.Role;
 import com.backend.common.exception.CustomException;
 import com.backend.common.util.JwtUtil;
 import com.backend.user_service.dto.loginUserDTO;
+import com.backend.user_service.dto.updateUserDTO;
 import com.backend.user_service.model.User;
 import com.backend.user_service.repository.UserMapper;
 import com.backend.user_service.repository.UserRepository;
-import com.backend.user_service.dto.updateUserDTO;
+
 import jakarta.servlet.http.Cookie;
 
 @Service
@@ -312,13 +313,10 @@ public class UserService implements UserDetailsService {
 
     public Cookie createCookie(String token, int maxAge) {
         Cookie jwtCookie = new Cookie("jwt", token);
-        // jwtCookie.setHttpOnly(true); // <-- Comment out or remove this line
         jwtCookie.setSecure(true);
         jwtCookie.setPath("/");
         jwtCookie.setMaxAge(maxAge);
-        jwtCookie.setAttribute("SameSite", "Lax"); // Keep SameSite
+        jwtCookie.setAttribute("SameSite", "Lax");
         return jwtCookie;
     }
-
-    // ... other methods XDD
 }
