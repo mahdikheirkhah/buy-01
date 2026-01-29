@@ -349,44 +349,45 @@ stage('🧪 Test Frontend') {
                                 sh """
                                     echo "🔍 Analyzing ${service}..."
                                     
-                                    docker run --rm \\
-                                      --volumes-from jenkins-cicd \\
-                                      -v jenkins_m2_cache:/root/.m2 \\
-                                      -v /var/run/docker.sock:/var/run/docker.sock \\
-                                      -w \${WORKSPACE}/backend/${service} \\
-                                      --network buy-01_BACKEND \\
-                                      -e TESTCONTAINERS_RYUK_DISABLED=true \\
-                                      \${MAVEN_IMAGE} \\
-                                      mvn clean install sonar:sonar \\
-                                        -Dsonar.projectKey=${service} \\
-                                        -Dsonar.host.url=http://sonarqube:9000 \\
-                                        -Dsonar.login=\${SONAR_TOKEN} \\
-                                        -Dsonar.exclusions="**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**" \\
-                                        -Dtest=!**/*IntegrationTest \\
+                                    docker run --rm \
+                                      --volumes-from jenkins-cicd \
+                                      -v jenkins_m2_cache:/root/.m2 \
+                                      -v /var/run/docker.sock:/var/run/docker.sock \
+                                      -w \${WORKSPACE}/backend/${service} \
+                                      --network buy-01_BACKEND \
+                                      -e TESTCONTAINERS_RYUK_DISABLED=true \
+                                      \${MAVEN_IMAGE} \
+                                      mvn clean install sonar:sonar \
+                                        -Dsonar.projectKey=${service} \
+                                        -Dsonar.host.url=http://sonarqube:9000 \
+                                        -Dsonar.login=\${SONAR_TOKEN} \
+                                        -Dsonar.exclusions="**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**" \
+                                        -Dtest=!**/*IntegrationTest \
                                         -B
-
+                            
                                     echo "✅ ${service} analysis completed"
                                 """
                             }
 
 
+
                          // Frontend Analysis - CORRECTED (Same pattern as backend)
                             sh '''
                                 echo "🔍 Frontend analysis with SonarQube..."
-                                
+
                                 FRONTEND_PATH="${WORKSPACE}/frontend"
                                 COVERAGE_FILE="${FRONTEND_PATH}/coverage/lcov.info"
-                                
+
                                 echo "   Using frontend path: $FRONTEND_PATH"
-                                
+
                                 if [ ! -f "$COVERAGE_FILE" ]; then
                                     echo "❌ ERROR: Coverage file NOT found!"
                                     exit 1
                                 fi
-                                
+
                                 COVERAGE_SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
                                 echo "✅ Coverage file ready: $COVERAGE_SIZE"
-                                
+
                                 echo "🚀 Starting SonarQube analysis..."
                                 docker run --rm \
                                   --volumes-from jenkins-cicd \
@@ -395,13 +396,13 @@ stage('🧪 Test Frontend') {
                                   -e SONAR_TOKEN=${SONAR_TOKEN} \
                                   sonarsource/sonar-scanner-cli:latest \
                                   -Dsonar.host.url=http://sonarqube:9000
-                                
+
                                 echo "✅ Frontend analysis completed"
                             '''
-                            
+
                             sleep(time: 10, unit: 'SECONDS')
                             echo "✅ SonarQube analysis completed"
-                            
+
 
                         }
                     } else {
