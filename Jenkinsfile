@@ -391,55 +391,39 @@ pipeline {
                                 sleep 3
                             '''
 
-                            // ✅ ANALYZE ALL 5 BACKEND SERVICES (with test results for 3)
-                            def services = ['user-service', 'product-service', 'media-service']
-                            services.each { service ->
-                                sh """
-                                    echo "🔍 Analyzing ${service} (with test coverage)..."
-
-                                    docker run --rm \
-                                      --volumes-from jenkins-cicd \
-                                      -v jenkins_m2_cache:/root/.m2 \
-                                      -w \${WORKSPACE}/backend/${service} \
-                                      --network buy-01_BACKEND \
-                                      \${MAVEN_IMAGE} \
-                                      mvn sonar:sonar \
-                                        -Dsonar.projectKey=${service} \
-                                        -Dsonar.host.url=http://sonarqube:9000 \
-                                        -Dsonar.login=\${SONAR_TOKEN} \
-                                        -Dsonar.exclusions="**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**" \
-                                        -B
-
-                                    echo "✅ ${service} analysis completed"
-                                """
-                            }
-
-                            // ✅ ANALYZE API-Gateway and Discovery (WITHOUT running tests)
-                            def noTestServices = ['api-gateway', 'discovery-service']
-                            noTestServices.each { service ->
-                                sh """
-                                    echo "🔍 Analyzing ${service} (code quality only, no tests)..."
-
-                                    docker run --rm \
-                                      --volumes-from jenkins-cicd \
-                                      -v jenkins_m2_cache:/root/.m2 \
-                                      -w \${WORKSPACE}/backend/${service} \
-                                      --network buy-01_BACKEND \
-                                      \${MAVEN_IMAGE} \
-                                      mvn sonar:sonar \
-                                        -Dsonar.projectKey=${service} \
-                                        -Dsonar.host.url=http://sonarqube:9000 \
-                                        -Dsonar.login=\${SONAR_TOKEN} \
-                                        -Dsonar.exclusions="**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**" \
-                                        -DskipTests \
-                                        -B
-
-                                    echo "✅ ${service} analysis completed"
-                                """
-                            }
-
+                        def services = ['user-service', 'product-service', 'media-service', 'api-gateway', 'discovery-service']
+                        services.each { service ->
+                            sh """
+                                echo "🔍 Analyzing ${service} ..."
+                                
+                                # ✅ Skip coverage for these 2 services
+                                if [ "${service}" = "api-gateway" ] || [ "${service}" = "discovery-service" ]; then
+                                    COVERAGE_EXCLUDE="-Dsonar.coverage.exclusions=**"
+                                    echo "   (Code quality only - test coverage excluded)"
+                                else
+                                    COVERAGE_EXCLUDE=""
+                                    echo "   (With test coverage)"
+                                fi
+                        
+                                docker run --rm \
+                                  --volumes-from jenkins-cicd \
+                                  -v jenkins_m2_cache:/root/.m2 \
+                                  -w \${WORKSPACE}/backend/${service} \
+                                  --network buy-01_BACKEND \
+                                  \${MAVEN_IMAGE} \
+                                  mvn sonar:sonar \
+                                    -Dsonar.projectKey=${service} \
+                                    -Dsonar.host.url=http://sonarqube:9000 \
+                                    -Dsonar.login=\${SONAR_TOKEN} \
+                                    -Dsonar.exclusions="**/target/**,common/**,discovery-service/**" \
+                                    \$COVERAGE_EXCLUDE \
+                                    -B
+                        
+                                echo "✅ ${service} analysis completed"
+                            """
+                        }
                             // ✅ ANALYZE FRONTEND (with coverage)
-                            sh '''
+                            sh """
                                 echo "🔍 Frontend analysis with SonarQube..."
 
                                 FRONTEND_PATH="${WORKSPACE}/frontend"
@@ -465,7 +449,7 @@ pipeline {
                                   -Dsonar.host.url=http://sonarqube:9000
 
                                 echo "✅ Frontend analysis completed"
-                            '''
+                            """
 
                             sleep(time: 10, unit: 'SECONDS')
                             echo "✅ SonarQube analysis completed for all 6 projects!"
