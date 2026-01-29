@@ -279,7 +279,11 @@ pipeline {
                         exit 1
                     fi
                 '''
-                publishCoverage adapters: [coberturaAdapter('frontend/coverage/cobertura-coverage.xml')], sourceFileResolver: sourceFiles('STORE_ALL_SOURCE')
+                recordCoverage(
+                toolName: 'Cobertura',
+                reportDir: 'frontend/coverage',
+                reportFiles: 'cobertura-coverage.xml'
+                )
             }
         }
 
