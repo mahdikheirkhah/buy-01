@@ -183,31 +183,31 @@ services:
     networks:
       - BACKEND
 
-  orders-service:
-    build:
-      context: ./backend
-      dockerfile: orders-service/Dockerfile
-    image: mahdikheirkhah/orders-service:${IMAGE_TAG:-latest}
-    container_name: orders-service
-    environment:
-      SPRING_PROFILES_ACTIVE: prod
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
-      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
-    depends_on:
-      discovery-service:
-        condition: service_healthy
-      buy-01:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 0"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 60s
-    networks:
-      - BACKEND
+  # orders-service:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: orders-service/Dockerfile
+  #   image: mahdikheirkhah/orders-service:${IMAGE_TAG:-latest}
+  #   container_name: orders-service
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: prod
+  #     EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+  #     SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+  #     SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+  #     MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
+  #   depends_on:
+  #     discovery-service:
+  #       condition: service_healthy
+  #     buy-01:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 0"]
+  #     interval: 15s
+  #     timeout: 10s
+  #     retries: 10
+  #     start_period: 60s
+  #   networks:
+  #     - BACKEND
 
   dummy-data:
     image: mahdikheirkhah/dummy-data:${IMAGE_TAG}
