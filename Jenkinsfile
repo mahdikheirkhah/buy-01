@@ -521,52 +521,106 @@ pipeline {
             }
         }
 
+        
         stage('🐳 Dockerize & Push') {
-            steps {
-                script {
-                    echo "🐳 Building and pushing Docker images with tag: ${IMAGE_TAG}"
+    steps {
+        script {
+            echo "🐳 Building and pushing Docker images with tag: ${IMAGE_TAG}"
 
-                    withCredentials([usernamePassword(
-                        credentialsId: env.DOCKER_CREDENTIAL_ID,
-                        passwordVariable: 'DOCKER_PASSWORD',
-                        usernameVariable: 'DOCKER_USERNAME'
-                    )]) {
-                        sh '''
-                            if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
-                                echo "❌ ERROR: Docker credentials not set!"
-                                exit 1
-                            fi
+            try {
+                withCredentials([usernamePassword(
+                    credentialsId: env.DOCKER_CREDENTIAL_ID,
+                    passwordVariable: 'DOCKER_PASSWORD',
+                    usernameVariable: 'DOCKER_USERNAME'
+                )]) {
+                    sh '''
+                        if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
+                            echo "❌ ERROR: Docker credentials not set!"
+                            echo "Please configure Docker Hub credentials in Jenkins:"
+                            echo "1. Go to Jenkins > Manage Jenkins > Credentials"
+                            echo "2. Add a 'Username with password' credential"
+                            echo "3. ID: dockerhub-credentials"
+                            exit 1
+                        fi
 
-                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                            if [ $? -ne 0 ]; then
-                                echo "❌ Docker login failed!"
-                                exit 1
-                            fi
-                            echo "✅ Docker Hub login successful"
-                        '''
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                        if [ $? -ne 0 ]; then
+                            echo "❌ Docker login failed!"
+                            exit 1
+                        fi
+                        echo "✅ Docker Hub login successful"
+                    '''
 
-                        def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service']
+                    // ✅ Backend services
+                    def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service']
 
-                        services.each { service ->
-                            sh '''
-                                cd ${WORKSPACE}/${BACKEND_DIR}/''' + service + '''
+                    services.each { service ->
+                        sh """
+                            echo "🐳 Building ${service}..."
+                            cd \${WORKSPACE}/\${BACKEND_DIR}/${service}
+
+                            # ✅ Check if JAR exists (proper way)
+                            if ls target/*.jar 1> /dev/null 2>&1; then
+                                echo "   ✅ JAR found for ${service}"
                                 
-                                if [ -f target/*.jar ]; then
-                                    docker build -t ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} .
-                                    docker push ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}
-                                    docker tag ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG} ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
-                                    docker push ${DOCKER_REPO}/''' + service + ''':${STABLE_TAG}
-                                    echo "✅ Pushed ${DOCKER_REPO}/''' + service + ''':${IMAGE_TAG}"
-                                else
-                                    echo "❌ ''' + service + ''' JAR not found!"
-                                    exit 1
-                                fi
-                            '''
-                        }
+                                # Create temporary Dockerfile
+                                cat > Dockerfile.tmp << 'DOCKERFILE_END'
+FROM amazoncorretto:17-alpine
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY target/*.jar app.jar
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \\
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+ENTRYPOINT ["java", "-Dcom.sun.management.jmxremote", "-jar", "app.jar"]
+DOCKERFILE_END
+
+                                # Build and push
+                                docker build -t \${DOCKER_REPO}/${service}:\${IMAGE_TAG} -f Dockerfile.tmp .
+                                docker push \${DOCKER_REPO}/${service}:\${IMAGE_TAG}
+
+                                # Tag and push stable
+                                docker tag \${DOCKER_REPO}/${service}:\${IMAGE_TAG} \${DOCKER_REPO}/${service}:\${STABLE_TAG}
+                                docker push \${DOCKER_REPO}/${service}:\${STABLE_TAG}
+
+                                rm Dockerfile.tmp
+                                echo "   ✅ Pushed ${service}:\${IMAGE_TAG}"
+                            else
+                                echo "   ⚠️  ${service} JAR not found, skipping..."
+                            fi
+
+                            cd \${WORKSPACE}
+                        """
                     }
+
+                    // ✅ Frontend
+                    sh '''
+                        echo "🐳 Building frontend..."
+                        
+                        if [ -d ${WORKSPACE}/frontend/dist ]; then
+                            echo "   ✅ Frontend dist found"
+                            
+                            docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${WORKSPACE}/frontend/
+                            docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
+
+                            docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
+                            docker push ${DOCKER_REPO}/frontend:${STABLE_TAG}
+
+                            echo "   ✅ Pushed frontend:${IMAGE_TAG}"
+                        else
+                            echo "   ⚠️  Frontend dist not found, skipping..."
+                        fi
+                    '''
+
+                    echo "✅ Docker build and push completed for all services!"
                 }
+            } catch (Exception e) {
+                echo "❌ Docker build/push failed: ${e.message}"
+                throw e  // ✅ Don't continue if Docker fails
             }
         }
+    }
+}
 
         stage('Deploy Locally') {
             when {
