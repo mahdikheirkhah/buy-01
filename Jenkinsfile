@@ -370,53 +370,42 @@ stage('🧪 Test Frontend') {
                             }
 
 
-// Frontend Analysis - DOCKER VERSION (Path Fixed)
-sh '''
-    echo "🔍 Frontend analysis with SonarQube..."
-    
-    FRONTEND_PATH="${WORKSPACE}/frontend"
-    COVERAGE_FILE="${FRONTEND_PATH}/coverage/lcov.info"
-    
-    echo "   Using frontend path: $FRONTEND_PATH"
-    
-    if [ ! -f "$COVERAGE_FILE" ]; then
-        echo "❌ ERROR: Coverage file NOT found!"
-        exit 1
-    fi
-    
-    COVERAGE_SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
-    echo "✅ Coverage file ready: $COVERAGE_SIZE"
-    
-    echo "🚀 Starting SonarQube analysis..."
-    docker run --rm \
-      --network host \
-      -v ${FRONTEND_PATH}:/src:ro \
-      -e SONAR_TOKEN=${SONAR_TOKEN} \
-      sonarsource/sonar-scanner-cli:latest \
-      -Dsonar.projectKey=frontend \
-      -Dsonar.projectName="Frontend" \
-      -Dsonar.sources=/src/app \
-      -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,**/*.d.ts,node_modules/**,dist/**,coverage/**,**/.env,**/.env*,src/environments/**,src/assets/** \
-      -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,node_modules/** \
-      -Dsonar.typescript.lcov.reportPaths=/src/coverage/lcov.info \
-      -Dsonar.host.url=http://host.docker.internal:9000 \
-      -Dsonar.sourceEncoding=UTF-8
-    
-    echo "✅ Frontend analysis completed"
-'''
+                        // Frontend Analysis - CORRECT VERSION (Using BACKEND network)
+                        sh '''
+                            echo "🔍 Frontend analysis with SonarQube..."
 
-sleep(time: 10, unit: 'SECONDS')
-echo "✅ SonarQube analysis completed"
+                            FRONTEND_PATH="${WORKSPACE}/frontend"
+                            COVERAGE_FILE="${FRONTEND_PATH}/coverage/lcov.info"
 
+                            echo "   Using frontend path: $FRONTEND_PATH"
 
-sleep(time: 10, unit: 'SECONDS')
-echo "✅ SonarQube analysis completed"
+                            if [ ! -f "$COVERAGE_FILE" ]; then
+                                echo "❌ ERROR: Coverage file NOT found!"
+                                exit 1
+                            fi
 
+                            COVERAGE_SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
+                            echo "✅ Coverage file ready: $COVERAGE_SIZE"
 
+                            echo "🚀 Starting SonarQube analysis..."
+                            docker run --rm \
+                              --network buy-01_BACKEND \
+                              -v ${FRONTEND_PATH}:/src:ro \
+                              -e SONAR_TOKEN=${SONAR_TOKEN} \
+                              sonarsource/sonar-scanner-cli:latest \
+                              -Dsonar.projectKey=frontend \
+                              -Dsonar.projectName="Frontend" \
+                              -Dsonar.sources=/src/app \
+                              -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,**/*.d.ts,node_modules/**,dist/**,coverage/**,**/.env,**/.env*,src/environments/**,src/assets/** \
+                              -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.test.ts,**/*.stories.ts,**/*.mock.ts,node_modules/** \
+                              -Dsonar.typescript.lcov.reportPaths=/src/coverage/lcov.info \
+                              -Dsonar.host.url=http://sonarqube:9000 \
+                              -Dsonar.sourceEncoding=UTF-8
 
-                            
-                            sleep(time: 10, unit: 'SECONDS')
-                            echo "✅ SonarQube analysis completed"
+                            echo "✅ Frontend analysis completed"
+                        '''
+                        sleep(time: 10, unit: 'SECONDS')
+                        echo "✅ SonarQube analysis completed"
                         }
                     } else {
                         echo "⚠️ SonarQube is not available, skipping analysis"
