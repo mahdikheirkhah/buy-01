@@ -30,7 +30,7 @@ import com.backend.user_service.dto.loginUserDTO;
 import com.backend.user_service.model.User;
 import com.backend.user_service.repository.UserMapper;
 import com.backend.user_service.repository.UserRepository;
-
+import com.backend.user_service.dto.updateUserDTO;
 import jakarta.servlet.http.Cookie;
 
 @Service
