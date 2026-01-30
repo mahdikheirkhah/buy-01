@@ -102,7 +102,7 @@ pipeline {
                     $class: 'GitSCM',
                     branches: [[name: "*/${params.BRANCH}"]],
                     userRemoteConfigs: [[
-                        url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
+                        url: 'https://01.gritlab.ax/git/mkheirkh/mr-jenk.git',
                         credentialsId: 'gitea-credentials'
                     ]],
                     extensions: [
