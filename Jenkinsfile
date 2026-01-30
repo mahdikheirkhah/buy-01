@@ -64,40 +64,71 @@ pipeline {
             }
         }
 
-        stage('📥 Checkout') {
-            steps {
-                script {
-                    // ✅ Force clean checkout
-                    deleteDir()
-                    
-                    echo "📥 Checking out branch: ${params.BRANCH}"
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: "*/${params.BRANCH}"]],
-                        userRemoteConfigs: [[
-                            url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
-                            credentialsId: 'gitea-credentials'
-                        ]],
-                        extensions: [
-                            [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
-                        ]
-                    ])
-                    echo "✅ Checkout completed from Gitea"
-                    sh 'git log --oneline -5'
-                    
-                    // ✅ Verify files were updated
-                    sh '''
-                        echo "🔍 Verifying config files..."
-                        echo "Frontend files:"
-                        ls -la ${WORKSPACE}/frontend/karma.conf.js
-                        ls -la ${WORKSPACE}/frontend/package.json
-                        echo ""
-                        echo "Content of karma.conf.js (first 20 lines):"
-                        head -20 ${WORKSPACE}/frontend/karma.conf.js
-                    '''
-                }
+     stage('📥 Checkout') {
+    steps {
+        script {
+            // ✅ Force clean checkout
+            deleteDir()
+            
+            // ✅ Determine source based on build type
+            def isPullRequest = (env.CHANGE_ID != null)
+            def sourceRepo = isPullRequest ? 'GitHub' : 'Gitea'
+            
+            echo "📥 Build Type: ${isPullRequest ? 'Pull Request #' + env.CHANGE_ID : 'Branch Build'}"
+            echo "📥 Source: ${sourceRepo}"
+            echo "📥 Checking out branch: ${params.BRANCH}"
+            
+            if (isPullRequest) {
+                // ✅ PR BUILD: Checkout from GitHub
+                echo "🔀 PR build detected - checking out from GitHub"
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "**"]],  // PR branch
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/mahdikheirkhah/buy-01.git',
+                        credentialsId: 'multi-branch-github',
+                        refspec: '+refs/pull/*/head:refs/remotes/origin/PR-*'
+                    ]],
+                    extensions: [
+                        [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                    ]
+                ])
+                echo "✅ Checkout completed from GitHub (PR #${env.CHANGE_ID})"
+                
+            } else {
+                // ✅ BRANCH BUILD: Checkout from Gitea
+                echo "🌿 Branch build detected - checking out from Gitea"
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${params.BRANCH}"]],
+                    userRemoteConfigs: [[
+                        url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
+                        credentialsId: 'gitea-credentials'
+                    ]],
+                    extensions: [
+                        [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                    ]
+                ])
+                echo "✅ Checkout completed from Gitea"
             }
+            
+            // ✅ Show git info
+            sh '''
+                echo ""
+                echo "📋 Git Information:"
+                echo "Current commit: $(git rev-parse HEAD)"
+                echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+                echo "Recent commits:"
+                git log --oneline -5
+                
+                echo ""
+                echo "🔍 Verifying workspace..."
+                ls -la ${WORKSPACE}/ | head -10
+            '''
         }
+    }
+}
+
 
         stage('🚀 Start SonarQube Early') {
             when {
