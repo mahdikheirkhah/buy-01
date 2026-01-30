@@ -8,6 +8,7 @@ pipeline {
 
     triggers {
         githubPush()
+        pollSCM('H/1 * * * *')
     }
 
     parameters {
