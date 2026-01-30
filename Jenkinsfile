@@ -528,92 +528,114 @@ pipeline {
             // ============================================================
             
             stage('📤 Report to GitHub') {
-                when {
-                    expression { params.SKIP_GITHUB_STATUS == false }
-                }
-                steps {
-                    script {
-                        echo "📤 Reporting build status to GitHub..."
-                        
-                        // ✅ Get build status in Groovy first
-                        def buildStatus = currentBuild.result ?: 'SUCCESS'
-                        def githubStatus = 'success'
-                        def description = 'All checks passed!'
-                        
-                        if (buildStatus == 'FAILURE') {
-                            githubStatus = 'failure'
-                            description = 'Build failed - check Jenkins for details'
-                        } else if (buildStatus == 'UNSTABLE') {
-                            githubStatus = 'error'
-                            description = 'Build unstable - quality gate issues'
-                        }
-                        
-                        echo "Build Status: ${buildStatus}"
-                        echo "GitHub Status: ${githubStatus}"
-                        
-                        withCredentials([string(credentialsId: 'multi-branch-github', variable: 'GITHUB_TOKEN')]) {
-                            sh """#!/bin/bash
-                                set -e
-                                
-                                # Get current commit SHA
-                                COMMIT_SHA=\$(git rev-parse HEAD)
-                                echo "📍 Current commit: \$COMMIT_SHA"
-                                
-                                # Get current branch
-                                CURRENT_BRANCH=\$(git rev-parse --abbrev-ref HEAD)
-                                echo "📍 Current branch: \$CURRENT_BRANCH"
-                                
-                                # GitHub API endpoint
-                                GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/statuses/\${COMMIT_SHA}"
-                                
-                                # Use status from Groovy
-                                GITHUB_STATUS="${githubStatus}"
-                                DESCRIPTION="${description}"
-                                
-                                echo "📤 Sending status to GitHub: \${GITHUB_STATUS}"
-                                
-                                # Create payload
-                                PAYLOAD=\$(cat <<'PAYLOAD_END'
-            {
-              "state": "${githubStatus}",
-              "description": "${description}",
-              "target_url": "${BUILD_URL}",
-              "context": "Jenkins CI/CD Pipeline"
+    when {
+        expression { params.SKIP_GITHUB_STATUS == false }
+    }
+    steps {
+        script {
+            echo "📤 Reporting build status to GitHub..."
+            
+            // ✅ Get build status in Groovy
+            def buildStatus = currentBuild.result ?: 'SUCCESS'
+            def githubStatus = 'success'
+            def description = 'All checks passed!'
+            
+            if (buildStatus == 'FAILURE') {
+                githubStatus = 'failure'
+                description = 'Build failed - check Jenkins for details'
+            } else if (buildStatus == 'UNSTABLE') {
+                githubStatus = 'error'
+                description = 'Build unstable - quality gate issues'
             }
-            PAYLOAD_END
-            )
-                                
-                                echo "Payload: \${PAYLOAD}"
-                                
-                                # Send status to GitHub
-                                RESPONSE=\$(curl -s -w "\\n%{http_code}" \\
-                                  -X POST \\
-                                  -H "Authorization: token \${GITHUB_TOKEN}" \\
-                                  -H "Content-Type: application/json" \\
-                                  -d "\${PAYLOAD}" \\
-                                  "\${GITHUB_API}")
-                                
-                                HTTP_CODE=\$(echo "\$RESPONSE" | tail -n 1)
-                                BODY=\$(echo "\$RESPONSE" | sed '\$d')
-                                
-                                echo "HTTP Response Code: \${HTTP_CODE}"
-                                echo "Response Body: \${BODY}"
-                                
-                                if [ "\${HTTP_CODE}" = "201" ] || [ "\${HTTP_CODE}" = "200" ]; then
-                                    echo "✅ GitHub status updated successfully"
-                                    echo "Status: \${GITHUB_STATUS}"
-                                    echo "Branch: \${CURRENT_BRANCH}"
-                                else
-                                    echo "❌ Failed to update GitHub status"
-                                    echo "HTTP Code: \${HTTP_CODE}"
-                                    echo "Response: \${BODY}"
-                                    exit 1
-                                fi
-                            """
-                        }
-                    }
+            
+            echo "Build Status: ${buildStatus}"
+            echo "GitHub Status: ${githubStatus}"
+            
+            try {
+                withCredentials([string(credentialsId: 'multi-branch-github', variable: 'GITHUB_TOKEN')]) {
+                    sh '''#!/bin/bash
+                        set -e
+                        set -x  # Enable debug output
+                        
+                        echo "🔍 Step 1: Verify token exists"
+                        if [ -z "${GITHUB_TOKEN}" ]; then
+                            echo "❌ ERROR: GITHUB_TOKEN is empty!"
+                            exit 1
+                        fi
+                        echo "✅ Token exists (length: ${#GITHUB_TOKEN})"
+                        
+                        echo ""
+                        echo "🔍 Step 2: Get commit SHA"
+                        COMMIT_SHA=$(git rev-parse HEAD)
+                        echo "📍 Current commit: $COMMIT_SHA"
+                        
+                        echo ""
+                        echo "🔍 Step 3: Get current branch"
+                        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                        echo "📍 Current branch: $CURRENT_BRANCH"
+                        
+                        echo ""
+                        echo "🔍 Step 4: Test GitHub API connectivity"
+                        echo "Testing connection to api.github.com..."
+                        curl -s -o /dev/null -w "HTTP Status: %{http_code}\\n" https://api.github.com/ || echo "❌ Cannot reach GitHub API"
+                        
+                        echo ""
+                        echo "🔍 Step 5: Build API endpoint"
+                        GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/statuses/${COMMIT_SHA}"
+                        echo "API Endpoint: $GITHUB_API"
+                        
+                        echo ""
+                        echo "🔍 Step 6: Create JSON payload"
+                        PAYLOAD=$(cat <<'JSON_END'
+{
+  "state": "''' + githubStatus + '''",
+  "description": "''' + description + '''",
+  "target_url": "''' + env.BUILD_URL + '''",
+  "context": "Jenkins CI/CD Pipeline"
+}
+JSON_END
+)
+                        echo "Payload:"
+                        echo "$PAYLOAD"
+                        
+                        echo ""
+                        echo "🔍 Step 7: Send status to GitHub"
+                        RESPONSE=$(curl -v -w "\\nHTTP_CODE:%{http_code}" \\
+                          -X POST \\
+                          -H "Authorization: token ${GITHUB_TOKEN}" \\
+                          -H "Content-Type: application/json" \\
+                          -H "Accept: application/vnd.github.v3+json" \\
+                          -d "${PAYLOAD}" \\
+                          "${GITHUB_API}" 2>&1)
+                        
+                        echo ""
+                        echo "🔍 Step 8: Parse response"
+                        echo "Full Response:"
+                        echo "$RESPONSE"
+                        
+                        HTTP_CODE=$(echo "$RESPONSE" | grep "HTTP_CODE:" | cut -d':' -f2)
+                        echo ""
+                        echo "HTTP Code: $HTTP_CODE"
+                        
+                        if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
+                            echo "✅ GitHub status updated successfully"
+                        else
+                            echo "❌ Failed to update GitHub status"
+                            echo "Full response shown above"
+                            exit 1
+                        fi
+                    '''
                 }
+                echo "✅ GitHub status reporting completed"
+            } catch (Exception e) {
+                echo "❌ GitHub status reporting failed: ${e.message}"
+                echo "This is not critical - continuing pipeline..."
+                // Don't fail the build on GitHub reporting issues
             }
+        }
+    }
+}
+
 
             // ============================================================
             // 🔍 GITHUB PR QUALITY CHECKS STAGE
