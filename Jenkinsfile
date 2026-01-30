@@ -64,40 +64,71 @@ pipeline {
             }
         }
 
-        stage('📥 Checkout') {
-            steps {
-                script {
-                    // ✅ Force clean checkout
-                    deleteDir()
-                    
-                    echo "📥 Checking out branch: ${params.BRANCH}"
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: "*/${params.BRANCH}"]],
-                        userRemoteConfigs: [[
-                            url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
-                            credentialsId: 'gitea-credentials'
-                        ]],
-                        extensions: [
-                            [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
-                        ]
-                    ])
-                    echo "✅ Checkout completed from Gitea"
-                    sh 'git log --oneline -5'
-                    
-                    // ✅ Verify files were updated
-                    sh '''
-                        echo "🔍 Verifying config files..."
-                        echo "Frontend files:"
-                        ls -la ${WORKSPACE}/frontend/karma.conf.js
-                        ls -la ${WORKSPACE}/frontend/package.json
-                        echo ""
-                        echo "Content of karma.conf.js (first 20 lines):"
-                        head -20 ${WORKSPACE}/frontend/karma.conf.js
-                    '''
-                }
+     stage('📥 Checkout') {
+    steps {
+        script {
+            // ✅ Force clean checkout
+            deleteDir()
+            
+            // ✅ Determine source based on build type
+            def isPullRequest = (env.CHANGE_ID != null)
+            def sourceRepo = isPullRequest ? 'GitHub' : 'Gitea'
+            
+            echo "📥 Build Type: ${isPullRequest ? 'Pull Request #' + env.CHANGE_ID : 'Branch Build'}"
+            echo "📥 Source: ${sourceRepo}"
+            echo "📥 Checking out branch: ${params.BRANCH}"
+            
+            if (isPullRequest) {
+                // ✅ PR BUILD: Checkout from GitHub
+                echo "🔀 PR build detected - checking out from GitHub"
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "**"]],  // PR branch
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/mahdikheirkhah/buy-01.git',
+                        credentialsId: 'multi-branch-github',
+                        refspec: '+refs/pull/*/head:refs/remotes/origin/PR-*'
+                    ]],
+                    extensions: [
+                        [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                    ]
+                ])
+                echo "✅ Checkout completed from GitHub (PR #${env.CHANGE_ID})"
+                
+            } else {
+                // ✅ BRANCH BUILD: Checkout from Gitea
+                echo "🌿 Branch build detected - checking out from Gitea"
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${params.BRANCH}"]],
+                    userRemoteConfigs: [[
+                        url: 'https://01.gritlab.ax/git/mkheirkh/buy-01.git',
+                        credentialsId: 'gitea-credentials'
+                    ]],
+                    extensions: [
+                        [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                    ]
+                ])
+                echo "✅ Checkout completed from Gitea"
             }
+            
+            // ✅ Show git info
+            sh '''
+                echo ""
+                echo "📋 Git Information:"
+                echo "Current commit: $(git rev-parse HEAD)"
+                echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+                echo "Recent commits:"
+                git log --oneline -5
+                
+                echo ""
+                echo "🔍 Verifying workspace..."
+                ls -la ${WORKSPACE}/ | head -10
+            '''
         }
+    }
+}
+
 
         stage('🚀 Start SonarQube Early') {
             when {
@@ -528,82 +559,115 @@ pipeline {
             // ============================================================
             
             stage('📤 Report to GitHub') {
-                when {
-                    expression { params.SKIP_GITHUB_STATUS == false }
-                }
-                steps {
-                    script {
-                        echo "📤 Reporting build status to GitHub..."
-                        
-                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-                            sh '''#!/bin/bash
-                                set -e
-                                
-                                # Get current commit SHA
-                                COMMIT_SHA=$(git rev-parse HEAD)
-                                echo "📍 Current commit: $COMMIT_SHA"
-                                
-                                # Get current branch
-                                CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-                                echo "📍 Current branch: $CURRENT_BRANCH"
-                                
-                                # GitHub API endpoint
-                                GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/statuses/${COMMIT_SHA}"
-                                
-                                # Build status based on current build result
-                                BUILD_STATUS="${BUILD_STATUS:-success}"
-                                
-                                # Determine status and description
-                                if [ "${BUILD_STATUS}" = "FAILURE" ] || [ "$currentBuild.result" = "FAILURE" ]; then
-                                    GITHUB_STATUS="failure"
-                                    DESCRIPTION="Build failed - check Jenkins for details"
-                                elif [ "${BUILD_STATUS}" = "UNSTABLE" ] || [ "$currentBuild.result" = "UNSTABLE" ]; then
-                                    GITHUB_STATUS="error"
-                                    DESCRIPTION="Build unstable - quality gate issues"
-                                else
-                                    GITHUB_STATUS="success"
-                                    DESCRIPTION="All checks passed!"
-                                fi
-                                
-                                # Create payload
-                                PAYLOAD=$(cat <<EOF
-            {
-              "state": "${GITHUB_STATUS}",
-              "description": "${DESCRIPTION}",
-              "target_url": "${BUILD_URL}",
-              "context": "Jenkins CI/CD Pipeline"
-            }
-            EOF
-            )
-                                
-                                # Send status to GitHub
-                                echo "Sending status: ${GITHUB_STATUS}"
-                                RESPONSE=$(curl -s -w "\n%{http_code}" \
-                                  -X POST \
-                                  -H "Authorization: token ${GITHUB_TOKEN}" \
-                                  -H "Content-Type: application/json" \
-                                  -d "${PAYLOAD}" \
-                                  "${GITHUB_API}")
-                                
-                                HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
-                                BODY=$(echo "$RESPONSE" | sed '$d')
-                                
-                                if [ "${HTTP_CODE}" = "201" ] || [ "${HTTP_CODE}" = "200" ]; then
-                                    echo "✅ GitHub status updated successfully"
-                                    echo "Status: ${GITHUB_STATUS}"
-                                    echo "Branch: ${CURRENT_BRANCH}"
-                                else
-                                    echo "❌ Failed to update GitHub status"
-                                    echo "HTTP Code: ${HTTP_CODE}"
-                                    echo "Response: ${BODY}"
-                                    exit 1
-                                fi
-                            '''
-                        }
-                    }
-                }
+    when {
+        expression { params.SKIP_GITHUB_STATUS == false }
+    }
+    steps {
+        script {
+            echo "📤 Reporting build status to GitHub..."
+            
+            // ✅ Get build status in Groovy
+            def buildStatus = currentBuild.result ?: 'SUCCESS'
+            def githubStatus = 'success'
+            def description = 'All checks passed!'
+            
+            if (buildStatus == 'FAILURE') {
+                githubStatus = 'failure'
+                description = 'Build failed - check Jenkins for details'
+            } else if (buildStatus == 'UNSTABLE') {
+                githubStatus = 'error'
+                description = 'Build unstable - quality gate issues'
             }
             
+            echo "Build Status: ${buildStatus}"
+            echo "GitHub Status: ${githubStatus}"
+            
+            try {
+                withCredentials([string(credentialsId: 'multi-branch-github', variable: 'GITHUB_TOKEN')]) {
+                    sh '''#!/bin/bash
+                        set -e
+                        set -x  # Enable debug output
+                        
+                        echo "🔍 Step 1: Verify token exists"
+                        if [ -z "${GITHUB_TOKEN}" ]; then
+                            echo "❌ ERROR: GITHUB_TOKEN is empty!"
+                            exit 1
+                        fi
+                        echo "✅ Token exists (length: ${#GITHUB_TOKEN})"
+                        
+                        echo ""
+                        echo "🔍 Step 2: Get commit SHA"
+                        COMMIT_SHA=$(git rev-parse HEAD)
+                        echo "📍 Current commit: $COMMIT_SHA"
+                        
+                        echo ""
+                        echo "🔍 Step 3: Get current branch"
+                        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                        echo "📍 Current branch: $CURRENT_BRANCH"
+                        
+                        echo ""
+                        echo "🔍 Step 4: Test GitHub API connectivity"
+                        echo "Testing connection to api.github.com..."
+                        curl -s -o /dev/null -w "HTTP Status: %{http_code}\\n" https://api.github.com/ || echo "❌ Cannot reach GitHub API"
+                        
+                        echo ""
+                        echo "🔍 Step 5: Build API endpoint"
+                        GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/statuses/${COMMIT_SHA}"
+                        echo "API Endpoint: $GITHUB_API"
+                        
+                        echo ""
+                        echo "🔍 Step 6: Create JSON payload"
+                        PAYLOAD=$(cat <<'JSON_END'
+{
+  "state": "''' + githubStatus + '''",
+  "description": "''' + description + '''",
+  "target_url": "''' + env.BUILD_URL + '''",
+  "context": "Jenkins CI/CD Pipeline"
+}
+JSON_END
+)
+                        echo "Payload:"
+                        echo "$PAYLOAD"
+                        
+                        echo ""
+                        echo "🔍 Step 7: Send status to GitHub"
+                        RESPONSE=$(curl -v -w "\\nHTTP_CODE:%{http_code}" \\
+                          -X POST \\
+                          -H "Authorization: token ${GITHUB_TOKEN}" \\
+                          -H "Content-Type: application/json" \\
+                          -H "Accept: application/vnd.github.v3+json" \\
+                          -d "${PAYLOAD}" \\
+                          "${GITHUB_API}" 2>&1)
+                        
+                        echo ""
+                        echo "🔍 Step 8: Parse response"
+                        echo "Full Response:"
+                        echo "$RESPONSE"
+                        
+                        HTTP_CODE=$(echo "$RESPONSE" | grep "HTTP_CODE:" | cut -d':' -f2)
+                        echo ""
+                        echo "HTTP Code: $HTTP_CODE"
+                        
+                        if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
+                            echo "✅ GitHub status updated successfully"
+                        else
+                            echo "❌ Failed to update GitHub status"
+                            echo "Full response shown above"
+                            exit 1
+                        fi
+                    '''
+                }
+                echo "✅ GitHub status reporting completed"
+            } catch (Exception e) {
+                echo "❌ GitHub status reporting failed: ${e.message}"
+                echo "This is not critical - continuing pipeline..."
+                // Don't fail the build on GitHub reporting issues
+            }
+        }
+    }
+}
+
+
             // ============================================================
             // 🔍 GITHUB PR QUALITY CHECKS STAGE
             // ============================================================
@@ -621,7 +685,7 @@ pipeline {
                     script {
                         echo "🔐 Enforcing branch protection rules..."
                         
-                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                        withCredentials([string(credentialsId: 'multi-branch-github', variable: 'GITHUB_TOKEN')]) {
                             sh '''#!/bin/bash
                                 set -e
                                 
@@ -695,7 +759,7 @@ pipeline {
                     script {
                         echo "💬 Posting detailed comment to PR..."
                         
-                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                        withCredentials([string(credentialsId: 'multi-branch-github', variable: 'GITHUB_TOKEN')]) {
                             sh '''#!/bin/bash
                                 PR_NUMBER=${CHANGE_ID}
                                 BUILD_NUMBER=${BUILD_NUMBER}
