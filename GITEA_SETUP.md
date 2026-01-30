@@ -1,3 +1,5 @@
+testtees
+
 # Gitea Integration with Jenkins
 
 This guide explains how to configure Jenkins to work with Gitea, especially when Gitea is restricted to campus WiFi.
@@ -80,7 +82,6 @@ Description: Docker Hub for pushing images
 **In the pipeline configuration:**
 
 1. **General** → Check **"Discard old builds"**
-
    - Days to keep builds: `7`
    - Max # of builds to keep: `10`
 
@@ -93,7 +94,6 @@ Description: Docker Hub for pushing images
    _(This polls Gitea every 5 minutes for changes)_
 
 3. **Pipeline** section:
-
    - **Definition**: Pipeline script from SCM
    - **SCM**: Git
    - **Repository URL**:
