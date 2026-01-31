@@ -67,7 +67,7 @@ public class ProductController {
 
         Page<ProductCardDTO> page = productService.getMyProducts(pageable, sellerId);
         return ResponseEntity.ok(page);
-
+    }
     @PostMapping
     @PreAuthorize("hasRole('ROLE_SELLER') || hasRole('ROLE_ADMIN')") // Make sure role name matches JWT
     public ResponseEntity<Product> createProduct(
