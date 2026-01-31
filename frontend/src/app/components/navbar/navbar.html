@@ -1,0 +1,44 @@
+<mat-toolbar color="primary" class="navbar-container">
+
+  <button mat-icon-button (click)="toggleSidenav.emit()">
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <a routerLink="/home" class="brand-logo">My Site</a>
+
+  <span class="spacer"></span>
+
+  <ng-container *ngIf="currentUser$ | async as user; else loggedOutButtons">
+
+    <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-button">
+
+      <img *ngIf="user.role === 'SELLER' && user.avatarUrl"
+           [src]="getAvatarUrl(user.avatarUrl)"
+           alt="User Avatar"
+           class="navbar-avatar-image">
+
+      <span class="navbar-user-name">
+        {{ user.firstName }} {{ user.lastName }}
+      </span>
+
+    </button>
+
+    <mat-menu #userMenu="matMenu">
+      <button mat-menu-item routerLink="/my-info">
+        <mat-icon>person</mat-icon>
+        <span>My Profile</span>
+      </button>
+      <button mat-menu-item (click)="onLogout()">
+        <mat-icon>exit_to_app</mat-icon>
+        <span>Logout</span>
+      </button>
+    </mat-menu>
+
+  </ng-container>
+
+  <ng-template #loggedOutButtons>
+    <button mat-button routerLink="/login">Login</button>
+    <button mat-raised-button color="accent" routerLink="/register">Register</button>
+  </ng-template>
+
+</mat-toolbar>

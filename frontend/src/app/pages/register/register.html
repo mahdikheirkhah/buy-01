@@ -1,0 +1,52 @@
+<div class="container">
+  <h2>Register</h2>
+  <form (ngSubmit)="onRegister()">
+    <div class="form-group">
+      <label for="firstName">First Name</label>
+      <input type="text" id="firstName" name="firstName" [(ngModel)]="registerData.firstName" required>
+    </div>
+
+    <div class="form-group">
+      <label for="lastName">Last Name</label>
+      <input type="text" id="lastName" name="lastName" [(ngModel)]="registerData.lastName" required>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" [(ngModel)]="registerData.email" required>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" [(ngModel)]="registerData.password" required>
+    </div>
+
+    <div class="form-group">
+      <label for="role">Register as</label>
+      <select id="role" name="role" [(ngModel)]="registerData.role">
+        <option value="CLIENT">Client</option>
+        <option value="SELLER">Seller</option>
+      </select>
+    </div>
+
+    <div class="form-group" *ngIf="registerData.role === 'SELLER'">
+      <label for="avatar">Avatar</label>
+      <input type="file" id="avatar" accept="image/*" (change)="onFileSelected($event)">
+
+      <div class="preview-container" *ngIf="croppedImage">
+        <p>Avatar Preview:</p>
+        <img [src]="croppedImage" class="avatar-preview" alt="Avatar image preview" />
+      </div>
+    </div>
+
+    <button type="submit">Register</button>
+  </form>
+  <p>Already have an account? <a routerLink="/login">Login here</a></p>
+</div>
+
+<app-image-cropper-modal
+  *ngIf="showCropper"
+  [imageChangedEvent]="imageChangedEvent"
+  (croppedImageBlob)="handleImageBlob($event)"
+  (modalClosed)="handleModalClose()">
+</app-image-cropper-modal>

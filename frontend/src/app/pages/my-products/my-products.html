@@ -1,0 +1,26 @@
+<div class="product-page-container">
+  <h2>My Products</h2>
+
+  <div class="product-grid" *ngIf="products.length > 0; else noProducts">
+
+    <app-product-card
+      *ngFor="let product of products"
+      [product]="product"
+      (edit)="onProductUpdated()"
+      (delete)="onProductDeleted()">
+    </app-product-card>
+
+  </div>
+
+  <ng-template #noProducts>
+    <p>You haven't created any products yet.</p>
+  </ng-template>
+
+  <mat-paginator
+    [length]="totalElements"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[5, 10, 20]"
+    (page)="onPageChange($event)">
+  </mat-paginator>
+
+</div>

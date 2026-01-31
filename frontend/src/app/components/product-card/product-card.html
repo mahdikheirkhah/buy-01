@@ -1,0 +1,30 @@
+<mat-card *ngIf="product" class="product-card" (click)="onCardClick()">
+
+  <div class="card-image-container">
+
+    <img
+      *ngFor="let imageUrl of product.imageUrls; let i = index"
+      mat-card-image
+      [src]="getImageUrl(imageUrl)"
+      [class.active]="i === currentImageIndex" alt="{{ product.name }} (image {{i + 1}})">
+
+    <div *ngIf="product.imageUrls.length === 0" class="no-image-placeholder">
+      <mat-icon>image_not_supported</mat-icon>
+    </div>
+  </div>
+
+  <mat-card-header>
+    <mat-card-title>{{ product.name }}</mat-card-title>
+    <mat-card-subtitle>{{ product.price | currency:'USD' }}</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <p class="product-description">{{ product.description }}</p>
+    <p><strong>Quantity:</strong> {{ product.quantity }}</p>
+  </mat-card-content>
+
+  <mat-card-actions *ngIf="product.createdByMe">
+    <button mat-button (click)="onEdit($event)">EDIT</button>
+    <button mat-button color="warn" (click)="onDelete($event)">DELETE</button>
+  </mat-card-actions>
+</mat-card>

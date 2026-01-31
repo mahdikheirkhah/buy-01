@@ -1,0 +1,153 @@
+:host {
+  display: block;
+  position: relative; /* For the loading overlay */
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.loading {
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.details-form {
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+form mat-form-field {
+  width: 100%;
+}
+
+mat-divider {
+  margin: 20px 0;
+}
+
+.image-section h4 {
+  color: var(--navy);
+  margin-top: 0;
+}
+
+.image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.thumbnail-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f0f0f0; /* ✅ ADD THIS: Adds a light gray background for letterboxing */
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* ✅ FIX: Changed from 'cover' to 'contain' */
+}
+
+/* This is the "X" button */
+.delete-image-btn {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 0 8px 0 8px; /* Optional: Nice styling */
+}
+
+.delete-image-btn:hover {
+  background-color: rgba(244, 67, 54, 0.9); /* Red on hover */
+}
+
+.delete-image-btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+}
+
+/* "trembling" animation */
+.thumbnail-wrapper:hover {
+  animation: shake 0.5s;
+  animation-iteration-count: infinite;
+}
+
+@keyframes shake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(1px, 1px) rotate(1deg); }
+  50% { transform: translate(-1px, -1px) rotate(-1deg); }
+  75% { transform: translate(1px, -1px) rotate(1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+/* File list styles */
+.form-group {
+  margin-top: 20px;
+}
+.file-list {
+  margin-top: 15px;
+  background-color: #f9f9f9;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  padding: 10px;
+}
+.file-list p {
+  margin-top: 0;
+  font-weight: 500;
+}
+.file-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.file-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+}
+.remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.remove-btn mat-icon {
+  color: #f44336;
+}
+
+.file-errors {
+  padding: 10px;
+  background-color: #fff0f0;
+  color: #c51111;
+  border: 1px solid #fcc;
+  border-radius: 4px;
+}

@@ -1,0 +1,8 @@
+div[mat-dialog-actions] {
+  padding: 0 24px 20px 24px;
+}
+
+button[color="warn"] {
+  background-color: var(--green-dark); /* Or your theme's warn color */
+  color: var(--white);
+}

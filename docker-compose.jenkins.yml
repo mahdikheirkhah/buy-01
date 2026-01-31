@@ -1,0 +1,50 @@
+
+services:
+  jenkins:
+    # Use custom Jenkins image with Docker CLI pre-installed
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    image: jenkins-with-docker:lts
+    container_name: jenkins-cicd
+    # Map Jenkins ports to the host
+    ports:
+      # Jenkins UI
+      - "8080:8080"
+      # JNLP port for agents (required if we scale to distributed builds later)
+      - "50000:50000"
+    volumes:
+      # Persistent storage for Jenkins data, jobs, and configuration
+      - jenkins_home:/var/jenkins_home
+      # CRITICAL: Mount the Docker daemon socket from the host.
+      # This allows Jenkins (running inside its container) to execute 'docker' commands on the host machine.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount the Maven settings file if you have one, or just the Maven repository cache
+      # This speeds up subsequent builds by caching downloaded dependencies
+      - ~/.m2:/root/.m2
+    # Ensure Jenkins starts automatically
+    restart: unless-stopped
+    # Connect to the BACKEND network to reach other services (SonarQube, Kafka, etc.)
+    # NOTE: This network must already exist from docker-compose.yml
+    networks:
+      - BACKEND
+    user: root # Run as root to ensure permissions for /var/run/docker.sock
+    environment:
+      # Set timezone for consistency
+      - TZ=Europe/Helsinki # Or your local timezone
+    # Health check to verify Jenkins is running
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  jenkins_home:
+    driver: local
+
+networks:
+  BACKEND:
+    name: buy-01_BACKEND
+    driver: bridge

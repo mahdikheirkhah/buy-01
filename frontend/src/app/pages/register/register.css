@@ -1,0 +1,143 @@
+ /* ... your existing form styles ... */
+
+ /* -- Cropper Modal Styles -- */
+ .container {
+   max-width: 500px;
+   margin: 80px auto 40px; /* 80px margin-top to clear the fixed navbar */
+   padding: 24px;
+   background-color: var(--white);
+   border-radius: 8px;
+   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+ }
+
+ h2 {
+   text-align: center;
+   color: var(--navy);
+   margin-top: 0;
+ }
+
+ .form-group {
+   margin-bottom: 20px;
+ }
+
+ .form-group label {
+   display: block;
+   margin-bottom: 8px;
+   font-weight: 500;
+   color: #555;
+ }
+
+ .form-group input[type="text"],
+ .form-group input[type="email"],
+ .form-group input[type="password"],
+ .form-group select {
+   width: 100%;
+   padding: 12px;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   box-sizing: border-box; /* Important */
+ }
+
+ /* The main submit button */
+ button[type="submit"] {
+   width: 100%;
+   padding: 14px;
+   border: none;
+   border-radius: 4px;
+   cursor: pointer;
+   font-size: 1rem;
+   font-weight: 600;
+
+   /* Our new colors! */
+   background-color: var(--green);
+   color: var(--white);
+   transition: background-color 0.2s ease;
+ }
+
+ button[type="submit"]:hover {
+   background-color: var(--green-dark);
+ }
+
+ p {
+   text-align: center;
+   margin-top: 20px;
+ }
+
+ p a {
+   color: var(--navy);
+   text-decoration: none;
+   font-weight: 600;
+ }
+
+ p a:hover {
+   text-decoration: underline;
+ }
+ .cropper-modal-overlay {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   background-color: rgba(0, 0, 0, 0.7);
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   z-index: 1000;
+ }
+
+ .cropper-modal-content {
+   background-color: white;
+   padding: 20px;
+   border-radius: 8px;
+   width: 90%;
+   max-width: 500px;
+   text-align: center;
+ }
+
+ .cropper-modal-content h3 {
+   margin-top: 0;
+ }
+
+ image-cropper {
+   display: block;
+   height: 300px;
+   width: 100%;
+ }
+
+ .cropper-buttons {
+   margin-top: 20px;
+   display: flex;
+   justify-content: flex-end;
+   gap: 10px;
+ }
+
+ .cropper-buttons button {
+   padding: 10px 20px;
+   border: none;
+   border-radius: 4px;
+   cursor: pointer;
+ }
+
+ .cropper-buttons .save-btn {
+   background-color: #3f51b5; /* Angular Material Primary */
+   color: white;
+ }
+
+ .cropper-buttons .cancel-btn {
+   background-color: #f44336; /* Angular Material Warn */
+   color: white;
+ }
+
+ /* -- Avatar Preview Styles -- */
+ .preview-container {
+   text-align: center;
+   margin-top: 15px;
+ }
+
+ .avatar-preview {
+   width: 100px;
+   height: 100px;
+   border-radius: 50%;
+   object-fit: cover;
+   border: 2px solid #ddd;
+ }

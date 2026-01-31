@@ -1,0 +1,56 @@
+.update-form {
+  padding: 24px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+h3 {
+  margin-top: 0;
+  color: var(--navy);
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.password-note {
+  font-size: 0.9rem;
+  color: #555;
+  background-color: #f0f0f0;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.error-message, .success-message {
+  padding: 12px;
+  border-radius: 4px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.error-message {
+  background-color: #fff0f0;
+  color: #c51111;
+  border: 1px solid #fcc;
+}
+
+.success-message {
+  background-color: #f0fff0;
+  color: #0c6e0c;
+  border: 1px solid #cfc;
+}
+
+.spinner-container {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}

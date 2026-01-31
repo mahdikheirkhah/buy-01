@@ -1,0 +1,51 @@
+spring:
+  data:
+    mongodb:
+      # Embedded MongoDB will auto-configure on a random port
+      auto-index-creation: true
+
+  kafka:
+    # Completely disable Kafka for tests
+    bootstrap-servers:
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      auto-startup: false
+    producer:
+      retries: 0
+    listener:
+      auto-startup: false
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+      - org.springframework.cloud.netflix.eureka.loadbalancer.LoadBalancerEurekaAutoConfiguration
+
+  cloud:
+    discovery:
+      enabled: false
+    loadbalancer:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+management:
+  endpoints:
+    enabled-by-default: false
+  health:
+    defaults:
+      enabled: false
+
+
+# Media service specific config
+media:
+  upload:
+    dir: /tmp/test-uploads
+
+
+
