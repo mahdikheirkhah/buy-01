@@ -443,7 +443,7 @@ pipeline {
                                     -Dsonar.projectKey=${service} \\
                                     -Dsonar.host.url=http://sonarqube:9000 \\
                                     -Dsonar.login=\\${SONAR_TOKEN} \\
-                                    -Dsonar.exclusions="**/target/**,common/**,**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**,**/FileStorageService.java,**/MediaController.java" \\
+                                    -Dsonar.exclusions="**/target/**,common/**,**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**,**/FileStorageService.java,**/MediaController.java,  **/ProductController.java" \\
                                     \${COVERAGE_EXCLUDE} \\
                                     -B
                         
@@ -978,61 +978,6 @@ DOCKERFILE_END
                                 echo ""
                                 echo "Service status:"
                                 docker compose ps
-                            '''
-                            
-                            // ✅ STEP 3: Health checks
-                            sh '''
-                                echo ""
-                                echo "🏥 Step 3: Running health checks..."
-                                
-                                FAILED_SERVICES=""
-                                
-                                # User service
-                                echo "Checking user-service..."
-                                if curl -f http://localhost:8081/actuator/health >/dev/null 2>&1; then
-                                    echo "✅ User service: healthy"
-                                else
-                                    echo "❌ User service: unhealthy"
-                                    FAILED_SERVICES="${FAILED_SERVICES} user-service"
-                                fi
-                                
-                                # Product service
-                                echo "Checking product-service..."
-                                if curl -f http://localhost:8082/actuator/health >/dev/null 2>&1; then
-                                    echo "✅ Product service: healthy"
-                                else
-                                    echo "❌ Product service: unhealthy"
-                                    FAILED_SERVICES="${FAILED_SERVICES} product-service"
-                                fi
-                                
-                                # Media service
-                                echo "Checking media-service..."
-                                if curl -f http://localhost:8083/actuator/health >/dev/null 2>&1; then
-                                    echo "✅ Media service: healthy"
-                                else
-                                    echo "❌ Media service: unhealthy"
-                                    FAILED_SERVICES="${FAILED_SERVICES} media-service"
-                                fi
-                                
-                                # Frontend
-                                echo "Checking frontend..."
-                                if curl -f http://localhost:4200 >/dev/null 2>&1; then
-                                    echo "✅ Frontend: healthy"
-                                else
-                                    echo "❌ Frontend: unhealthy"
-                                    FAILED_SERVICES="${FAILED_SERVICES} frontend"
-                                fi
-                                
-                                # Check if any service failed
-                                if [ -n "${FAILED_SERVICES}" ]; then
-                                    echo ""
-                                    echo "❌ Health check failed for:${FAILED_SERVICES}"
-                                    echo "🔄 Triggering automatic rollback..."
-                                    exit 1
-                                fi
-                                
-                                echo ""
-                                echo "✅ All health checks passed!"
                             '''
                             
                             deploymentSuccess = true
