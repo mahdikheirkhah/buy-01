@@ -806,7 +806,7 @@ pipeline {
             }
         }
         
-stage('🐳 Build & Push Docker Images') {
+        stage('🐳 Build & Push Docker Images') {
             when {
                 expression { params.SKIP_DEPLOY == false }
             }
@@ -820,80 +820,68 @@ stage('🐳 Build & Push Docker Images') {
                         usernameVariable: 'DOCKER_USERNAME'
                     )]) {
                         sh '''
-                            # 1. Login
                             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
                             
                             # =========================================
-                            # PART A: BACKEND SERVICES (Java/Spring)
+                            # PART A: BACKEND SERVICES
                             # =========================================
-                            # We must look inside ${BACKEND_DIR}
-                            # We must generate the Dockerfile.tmp like before
-                            
                             BACKEND_SERVICES="discovery-service api-gateway user-service product-service media-service dummy-data"
                             
                             for service in $BACKEND_SERVICES; do
                                 echo "-----------------------------------------------"
                                 echo "🔨 Processing Backend Service: $service"
                                 
-                                # ✅ FIX: Go to the correct sub-directory
                                 cd ${WORKSPACE}/${BACKEND_DIR}/$service
                                 
-                                # Check if JAR exists
                                 if [ -f target/*.jar ]; then
                                 
-                                    # ✅ RESTORED: Generate Dockerfile on the fly
-                                    # (Your backend services need this because they don't have a Dockerfile in git)
-                                    cat > Dockerfile.tmp << EOF
-                                    FROM amazoncorretto:17-alpine
-                                    RUN apk add --no-cache curl
-                                    WORKDIR /app
-                                    COPY target/*.jar app.jar
-                                    EXPOSE 8080 8443
-                                    HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD curl -f http://localhost:8080/actuator/health || exit 0
-                                    ENTRYPOINT ["java", "-Dcom.sun.management.jmxremote", "-jar", "app.jar"]
-                                    EOF
+# ---------------------------------------------------------
+# ✅ FIX: The EOF below must be flush left (NO SPACES before it)
+# ---------------------------------------------------------
+cat > Dockerfile.tmp << EOF
+FROM amazoncorretto:17-alpine
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY target/*.jar app.jar
+EXPOSE 8080 8443
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD curl -f http://localhost:8080/actuator/health || exit 0
+ENTRYPOINT ["java", "-Dcom.sun.management.jmxremote", "-jar", "app.jar"]
+EOF
+# ---------------------------------------------------------
 
-                                    # 1. Build with ID Tag
+                                    # Build & Tag
                                     docker build -t ${DOCKER_REPO}/$service:${IMAGE_TAG} -f Dockerfile.tmp .
-                                    
-                                    # 2. Tag as Latest
                                     docker tag ${DOCKER_REPO}/$service:${IMAGE_TAG} ${DOCKER_REPO}/$service:latest
                                     
-                                    # 3. Push BOTH
+                                    # Push Both
                                     docker push ${DOCKER_REPO}/$service:${IMAGE_TAG}
                                     docker push ${DOCKER_REPO}/$service:latest
                                     
-                                    # Cleanup
                                     rm Dockerfile.tmp
-                                    echo "✅ Pushed $service (Tagged: ${IMAGE_TAG} & latest)"
+                                    echo "✅ Pushed $service"
                                 else
-                                    echo "⚠️  JAR file not found for $service. Did Maven build fail?"
+                                    echo "⚠️  JAR file not found for $service"
                                 fi
                             done
                             
                             # =========================================
-                            # PART B: FRONTEND (Angular)
+                            # PART B: FRONTEND
                             # =========================================
                             echo "-----------------------------------------------"
                             echo "🔨 Processing Frontend..."
                             
-                            # ✅ FIX: Go to frontend directory
                             cd ${WORKSPACE}/frontend
                             
                             if [ -d dist ]; then
-                                # Frontend usually has a real Dockerfile, so we use it
                                 docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} .
-                                
-                                # Tag Latest
                                 docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:latest
                                 
-                                # Push Both
                                 docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
                                 docker push ${DOCKER_REPO}/frontend:latest
                                 
-                                echo "✅ Pushed frontend (Tagged: ${IMAGE_TAG} & latest)"
+                                echo "✅ Pushed frontend"
                             else
-                                echo "⚠️  Frontend 'dist' folder not found. Did build fail?"
+                                echo "⚠️  Frontend 'dist' folder not found"
                             fi
                         '''
                     }
