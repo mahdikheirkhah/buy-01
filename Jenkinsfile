@@ -522,10 +522,10 @@ pipeline {
                                 else
                                     echo "❌ $service: $STATUS"
                                     FAILED_SERVICES="$FAILED_SERVICES $service"
+                                    exit 1
                                 fi
                             done
                             
-                            echo ""
                             echo "Quality Gate Summary: $PASSED_COUNT/$TOTAL_COUNT passed"
                             
                             if [ $PASSED_COUNT -eq $TOTAL_COUNT ]; then
@@ -902,7 +902,7 @@ DOCKERFILE_END
             }
         }
 
-stage('🚀 Deploy with Rollback') {
+        stage('🚀 Deploy Locally') {
             when {
                 allOf {
                     expression { params.DEPLOY_LOCALLY == true }
@@ -911,115 +911,203 @@ stage('🚀 Deploy with Rollback') {
             }
             steps {
                 script {
-                    echo "🚀 Deploying with automatic rollback capability..."
-                    
-                    // ✅ DEFINE SERVICES TO DEPLOY (Excluding sonarqube)
-                    def servicesToDeploy = "zookeeper kafka buy-01 discovery-service api-gateway user-service product-service media-service dummy-data frontend"
-                    
-                    def deploymentSuccess = false
-                    
+                    echo "🚀 Deploying locally with tag: ${IMAGE_TAG}"
+
                     try {
-                        withCredentials([usernamePassword(
-                            credentialsId: env.DOCKER_CREDENTIAL_ID,
-                            passwordVariable: 'DOCKER_PASSWORD',
-                            usernameVariable: 'DOCKER_USERNAME'
-                        )]) {
-                            // ✅ STEP 1: Backup current stable version
-                            sh """
-                                echo "📦 Step 1: Backing up current stable version..."
-                                echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
-                                
-                                # Use the specific list for backup too
-                                SERVICES="user-service product-service media-service api-gateway discovery-service frontend"
-                                
-                                for service in \$SERVICES; do
-                                    if docker pull ${DOCKER_REPO}/\${service}:stable 2>/dev/null; then
-                                        docker tag ${DOCKER_REPO}/\${service}:stable ${DOCKER_REPO}/\${service}:previous-stable
-                                        docker push ${DOCKER_REPO}/\${service}:previous-stable
-                                        echo "✅ \${service} backed up"
-                                    else
-                                        echo "⚠️  No stable version for \${service}"
-                                    fi
-                                done
-                            """
+                        // 📦 Step 1: Backup current deployment state
+                        sh '''#!/bin/bash
+                            set -e
                             
-                            // ✅ STEP 2: Deploy new version
-                            sh """
-                                echo ""
-                                echo "🚀 Step 2: Deploying new version ${IMAGE_TAG}..."
-                                
-                                # IMPORTANT: Set Project Name to match your existing stack
-                                export COMPOSE_PROJECT_NAME=buy-01
-                                export IMAGE_TAG=${IMAGE_TAG}
-                                cd ${WORKSPACE}
-                                
-                                # Update .env
-                                echo "IMAGE_TAG=${IMAGE_TAG}" > .env
-                                
-                                echo "Pulling new images..."
-                                docker compose pull
-                                
-                                echo "Deploying ONLY: ${servicesToDeploy}"
-                                # ✅ Run UP only for specific services (skips SonarQube)
-                                docker compose up -d --remove-orphans ${servicesToDeploy}
-                                
-                                echo "Waiting for services to start (30 seconds)..."
-                                sleep 30
-                                
-                                docker compose ps
-                            """
+                            echo "📦 Backing up current deployment state..."
                             
-                            deploymentSuccess = true
-                            currentBuild.description = "✅ Deployed v${IMAGE_TAG}"
-                            echo "✅ Deployment successful!"
-                        }
+                            # Create backup directory
+                            mkdir -p .backup
+                            BACKUP_DIR=".backup/deployment-${BUILD_NUMBER}-$(date +%s)"
+                            mkdir -p "$BACKUP_DIR"
+                            
+                            # Save current docker-compose state
+                            if [ -f docker-compose.yml ]; then
+                                cp docker-compose.yml "$BACKUP_DIR/docker-compose.yml"
+                                echo "✅ Backed up docker-compose.yml"
+                            fi
+                            
+                            # Save current running container info
+                            docker compose ps > "$BACKUP_DIR/containers-before.log" 2>&1 || true
+                            docker images | grep mahdikheirkhah > "$BACKUP_DIR/images-before.log" 2>&1 || true
+                            
+                            # Save current IMAGE_TAG for rollback
+                            if [ -f .env ]; then
+                                cp .env "$BACKUP_DIR/.env.backup"
+                                grep IMAGE_TAG .env > "$BACKUP_DIR/previous-tag.txt" || echo "IMAGE_TAG=none" > "$BACKUP_DIR/previous-tag.txt"
+                            else
+                                echo "IMAGE_TAG=none" > "$BACKUP_DIR/previous-tag.txt"
+                            fi
+                            
+                            echo "✅ Backup created at: $BACKUP_DIR"
+                            echo "$BACKUP_DIR" > .backup/latest-backup-path.txt
+                        '''
                         
+                        // 🧹 Step 2: Clean and deploy
+                        sh '''#!/bin/bash
+                            set -e
+                            
+                            echo "🧹 Cleaning up existing containers..."
+                            
+                            # Stop and remove containers using docker-compose
+                            docker compose down --remove-orphans || true
+                            sleep 2
+                            
+                            # Force remove specific containers if they still exist
+                            for container in frontend discovery-service api-gateway user-service product-service media-service dummy-data sonarqube zookeeper kafka buy-01; do
+                                if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
+                                    echo "🗑️  Removing container: $container"
+                                    docker rm -f "$container" 2>/dev/null || true
+                                fi
+                            done
+                            sleep 2
+                            
+                            echo "🔄 Pulling latest images..."
+                            export IMAGE_TAG=${IMAGE_TAG}
+                            docker compose pull || true
+                            
+                            echo "🚀 Starting services..."
+                            docker compose up -d --remove-orphans --force-recreate
+                            
+                            echo "⏳ Waiting for services to start..."
+                            sleep 30
+                            
+                            echo "📊 Service status:"
+                            docker compose ps
+                            echo "✅ Local deployment successful!"
+                        '''
+                        
+                        // ✅ Step 3: Health check verification
+                        sh '''#!/bin/bash
+                            set -e
+                            
+                            echo "✅ Verifying deployment health..."
+                            
+                            MAX_RETRIES=5
+                            RETRY_COUNT=0
+                            HEALTH_CHECKS_PASSED=0
+                            
+                            # Function to check endpoint
+                            check_endpoint() {
+                                local endpoint=$1
+                                local expected_status=$2
+                                local name=$3
+                                
+                                status=$(curl -s -o /dev/null -w "%{http_code}" -k "$endpoint" 2>/dev/null || echo "000")
+                                if [ "$status" -eq "$expected_status" ] || [ "$status" -eq 200 ]; then
+                                    echo "✅ $name: UP (HTTP $status)"
+                                    return 0
+                                else
+                                    echo "⚠️ $name: Status $status"
+                                    return 1
+                                fi
+                            }
+                            
+                            echo "Checking critical services..."
+                            check_endpoint "http://localhost:8080/api/health" 200 "API Gateway" && ((HEALTH_CHECKS_PASSED++)) || true
+                            check_endpoint "http://localhost:8761/actuator/health" 200 "Eureka Discovery" && ((HEALTH_CHECKS_PASSED++)) || true
+                            check_endpoint "https://localhost:4200" 200 "Frontend" && ((HEALTH_CHECKS_PASSED++)) || true
+                            
+                            echo ""
+                            echo "Health checks passed: $HEALTH_CHECKS_PASSED/3"
+                            
+                            if [ "$HEALTH_CHECKS_PASSED" -lt 2 ]; then
+                                echo "⚠️ WARNING: Only $HEALTH_CHECKS_PASSED services healthy"
+                                exit 1
+                            fi
+                            
+                            echo "✅ Deployment health check PASSED"
+                        '''
+
+                        echo "🌐 Access your application at:"
+                        echo "   - Frontend: https://localhost:4200"
+                        echo "   - API Gateway: https://localhost:8443"
+                        echo "   - Eureka: http://localhost:8761"
                     } catch (Exception e) {
-                        echo "❌ Deployment failed: ${e.message}"
+                        echo "❌ Local deployment failed: ${e.message}"
                         echo "🔄 Initiating automatic rollback..."
                         
-                        // ✅ AUTOMATIC ROLLBACK
-                        withCredentials([usernamePassword(
-                            credentialsId: env.DOCKER_CREDENTIAL_ID,
-                            passwordVariable: 'DOCKER_PASSWORD',
-                            usernameVariable: 'DOCKER_USERNAME'
-                        )]) {
-                            sh """
-                                echo "🔄 Rolling back to previous-stable..."
-                                echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
+                        try {
+                            sh '''#!/bin/bash
+                                set -e
                                 
-                                # IMPORTANT: Set Project Name here too
-                                export COMPOSE_PROJECT_NAME=buy-01
-                                cd ${WORKSPACE}
+                                BACKUP_PATH=$(cat .backup/latest-backup-path.txt 2>/dev/null || echo "")
                                 
-                                sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=previous-stable/" .env
+                                if [ -z "$BACKUP_PATH" ] || [ ! -d "$BACKUP_PATH" ]; then
+                                    echo "❌ No valid backup found for rollback!"
+                                    exit 1
+                                fi
                                 
-                                echo "Pulling previous stable images..."
-                                docker compose pull
+                                echo "🔄 Rolling back to previous deployment..."
                                 
-                                echo "Deploying previous stable version..."
-                                # ❌ REMOVED 'docker compose down' to protect SonarQube
-                                # ✅ Just run UP again with the old tag to revert containers
-                                docker compose up -d ${servicesToDeploy}
+                                # Stop current deployment
+                                echo "Stopping current services..."
+                                docker compose down --remove-orphans || true
+                                sleep 5
                                 
-                                echo "Waiting for services to start (20 seconds)..."
+                                # Restore previous docker-compose
+                                if [ -f "$BACKUP_PATH/docker-compose.yml" ]; then
+                                    cp "$BACKUP_PATH/docker-compose.yml" docker-compose.yml
+                                    echo "✅ Restored docker-compose.yml"
+                                fi
+                                
+                                # Get previous image tag
+                                PREVIOUS_TAG=$(grep IMAGE_TAG "$BACKUP_PATH/previous-tag.txt" | cut -d'=' -f2)
+                                echo "Previous IMAGE_TAG: $PREVIOUS_TAG"
+                                
+                                # Start previous version
+                                echo "Starting previous version..."
+                                if [ "$PREVIOUS_TAG" != "none" ]; then
+                                    export IMAGE_TAG=$PREVIOUS_TAG
+                                fi
+                                docker compose up -d --remove-orphans
+                                
+                                # Wait and verify
+                                echo "Waiting for rollback services to start..."
                                 sleep 20
                                 
-                                echo "✅ Rollback completed"
                                 docker compose ps
-                            """
+                                echo "✅ Rollback COMPLETED"
+                                
+                                # Log rollback event
+                                echo ""
+                                echo "📋 ROLLBACK LOG:"
+                                echo "  Backup Location: $BACKUP_PATH"
+                                echo "  Failed Build: #${BUILD_NUMBER}"
+                                echo "  Failed Image Tag: ${IMAGE_TAG}"
+                                echo "  Restored Image Tag: $PREVIOUS_TAG"
+                                echo "  Rollback Time: $(date)"
+                                
+                                # Save rollback report
+                                {
+                                    echo "ROLLBACK REPORT"
+                                    echo "=============="
+                                    echo "Build Number: ${BUILD_NUMBER}"
+                                    echo "Failed Image Tag: ${IMAGE_TAG}"
+                                    echo "Rolled Back To: $PREVIOUS_TAG"
+                                    echo "Timestamp: $(date)"
+                                    echo ""
+                                    echo "Previous containers:"
+                                    cat "$BACKUP_PATH/containers-before.log"
+                                } > "$BACKUP_PATH/rollback-report.txt"
+                                
+                                echo "✅ Rollback report saved to: $BACKUP_PATH/rollback-report.txt"
+                            '''
+                            
+                            echo "✅ Automatic rollback completed successfully"
+                            echo "   Previous version has been restored"
+                            echo "   Check .backup/ directory for rollback details"
+                        } catch (Exception rollbackError) {
+                            echo "❌ CRITICAL: Rollback also failed: ${rollbackError.message}"
+                            echo "   Manual intervention required!"
+                            echo "   Check .backup/ directory for backup files"
                         }
                         
-                        currentBuild.result = 'FAILURE'
-                        currentBuild.description = "❌ Deploy failed → Rolled back"
-                        error("Deployment failed and automatically rolled back")
-                    }
-                    
-                    if (deploymentSuccess) {
-                        // Success message block...
-                         sh '''
-                            echo "✅ DEPLOYMENT SUCCESSFUL"
-                        '''
+                        error("Deploy failed with automatic rollback executed: ${e.message}")
                     }
                 }
             }
