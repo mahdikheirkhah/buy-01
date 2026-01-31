@@ -902,7 +902,7 @@ DOCKERFILE_END
             }
         }
 
-        stage('🚀 Deploy with Rollback') {
+stage('🚀 Deploy with Rollback') {
             when {
                 allOf {
                     expression { params.DEPLOY_LOCALLY == true }
@@ -913,6 +913,9 @@ DOCKERFILE_END
                 script {
                     echo "🚀 Deploying with automatic rollback capability..."
                     
+                    // ✅ DEFINE SERVICES TO DEPLOY (Excluding sonarqube)
+                    def servicesToDeploy = "zookeeper kafka buy-01 discovery-service api-gateway user-service product-service media-service dummy-data frontend"
+                    
                     def deploymentSuccess = false
                     
                     try {
@@ -922,63 +925,49 @@ DOCKERFILE_END
                             usernameVariable: 'DOCKER_USERNAME'
                         )]) {
                             // ✅ STEP 1: Backup current stable version
-                            sh '''
+                            sh """
                                 echo "📦 Step 1: Backing up current stable version..."
-                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                                echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
                                 
+                                # Use the specific list for backup too
                                 SERVICES="user-service product-service media-service api-gateway discovery-service frontend"
                                 
-                                for service in $SERVICES; do
-                                    echo "Backing up ${service}:stable → previous-stable"
-                                    
-                                    # Pull current stable
-                                    if docker pull ${DOCKER_REPO}/${service}:stable 2>/dev/null; then
-                                        # Tag as previous-stable
-                                        docker tag ${DOCKER_REPO}/${service}:stable ${DOCKER_REPO}/${service}:previous-stable
-                                        docker push ${DOCKER_REPO}/${service}:previous-stable
-                                        echo "✅ ${service} backed up"
+                                for service in \$SERVICES; do
+                                    if docker pull ${DOCKER_REPO}/\${service}:stable 2>/dev/null; then
+                                        docker tag ${DOCKER_REPO}/\${service}:stable ${DOCKER_REPO}/\${service}:previous-stable
+                                        docker push ${DOCKER_REPO}/\${service}:previous-stable
+                                        echo "✅ \${service} backed up"
                                     else
-                                        echo "⚠️  No stable version for ${service} (first deployment?)"
+                                        echo "⚠️  No stable version for \${service}"
                                     fi
                                 done
-                                
-                                echo "✅ Backup completed - rollback point created"
-                            '''
+                            """
                             
                             // ✅ STEP 2: Deploy new version
-                            sh '''
+                            sh """
                                 echo ""
                                 echo "🚀 Step 2: Deploying new version ${IMAGE_TAG}..."
                                 
+                                # IMPORTANT: Set Project Name to match your existing stack
+                                export COMPOSE_PROJECT_NAME=buy-01
                                 export IMAGE_TAG=${IMAGE_TAG}
                                 cd ${WORKSPACE}
                                 
                                 # Update .env
-                                if [ ! -f .env ]; then
-                                    echo "IMAGE_TAG=${IMAGE_TAG}" > .env
-                                else
-                                    sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env
-                                fi
+                                echo "IMAGE_TAG=${IMAGE_TAG}" > .env
                                 
-                                echo "Current .env:"
-                                cat .env
-                                
-                                echo ""
                                 echo "Pulling new images..."
                                 docker compose pull
                                 
-                                echo ""
-                                echo "Deploying services..."
-                                docker compose up -d --remove-orphans
+                                echo "Deploying ONLY: ${servicesToDeploy}"
+                                # ✅ Run UP only for specific services (skips SonarQube)
+                                docker compose up -d --remove-orphans ${servicesToDeploy}
                                 
-                                echo ""
                                 echo "Waiting for services to start (30 seconds)..."
                                 sleep 30
                                 
-                                echo ""
-                                echo "Service status:"
                                 docker compose ps
-                            '''
+                            """
                             
                             deploymentSuccess = true
                             currentBuild.description = "✅ Deployed v${IMAGE_TAG}"
@@ -995,61 +984,41 @@ DOCKERFILE_END
                             passwordVariable: 'DOCKER_PASSWORD',
                             usernameVariable: 'DOCKER_USERNAME'
                         )]) {
-                            sh '''
+                            sh """
                                 echo "🔄 Rolling back to previous-stable..."
-                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                                echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
                                 
+                                # IMPORTANT: Set Project Name here too
+                                export COMPOSE_PROJECT_NAME=buy-01
                                 cd ${WORKSPACE}
                                 
-                                # Update .env to previous-stable
                                 sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=previous-stable/" .env
                                 
-                                echo "Updated .env:"
-                                cat .env
-                                
-                                # Pull previous stable images
-                                echo ""
                                 echo "Pulling previous stable images..."
                                 docker compose pull
                                 
-                                # Deploy previous version
-                                echo ""
                                 echo "Deploying previous stable version..."
-                                docker compose down
-                                docker compose up -d
+                                # ❌ REMOVED 'docker compose down' to protect SonarQube
+                                # ✅ Just run UP again with the old tag to revert containers
+                                docker compose up -d ${servicesToDeploy}
                                 
-                                echo ""
                                 echo "Waiting for services to start (20 seconds)..."
                                 sleep 20
                                 
-                                echo ""
                                 echo "✅ Rollback completed"
-                                echo "Service status:"
                                 docker compose ps
-                            '''
+                            """
                         }
                         
                         currentBuild.result = 'FAILURE'
-                        currentBuild.description = "❌ Deploy failed → Rolled back to previous-stable"
+                        currentBuild.description = "❌ Deploy failed → Rolled back"
                         error("Deployment failed and automatically rolled back")
                     }
                     
-                    // ✅ If deployment was successful, show info
                     if (deploymentSuccess) {
-                        sh '''
-                            echo ""
-                            echo "=========================================="
+                        // Success message block...
+                         sh '''
                             echo "✅ DEPLOYMENT SUCCESSFUL"
-                            echo "=========================================="
-                            echo "Version: ${IMAGE_TAG}"
-                            echo "Rollback available: previous-stable"
-                            echo ""
-                            echo "Access your application at:"
-                            echo "  - Frontend: http://localhost:4200"
-                            echo "  - API Gateway: http://localhost:8443"
-                            echo "  - Eureka: http://localhost:8761"
-                            echo "  - SonarQube: http://localhost:9000"
-                            echo "=========================================="
                         '''
                     }
                 }
