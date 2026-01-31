@@ -1,7 +1,7 @@
 // CI/CD Pipeline for Buy-01 E-Commerce Platform
-// Last updated: 2026-01-29
-// FIXED VERSION - Frontend Test Docker Path Issue Resolved
-// UPDATED - Fail-fast pipeline + Frontend exclusions
+// Last updated: 2026-01-30
+// ENHANCED VERSION - Auto-deploy + Automatic Rollback on Failure
+// NEW FEATURES: Health checks, rollback strategy, version backup
 
 pipeline {
     agent any
@@ -16,7 +16,7 @@ pipeline {
         booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run unit tests')
         booleanParam(name: 'SKIP_FRONTEND_TESTS', defaultValue: false, description: 'Skip frontend unit tests (for debugging)')
         booleanParam(name: 'RUN_SONAR', defaultValue: true, description: 'Run SonarQube analysis')
-        booleanParam(name: 'SKIP_DEPLOY', defaultValue: true, description: 'Skip deployment')
+        booleanParam(name: 'SKIP_DEPLOY', defaultValue: false, description: 'Skip deployment')  // ✅ CHANGED: Auto-deploy enabled
         booleanParam(name: 'DEPLOY_LOCALLY', defaultValue: true, description: 'Deploy locally without SSH')
         booleanParam(name: 'SKIP_FRONTEND_BUILD', defaultValue: false, description: 'Skip frontend build')
         booleanParam(name: 'SKIP_GITHUB_STATUS', defaultValue: false, description: 'Skip GitHub status reporting')
@@ -29,6 +29,7 @@ pipeline {
         DOCKER_CREDENTIAL_ID = 'dockerhub-credentials'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         STABLE_TAG = 'stable'
+        PREVIOUS_STABLE_TAG = 'previous-stable' 
         SSH_CREDENTIAL_ID = 'ssh-deployment-key'
         REMOTE_HOST = '192.168.1.100'
         REMOTE_USER = 'ssh-user'
@@ -37,6 +38,7 @@ pipeline {
         NODE_IMAGE = 'node:22-alpine'
         BACKEND_DIR = 'backend'
         FRONTEND_DIR = 'frontend'
+        GIT_SOURCE = 'unknown'
     }
 
     options {
@@ -58,78 +60,73 @@ pipeline {
                     echo "Build: #${env.BUILD_NUMBER}"
                     echo "Image Tag: ${IMAGE_TAG}"
                     echo "Run Tests: ${params.RUN_TESTS}"
-                    echo "Run Integration Tests: ${params.RUN_INTEGRATION_TESTS}"
                     echo "Deploy Locally: ${params.DEPLOY_LOCALLY}"
+                    echo "Auto-Deploy: ${!params.SKIP_DEPLOY}"
                     echo "=========================================="
                 }
             }
         }
 
-     stage('📥 Checkout') {
-    steps {
-        script {
-            // ✅ Force clean checkout
-            deleteDir()
-            
-            // ✅ Determine source based on build type
-            def isPullRequest = (env.CHANGE_ID != null)
-            def sourceRepo = isPullRequest ? 'GitHub' : 'Gitea'
-            
-            echo "📥 Build Type: ${isPullRequest ? 'Pull Request #' + env.CHANGE_ID : 'Branch Build'}"
-            echo "📥 Source: ${sourceRepo}"
-            echo "📥 Checking out branch: ${params.BRANCH}"
-            
-            if (isPullRequest) {
-                // ✅ PR BUILD: Checkout from GitHub
-                echo "🔀 PR build detected - checking out from GitHub"
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: "**"]],  // PR branch
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/mahdikheirkhah/buy-01.git',
-                        credentialsId: 'multi-branch-github',
-                        refspec: '+refs/pull/*/head:refs/remotes/origin/PR-*'
-                    ]],
-                    extensions: [
-                        [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
-                    ]
-                ])
-                echo "✅ Checkout completed from GitHub (PR #${env.CHANGE_ID})"
-                
-            } else {
-                // ✅ BRANCH BUILD: Checkout from Gitea
-                echo "🌿 Branch build detected - checking out from Gitea"
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: "*/${params.BRANCH}"]],
-                    userRemoteConfigs: [[
-                        url: 'https://01.gritlab.ax/git/mkheirkh/mr-jenk.git',
-                        credentialsId: 'gitea-credentials'
-                    ]],
-                    extensions: [
-                        [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
-                    ]
-                ])
-                echo "✅ Checkout completed from Gitea"
+        stage('📥 Checkout') {
+            steps {
+                script {
+                    deleteDir()
+                    
+                    def isPullRequest = (env.CHANGE_ID != null)
+                    def sourceRepo = isPullRequest ? 'GitHub' : 'Gitea'
+                    env.GIT_SOURCE = sourceRepo
+                    
+                    echo "📥 Build Type: ${isPullRequest ? 'Pull Request #' + env.CHANGE_ID : 'Branch Build'}"
+                    echo "📥 Source: ${sourceRepo}"
+                    echo "📥 Checking out branch: ${params.BRANCH}"
+                    
+                    if (isPullRequest) {
+                        echo "🔀 PR build detected - checking out from GitHub"
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: "**"]],
+                            userRemoteConfigs: [[
+                                url: 'https://github.com/mahdikheirkhah/buy-01.git',
+                                credentialsId: 'multi-branch-github',
+                                refspec: '+refs/pull/*/head:refs/remotes/origin/PR-*'
+                            ]],
+                            extensions: [
+                                [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                            ]
+                        ])
+                        echo "✅ Checkout completed from GitHub (PR #${env.CHANGE_ID})"
+                        
+                    } else {
+                        echo "🌿 Branch build detected - checking out from Gitea"
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: "*/${params.BRANCH}"]],
+                            userRemoteConfigs: [[
+                                url: 'https://01.gritlab.ax/git/mkheirkh/safe-zone',
+                                credentialsId: 'gitea-credentials'
+                            ]],
+                            extensions: [
+                                [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                            ]
+                        ])
+                        echo "✅ Checkout completed from Gitea"
+                    }
+                    
+                    sh '''
+                        echo ""
+                        echo "📋 Git Information:"
+                        echo "Current commit: $(git rev-parse HEAD)"
+                        echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+                        echo "Recent commits:"
+                        git log --oneline -5
+                        
+                        echo ""
+                        echo "🔍 Verifying workspace..."
+                        ls -la ${WORKSPACE}/ | head -10
+                    '''
+                }
             }
-            
-            // ✅ Show git info
-            sh '''
-                echo ""
-                echo "📋 Git Information:"
-                echo "Current commit: $(git rev-parse HEAD)"
-                echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
-                echo "Recent commits:"
-                git log --oneline -5
-                
-                echo ""
-                echo "🔍 Verifying workspace..."
-                ls -la ${WORKSPACE}/ | head -10
-            '''
         }
-    }
-}
-
 
         stage('🚀 Start SonarQube Early') {
             when {
@@ -269,7 +266,7 @@ pipeline {
                         }
                     }
                     junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
-                    // ✅ FAIL-FAST: If any tests fail, stop the pipeline
+                    
                     if (failedTests.size() > 0) {
                         error("❌ Backend unit tests failed for: ${failedTests.join(', ')}")
                     } else {
@@ -376,8 +373,7 @@ pipeline {
             }
         }
 
-
-        stage('📊 SonarQube Analysis') {
+       stage('📊 SonarQube Analysis') {
             when {
                 expression { params.RUN_SONAR == true }
             }
@@ -401,18 +397,17 @@ pipeline {
 
                     if (sonarAvailable == "true") {
                         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                            // Create SonarQube projects if they don't exist
                             sh '''#!/bin/bash
                                 echo "📁 Creating SonarQube projects if they don't exist..."
 
                                 for service in user-service product-service media-service api-gateway discovery-service frontend; do
                                     echo "Checking if $service project exists..."
-                                    PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=$service | grep -o "\"key\":\"$service\"" || echo "")
+                                    PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=$service | grep -o "\\"key\\":\\"$service\\"" || echo "")
                                     if [ -z "$PROJECT_EXISTS" ]; then
                                         echo "Creating $service project..."
-                                        curl -s -X POST -u ${SONAR_TOKEN}: \
-                                          -F "project=$service" \
-                                          -F "name=$(echo $service | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2));}1')" \
+                                        curl -s -X POST -u ${SONAR_TOKEN}: \\
+                                          -F "project=$service" \\
+                                          -F "name=$(echo $service | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2));}1')" \\
                                           http://sonarqube:9000/api/projects/create > /dev/null
                                         echo "✅ $service project created"
                                     else
@@ -425,10 +420,11 @@ pipeline {
 
                         def services = ['user-service', 'product-service', 'media-service', 'api-gateway', 'discovery-service']
                         services.each { service ->
+                            // ✅ FIXED: Move COVERAGE_EXCLUDE definition inside the shell command
                             sh """
                                 echo "🔍 Analyzing ${service} ..."
                                 
-                                # ✅ Skip coverage for these 2 services
+                                # Define COVERAGE_EXCLUDE here within the shell context
                                 if [ "${service}" = "api-gateway" ] || [ "${service}" = "discovery-service" ]; then
                                     COVERAGE_EXCLUDE="-Dsonar.coverage.exclusions=**"
                                     echo "   (Code quality only - test coverage excluded)"
@@ -437,51 +433,52 @@ pipeline {
                                     echo "   (With test coverage)"
                                 fi
                         
-                                docker run --rm \
-                                  --volumes-from jenkins-cicd \
-                                  -v jenkins_m2_cache:/root/.m2 \
-                                  -w \${WORKSPACE}/backend/${service} \
-                                  --network buy-01_BACKEND \
-                                  \${MAVEN_IMAGE} \
-                                  mvn sonar:sonar \
-                                    -Dsonar.projectKey=${service} \
-                                    -Dsonar.host.url=http://sonarqube:9000 \
-                                    -Dsonar.login=\${SONAR_TOKEN} \
-                                    -Dsonar.exclusions="**/target/**,common/**,**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**,**/FileStorageService.java,**/MediaController.java" \
-                                    \$COVERAGE_EXCLUDE \
+                                docker run --rm \\
+                                  --volumes-from jenkins-cicd \\
+                                  -v jenkins_m2_cache:/root/.m2 \\
+                                  -w \\${WORKSPACE}/backend/${service} \\
+                                  --network buy-01_BACKEND \\
+                                  \\${MAVEN_IMAGE} \\
+                                  mvn sonar:sonar \\
+                                    -Dsonar.projectKey=${service} \\
+                                    -Dsonar.host.url=http://sonarqube:9000 \\
+                                    -Dsonar.login=\\${SONAR_TOKEN} \\
+                                    -Dsonar.exclusions="**/target/**,common/**,**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**,**/FileStorageService.java,**/MediaController.java" \\
+                                    \${COVERAGE_EXCLUDE} \\
                                     -B
                         
                                 echo "✅ ${service} analysis completed"
                             """
                         }
-                            // ✅ ANALYZE FRONTEND (with coverage)
-                        sh """
+                        
+                        // ✅ Frontend analysis with proper single-quote syntax
+                        sh '''
                             echo "🔍 Frontend analysis with SonarQube..."
 
-                            FRONTEND_PATH="\${WORKSPACE}/frontend"
-                            COVERAGE_FILE="\${FRONTEND_PATH}/coverage/lcov.info"
+                            FRONTEND_PATH="${WORKSPACE}/frontend"
+                            COVERAGE_FILE="${FRONTEND_PATH}/coverage/lcov.info"
 
-                            echo "   Using frontend path: \$FRONTEND_PATH"
+                            echo "   Using frontend path: $FRONTEND_PATH"
 
-                            if [ ! -f "\$COVERAGE_FILE" ]; then
+                            if [ ! -f "$COVERAGE_FILE" ]; then
                                 echo "❌ ERROR: Coverage file NOT found!"
                                 exit 1
                             fi
 
-                            COVERAGE_SIZE=\$(du -h "\$COVERAGE_FILE" | cut -f1)
-                            echo "✅ Coverage file ready: \$COVERAGE_SIZE"
+                            COVERAGE_SIZE=$(du -h "$COVERAGE_FILE" | cut -f1)
+                            echo "✅ Coverage file ready: $COVERAGE_SIZE"
 
                             echo "🚀 Starting SonarQube analysis..."
-                            docker run --rm \
-                              --volumes-from jenkins-cicd \
-                              -w \${WORKSPACE}/frontend \
-                              --network buy-01_BACKEND \
-                              -e SONAR_TOKEN=\${SONAR_TOKEN} \
-                              sonarsource/sonar-scanner-cli:latest \
+                            docker run --rm \\
+                              --volumes-from jenkins-cicd \\
+                              -w ${WORKSPACE}/frontend \\
+                              --network buy-01_BACKEND \\
+                              -e SONAR_TOKEN=${SONAR_TOKEN} \\
+                              sonarsource/sonar-scanner-cli:latest \\
                               -Dsonar.host.url=http://sonarqube:9000
 
                             echo "✅ Frontend analysis completed"
-                        """
+                        '''
                         sleep(time: 10, unit: 'SECONDS')
                         echo "✅ SonarQube analysis completed for all 6 projects!"
                         }
@@ -491,7 +488,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('📊 Quality Gate') {
             when {
@@ -542,7 +538,6 @@ pipeline {
                             fi
                         ''', returnStatus: true)
                         
-                        // ✅ FAIL-FAST: If quality gate fails, stop the pipeline
                         if (qgResult != 0) {
                             error("❌ Quality Gate check failed for some services")
                         } else {
@@ -552,331 +547,305 @@ pipeline {
                 }
             }
         }
-            // ============================================================
-            // 🔄 GITHUB STATUS REPORTING STAGE
-            // ============================================================
-            // Add this stage to your Jenkinsfile after 'Quality Gate' stage
-            // This enables PR-based CI/CD with GitHub status checks
-            // ============================================================
-            
-   stage('📤 Report to GitHub') {
-    when {
-        expression { params.SKIP_GITHUB_STATUS == false }
-    }
-    steps {
-        script {
-            echo "📤 Reporting build status to GitHub..."
-            
-            def buildStatus = currentBuild.result ?: 'SUCCESS'
-            def githubStatus = 'success'
-            def description = 'All checks passed!'
-            
-            if (buildStatus == 'FAILURE') {
-                githubStatus = 'failure'
-                description = 'Build failed - check Jenkins for details'
-            } else if (buildStatus == 'UNSTABLE') {
-                githubStatus = 'error'
-                description = 'Build unstable - quality gate issues'
+
+        stage('📤 Report to GitHub') {
+            when {
+                expression { params.SKIP_GITHUB_STATUS == false }
+                expression { env.GIT_SOURCE == 'GitHub' }
             }
-            
-            echo "Build Status: ${buildStatus}"
-            echo "GitHub Status: ${githubStatus}"
-            
-            try {
-                // ✅ Extract PASSWORD field (which contains the token)
-                withCredentials([usernamePassword(
-                    credentialsId: 'multi-branch-github',
-                    passwordVariable: 'GITHUB_TOKEN',  // Token is in password field
-                    usernameVariable: 'GITHUB_USER'    // Username (not used for API)
-                )]) {
-                    sh """#!/bin/bash
-                        set -e
-                        
-                        echo "🔍 Step 1: Verify token exists"
-                        if [ -z "\${GITHUB_TOKEN}" ]; then
-                            echo "❌ ERROR: GITHUB_TOKEN is empty!"
-                            exit 1
-                        fi
-                        echo "✅ Token exists (length: \${#GITHUB_TOKEN})"
-                        
-                        echo ""
-                        echo "🔍 Step 2: Get commit SHA"
-                        COMMIT_SHA=\$(git rev-parse HEAD)
-                        echo "📍 Current commit: \$COMMIT_SHA"
-                        
-                        echo ""
-                        echo "🔍 Step 3: Get current branch"
-                        CURRENT_BRANCH=\$(git rev-parse --abbrev-ref HEAD)
-                        echo "📍 Current branch: \$CURRENT_BRANCH"
-                        
-                        echo ""
-                        echo "🔍 Step 4: Test GitHub API connectivity"
-                        HTTP_TEST=\$(curl -s -o /dev/null -w "%{http_code}" https://api.github.com/)
-                        echo "GitHub API Status: \$HTTP_TEST"
-                        
-                        if [ "\$HTTP_TEST" != "200" ]; then
-                            echo "⚠️  Warning: GitHub API may not be reachable"
-                        fi
-                        
-                        echo ""
-                        echo "🔍 Step 5: Build API endpoint"
-                        GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/statuses/\${COMMIT_SHA}"
-                        echo "API Endpoint: \$GITHUB_API"
-                        
-                        echo ""
-                        echo "🔍 Step 6: Create JSON payload"
-                        PAYLOAD=\$(cat <<'EOF'
-{
-  "state": "${githubStatus}",
-  "description": "${description}",
-  "target_url": "${BUILD_URL}",
-  "context": "Jenkins CI/CD Pipeline"
-}
-EOF
-)
-                        echo "Payload: \$PAYLOAD"
-                        
-                        echo ""
-                        echo "🔍 Step 7: Send status to GitHub"
-                        RESPONSE=\$(curl -s -w "\\nHTTP_CODE:%{http_code}" \\
-                          -X POST \\
-                          -H "Authorization: token \${GITHUB_TOKEN}" \\
-                          -H "Content-Type: application/json" \\
-                          -H "Accept: application/vnd.github.v3+json" \\
-                          -d "\$PAYLOAD" \\
-                          "\${GITHUB_API}")
-                        
-                        echo ""
-                        echo "🔍 Step 8: Parse response"
-                        HTTP_CODE=\$(echo "\$RESPONSE" | grep "HTTP_CODE:" | cut -d':' -f2)
-                        RESPONSE_BODY=\$(echo "\$RESPONSE" | grep -v "HTTP_CODE:")
-                        
-                        echo "HTTP Code: \$HTTP_CODE"
-                        echo "Response Body: \$RESPONSE_BODY"
-                        
-                        if [ "\$HTTP_CODE" = "201" ] || [ "\$HTTP_CODE" = "200" ]; then
-                            echo "✅ GitHub status updated successfully"
-                        else
-                            echo "❌ Failed to update GitHub status"
-                            echo "Full response: \$RESPONSE"
-                            exit 1
-                        fi
-                    """
+            steps {
+                script {
+                    echo "📤 Reporting build status to GitHub..."
+                    
+                    def buildStatus = currentBuild.result ?: 'SUCCESS'
+                    def githubStatus = 'success'
+                    def description = 'All checks passed!'
+                    
+                    if (buildStatus == 'FAILURE') {
+                        githubStatus = 'failure'
+                        description = 'Build failed - check Jenkins for details'
+                    } else if (buildStatus == 'UNSTABLE') {
+                        githubStatus = 'error'
+                        description = 'Build unstable - quality gate issues'
+                    }
+                    
+                    echo "Build Status: ${buildStatus}"
+                    echo "GitHub Status: ${githubStatus}"
+                    
+                    try {
+                        withCredentials([usernamePassword(
+                            credentialsId: 'multi-branch-github',
+                            passwordVariable: 'GITHUB_TOKEN',
+                            usernameVariable: 'GITHUB_USER'
+                        )]) {
+                            sh '''#!/bin/bash
+                                set -e
+                                
+                                echo "🔍 Step 1: Verify token exists"
+                                if [ -z "${GITHUB_TOKEN}" ]; then
+                                    echo "❌ ERROR: GITHUB_TOKEN is empty!"
+                                    exit 1
+                                fi
+                                echo "✅ Token exists (length: ${#GITHUB_TOKEN})"
+                                
+                                echo ""
+                                echo "🔍 Step 2: Get commit SHA"
+                                COMMIT_SHA=$(git rev-parse HEAD)
+                                echo "📍 Current commit: $COMMIT_SHA"
+                                
+                                echo ""
+                                echo "🔍 Step 3: Get current branch"
+                                CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                                echo "📍 Current branch: $CURRENT_BRANCH"
+                                
+                                echo ""
+                                echo "🔍 Step 4: Test GitHub API connectivity"
+                                HTTP_TEST=$(curl -s -o /dev/null -w "%{http_code}" https://api.github.com/)
+                                echo "GitHub API Status: $HTTP_TEST"
+                                
+                                if [ "$HTTP_TEST" != "200" ]; then
+                                    echo "⚠️  Warning: GitHub API may not be reachable"
+                                fi
+                                
+                                echo ""
+                                echo "🔍 Step 5: Build API endpoint"
+                                GITHUB_API="https://api.github.com/repos/''' + env.GITHUB_REPO + '''/statuses/${COMMIT_SHA}"
+                                echo "API Endpoint: $GITHUB_API"
+                                
+                                echo ""
+                                echo "🔍 Step 6: Create JSON payload"
+                                PAYLOAD=$(cat <<'EOF'
+                                {
+                                  "state": "''' + githubStatus + '''",
+                                  "description": "''' + description + '''",
+                                  "target_url": "''' + env.BUILD_URL + '''",
+                                  "context": "Jenkins CI/CD Pipeline"
+                                }
+                                EOF
+                                )
+                                echo "Payload: $PAYLOAD"
+                                
+                                echo ""
+                                echo "🔍 Step 7: Send status to GitHub"
+                                RESPONSE=$(curl -s -w "\\nHTTP_CODE:%{http_code}" \\
+                                  -X POST \\
+                                  -H "Authorization: token ${GITHUB_TOKEN}" \\
+                                  -H "Content-Type: application/json" \\
+                                  -H "Accept: application/vnd.github.v3+json" \\
+                                  -d "$PAYLOAD" \\
+                                  "${GITHUB_API}")
+                                
+                                echo ""
+                                echo "🔍 Step 8: Parse response"
+                                HTTP_CODE=$(echo "$RESPONSE" | grep "HTTP_CODE:" | cut -d':' -f2)
+                                RESPONSE_BODY=$(echo "$RESPONSE" | grep -v "HTTP_CODE:")
+                                
+                                echo "HTTP Code: $HTTP_CODE"
+                                echo "Response Body: $RESPONSE_BODY"
+                                
+                                if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
+                                    echo "✅ GitHub status updated successfully"
+                                else
+                                    echo "❌ Failed to update GitHub status"
+                                    echo "Full response: $RESPONSE"
+                                    exit 1
+                                fi
+                            '''
+                        }
+                        echo "✅ GitHub status reporting completed"
+                    } catch (Exception e) {
+                        echo "❌ GitHub status reporting failed: ${e.message}"
+                        echo "This is not critical - continuing pipeline..."
+                    }
                 }
-                echo "✅ GitHub status reporting completed"
-            } catch (Exception e) {
-                echo "❌ GitHub status reporting failed: ${e.message}"
-                echo "This is not critical - continuing pipeline..."
-                // Don't fail the build on GitHub reporting issues
             }
         }
-    }
-}
 
-
-            // ============================================================
-            // 🔍 GITHUB PR QUALITY CHECKS STAGE
-            // ============================================================
-            // Add this stage after 'Report to GitHub' for PR-specific checks
-            // This blocks merges based on quality gate failures
-            
- stage('🔐 GitHub PR Protection') {
-    when {
-        allOf {
-            expression { env.CHANGE_ID != null }  // Only on PRs
-            expression { params.SKIP_GITHUB_STATUS == false }
-        }
-    }
-    steps {
-        script {
-            echo "🔐 Enforcing branch protection rules..."
-            
-            withCredentials([usernamePassword(
-                credentialsId: 'multi-branch-github',
-                passwordVariable: 'GITHUB_TOKEN',
-                usernameVariable: 'GITHUB_USER'
-            )]) {
-                sh '''#!/bin/bash
-                    set -e
+        stage('🔐 GitHub PR Protection') {
+            when {
+                allOf {
+                    expression { env.CHANGE_ID != null }
+                    expression { params.SKIP_GITHUB_STATUS == false }
+                    expression { env.GIT_SOURCE == 'GitHub' }
+                }
+            }
+            steps {
+                script {
+                    echo "🔐 Enforcing branch protection rules..."
                     
-                    PR_NUMBER=${CHANGE_ID}
-                    COMMIT_SHA=$(git rev-parse HEAD)
-                    
-                    echo "📍 PR: #${PR_NUMBER}"
-                    echo "📍 Commit: ${COMMIT_SHA}"
-                    
-                    # Get PR info
-                    GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}"
-                    
-                    PR_INFO=$(curl -s \
-                      -H "Authorization: token ${GITHUB_TOKEN}" \
-                      -H "Accept: application/vnd.github.v3+json" \
-                      "${GITHUB_API}")
-                    
-                    BASE_BRANCH=$(echo "${PR_INFO}" | grep -o '"base":[^}]*' | grep -o '"ref":"[^"]*"' | cut -d'"' -f4)
-                    HEAD_BRANCH=$(echo "${PR_INFO}" | grep -o '"head":[^}]*' | grep -o '"ref":"[^"]*"' | cut -d'"' -f4)
-                    
-                    echo "Base branch (target): ${BASE_BRANCH}"
-                    echo "Head branch (source): ${HEAD_BRANCH}"
-                    
-                    if [ "${BASE_BRANCH}" = "main" ]; then
-                        echo "🛡️  PR to main branch - enforcing strict checks"
-                        
-                        # Get commit status
-                        STATUS_API="https://api.github.com/repos/${GITHUB_REPO}/commits/${COMMIT_SHA}/status"
-                        
-                        STATUS_INFO=$(curl -s \
-                          -H "Authorization: token ${GITHUB_TOKEN}" \
-                          -H "Accept: application/vnd.github.v3+json" \
-                          "${STATUS_API}")
-                        
-                        OVERALL_STATE=$(echo "${STATUS_INFO}" | grep -o '"state":"[^"]*"' | head -1 | cut -d'"' -f4)
-                        
-                        echo "Overall status: ${OVERALL_STATE}"
-                        
-                        if [ "${OVERALL_STATE}" = "success" ] || [ "${OVERALL_STATE}" = "pending" ]; then
-                            echo "✅ Status checks passed - merge allowed"
-                        else
-                            echo "❌ Status checks failed - cannot merge"
-                            exit 1
-                        fi
-                    else
-                        echo "ℹ️  PR to non-main branch - skipping strict checks"
-                    fi
-                '''
+                    withCredentials([usernamePassword(
+                        credentialsId: 'multi-branch-github',
+                        passwordVariable: 'GITHUB_TOKEN',
+                        usernameVariable: 'GITHUB_USER'
+                    )]) {
+                        sh '''#!/bin/bash
+                            set -e
+                            
+                            PR_NUMBER=${CHANGE_ID}
+                            COMMIT_SHA=$(git rev-parse HEAD)
+                            
+                            echo "📍 PR: #${PR_NUMBER}"
+                            echo "📍 Commit: ${COMMIT_SHA}"
+                            
+                            GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}"
+                            
+                            PR_INFO=$(curl -s \\
+                              -H "Authorization: token ${GITHUB_TOKEN}" \\
+                              -H "Accept: application/vnd.github.v3+json" \\
+                              "${GITHUB_API}")
+                            
+                            BASE_BRANCH=$(echo "${PR_INFO}" | grep -o '"base":[^}]*' | grep -o '"ref":"[^"]*"' | cut -d'"' -f4)
+                            HEAD_BRANCH=$(echo "${PR_INFO}" | grep -o '"head":[^}]*' | grep -o '"ref":"[^"]*"' | cut -d'"' -f4)
+                            
+                            echo "Base branch (target): ${BASE_BRANCH}"
+                            echo "Head branch (source): ${HEAD_BRANCH}"
+                            
+                            if [ "${BASE_BRANCH}" = "main" ]; then
+                                echo "🛡️  PR to main branch - enforcing strict checks"
+                                
+                                STATUS_API="https://api.github.com/repos/${GITHUB_REPO}/commits/${COMMIT_SHA}/status"
+                                
+                                STATUS_INFO=$(curl -s \\
+                                  -H "Authorization: token ${GITHUB_TOKEN}" \\
+                                  -H "Accept: application/vnd.github.v3+json" \\
+                                  "${STATUS_API}")
+                                
+                                OVERALL_STATE=$(echo "${STATUS_INFO}" | grep -o '"state":"[^"]*"' | head -1 | cut -d'"' -f4)
+                                
+                                echo "Overall status: ${OVERALL_STATE}"
+                                
+                                if [ "${OVERALL_STATE}" = "success" ] || [ "${OVERALL_STATE}" = "pending" ]; then
+                                    echo "✅ Status checks passed - merge allowed"
+                                else
+                                    echo "❌ Status checks failed - cannot merge"
+                                    exit 1
+                                fi
+                            else
+                                echo "ℹ️  PR to non-main branch - skipping strict checks"
+                            fi
+                        '''
+                    }
+                }
             }
         }
-    }
-}
 
-            
-            // ============================================================
-            // 📋 SEND DETAILED PR COMMENT STAGE
-            // ============================================================
-            // Add this stage for beautiful PR comments with test results
-            
-stage('💬 Post PR Comment') {
-    when {
-        allOf {
-            expression { env.CHANGE_ID != null }
-            expression { params.SKIP_GITHUB_STATUS == false }
-        }
-    }
-    steps {
-        script {
-            echo "💬 Posting detailed comment to PR..."
-            
-            withCredentials([usernamePassword(
-                credentialsId: 'multi-branch-github',
-                passwordVariable: 'GITHUB_TOKEN',
-                usernameVariable: 'GITHUB_USER'
-            )]) {
-                sh '''#!/bin/bash
-                    PR_NUMBER=${CHANGE_ID}
-                    BUILD_NUM=${BUILD_NUMBER}
-                    BUILD_LINK=${BUILD_URL}
-                    COMMIT_SHORT=$(git rev-parse --short HEAD)
-                    BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+        stage('💬 Post PR Comment') {
+            when {
+                allOf {
+                    expression { env.CHANGE_ID != null }
+                    expression { params.SKIP_GITHUB_STATUS == false }
+                    expression { env.GIT_SOURCE == 'GitHub' }
+                }
+            }
+            steps {
+                script {
+                    echo "💬 Posting detailed comment to PR..."
                     
-                    # Create comment body
-                    COMMENT_BODY=$(cat <<'COMMENT_EOF'
-## 🔍 CI/CD Pipeline Report
+                    withCredentials([usernamePassword(
+                        credentialsId: 'multi-branch-github',
+                        passwordVariable: 'GITHUB_TOKEN',
+                        usernameVariable: 'GITHUB_USER'
+                    )]) {
+                        sh '''#!/bin/bash
+                            PR_NUMBER=${CHANGE_ID}
+                            BUILD_NUM=${BUILD_NUMBER}
+                            BUILD_LINK=${BUILD_URL}
+                            COMMIT_SHORT=$(git rev-parse --short HEAD)
+                            BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+                            
+                            COMMENT_BODY=$(cat <<'COMMENT_EOF'
+                            ## 🔍 CI/CD Pipeline Report
 
-### Build Status: ✅ PASSED
-- **Build Number:** #'${BUILD_NUM}'
-- **Branch:** '${BRANCH_NAME}'
-- **Commit:** '${COMMIT_SHORT}'
+                            ### Build Status: ✅ PASSED
+                            - **Build Number:** #'${BUILD_NUM}'
+                            - **Branch:** '${BRANCH_NAME}'
+                            - **Commit:** '${COMMIT_SHORT}'
 
-### Test Results
-| Component | Status |
-|-----------|--------|
-| Backend Unit Tests | ✅ Passed |
-| Frontend Unit Tests | ✅ Passed |
-| SonarQube Analysis | ✅ Passed |
-| Quality Gate | ✅ Passed |
+                            ### Test Results
+                            | Component | Status |
+                            |-----------|--------|
+                            | Backend Unit Tests | ✅ Passed |
+                            | Frontend Unit Tests | ✅ Passed |
+                            | SonarQube Analysis | ✅ Passed |
+                            | Quality Gate | ✅ Passed |
 
-### 📊 Reports
-- 📋 [Build Logs]('${BUILD_LINK}'console)
-- 📈 [SonarQube Dashboard](http://localhost:9000)
+                            ### 📊 Reports
+                            - 📋 [Build Logs]('${BUILD_LINK}'console)
+                            - 📈 [SonarQube Dashboard](http://localhost:9000)
 
-### ✅ Ready to Merge
-All checks have passed. This PR is ready to be merged.
+                            ### ✅ Ready to Merge
+                            All checks have passed. This PR is ready to be merged.
 
----
-**Jenkins CI/CD Pipeline** | $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-COMMENT_EOF
-)
-                    
-                    # Create JSON payload
-                    PAYLOAD=$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')
-                    
-                    # Post comment
-                    COMMENTS_API="https://api.github.com/repos/${GITHUB_REPO}/issues/${PR_NUMBER}/comments"
-                    
-                    HTTP_CODE=$(curl -s -o /tmp/comment-response.json -w "%{http_code}" \
-                      -X POST \
-                      -H "Authorization: token ${GITHUB_TOKEN}" \
-                      -H "Content-Type: application/json" \
-                      -d "${PAYLOAD}" \
-                      "${COMMENTS_API}")
-                    
-                    echo "HTTP Code: ${HTTP_CODE}"
-                    
-                    if [ "${HTTP_CODE}" = "201" ]; then
-                        echo "✅ PR comment posted successfully"
-                    else
-                        echo "⚠️  Failed to post comment (HTTP ${HTTP_CODE})"
-                        cat /tmp/comment-response.json
-                    fi
-                '''
+                            ---
+                            **Jenkins CI/CD Pipeline** | $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+                            COMMENT_EOF
+                            )
+                            
+                            PAYLOAD=$(jq -n --arg body "$COMMENT_BODY" '{body: $body}')
+                            
+                            COMMENTS_API="https://api.github.com/repos/${GITHUB_REPO}/issues/${PR_NUMBER}/comments"
+                            
+                            HTTP_CODE=$(curl -s -o /tmp/comment-response.json -w "%{http_code}" \\
+                              -X POST \\
+                              -H "Authorization: token ${GITHUB_TOKEN}" \\
+                              -H "Content-Type: application/json" \\
+                              -d "${PAYLOAD}" \\
+                              "${COMMENTS_API}")
+                            
+                            echo "HTTP Code: ${HTTP_CODE}"
+                            
+                            if [ "${HTTP_CODE}" = "201" ]; then
+                                echo "✅ PR comment posted successfully"
+                            else
+                                echo "⚠️  Failed to post comment (HTTP ${HTTP_CODE})"
+                                cat /tmp/comment-response.json
+                            fi
+                        '''
+                    }
+                }
             }
         }
-    }
-}
-
-
+        
         stage('🐳 Dockerize & Push') {
             steps {
                 script {
-                echo "🐳 Building and pushing Docker images with tag: ${IMAGE_TAG}"
-                try {
-                withCredentials([usernamePassword(
-                    credentialsId: env.DOCKER_CREDENTIAL_ID,
-                    passwordVariable: 'DOCKER_PASSWORD',
-                    usernameVariable: 'DOCKER_USERNAME'
-                )]) {
-                    sh '''
-                        if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
-                            echo "❌ ERROR: Docker credentials not set!"
-                            echo "Please configure Docker Hub credentials in Jenkins:"
-                            echo "1. Go to Jenkins > Manage Jenkins > Credentials"
-                            echo "2. Add a 'Username with password' credential"
-                            echo "3. ID: dockerhub-credentials"
-                            exit 1
-                        fi
+                    echo "🐳 Building and pushing Docker images with tag: ${IMAGE_TAG}"
+                    try {
+                        withCredentials([usernamePassword(
+                            credentialsId: env.DOCKER_CREDENTIAL_ID,
+                            passwordVariable: 'DOCKER_PASSWORD',
+                            usernameVariable: 'DOCKER_USERNAME'
+                        )]) {
+                            sh '''
+                                if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
+                                    echo "❌ ERROR: Docker credentials not set!"
+                                    echo "Please configure Docker Hub credentials in Jenkins:"
+                                    echo "1. Go to Jenkins > Manage Jenkins > Credentials"
+                                    echo "2. Add a 'Username with password' credential"
+                                    echo "3. ID: dockerhub-credentials"
+                                    exit 1
+                                fi
+                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                                if [ $? -ne 0 ]; then
+                                    echo "❌ Docker login failed!"
+                                    exit 1
+                                fi
+                                echo "✅ Docker Hub login successful"
+                            '''
 
-                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                        if [ $? -ne 0 ]; then
-                            echo "❌ Docker login failed!"
-                            exit 1
-                        fi
-                        echo "✅ Docker Hub login successful"
-                    '''
+                            // ✅ Backend services
+                            def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'dummy-data']
 
-                    // ✅ Backend services
-                    def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'dummy-data']
+                            services.each { service ->
+                                sh """
+                                    echo "🐳 Building ${service}..."
+                                    cd \${WORKSPACE}/\${BACKEND_DIR}/${service}
 
-                    services.each { service ->
-                        sh """
-                            echo "🐳 Building ${service}..."
-                            cd \${WORKSPACE}/\${BACKEND_DIR}/${service}
-
-                            # ✅ Check if JAR exists (proper way)
-                            if ls target/*.jar 1> /dev/null 2>&1; then
-                                echo "   ✅ JAR found for ${service}"
-                                
-                                # Create temporary Dockerfile
-                                cat > Dockerfile.tmp << 'DOCKERFILE_END'
+                                    # ✅ Check if JAR exists (proper way)
+                                    if ls target/*.jar 1> /dev/null 2>&1; then
+                                        echo "   ✅ JAR found for ${service}"
+                                        # Create temporary Dockerfile
+                                        cat > Dockerfile.tmp << 'DOCKERFILE_END'
 FROM amazoncorretto:17-alpine
 RUN apk add --no-cache curl
 WORKDIR /app
@@ -887,54 +856,53 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \\
 ENTRYPOINT ["java", "-Dcom.sun.management.jmxremote", "-jar", "app.jar"]
 DOCKERFILE_END
 
-                                # Build and push
-                                docker build -t \${DOCKER_REPO}/${service}:\${IMAGE_TAG} -f Dockerfile.tmp .
-                                docker push \${DOCKER_REPO}/${service}:\${IMAGE_TAG}
+                                        # Build and push
+                                        docker build -t \${DOCKER_REPO}/${service}:\${IMAGE_TAG} -f Dockerfile.tmp .
+                                        docker push \${DOCKER_REPO}/${service}:\${IMAGE_TAG}
 
-                                # Tag and push stable
-                                docker tag \${DOCKER_REPO}/${service}:\${IMAGE_TAG} \${DOCKER_REPO}/${service}:\${STABLE_TAG}
-                                docker push \${DOCKER_REPO}/${service}:\${STABLE_TAG}
+                                        # Tag and push stable
+                                        docker tag \${DOCKER_REPO}/${service}:\${IMAGE_TAG} \${DOCKER_REPO}/${service}:\${STABLE_TAG}
+                                        docker push \${DOCKER_REPO}/${service}:\${STABLE_TAG}
 
-                                rm Dockerfile.tmp
-                                echo "   ✅ Pushed ${service}:\${IMAGE_TAG}"
-                            else
-                                echo "   ⚠️  ${service} JAR not found, skipping..."
-                            fi
-
-                            cd \${WORKSPACE}
-                        """
-                    }
-
-                    // ✅ Frontend
-                    sh '''
-                        echo "🐳 Building frontend..."
-                        
-                        if [ -d ${WORKSPACE}/frontend/dist ]; then
-                            echo "   ✅ Frontend dist found"
+                                        rm Dockerfile.tmp
+                                        echo "   ✅ Pushed ${service}:\${IMAGE_TAG}"
+                                    else
+                                        echo "   ⚠️  ${service} JAR not found, skipping..."
+                                    fi
+                                    cd \${WORKSPACE}
+                                """
+                            }
                             
-                            docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${WORKSPACE}/frontend/
-                            docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
+                            // ✅ Frontend
+                            sh '''
+                                echo "🐳 Building frontend..."
 
-                            docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
-                            docker push ${DOCKER_REPO}/frontend:${STABLE_TAG}
+                                if [ -d ${WORKSPACE}/frontend/dist ]; then
+                                    echo "   ✅ Frontend dist found"
 
-                            echo "   ✅ Pushed frontend:${IMAGE_TAG}"
-                        else
-                            echo "   ⚠️  Frontend dist not found, skipping..."
-                        fi
-                    '''
+                                    docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${WORKSPACE}/frontend/
+                                    docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
 
-                    echo "✅ Docker build and push completed for all services!"
+                                    docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
+                                    docker push ${DOCKER_REPO}/frontend:${STABLE_TAG}
+
+                                    echo "   ✅ Pushed frontend:${IMAGE_TAG}"
+                                else
+                                    echo "   ⚠️  Frontend dist not found, skipping..."
+                                fi
+                            '''
+
+                            echo "✅ Docker build and push completed for all services!"
+                        }
+                    } catch (Exception e) {
+                        echo "❌ Docker build/push failed: ${e.message}"
+                        throw e  // ✅ Don't continue if Docker fails
+                    }
                 }
-            } catch (Exception e) {
-                echo "❌ Docker build/push failed: ${e.message}"
-                throw e  // ✅ Don't continue if Docker fails
             }
         }
-    }
-}
 
-        stage('Deploy Locally') {
+        stage('🚀 Deploy with Rollback') {
             when {
                 allOf {
                     expression { params.DEPLOY_LOCALLY == true }
@@ -943,32 +911,202 @@ DOCKERFILE_END
             }
             steps {
                 script {
-                    echo "🚀 Deploying locally with tag ${IMAGE_TAG}..."
+                    echo "🚀 Deploying with automatic rollback capability..."
                     
-                    sh '''
-                        export IMAGE_TAG=${IMAGE_TAG}
-                        cd ${WORKSPACE}
+                    def deploymentSuccess = false
+                    
+                    try {
+                        withCredentials([usernamePassword(
+                            credentialsId: env.DOCKER_CREDENTIAL_ID,
+                            passwordVariable: 'DOCKER_PASSWORD',
+                            usernameVariable: 'DOCKER_USERNAME'
+                        )]) {
+                            // ✅ STEP 1: Backup current stable version
+                            sh '''
+                                echo "📦 Step 1: Backing up current stable version..."
+                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                                
+                                SERVICES="user-service product-service media-service api-gateway discovery-service frontend"
+                                
+                                for service in $SERVICES; do
+                                    echo "Backing up ${service}:stable → previous-stable"
+                                    
+                                    # Pull current stable
+                                    if docker pull ${DOCKER_REPO}/${service}:stable 2>/dev/null; then
+                                        # Tag as previous-stable
+                                        docker tag ${DOCKER_REPO}/${service}:stable ${DOCKER_REPO}/${service}:previous-stable
+                                        docker push ${DOCKER_REPO}/${service}:previous-stable
+                                        echo "✅ ${service} backed up"
+                                    else
+                                        echo "⚠️  No stable version for ${service} (first deployment?)"
+                                    fi
+                                done
+                                
+                                echo "✅ Backup completed - rollback point created"
+                            '''
+                            
+                            // ✅ STEP 2: Deploy new version
+                            sh '''
+                                echo ""
+                                echo "🚀 Step 2: Deploying new version ${IMAGE_TAG}..."
+                                
+                                export IMAGE_TAG=${IMAGE_TAG}
+                                cd ${WORKSPACE}
+                                
+                                # Update .env
+                                if [ ! -f .env ]; then
+                                    echo "IMAGE_TAG=${IMAGE_TAG}" > .env
+                                else
+                                    sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env
+                                fi
+                                
+                                echo "Current .env:"
+                                cat .env
+                                
+                                echo ""
+                                echo "Pulling new images..."
+                                docker compose pull
+                                
+                                echo ""
+                                echo "Deploying services..."
+                                docker compose up -d --remove-orphans
+                                
+                                echo ""
+                                echo "Waiting for services to start (30 seconds)..."
+                                sleep 30
+                                
+                                echo ""
+                                echo "Service status:"
+                                docker compose ps
+                            '''
+                            
+                            // ✅ STEP 3: Health checks
+                            sh '''
+                                echo ""
+                                echo "🏥 Step 3: Running health checks..."
+                                
+                                FAILED_SERVICES=""
+                                
+                                # User service
+                                echo "Checking user-service..."
+                                if curl -f http://localhost:8081/actuator/health >/dev/null 2>&1; then
+                                    echo "✅ User service: healthy"
+                                else
+                                    echo "❌ User service: unhealthy"
+                                    FAILED_SERVICES="${FAILED_SERVICES} user-service"
+                                fi
+                                
+                                # Product service
+                                echo "Checking product-service..."
+                                if curl -f http://localhost:8082/actuator/health >/dev/null 2>&1; then
+                                    echo "✅ Product service: healthy"
+                                else
+                                    echo "❌ Product service: unhealthy"
+                                    FAILED_SERVICES="${FAILED_SERVICES} product-service"
+                                fi
+                                
+                                # Media service
+                                echo "Checking media-service..."
+                                if curl -f http://localhost:8083/actuator/health >/dev/null 2>&1; then
+                                    echo "✅ Media service: healthy"
+                                else
+                                    echo "❌ Media service: unhealthy"
+                                    FAILED_SERVICES="${FAILED_SERVICES} media-service"
+                                fi
+                                
+                                # Frontend
+                                echo "Checking frontend..."
+                                if curl -f http://localhost:4200 >/dev/null 2>&1; then
+                                    echo "✅ Frontend: healthy"
+                                else
+                                    echo "❌ Frontend: unhealthy"
+                                    FAILED_SERVICES="${FAILED_SERVICES} frontend"
+                                fi
+                                
+                                # Check if any service failed
+                                if [ -n "${FAILED_SERVICES}" ]; then
+                                    echo ""
+                                    echo "❌ Health check failed for:${FAILED_SERVICES}"
+                                    echo "🔄 Triggering automatic rollback..."
+                                    exit 1
+                                fi
+                                
+                                echo ""
+                                echo "✅ All health checks passed!"
+                            '''
+                            
+                            deploymentSuccess = true
+                            currentBuild.description = "✅ Deployed v${IMAGE_TAG}"
+                            echo "✅ Deployment successful!"
+                        }
                         
-                        echo "Pulling latest images..."
-                        docker compose pull
+                    } catch (Exception e) {
+                        echo "❌ Deployment failed: ${e.message}"
+                        echo "🔄 Initiating automatic rollback..."
                         
-                        echo "Starting services..."
-                        docker compose up -d --remove-orphans
+                        // ✅ AUTOMATIC ROLLBACK
+                        withCredentials([usernamePassword(
+                            credentialsId: env.DOCKER_CREDENTIAL_ID,
+                            passwordVariable: 'DOCKER_PASSWORD',
+                            usernameVariable: 'DOCKER_USERNAME'
+                        )]) {
+                            sh '''
+                                echo "🔄 Rolling back to previous-stable..."
+                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                                
+                                cd ${WORKSPACE}
+                                
+                                # Update .env to previous-stable
+                                sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=previous-stable/" .env
+                                
+                                echo "Updated .env:"
+                                cat .env
+                                
+                                # Pull previous stable images
+                                echo ""
+                                echo "Pulling previous stable images..."
+                                docker compose pull
+                                
+                                # Deploy previous version
+                                echo ""
+                                echo "Deploying previous stable version..."
+                                docker compose down
+                                docker compose up -d
+                                
+                                echo ""
+                                echo "Waiting for services to start (20 seconds)..."
+                                sleep 20
+                                
+                                echo ""
+                                echo "✅ Rollback completed"
+                                echo "Service status:"
+                                docker compose ps
+                            '''
+                        }
                         
-                        echo "Waiting for services to start (30 seconds)..."
-                        sleep 30
-                        
-                        echo "Service status:"
-                        docker compose ps
-                        
-                        echo ""
-                        echo "✅ Local deployment successful!"
-                        echo "Access your application at:"
-                        echo "  - Frontend: http://localhost:4200"
-                        echo "  - API Gateway: http://localhost:8443"
-                        echo "  - Eureka: http://localhost:8761"
-                        echo "  - SonarQube: http://localhost:9000"
-                    '''
+                        currentBuild.result = 'FAILURE'
+                        currentBuild.description = "❌ Deploy failed → Rolled back to previous-stable"
+                        error("Deployment failed and automatically rolled back")
+                    }
+                    
+                    // ✅ If deployment was successful, show info
+                    if (deploymentSuccess) {
+                        sh '''
+                            echo ""
+                            echo "=========================================="
+                            echo "✅ DEPLOYMENT SUCCESSFUL"
+                            echo "=========================================="
+                            echo "Version: ${IMAGE_TAG}"
+                            echo "Rollback available: previous-stable"
+                            echo ""
+                            echo "Access your application at:"
+                            echo "  - Frontend: http://localhost:4200"
+                            echo "  - API Gateway: http://localhost:8443"
+                            echo "  - Eureka: http://localhost:8761"
+                            echo "  - SonarQube: http://localhost:9000"
+                            echo "=========================================="
+                        '''
+                    }
                 }
             }
         }
@@ -985,13 +1123,13 @@ DOCKERFILE_END
             script {
                 echo "✅ Pipeline completed successfully!"
                 def message = """
-Build SUCCESS
-Job: ${env.JOB_NAME}
-Build: ${env.BUILD_NUMBER}
-Branch: ${params.BRANCH}
-Duration: ${currentBuild.durationString}
-Build URL: ${env.BUILD_URL}
-"""
+                Build SUCCESS
+                Job: ${env.JOB_NAME}
+                Build: ${env.BUILD_NUMBER}
+                Branch: ${params.BRANCH}
+                Duration: ${currentBuild.durationString}
+                Build URL: ${env.BUILD_URL}
+                """
                 try {
                     emailext(
                         subject: "Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
@@ -1009,14 +1147,14 @@ Build URL: ${env.BUILD_URL}
             script {
                 echo "❌ Pipeline failed!"
                 def message = """
-Build FAILED
-Job: ${env.JOB_NAME}
-Build: ${env.BUILD_NUMBER}
-Branch: ${params.BRANCH}
-Status: ${currentBuild.result}
-Build URL: ${env.BUILD_URL}
-Console: ${env.BUILD_URL}console
-"""
+                Build FAILED
+                Job: ${env.JOB_NAME}
+                Build: ${env.BUILD_NUMBER}
+                Branch: ${params.BRANCH}
+                Status: ${currentBuild.result}
+                Build URL: ${env.BUILD_URL}
+                Console: ${env.BUILD_URL}console
+                """
                 try {
                     emailext(
                         subject: "Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",

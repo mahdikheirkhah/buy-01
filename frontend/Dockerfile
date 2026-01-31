@@ -20,9 +20,12 @@ RUN rm -rf ./*
 # Copy built Angular app from previous stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom nginx config if exists
+# Copy custom nginx config (with proper structure)
 COPY nginx.conf /etc/nginx/nginx.conf
 
-EXPOSE 80
+COPY certs /etc/nginx/certs
+
+# Expose the port nginx will listen on (4200 instead of 80)
+EXPOSE 4200
 
 CMD ["nginx", "-g", "daemon off;"]

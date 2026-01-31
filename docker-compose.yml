@@ -239,8 +239,10 @@ services:
   frontend:
     image: mahdikheirkhah/frontend:${IMAGE_TAG:-latest}
     container_name: frontend
+    volumes:
+      - ./certs:/etc/nginx/certs:ro  # ✅ Mount your certs
     ports:
-      - "4200:4200"
+      - "4200:443"
     environment:
       API_GATEWAY_URL: https://localhost:8443
     depends_on:
