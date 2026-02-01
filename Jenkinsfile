@@ -968,42 +968,70 @@ EOF
                             echo "✅ Local deployment successful!"
                         '''
                         
-                        // ✅ Step 3: Health check verification
+                        // ✅ Step 3: Health check verification with retries
                         sh '''#!/bin/bash
-                            set -e
-                            
                             echo "✅ Verifying deployment health..."
                             
-                            MAX_RETRIES=5
-                            RETRY_COUNT=0
+                            # Give services time to start
+                            echo "⏳ Waiting 10 seconds for services to stabilize..."
+                            sleep 10
+                            
+                            MAX_RETRIES=8
+                            RETRY_INTERVAL=5
                             HEALTH_CHECKS_PASSED=0
                             
-                            # Function to check endpoint
+                            # Function to check endpoint with retries
                             check_endpoint() {
                                 local endpoint=$1
-                                local expected_status=$2
-                                local name=$3
+                                local name=$2
+                                local retry_count=0
+                                local max_attempts=$3
                                 
-                                status=$(curl -s -o /dev/null -w "%{http_code}" -k "$endpoint" 2>/dev/null || echo "000")
-                                if [ "$status" -eq "$expected_status" ] || [ "$status" -eq 200 ]; then
-                                    echo "✅ $name: UP (HTTP $status)"
-                                    return 0
-                                else
-                                    echo "⚠️ $name: Status $status"
-                                    return 1
-                                fi
+                                while [ $retry_count -lt $max_attempts ]; do
+                                    # Use -k to ignore self-signed certificate errors
+                                    # Use --max-time to prevent hanging
+                                    status=$(curl -s -o /dev/null -w "%{http_code}" -k --max-time 5 "$endpoint" 2>/dev/null || echo "000")
+                                    
+                                    if [ "$status" = "200" ] || [ "$status" = "201" ] || [ "$status" = "204" ]; then
+                                        echo "✅ $name: HEALTHY (HTTP $status)"
+                                        return 0
+                                    fi
+                                    
+                                    retry_count=$((retry_count + 1))
+                                    if [ $retry_count -lt $max_attempts ]; then
+                                        echo "⏳ $name: Status $status (attempt $((retry_count))/$(($max_attempts))). Retrying in ${RETRY_INTERVAL}s..."
+                                        sleep $RETRY_INTERVAL
+                                    fi
+                                done
+                                
+                                echo "❌ $name: Failed after $max_attempts attempts (last status: $status)"
+                                return 1
                             }
                             
+                            echo ""
                             echo "Checking critical services..."
-                            check_endpoint "http://localhost:8080/api/health" 200 "API Gateway" && ((HEALTH_CHECKS_PASSED++)) || true
-                            check_endpoint "http://localhost:8761/actuator/health" 200 "Eureka Discovery" && ((HEALTH_CHECKS_PASSED++)) || true
-                            check_endpoint "https://localhost:4200" 200 "Frontend" && ((HEALTH_CHECKS_PASSED++)) || true
+                            
+                            # Eureka Discovery (HTTP, port 8761)
+                            check_endpoint "http://localhost:8761/actuator/health" "Eureka Discovery" $MAX_RETRIES && ((HEALTH_CHECKS_PASSED++)) || true
+                            
+                            # API Gateway (HTTPS with self-signed cert, port 8443)
+                            check_endpoint "https://localhost:8443/actuator/health" "API Gateway" $MAX_RETRIES && ((HEALTH_CHECKS_PASSED++)) || true
+                            
+                            # Frontend (HTTPS with self-signed cert, port 4200)
+                            check_endpoint "https://localhost:4200" "Frontend" $((MAX_RETRIES / 2)) && ((HEALTH_CHECKS_PASSED++)) || true
                             
                             echo ""
+                            echo "=========================================="
                             echo "Health checks passed: $HEALTH_CHECKS_PASSED/3"
+                            echo "=========================================="
                             
                             if [ "$HEALTH_CHECKS_PASSED" -lt 2 ]; then
                                 echo "⚠️ WARNING: Only $HEALTH_CHECKS_PASSED services healthy"
+                                echo "Showing container status:"
+                                docker compose ps
+                                echo ""
+                                echo "Showing recent logs:"
+                                docker compose logs --tail=20
                                 exit 1
                             fi
                             
