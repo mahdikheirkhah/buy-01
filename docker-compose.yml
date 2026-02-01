@@ -107,8 +107,8 @@ services:
       test: ["CMD-SHELL", "curl --insecure -f https://localhost:8443/actuator/health || exit 1"]
       interval: 15s
       timeout: 10s
-      retries: 20
-      start_period: 90s
+      retries: 25
+      start_period: 120s
     networks:
       - BACKEND
 
@@ -127,11 +127,11 @@ services:
       buy-01:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1"]
       interval: 15s
       timeout: 10s
-      retries: 10
-      start_period: 60s
+      retries: 15
+      start_period: 90s
     networks:
       - BACKEND
 
@@ -150,11 +150,11 @@ services:
       buy-01:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1"]
       interval: 15s
       timeout: 10s
-      retries: 10
-      start_period: 60s
+      retries: 15
+      start_period: 90s
     networks:
       - BACKEND
 
@@ -175,11 +175,11 @@ services:
       buy-01:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1"]
       interval: 15s
       timeout: 10s
-      retries: 10
-      start_period: 60s
+      retries: 15
+      start_period: 90s
     networks:
       - BACKEND
 
@@ -212,7 +212,7 @@ services:
   dummy-data:
     image: mahdikheirkhah/dummy-data:${IMAGE_TAG:-latest}
     container_name: dummy-data
-    command: sh -c "sleep 120 && java -jar /app/dummy-data.jar"
+    command: sh -c "sleep 80 && java -jar /app/dummy-data.jar"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       APP_API_GATEWAY_URL: https://api-gateway:8443
@@ -220,8 +220,6 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       APP_DUMMY_DATA_ENABLED: 'true'
     depends_on:
-      api-gateway:
-        condition: service_healthy
       kafka:
         condition: service_healthy
       user-service:
@@ -230,8 +228,8 @@ services:
         condition: service_healthy
       media-service:
         condition: service_healthy
-      # orders-service:
-      #   condition: service_healthy
+      api-gateway:
+        condition: service_healthy
     restart: on-failure:5
     networks:
       - BACKEND
@@ -243,9 +241,6 @@ services:
       - "4200:4200"
     environment:
       API_GATEWAY_URL: https://localhost:8443
-    depends_on:
-      api-gateway:
-        condition: service_healthy
     healthcheck:
       # Using --insecure for HTTPS with self-signed certs, -f checks for 2xx status
       test: ["CMD-SHELL", "curl --insecure -f https://localhost:4200 || exit 1"]
