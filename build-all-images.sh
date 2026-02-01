@@ -7,44 +7,48 @@ set -e
 echo "🐳 Building all Docker images..."
 echo ""
 
+# Build parent pom first so dependencies are available
+echo "📦 Building parent pom..."
 cd backend
+mvn -q clean install -DskipTests
+cd ..
+echo "✅ Parent pom built"
+echo ""
 
 echo "📦 Building discovery-service..."
-docker build -t mahdikheirkhah/discovery-service:latest discovery-service/
+docker build -f backend/discovery-service/Dockerfile -t mahdikheirkhah/discovery-service:latest backend/
 echo "✅ discovery-service built"
 echo ""
 
 echo "📦 Building api-gateway..."
-docker build -t mahdikheirkhah/api-gateway:latest api-gateway/
+docker build -f backend/api-gateway/Dockerfile -t mahdikheirkhah/api-gateway:latest backend/
 echo "✅ api-gateway built"
 echo ""
 
 echo "📦 Building user-service..."
-docker build -t mahdikheirkhah/user-service:latest user-service/
+docker build -f backend/user-service/Dockerfile -t mahdikheirkhah/user-service:latest backend/
 echo "✅ user-service built"
 echo ""
 
 echo "📦 Building product-service..."
-docker build -t mahdikheirkhah/product-service:latest product-service/
+docker build -f backend/product-service/Dockerfile -t mahdikheirkhah/product-service:latest backend/
 echo "✅ product-service built"
 echo ""
 
 echo "📦 Building media-service..."
-docker build -t mahdikheirkhah/media-service:latest media-service/
+docker build -f backend/media-service/Dockerfile -t mahdikheirkhah/media-service:latest backend/
 echo "✅ media-service built"
 echo ""
 
 echo "📦 Building orders-service..."
-docker build -t mahdikheirkhah/orders-service:latest orders-service/
+docker build -f backend/orders-service/Dockerfile -t mahdikheirkhah/orders-service:latest backend/
 echo "✅ orders-service built"
 echo ""
 
 echo "📦 Building dummy-data..."
-docker build -t mahdikheirkhah/dummy-data:latest dummy-data/
+docker build -f backend/dummy-data/Dockerfile -t mahdikheirkhah/dummy-data:latest backend/
 echo "✅ dummy-data built"
 echo ""
-
-cd ..
 
 echo "📦 Building frontend..."
 docker build -t mahdikheirkhah/frontend:latest frontend/

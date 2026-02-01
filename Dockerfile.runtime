@@ -1,0 +1,8 @@
+ARG SERVICE_NAME
+ARG JAR_FILE
+
+FROM eclipse-temurin:17-jdk-jammy
+WORKDIR /app
+COPY ${JAR_FILE} app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

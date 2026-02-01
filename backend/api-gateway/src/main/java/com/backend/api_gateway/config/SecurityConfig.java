@@ -18,6 +18,7 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .pathMatchers("/actuator/**").permitAll()
                         .pathMatchers("/api/auth/**").permitAll()
 
                         // ✅ CHANGE THIS:
