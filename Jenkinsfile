@@ -383,7 +383,7 @@ pipeline {
 
                     def sonarAvailable = sh(
                         script: '''#!/bin/bash
-                            RESPONSE=$(timeout 5 curl -s http://sonarqube:9000/api/system/status 2>&1)
+                            RESPONSE=$(timeout 5 curl -s http://localhost:9000/api/system/status 2>&1)
                             if echo "$RESPONSE" | grep -q '"status":"UP"'; then
                                 echo "true"
                             else
