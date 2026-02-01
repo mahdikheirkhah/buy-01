@@ -210,7 +210,7 @@ services:
   #     - BACKEND
 
   dummy-data:
-    image: mahdikheirkhah/dummy-data:${IMAGE_TAG}
+    image: mahdikheirkhah/dummy-data:${IMAGE_TAG:-latest}
     container_name: dummy-data
     command: sh -c "sleep 120 && java -jar /app/dummy-data.jar"
     environment:
@@ -240,12 +240,18 @@ services:
     image: mahdikheirkhah/frontend:${IMAGE_TAG:-latest}
     container_name: frontend
     ports:
-      - "4200:443"
+      - "4200:4200"
     environment:
       API_GATEWAY_URL: https://localhost:8443
     depends_on:
       api-gateway:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl --insecure -f https://localhost:4200 || exit 0"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     networks:
       - BACKEND
 

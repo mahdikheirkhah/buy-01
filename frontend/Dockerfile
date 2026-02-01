@@ -14,18 +14,22 @@ RUN npm run build -- --configuration production
 FROM nginx:alpine AS production
 WORKDIR /usr/share/nginx/html
 
-# Remove default nginx static assets
-RUN rm -rf ./*
+# Remove default nginx static assets and config
+RUN rm -rf ./* /etc/nginx/conf.d/default.conf
 
 # Copy built Angular app from previous stage
-COPY --from=build /app/dist /usr/share/nginx/html
+# Angular build outputs to dist/frontend by default
+COPY --from=build /app/dist/frontend/* /usr/share/nginx/html/
 
 # Copy custom nginx config (with proper structure)
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Copy SSL certificates
 COPY certs /etc/nginx/certs
 
-# Expose the port nginx will listen on (4200 instead of 80)
+# Expose HTTPS port only
 EXPOSE 4200
 
+# Ensure proper permissions and start nginx
+RUN chmod -R 755 /usr/share/nginx/html
 CMD ["nginx", "-g", "daemon off;"]
