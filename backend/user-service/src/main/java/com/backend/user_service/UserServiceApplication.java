@@ -9,6 +9,6 @@ import org.springframework.core.io.ClassPathResource;
 @ComponentScan(basePackages = {"com.backend.user_service", "com.backend.common"})
 public class UserServiceApplication {
     public static void main(String[] args) {
-        SpringApplication.run(UserServiceApplication.class, args)  // Missing semicolon
+        SpringApplication.run(UserServiceApplication.class, args);
     }
 }
