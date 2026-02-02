@@ -472,7 +472,7 @@ pipeline {
                             docker run --rm \\
                               --volumes-from jenkins-cicd \\
                               -w ${WORKSPACE}/frontend \\
-                              --network buy-01_BACKEND \\
+                              --network database_BACKEND \\
                               -e SONAR_TOKEN=${SONAR_TOKEN} \\
                               sonarsource/sonar-scanner-cli:latest \\
                               -Dsonar.host.url=http://sonarqube:9000
@@ -945,7 +945,7 @@ EOF
                             sleep 2
                             
                             # Force remove specific containers if they still exist
-                            for container in frontend discovery-service api-gateway user-service product-service media-service dummy-data sonarqube zookeeper kafka buy-01; do
+                            for container in frontend discovery-service api-gateway user-service product-service media-service dummy-data sonarqube zookeeper kafka database; do
                                 if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
                                     echo "🗑️  Removing container: $container"
                                     docker rm -f "$container" 2>/dev/null || true
