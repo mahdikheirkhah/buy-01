@@ -254,7 +254,7 @@ services:
 
 networks:
   BACKEND:
-    name: database_BACKEND
+    name: buy-01_BACKEND
     driver: bridge
 
 volumes:

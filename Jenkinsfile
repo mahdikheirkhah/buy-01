@@ -472,7 +472,7 @@ pipeline {
                             docker run --rm \\
                               --volumes-from jenkins-cicd \\
                               -w ${WORKSPACE}/frontend \\
-                              --network database_BACKEND \\
+                              --network buy-01_BACKEND \\
                               -e SONAR_TOKEN=${SONAR_TOKEN} \\
                               sonarsource/sonar-scanner-cli:latest \\
                               -Dsonar.host.url=http://sonarqube:9000
