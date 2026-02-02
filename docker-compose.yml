@@ -35,6 +35,27 @@ services:
     networks:
       - BACKEND
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - /Users/mohammad.kheirkhah/.docker-volumes/prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - BACKEND
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/healthy || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   sonarqube:
     image: sonarqube:lts-community
     container_name: sonarqube
@@ -80,7 +101,7 @@ services:
       - "8761:8761"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health,prometheus'
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
       interval: 15s
@@ -98,7 +119,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod,https
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health,prometheus'
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -122,7 +143,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
       SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health,prometheus'
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -147,7 +168,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
       SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health,prometheus'
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -172,7 +193,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
       SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health,prometheus'
     volumes:
       - ./backend/media-service/uploads:/app/uploads
     depends_on:
@@ -218,7 +239,7 @@ services:
   dummy-data:
     image: mahdikheirkhah/dummy-data:${IMAGE_TAG:-latest}
     container_name: dummy-data
-    command: sh -c "sleep 80 && java -jar /app/dummy-data.jar"
+    command: sh -c "sleep 180 && java -jar /app/dummy-data.jar"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       APP_API_GATEWAY_URL: https://api-gateway:8443
@@ -247,6 +268,9 @@ services:
       - "4200:4200"
     environment:
       API_GATEWAY_URL: https://localhost:8443
+    depends_on:
+      api-gateway:
+        condition: service_healthy
     healthcheck:
       # Using --insecure for HTTPS with self-signed certs, -f checks for 2xx status
       test: ["CMD-SHELL", "curl --insecure -f https://localhost:4200 || exit 1"]

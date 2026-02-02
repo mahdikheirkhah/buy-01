@@ -3,52 +3,47 @@
 set -e
 
 REGISTRY="mahdikheirkhah"
+IMAGE_TAG="${1:-latest}"
 
-echo "🐳 Building and pushing Docker images..."
+echo "🐳 Building and pushing Docker images (tag: $IMAGE_TAG)..."
 
-# Function to build and push service
-build_and_push() {
+# Function to build and push service using docker-compose
+build_and_push_service() {
     local service=$1
-    local port=${2:-8080}
     
     echo ""
     echo "📦 Building $service image..."
-    
-    # Create Dockerfile for the service
-    cat > /tmp/Dockerfile.$service << EOF
-FROM eclipse-temurin:17-jdk-jammy
-WORKDIR /app
-COPY backend/$service/target/$service-0.0.1-SNAPSHOT.jar app.jar
-EXPOSE $port
-ENTRYPOINT ["java", "-jar", "app.jar"]
-EOF
-    
-    # Build image
-    docker build -f /tmp/Dockerfile.$service -t $REGISTRY/$service:latest .
+    docker compose build $service
     echo "✅ $service image built"
     
-    # Push image
     echo "🚀 Pushing $service to Docker Hub..."
-    docker push $REGISTRY/$service:latest
+    docker compose push $service
     echo "✅ $service pushed"
 }
 
 # Build and push all backend services
-build_and_push "discovery-service"
-build_and_push "api-gateway" "8443"
-build_and_push "user-service"
-build_and_push "product-service"
-build_and_push "media-service"
-build_and_push "dummy-data"
+echo ""
+echo "=== Building Backend Services ==="
+build_and_push_service "discovery-service"
+build_and_push_service "api-gateway"
+build_and_push_service "user-service"
+build_and_push_service "product-service"
+build_and_push_service "media-service"
+build_and_push_service "dummy-data"
 
 # Build and push frontend
 echo ""
-echo "📦 Building frontend image..."
-docker build -t $REGISTRY/frontend:latest frontend/
-echo "✅ frontend image built"
-echo "🚀 Pushing frontend to Docker Hub..."
-docker push $REGISTRY/frontend:latest
-echo "✅ frontend pushed"
+echo "=== Building Frontend ==="
+build_and_push_service "frontend"
 
 echo ""
-echo "✅ All images built and pushed successfully!"
+echo "✅ All images built and pushed successfully to Docker Hub!"
+echo ""
+echo "To run containers locally:"
+echo "  docker compose up -d"
+echo ""
+echo "To view logs:"
+echo "  docker compose logs -f"
+echo ""
+echo "To stop containers:"
+echo "  docker compose down"
