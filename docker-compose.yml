@@ -55,9 +55,9 @@ services:
       retries: 10
       start_period: 90s
 
-  buy-01:
+  database:
     image: mongo:7.0
-    container_name: buy-01
+    container_name: database
     ports:
       - "27018:27017"
     environment:
@@ -101,8 +101,8 @@ services:
       discovery-service:
         condition: service_healthy
     healthcheck:
-      # Using --insecure for HTTPS with self-signed certs, soft failure with exit 0
-      test: ["CMD-SHELL", "curl --insecure -f https://localhost:8443/actuator/health || exit 0"]
+      # Using --insecure for HTTPS with self-signed certs
+      test: ["CMD-SHELL", "curl --insecure -f https://localhost:8443/actuator/health"]
       interval: 15s
       timeout: 10s
       retries: 25
@@ -118,15 +118,15 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
-      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@database:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       discovery-service:
         condition: service_healthy
-      buy-01:
+      database:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health"]
       interval: 15s
       timeout: 10s
       retries: 15
@@ -142,15 +142,15 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
-      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@database:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       discovery-service:
         condition: service_healthy
-      buy-01:
+      database:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health"]
       interval: 15s
       timeout: 10s
       retries: 15
@@ -166,17 +166,17 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
-      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@database:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     volumes:
       - ./backend/media-service/uploads:/app/uploads
     depends_on:
       discovery-service:
         condition: service_healthy
-      buy-01:
+      database:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health"]
       interval: 15s
       timeout: 10s
       retries: 15
@@ -213,7 +213,11 @@ services:
   dummy-data:
     image: mahdikheirkhah/dummy-data:${IMAGE_TAG:-latest}
     container_name: dummy-data
-    command: sh -c "sleep 120 && java -jar /app/dummy-data.jar"
+    command: [
+      "/bin/sh",
+      "-c",
+      "while ! curl --insecure -s https://api-gateway:8443/actuator/health 2>/dev/null | grep -q '\"status\":\"UP\"'; do sleep 2; done; sleep 180 && java -jar /app/dummy-data.jar"
+    ]
     environment:
       SPRING_PROFILES_ACTIVE: prod
       APP_API_GATEWAY_URL: https://api-gateway:8443
@@ -221,14 +225,6 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       APP_DUMMY_DATA_ENABLED: 'true'
     depends_on:
-      kafka:
-        condition: service_healthy
-      user-service:
-        condition: service_healthy
-      product-service:
-        condition: service_healthy
-      media-service:
-        condition: service_healthy
       api-gateway:
         condition: service_healthy
     restart: on-failure:5
@@ -258,7 +254,7 @@ services:
 
 networks:
   BACKEND:
-    name: buy-01_BACKEND
+    name: database_BACKEND
     driver: bridge
 
 volumes:
