@@ -73,15 +73,18 @@ pipeline {
                     deleteDir()
                     
                     def isPullRequest = (env.CHANGE_ID != null)
-                    def sourceRepo = isPullRequest ? 'GitHub' : 'Gitea'
+                    // Detect source repo from Git URL
+                    def isGitHubSource = (env.GIT_URL != null && env.GIT_URL.contains('github.com'))
+                    def sourceRepo = isGitHubSource ? 'GitHub' : 'Gitea'
                     env.GIT_SOURCE = sourceRepo
                     
                     echo "📥 Build Type: ${isPullRequest ? 'Pull Request #' + env.CHANGE_ID : 'Branch Build'}"
+                    echo "📥 Git URL: ${env.GIT_URL ?: 'Not set'}"
                     echo "📥 Source: ${sourceRepo}"
                     echo "📥 Checking out branch: ${params.BRANCH}"
                     
-                    if (isPullRequest) {
-                        echo "🔀 PR build detected - checking out from GitHub"
+                    if (isPullRequest || isGitHubSource) {
+                        echo "🔀 GitHub build detected - checking out from GitHub"
                         checkout([
                             $class: 'GitSCM',
                             branches: [[name: "**"]],
@@ -97,7 +100,7 @@ pipeline {
                         echo "✅ Checkout completed from GitHub (PR #${env.CHANGE_ID})"
                         
                     } else {
-                        echo "🌿 Branch build detected - checking out from Gitea"
+                        echo "🌿 Branch build detected - checking out from ${sourceRepo}"
                         checkout([
                             $class: 'GitSCM',
                             branches: [[name: "*/${params.BRANCH}"]],
