@@ -213,7 +213,7 @@ services:
   dummy-data:
     image: mahdikheirkhah/dummy-data:${IMAGE_TAG:-latest}
     container_name: dummy-data
-    command: sh -c "sleep 180 && java -jar /app/dummy-data.jar"
+    command: sh -c "sleep 120 && java -jar /app/dummy-data.jar"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       APP_API_GATEWAY_URL: https://api-gateway:8443
