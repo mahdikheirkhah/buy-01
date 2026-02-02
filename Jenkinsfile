@@ -1073,6 +1073,68 @@ EOF
             script {
                 echo "Pipeline execution completed"
             }
+            script {
+                // Report status to GitHub regardless of build result
+                if (params.SKIP_GITHUB_STATUS == false && env.GIT_SOURCE == 'GitHub') {
+                    echo "📤 Reporting build status to GitHub..."
+                    
+                    def buildStatus = currentBuild.result ?: 'SUCCESS'
+                    def githubStatus = 'success'
+                    def description = 'All checks passed!'
+                    
+                    if (buildStatus == 'FAILURE') {
+                        githubStatus = 'failure'
+                        description = 'Build failed - check Jenkins for details'
+                    } else if (buildStatus == 'UNSTABLE') {
+                        githubStatus = 'error'
+                        description = 'Build unstable - quality gate issues'
+                    }
+                    
+                    echo "Build Status: ${buildStatus}"
+                    echo "GitHub Status: ${githubStatus}"
+                    
+                    try {
+                        withCredentials([usernamePassword(
+                            credentialsId: 'multi-branch-github',
+                            passwordVariable: 'GITHUB_TOKEN',
+                            usernameVariable: 'GITHUB_USER'
+                        )]) {
+                            sh '''#!/bin/bash
+                                set -e
+                                
+                                COMMIT_SHA=$(git rev-parse HEAD)
+                                GITHUB_API="https://api.github.com/repos/''' + env.GITHUB_REPO + '''/statuses/${COMMIT_SHA}"
+                                
+                                PAYLOAD=$(cat <<'EOF'
+                                {
+                                  "state": "''' + githubStatus + '''",
+                                  "description": "''' + description + '''",
+                                  "context": "continuous-integration/jenkins",
+                                  "target_url": "''' + env.BUILD_URL + '''"
+                                }
+                                EOF
+                                )
+                                
+                                HTTP_CODE=$(curl -s -o /tmp/status-response.json -w "%{http_code}" \\
+                                  -X POST \\
+                                  -H "Authorization: token ${GITHUB_TOKEN}" \\
+                                  -H "Content-Type: application/json" \\
+                                  -d "${PAYLOAD}" \\
+                                  "${GITHUB_API}")
+                                
+                                if [ "${HTTP_CODE}" = "201" ] || [ "${HTTP_CODE}" = "200" ]; then
+                                    echo "✅ GitHub status updated: ''' + githubStatus + '''"
+                                else
+                                    echo "⚠️  Failed to update GitHub status (HTTP ${HTTP_CODE})"
+                                    cat /tmp/status-response.json
+                                fi
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo "❌ Failed to report status to GitHub: ${e.message}"
+                    }
+                }
+            }
         }
         success {
             script {
