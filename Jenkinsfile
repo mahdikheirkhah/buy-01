@@ -876,6 +876,9 @@ EOF
                     echo "Check Conclusion: ${checkConclusion}"
                     
                     try {
+                        // Get commit SHA at Groovy level
+                        def commitSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                        
                         withCredentials([usernamePassword(
                             credentialsId: 'multi-branch-github',
                             passwordVariable: 'GITHUB_TOKEN',
@@ -884,9 +887,8 @@ EOF
                             sh '''#!/bin/bash
                                 set -e
                                 
-                                echo "🔍 Getting commit information..."
-                                COMMIT_SHA=$(git rev-parse HEAD)
-                                echo "Commit: ${COMMIT_SHA}"
+                                echo "🔍 Commit information..."
+                                echo "Commit: ''' + commitSha + '''"
                                 
                                 echo ""
                                 echo "📤 Sending check run to GitHub API..."
@@ -896,7 +898,7 @@ EOF
                                 PAYLOAD=$(cat <<'EOF'
 {
   "name": "Jenkins CI/CD Pipeline",
-  "head_sha": "''' + COMMIT_SHA + '''",
+  "head_sha": "''' + commitSha + '''",
   "status": "completed",
   "conclusion": "''' + checkConclusion + '''",
   "details_url": "''' + env.BUILD_URL + '''",
@@ -910,6 +912,8 @@ EOF
                                 
                                 echo "Payload:"
                                 echo "${PAYLOAD}"
+                                echo ""
+                                echo "📍 Sending POST request to: ${GITHUB_API}"
                                 echo ""
                                 
                                 HTTP_CODE=$(curl -s -o /tmp/check-response.json -w "%{http_code}" \
