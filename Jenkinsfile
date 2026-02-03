@@ -941,6 +941,8 @@ EOF
                 }
             }
         }
+        
+        
         success {
             script {
                 echo "✅ Pipeline completed successfully!"
@@ -991,4 +993,5 @@ EOF
             }
         }
     }
+}
 }
