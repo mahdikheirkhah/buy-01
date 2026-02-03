@@ -903,7 +903,7 @@ EOF
                                 GITHUB_API="https://api.github.com/repos/''' + env.GITHUB_REPO + '''/statuses/''' + commitSha + '''"
                                 echo "Endpoint: ${GITHUB_API}"
                                 
-                                PAYLOAD='{"state":"''' + ghState + '''", "context":"Jenkins CI/CD Pipeline", "description":"''' + summary + '''", "target_url":"''' + env.BUILD_URL + '''"}'
+                                PAYLOAD='{"state":"''' + ghState + '''", "context":"Jenkins", "description":"''' + summary + '''", "target_url":"''' + env.BUILD_URL + '''"}'
                                 
                                 echo "Payload:"
                                 echo "${PAYLOAD}"
