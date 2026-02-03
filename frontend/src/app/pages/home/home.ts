@@ -44,8 +44,12 @@ export class HomeComponent implements OnInit {
         this.currentUser = user;
       },
       error: (err) => {
-        console.error('Failed to fetch current user:', err);
-        this.errorMessage = 'Could not load user data.';
+        // 401 means JWT is invalid/expired - let the interceptor handle logout
+        // Don't show error message - user is already being redirected
+        if (err.status !== 401) {
+          console.error('Failed to fetch current user:', err);
+          this.errorMessage = 'Could not load user data.';
+        }
       }
     });
 
