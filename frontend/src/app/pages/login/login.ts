@@ -21,29 +21,28 @@ export class LoginComponent {
     this.authService.login(this.loginData).subscribe({
       next: (response) => {
         console.log('Login successful', response);
-        // Fetch current user to determine role
+        // Get current user role to navigate appropriately
         this.authService.fetchCurrentUser().subscribe({
           next: (user) => {
             console.log('User role:', user.role);
             // Route based on user role
-            if (user.role === 'CLIENT') {
-              this.router.navigate(['/home']);
-            } else if (user.role === 'SELLER') {
+            if (user.role === 'SELLER') {
               this.router.navigate(['/seller-dashboard']);
             } else {
-              // Default fallback
+              // Default fallback for CLIENT and other roles
               this.router.navigate(['/home']);
             }
           },
           error: (err) => {
             console.error('Failed to fetch user role', err);
+            // Even if fetchCurrentUser fails, navigate to home
             this.router.navigate(['/home']);
           }
         });
       },
       error: (err) => {
         console.error('Login failed', err);
-        // Handle login error
+        // Handle login error - don't navigate
       }
     });
   }

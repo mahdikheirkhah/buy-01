@@ -23,6 +23,18 @@ up:
 	@echo "--- Starting Docker Compose Services ---"
 	docker-compose up -d
 
+# Build locally and start services (without pulling from Docker Hub)
+local: build-java
+	@echo "--- Starting Docker Compose Services (Local Build) ---"
+	docker-compose build
+	docker-compose up -d
+
+# Build locally and start backend services only (without frontend)
+backend-local: build-java
+	@echo "--- Starting Backend Services Only (Local Build) ---"
+	docker-compose build --no-deps discovery-service kafka zookeeper buy-01 sonarqube api-gateway user-service product-service media-service dummy-data
+	docker-compose up -d discovery-service kafka zookeeper buy-01 sonarqube api-gateway user-service product-service media-service dummy-data
+
 # Stop and remove all containers, networks, and volumes defined in docker-compose.yml.
 down:
 	@echo "--- Stopping and Removing Containers ---"
@@ -61,4 +73,4 @@ clean: down
 	docker rmi -f $$(docker images -q --filter reference='mahdikheirkhah/*') 2> /dev/null || true
 
 # Define Phony targets to ensure make runs the commands even if files with these names exist.
-.PHONY: all build build-java build-frontend up down clean
+.PHONY: all build build-java build-frontend up down clean local backend-local

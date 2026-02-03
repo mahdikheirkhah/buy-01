@@ -42,7 +42,8 @@ services:
 
 volumes:
   jenkins_home:
-    driver: local
+    external: true
+    name: buy-01_jenkins_home
 
 networks:
   BACKEND:

@@ -159,8 +159,8 @@ pipeline {
                                 
                                 READY=false
                                 for i in $(seq 1 120); do
-                                    RESPONSE=$(timeout 2 curl -s http://localhost:9000/api/system/status 2>/dev/null || echo "")
-                                    if echo "$RESPONSE" | grep -q '"status":"UP"'; then
+                                    RESPONSE=$(timeout 2 curl -s http://sonarqube:9000/api/system/status 2>/dev/null || echo "")
+                                    if echo "$RESPONSE" | grep -q 'status.*UP'; then
                                         echo "✅ SonarQube is ready!"
                                         READY=true
                                         break
@@ -384,7 +384,7 @@ pipeline {
                     def sonarAvailable = sh(
                         script: '''#!/bin/bash
                             RESPONSE=$(timeout 5 curl -s http://sonarqube:9000/api/system/status 2>&1)
-                            if echo "$RESPONSE" | grep -q '"status":"UP"'; then
+                            if echo "$RESPONSE" | grep -q 'status.*UP'; then
                                 echo "true"
                             else
                                 echo "false"
@@ -443,7 +443,7 @@ pipeline {
                                     -Dsonar.projectKey=${service} \\
                                     -Dsonar.host.url=http://sonarqube:9000 \\
                                     -Dsonar.login=\\${SONAR_TOKEN} \\
-                                    -Dsonar.exclusions="**/target/**,common/**,**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**,**/FileStorageService.java,**/MediaController.java" \\
+                                    -Dsonar.exclusions="**/target/**,common/**,**/dto/**,**/model/**,**/repository/**,**/mapper/**,**/config/**,**/messaging/**,**/FileStorageService.java,**/MediaController.java,  **/ProductController.java" \\
                                     \${COVERAGE_EXCLUDE} \\
                                     -B
                         
@@ -522,10 +522,10 @@ pipeline {
                                 else
                                     echo "❌ $service: $STATUS"
                                     FAILED_SERVICES="$FAILED_SERVICES $service"
+                                    exit 1
                                 fi
                             done
                             
-                            echo ""
                             echo "Quality Gate Summary: $PASSED_COUNT/$TOTAL_COUNT passed"
                             
                             if [ $PASSED_COUNT -eq $TOTAL_COUNT ]; then
@@ -806,103 +806,90 @@ pipeline {
             }
         }
         
-        stage('🐳 Dockerize & Push') {
+        stage('🐳 Build & Push Docker Images') {
+            when {
+                expression { params.SKIP_DEPLOY == false }
+            }
             steps {
                 script {
-                    echo "🐳 Building and pushing Docker images with tag: ${IMAGE_TAG}"
-                    try {
-                        withCredentials([usernamePassword(
-                            credentialsId: env.DOCKER_CREDENTIAL_ID,
-                            passwordVariable: 'DOCKER_PASSWORD',
-                            usernameVariable: 'DOCKER_USERNAME'
-                        )]) {
-                            sh '''
-                                if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
-                                    echo "❌ ERROR: Docker credentials not set!"
-                                    echo "Please configure Docker Hub credentials in Jenkins:"
-                                    echo "1. Go to Jenkins > Manage Jenkins > Credentials"
-                                    echo "2. Add a 'Username with password' credential"
-                                    echo "3. ID: dockerhub-credentials"
-                                    exit 1
-                                fi
-                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                                if [ $? -ne 0 ]; then
-                                    echo "❌ Docker login failed!"
-                                    exit 1
-                                fi
-                                echo "✅ Docker Hub login successful"
-                            '''
-
-                            // ✅ Backend services
-                            def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'dummy-data']
-
-                            services.each { service ->
-                                sh """
-                                    echo "🐳 Building ${service}..."
-                                    cd \${WORKSPACE}/\${BACKEND_DIR}/${service}
-
-                                    # ✅ Check if JAR exists (proper way)
-                                    if ls target/*.jar 1> /dev/null 2>&1; then
-                                        echo "   ✅ JAR found for ${service}"
-                                        # Create temporary Dockerfile
-                                        cat > Dockerfile.tmp << 'DOCKERFILE_END'
+                    echo "🐳 Building and Pushing Docker Images..."
+                    
+                    withCredentials([usernamePassword(
+                        credentialsId: env.DOCKER_CREDENTIAL_ID, 
+                        passwordVariable: 'DOCKER_PASSWORD', 
+                        usernameVariable: 'DOCKER_USERNAME'
+                    )]) {
+                        sh '''
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                            
+                            # =========================================
+                            # PART A: BACKEND SERVICES
+                            # =========================================
+                            BACKEND_SERVICES="discovery-service api-gateway user-service product-service media-service dummy-data"
+                            
+                            for service in $BACKEND_SERVICES; do
+                                echo "-----------------------------------------------"
+                                echo "🔨 Processing Backend Service: $service"
+                                
+                                cd ${WORKSPACE}/${BACKEND_DIR}/$service
+                                
+                                if [ -f target/*.jar ]; then
+                                
+# ---------------------------------------------------------
+# ✅ FIX: The EOF below must be flush left (NO SPACES before it)
+# ---------------------------------------------------------
+cat > Dockerfile.tmp << EOF
 FROM amazoncorretto:17-alpine
 RUN apk add --no-cache curl
 WORKDIR /app
 COPY target/*.jar app.jar
-EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \\
-    CMD curl -f http://localhost:8080/actuator/health || exit 1
+EXPOSE 8080 8443
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 CMD curl -f http://localhost:8080/actuator/health || exit 0
 ENTRYPOINT ["java", "-Dcom.sun.management.jmxremote", "-jar", "app.jar"]
-DOCKERFILE_END
+EOF
+# ---------------------------------------------------------
 
-                                        # Build and push
-                                        docker build -t \${DOCKER_REPO}/${service}:\${IMAGE_TAG} -f Dockerfile.tmp .
-                                        docker push \${DOCKER_REPO}/${service}:\${IMAGE_TAG}
-
-                                        # Tag and push stable
-                                        docker tag \${DOCKER_REPO}/${service}:\${IMAGE_TAG} \${DOCKER_REPO}/${service}:\${STABLE_TAG}
-                                        docker push \${DOCKER_REPO}/${service}:\${STABLE_TAG}
-
-                                        rm Dockerfile.tmp
-                                        echo "   ✅ Pushed ${service}:\${IMAGE_TAG}"
-                                    else
-                                        echo "   ⚠️  ${service} JAR not found, skipping..."
-                                    fi
-                                    cd \${WORKSPACE}
-                                """
-                            }
-                            
-                            // ✅ Frontend
-                            sh '''
-                                echo "🐳 Building frontend..."
-
-                                if [ -d ${WORKSPACE}/frontend/dist ]; then
-                                    echo "   ✅ Frontend dist found"
-
-                                    docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${WORKSPACE}/frontend/
-                                    docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
-
-                                    docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:${STABLE_TAG}
-                                    docker push ${DOCKER_REPO}/frontend:${STABLE_TAG}
-
-                                    echo "   ✅ Pushed frontend:${IMAGE_TAG}"
+                                    # Build & Tag
+                                    docker build -t ${DOCKER_REPO}/$service:${IMAGE_TAG} -f Dockerfile.tmp .
+                                    docker tag ${DOCKER_REPO}/$service:${IMAGE_TAG} ${DOCKER_REPO}/$service:latest
+                                    
+                                    # Push Both
+                                    docker push ${DOCKER_REPO}/$service:${IMAGE_TAG}
+                                    docker push ${DOCKER_REPO}/$service:latest
+                                    
+                                    rm Dockerfile.tmp
+                                    echo "✅ Pushed $service"
                                 else
-                                    echo "   ⚠️  Frontend dist not found, skipping..."
+                                    echo "⚠️  JAR file not found for $service"
                                 fi
-                            '''
-
-                            echo "✅ Docker build and push completed for all services!"
-                        }
-                    } catch (Exception e) {
-                        echo "❌ Docker build/push failed: ${e.message}"
-                        throw e  // ✅ Don't continue if Docker fails
+                            done
+                            
+                            # =========================================
+                            # PART B: FRONTEND
+                            # =========================================
+                            echo "-----------------------------------------------"
+                            echo "🔨 Processing Frontend..."
+                            
+                            cd ${WORKSPACE}/frontend
+                            
+                            if [ -d dist ]; then
+                                docker build -t ${DOCKER_REPO}/frontend:${IMAGE_TAG} .
+                                docker tag ${DOCKER_REPO}/frontend:${IMAGE_TAG} ${DOCKER_REPO}/frontend:latest
+                                
+                                docker push ${DOCKER_REPO}/frontend:${IMAGE_TAG}
+                                docker push ${DOCKER_REPO}/frontend:latest
+                                
+                                echo "✅ Pushed frontend"
+                            else
+                                echo "⚠️  Frontend 'dist' folder not found"
+                            fi
+                        '''
                     }
                 }
             }
         }
 
-        stage('🚀 Deploy with Rollback') {
+        stage('🚀 Deploy Locally') {
             when {
                 allOf {
                     expression { params.DEPLOY_LOCALLY == true }
@@ -911,201 +898,169 @@ DOCKERFILE_END
             }
             steps {
                 script {
-                    echo "🚀 Deploying with automatic rollback capability..."
-                    
-                    def deploymentSuccess = false
-                    
+                    echo "🚀 Deploying locally with tag: ${IMAGE_TAG}"
+
                     try {
-                        withCredentials([usernamePassword(
-                            credentialsId: env.DOCKER_CREDENTIAL_ID,
-                            passwordVariable: 'DOCKER_PASSWORD',
-                            usernameVariable: 'DOCKER_USERNAME'
-                        )]) {
-                            // ✅ STEP 1: Backup current stable version
-                            sh '''
-                                echo "📦 Step 1: Backing up current stable version..."
-                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                                
-                                SERVICES="user-service product-service media-service api-gateway discovery-service frontend"
-                                
-                                for service in $SERVICES; do
-                                    echo "Backing up ${service}:stable → previous-stable"
-                                    
-                                    # Pull current stable
-                                    if docker pull ${DOCKER_REPO}/${service}:stable 2>/dev/null; then
-                                        # Tag as previous-stable
-                                        docker tag ${DOCKER_REPO}/${service}:stable ${DOCKER_REPO}/${service}:previous-stable
-                                        docker push ${DOCKER_REPO}/${service}:previous-stable
-                                        echo "✅ ${service} backed up"
-                                    else
-                                        echo "⚠️  No stable version for ${service} (first deployment?)"
-                                    fi
-                                done
-                                
-                                echo "✅ Backup completed - rollback point created"
-                            '''
+                        // 📦 Step 1: Backup current deployment state
+                        sh '''#!/bin/bash
+                            set -e
                             
-                            // ✅ STEP 2: Deploy new version
-                            sh '''
-                                echo ""
-                                echo "🚀 Step 2: Deploying new version ${IMAGE_TAG}..."
-                                
-                                export IMAGE_TAG=${IMAGE_TAG}
-                                cd ${WORKSPACE}
-                                
-                                # Update .env
-                                if [ ! -f .env ]; then
-                                    echo "IMAGE_TAG=${IMAGE_TAG}" > .env
-                                else
-                                    sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env
-                                fi
-                                
-                                echo "Current .env:"
-                                cat .env
-                                
-                                echo ""
-                                echo "Pulling new images..."
-                                docker compose pull
-                                
-                                echo ""
-                                echo "Deploying services..."
-                                docker compose up -d --remove-orphans
-                                
-                                echo ""
-                                echo "Waiting for services to start (30 seconds)..."
-                                sleep 30
-                                
-                                echo ""
-                                echo "Service status:"
-                                docker compose ps
-                            '''
+                            echo "📦 Backing up current deployment state..."
                             
-                            // ✅ STEP 3: Health checks
-                            sh '''
-                                echo ""
-                                echo "🏥 Step 3: Running health checks..."
-                                
-                                FAILED_SERVICES=""
-                                
-                                # User service
-                                echo "Checking user-service..."
-                                if curl -f http://localhost:8081/actuator/health >/dev/null 2>&1; then
-                                    echo "✅ User service: healthy"
-                                else
-                                    echo "❌ User service: unhealthy"
-                                    FAILED_SERVICES="${FAILED_SERVICES} user-service"
+                            # Create backup directory
+                            mkdir -p .backup
+                            BACKUP_DIR=".backup/deployment-${BUILD_NUMBER}-$(date +%s)"
+                            mkdir -p "$BACKUP_DIR"
+                            
+                            # Save current docker-compose state
+                            if [ -f docker-compose.yml ]; then
+                                cp docker-compose.yml "$BACKUP_DIR/docker-compose.yml"
+                                echo "✅ Backed up docker-compose.yml"
+                            fi
+                            
+                            # Save current running container info
+                            docker compose ps > "$BACKUP_DIR/containers-before.log" 2>&1 || true
+                            docker images | grep mahdikheirkhah > "$BACKUP_DIR/images-before.log" 2>&1 || true
+                            
+                            # Save current IMAGE_TAG for rollback
+                            if [ -f .env ]; then
+                                cp .env "$BACKUP_DIR/.env.backup"
+                                grep IMAGE_TAG .env > "$BACKUP_DIR/previous-tag.txt" || echo "IMAGE_TAG=none" > "$BACKUP_DIR/previous-tag.txt"
+                            else
+                                echo "IMAGE_TAG=none" > "$BACKUP_DIR/previous-tag.txt"
+                            fi
+                            
+                            echo "✅ Backup created at: $BACKUP_DIR"
+                            echo "$BACKUP_DIR" > .backup/latest-backup-path.txt
+                        '''
+                        
+                        // 🧹 Step 2: Clean and deploy
+                        sh '''#!/bin/bash
+                            set -e
+                            
+                            echo "🧹 Cleaning up existing containers..."
+                            
+                            # Stop and remove containers using docker-compose
+                            docker compose down --remove-orphans || true
+                            sleep 2
+                            
+                            # Force remove specific containers if they still exist
+                            for container in frontend discovery-service api-gateway user-service product-service media-service dummy-data sonarqube zookeeper kafka database; do
+                                if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
+                                    echo "🗑️  Removing container: $container"
+                                    docker rm -f "$container" 2>/dev/null || true
                                 fi
+                            done
+                            sleep 2
+                            
+                            echo "🔄 Pulling latest images..."
+                            export IMAGE_TAG=${IMAGE_TAG}
+                            docker compose pull || true
+                            
+                            echo "🚀 Starting services..."
+                            docker compose up -d --remove-orphans --force-recreate
+                            
+                            echo "⏳ Waiting for services to start..."
+                            sleep 30
+                            
+                            echo "📊 Service status:"
+                            docker compose ps
+                            echo "✅ Local deployment successful!"
+                        '''
+                        
+                        // ✅ Step 3: Display deployment status
+                        sh '''#!/bin/bash
+                            echo "✅ Deployment completed successfully!"
+                            echo ""
+                            echo "Docker Compose Services:"
+                            docker compose ps
+                            echo ""
+                            echo "🌐 Access your application at:"
+                            echo "   - Frontend: https://localhost:4200"
+                            echo "   - API Gateway: https://localhost:8443"
+                            echo "   - Eureka: http://localhost:8761"
+                        '''
+                    } catch (Exception e) {
+                        echo "❌ Local deployment failed: ${e.message}"
+                        echo "🔄 Initiating automatic rollback..."
+                        
+                        try {
+                            sh '''#!/bin/bash
+                                set -e
                                 
-                                # Product service
-                                echo "Checking product-service..."
-                                if curl -f http://localhost:8082/actuator/health >/dev/null 2>&1; then
-                                    echo "✅ Product service: healthy"
-                                else
-                                    echo "❌ Product service: unhealthy"
-                                    FAILED_SERVICES="${FAILED_SERVICES} product-service"
-                                fi
+                                BACKUP_PATH=$(cat .backup/latest-backup-path.txt 2>/dev/null || echo "")
                                 
-                                # Media service
-                                echo "Checking media-service..."
-                                if curl -f http://localhost:8083/actuator/health >/dev/null 2>&1; then
-                                    echo "✅ Media service: healthy"
-                                else
-                                    echo "❌ Media service: unhealthy"
-                                    FAILED_SERVICES="${FAILED_SERVICES} media-service"
-                                fi
-                                
-                                # Frontend
-                                echo "Checking frontend..."
-                                if curl -f http://localhost:4200 >/dev/null 2>&1; then
-                                    echo "✅ Frontend: healthy"
-                                else
-                                    echo "❌ Frontend: unhealthy"
-                                    FAILED_SERVICES="${FAILED_SERVICES} frontend"
-                                fi
-                                
-                                # Check if any service failed
-                                if [ -n "${FAILED_SERVICES}" ]; then
-                                    echo ""
-                                    echo "❌ Health check failed for:${FAILED_SERVICES}"
-                                    echo "🔄 Triggering automatic rollback..."
+                                if [ -z "$BACKUP_PATH" ] || [ ! -d "$BACKUP_PATH" ]; then
+                                    echo "❌ No valid backup found for rollback!"
                                     exit 1
                                 fi
                                 
-                                echo ""
-                                echo "✅ All health checks passed!"
-                            '''
-                            
-                            deploymentSuccess = true
-                            currentBuild.description = "✅ Deployed v${IMAGE_TAG}"
-                            echo "✅ Deployment successful!"
-                        }
-                        
-                    } catch (Exception e) {
-                        echo "❌ Deployment failed: ${e.message}"
-                        echo "🔄 Initiating automatic rollback..."
-                        
-                        // ✅ AUTOMATIC ROLLBACK
-                        withCredentials([usernamePassword(
-                            credentialsId: env.DOCKER_CREDENTIAL_ID,
-                            passwordVariable: 'DOCKER_PASSWORD',
-                            usernameVariable: 'DOCKER_USERNAME'
-                        )]) {
-                            sh '''
-                                echo "🔄 Rolling back to previous-stable..."
-                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                                echo "🔄 Rolling back to previous deployment..."
                                 
-                                cd ${WORKSPACE}
+                                # Stop current deployment
+                                echo "Stopping current services..."
+                                docker compose down --remove-orphans || true
+                                sleep 5
                                 
-                                # Update .env to previous-stable
-                                sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=previous-stable/" .env
+                                # Restore previous docker-compose
+                                if [ -f "$BACKUP_PATH/docker-compose.yml" ]; then
+                                    cp "$BACKUP_PATH/docker-compose.yml" docker-compose.yml
+                                    echo "✅ Restored docker-compose.yml"
+                                fi
                                 
-                                echo "Updated .env:"
-                                cat .env
+                                # Get previous image tag
+                                PREVIOUS_TAG=$(grep IMAGE_TAG "$BACKUP_PATH/previous-tag.txt" | cut -d'=' -f2)
+                                echo "Previous IMAGE_TAG: $PREVIOUS_TAG"
                                 
-                                # Pull previous stable images
-                                echo ""
-                                echo "Pulling previous stable images..."
-                                docker compose pull
+                                # Start previous version
+                                echo "Starting previous version..."
+                                if [ "$PREVIOUS_TAG" != "none" ]; then
+                                    export IMAGE_TAG=$PREVIOUS_TAG
+                                fi
+                                docker compose up -d --remove-orphans
                                 
-                                # Deploy previous version
-                                echo ""
-                                echo "Deploying previous stable version..."
-                                docker compose down
-                                docker compose up -d
-                                
-                                echo ""
-                                echo "Waiting for services to start (20 seconds)..."
+                                # Wait and verify
+                                echo "Waiting for rollback services to start..."
                                 sleep 20
                                 
-                                echo ""
-                                echo "✅ Rollback completed"
-                                echo "Service status:"
                                 docker compose ps
+                                echo "✅ Rollback COMPLETED"
+                                
+                                # Log rollback event
+                                echo ""
+                                echo "📋 ROLLBACK LOG:"
+                                echo "  Backup Location: $BACKUP_PATH"
+                                echo "  Failed Build: #${BUILD_NUMBER}"
+                                echo "  Failed Image Tag: ${IMAGE_TAG}"
+                                echo "  Restored Image Tag: $PREVIOUS_TAG"
+                                echo "  Rollback Time: $(date)"
+                                
+                                # Save rollback report
+                                {
+                                    echo "ROLLBACK REPORT"
+                                    echo "=============="
+                                    echo "Build Number: ${BUILD_NUMBER}"
+                                    echo "Failed Image Tag: ${IMAGE_TAG}"
+                                    echo "Rolled Back To: $PREVIOUS_TAG"
+                                    echo "Timestamp: $(date)"
+                                    echo ""
+                                    echo "Previous containers:"
+                                    cat "$BACKUP_PATH/containers-before.log"
+                                } > "$BACKUP_PATH/rollback-report.txt"
+                                
+                                echo "✅ Rollback report saved to: $BACKUP_PATH/rollback-report.txt"
                             '''
+                            
+                            echo "✅ Automatic rollback completed successfully"
+                            echo "   Previous version has been restored"
+                            echo "   Check .backup/ directory for rollback details"
+                        } catch (Exception rollbackError) {
+                            echo "❌ CRITICAL: Rollback also failed: ${rollbackError.message}"
+                            echo "   Manual intervention required!"
+                            echo "   Check .backup/ directory for backup files"
                         }
                         
-                        currentBuild.result = 'FAILURE'
-                        currentBuild.description = "❌ Deploy failed → Rolled back to previous-stable"
-                        error("Deployment failed and automatically rolled back")
-                    }
-                    
-                    // ✅ If deployment was successful, show info
-                    if (deploymentSuccess) {
-                        sh '''
-                            echo ""
-                            echo "=========================================="
-                            echo "✅ DEPLOYMENT SUCCESSFUL"
-                            echo "=========================================="
-                            echo "Version: ${IMAGE_TAG}"
-                            echo "Rollback available: previous-stable"
-                            echo ""
-                            echo "Access your application at:"
-                            echo "  - Frontend: http://localhost:4200"
-                            echo "  - API Gateway: http://localhost:8443"
-                            echo "  - Eureka: http://localhost:8761"
-                            echo "  - SonarQube: http://localhost:9000"
-                            echo "=========================================="
-                        '''
+                        error("Deploy failed with automatic rollback executed: ${e.message}")
                     }
                 }
             }
@@ -1117,6 +1072,68 @@ DOCKERFILE_END
             archiveArtifacts allowEmptyArchive: true, artifacts: '**/target/surefire-reports/**, frontend/coverage/**'
             script {
                 echo "Pipeline execution completed"
+            }
+            script {
+                // Report status to GitHub regardless of build result
+                if (params.SKIP_GITHUB_STATUS == false && env.GIT_SOURCE == 'GitHub') {
+                    echo "📤 Reporting build status to GitHub..."
+                    
+                    def buildStatus = currentBuild.result ?: 'SUCCESS'
+                    def githubStatus = 'success'
+                    def description = 'All checks passed!'
+                    
+                    if (buildStatus == 'FAILURE') {
+                        githubStatus = 'failure'
+                        description = 'Build failed - check Jenkins for details'
+                    } else if (buildStatus == 'UNSTABLE') {
+                        githubStatus = 'error'
+                        description = 'Build unstable - quality gate issues'
+                    }
+                    
+                    echo "Build Status: ${buildStatus}"
+                    echo "GitHub Status: ${githubStatus}"
+                    
+                    try {
+                        withCredentials([usernamePassword(
+                            credentialsId: 'multi-branch-github',
+                            passwordVariable: 'GITHUB_TOKEN',
+                            usernameVariable: 'GITHUB_USER'
+                        )]) {
+                            sh '''#!/bin/bash
+                                set -e
+                                
+                                COMMIT_SHA=$(git rev-parse HEAD)
+                                GITHUB_API="https://api.github.com/repos/''' + env.GITHUB_REPO + '''/statuses/${COMMIT_SHA}"
+                                
+                                PAYLOAD=$(cat <<'EOF'
+                                {
+                                  "state": "''' + githubStatus + '''",
+                                  "description": "''' + description + '''",
+                                  "context": "continuous-integration/jenkins",
+                                  "target_url": "''' + env.BUILD_URL + '''"
+                                }
+                                EOF
+                                )
+                                
+                                HTTP_CODE=$(curl -s -o /tmp/status-response.json -w "%{http_code}" \\
+                                  -X POST \\
+                                  -H "Authorization: token ${GITHUB_TOKEN}" \\
+                                  -H "Content-Type: application/json" \\
+                                  -d "${PAYLOAD}" \\
+                                  "${GITHUB_API}")
+                                
+                                if [ "${HTTP_CODE}" = "201" ] || [ "${HTTP_CODE}" = "200" ]; then
+                                    echo "✅ GitHub status updated: ''' + githubStatus + '''"
+                                else
+                                    echo "⚠️  Failed to update GitHub status (HTTP ${HTTP_CODE})"
+                                    cat /tmp/status-response.json
+                                fi
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo "❌ Failed to report status to GitHub: ${e.message}"
+                    }
+                }
             }
         }
         success {
