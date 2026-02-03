@@ -583,6 +583,8 @@ pipeline {
                     }
                 }
             }
+        }
+        
         stage('🐳 Build & Push Docker Images') {
             when {
                 expression { params.SKIP_DEPLOY == false }
@@ -993,5 +995,4 @@ EOF
             }
         }
     }
-}
 }
