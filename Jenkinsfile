@@ -879,6 +879,14 @@ EOF
                         // Get commit SHA at Groovy level
                         def commitSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                         
+                        // Map build status to GitHub Statuses API states (success, failure, error, pending)
+                        def ghState = 'success'
+                        if (checkConclusion == 'failure') {
+                            ghState = 'failure'
+                        } else if (checkConclusion == 'neutral') {
+                            ghState = 'failure'  // GitHub Statuses API doesn't have 'neutral'
+                        }
+                        
                         withCredentials([usernamePassword(
                             credentialsId: 'multi-branch-github',
                             passwordVariable: 'GITHUB_TOKEN',
@@ -891,24 +899,11 @@ EOF
                                 echo "Commit: ''' + commitSha + '''"
                                 
                                 echo ""
-                                echo "📤 Sending check run to GitHub API..."
-                                GITHUB_API="https://api.github.com/repos/''' + env.GITHUB_REPO + '''/check-runs"
+                                echo "📤 Sending status to GitHub Statuses API..."
+                                GITHUB_API="https://api.github.com/repos/''' + env.GITHUB_REPO + '''/statuses/''' + commitSha + '''"
                                 echo "Endpoint: ${GITHUB_API}"
                                 
-                                PAYLOAD=$(cat <<'EOF'
-{
-  "name": "Jenkins CI/CD Pipeline",
-  "head_sha": "''' + commitSha + '''",
-  "status": "completed",
-  "conclusion": "''' + checkConclusion + '''",
-  "details_url": "''' + env.BUILD_URL + '''",
-  "output": {
-    "title": "Build Result",
-    "summary": "''' + summary + '''"
-  }
-}
-EOF
-                                )
+                                PAYLOAD='{"state":"''' + ghState + '''", "context":"Jenkins CI/CD Pipeline", "description":"''' + summary + '''", "target_url":"''' + env.BUILD_URL + '''"}'
                                 
                                 echo "Payload:"
                                 echo "${PAYLOAD}"
@@ -916,7 +911,7 @@ EOF
                                 echo "📍 Sending POST request to: ${GITHUB_API}"
                                 echo ""
                                 
-                                HTTP_CODE=$(curl -s -o /tmp/check-response.json -w "%{http_code}" \
+                                HTTP_CODE=$(curl -s -o /tmp/status-response.json -w "%{http_code}" \
                                   -X POST \
                                   -H "Authorization: token ${GITHUB_TOKEN}" \
                                   -H "Content-Type: application/json" \
@@ -927,10 +922,10 @@ EOF
                                 echo "HTTP Response Code: ${HTTP_CODE}"
                                 
                                 if [ "${HTTP_CODE}" = "201" ]; then
-                                    echo "✅ GitHub check run created successfully"
+                                    echo "✅ GitHub status reported successfully"
                                 else
-                                    echo "⚠️  GitHub check run response:"
-                                    cat /tmp/check-response.json
+                                    echo "⚠️  GitHub status response:"
+                                    cat /tmp/status-response.json
                                 fi
                             '''
                         }
