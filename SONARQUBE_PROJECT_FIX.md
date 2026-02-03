@@ -7,7 +7,7 @@ SonarQube is showing projects with incorrect keys:
 - `buy01-backend` instead of `buy-01-backend`
 - `buy01-frontend` instead of `buy-01-frontend`
 
-## Root Cause
+## Root Causefkfkfk
 
 The projects were likely created without explicit project keys, and SonarQube auto-generated keys based on directory names or Maven artifactId (which is "backend" in pom.xml).
 
