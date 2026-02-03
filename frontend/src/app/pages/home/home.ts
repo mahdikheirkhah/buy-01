@@ -7,6 +7,7 @@ import { ProductService, Page } from '../../services/product-service'; // Adjust
 import { ProductCardDTO } from '../../models/productCard.model'; // Adjust path
 import { AuthService } from '../../services/auth';
 import { User } from '../../models/user.model';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-home',
@@ -19,6 +20,17 @@ import { User } from '../../models/user.model';
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })
+// @Component({
+//   selector: 'app-home',
+//   standalone: true,
+//   imports: [
+//     CommonModule,
+//     MatPaginatorModule,
+//     ProductCard
+//   ],
+//   templateUrl: './home.html',
+//   styleUrls: ['./home.css']
+// })
 export class HomeComponent implements OnInit {
   // User data state
   currentUser: User | null = null;
