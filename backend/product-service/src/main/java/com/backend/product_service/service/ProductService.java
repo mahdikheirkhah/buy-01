@@ -217,17 +217,6 @@ public class ProductService {
             return List.of();
         }
     }
-    // public List<ProductDTO> getAllProductsWithSellerID(String sellerId) {
-    // Product product = productRepository.findBySellerID(sellerId);
-    // if (product == null) {
-    // return null;
-    // }
-    // ProductDTO result;
-    // InfoUserDTO seller = getSellersInfo(sellerId);
-    // getMedia(.getProductId());
-    //
-    // return result;
-    // }
 
     private List<ProductDTO> appendSellersToProduct(List<Product> products, List<InfoUserDTO> sellers) {
         assert sellers != null;
