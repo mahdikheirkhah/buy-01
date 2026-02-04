@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http'; // Import HttpPar
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ProductCardDTO } from '../models/productCard.model'; // Make sure this path is correct
-import {ProductDetailDTO} from '../models/product.model';
+import { ProductDetailDTO } from '../models/product.model';
 // We can define the Page response interface here or in its own file
 export interface Page<T> {
   content: T[];
@@ -27,7 +27,7 @@ export class ProductService {
   }
 
 
-uploadProductImage(productId: string, file: File): Observable<any> {
+  uploadProductImage(productId: string, file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('productId', productId);
@@ -67,26 +67,60 @@ uploadProductImage(productId: string, file: File): Observable<any> {
     });
   }
   getProductById(id: string): Observable<ProductDetailDTO> {
-      return this.http.get<ProductDetailDTO>(`${this.productApiUrl}/${id}`, {
-        withCredentials: true
-      });
-    }
+    return this.http.get<ProductDetailDTO>(`${this.productApiUrl}/${id}`, {
+      withCredentials: true
+    });
+  }
   deleteProduct(id: string): Observable<string> {
-      return this.http.delete(`${this.productApiUrl}/${id}`, {
-        withCredentials: true,
-        responseType: 'text' // Because your backend returns a plain string
-      });
+    return this.http.delete(`${this.productApiUrl}/${id}`, {
+      withCredentials: true,
+      responseType: 'text' // Because your backend returns a plain string
+    });
   }
   updateProduct(id: string, productData: any): Observable<ProductDetailDTO> {
-      return this.http.put<ProductDetailDTO>(`${this.productApiUrl}/${id}`, productData, {
-        withCredentials: true,
-      });
+    return this.http.put<ProductDetailDTO>(`${this.productApiUrl}/${id}`, productData, {
+      withCredentials: true,
+    });
   }
-  deleteProductImage(productId: string,mediaId: string): Observable<any> {
+  deleteProductImage(productId: string, mediaId: string): Observable<any> {
 
-      return this.http.delete(`${this.productApiUrl}/deleteMedia/${productId}/${mediaId}`, {
-        withCredentials: true,
-        responseType: 'json'
-      });
+    return this.http.delete(`${this.productApiUrl}/deleteMedia/${productId}/${mediaId}`, {
+      withCredentials: true,
+      responseType: 'json'
+    });
+  }
+
+  /**
+   * Search and filter products - single unified endpoint
+   * If no filters are provided, returns all products
+   */
+  searchProducts(
+    keyword?: string,
+    minPrice?: number,
+    maxPrice?: number,
+    minQuantity?: number,
+    maxQuantity?: number,
+    startDate?: string,
+    endDate?: string,
+    page: number = 0,
+    size: number = 10
+  ): Observable<Page<ProductCardDTO>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', 'createdAt,desc');
+
+    if (keyword) params = params.set('q', keyword);
+    if (minPrice !== undefined && minPrice !== null) params = params.set('minPrice', minPrice.toString());
+    if (maxPrice !== undefined && maxPrice !== null) params = params.set('maxPrice', maxPrice.toString());
+    if (minQuantity !== undefined && minQuantity !== null) params = params.set('minQuantity', minQuantity.toString());
+    if (maxQuantity !== undefined && maxQuantity !== null) params = params.set('maxQuantity', maxQuantity.toString());
+    if (startDate) params = params.set('startDate', startDate);
+    if (endDate) params = params.set('endDate', endDate);
+
+    return this.http.get<Page<ProductCardDTO>>(`${this.productApiUrl}/search`, {
+      withCredentials: true,
+      params: params
+    });
   }
 }
