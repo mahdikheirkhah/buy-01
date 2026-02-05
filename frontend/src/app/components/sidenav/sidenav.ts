@@ -17,7 +17,7 @@ import { AuthService } from '../../services/auth';
     MatIconModule
   ],
   templateUrl: './sidenav.html',
-  styleUrl: './sidenav.css'
+  styleUrls: ['./sidenav.css']
 })
 export class SidenavComponent {
   @Output() closeSidenav = new EventEmitter<void>();

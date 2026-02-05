@@ -52,12 +52,12 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:9000/api/system/status | grep -q UP || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 60s
+      retries: 10
+      start_period: 90s
 
-  buy-01:
+  database:
     image: mongo:7.0
-    container_name: buy-01
+    container_name: database
     ports:
       - "27018:27017"
     environment:
@@ -80,13 +80,12 @@ services:
       - "8761:8761"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 0"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 40s
+      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
     networks:
       - BACKEND
 
@@ -98,88 +97,90 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod,https
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
     depends_on:
       discovery-service:
         condition: service_healthy
     healthcheck:
-      # Using --insecure for HTTPS and "|| exit 0" to prevent deployment failure during dev
-      test: ["CMD-SHELL", "curl --insecure -f https://localhost:8443/actuator/health || exit 0"]
+      # Using --insecure for HTTPS with self-signed certs
+      test: ["CMD-SHELL", "curl --insecure -f https://localhost:8443/actuator/health"]
       interval: 15s
       timeout: 10s
-      retries: 10
-      start_period: 60s
+      retries: 25
+      start_period: 120s
     networks:
       - BACKEND
 
   user-service:
     image: mahdikheirkhah/user-service:${IMAGE_TAG:-latest}
     container_name: user-service
+    ports:
+      - "8081:8081"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
-      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@database:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
     depends_on:
       discovery-service:
         condition: service_healthy
-      buy-01:
+      database:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health"]
       interval: 15s
       timeout: 10s
-      retries: 10
-      start_period: 60s
+      retries: 15
+      start_period: 90s
     networks:
       - BACKEND
 
   product-service:
     image: mahdikheirkhah/product-service:${IMAGE_TAG:-latest}
     container_name: product-service
+    ports:
+      - "8082:8082"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
-      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@database:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
     depends_on:
       discovery-service:
         condition: service_healthy
-      buy-01:
+      database:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health"]
       interval: 15s
       timeout: 10s
-      retries: 10
-      start_period: 60s
+      retries: 15
+      start_period: 90s
     networks:
       - BACKEND
 
   media-service:
     image: mahdikheirkhah/media-service:${IMAGE_TAG:-latest}
     container_name: media-service
+    ports:
+      - "8083:8083"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
-      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@database:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
     volumes:
       - ./backend/media-service/uploads:/app/uploads
     depends_on:
       discovery-service:
         condition: service_healthy
-      buy-01:
+      database:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health"]
       interval: 15s
       timeout: 10s
-      retries: 10
-      start_period: 60s
+      retries: 15
+      start_period: 90s
     networks:
       - BACKEND
 
@@ -210,9 +211,8 @@ services:
       - BACKEND
 
   dummy-data:
-    image: mahdikheirkhah/dummy-data:${IMAGE_TAG}
+    image: mahdikheirkhah/dummy-data:${IMAGE_TAG:-latest}
     container_name: dummy-data
-    command: sh -c "sleep 120 && java -jar /app/dummy-data.jar"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       APP_API_GATEWAY_URL: https://api-gateway:8443
@@ -230,8 +230,6 @@ services:
         condition: service_healthy
       media-service:
         condition: service_healthy
-      orders-service:
-        condition: service_healthy
     restart: on-failure:5
     networks:
       - BACKEND
@@ -246,14 +244,21 @@ services:
     depends_on:
       api-gateway:
         condition: service_healthy
+    healthcheck:
+      # Using --insecure for HTTPS with self-signed certs, -f checks for 2xx status
+      test: ["CMD-SHELL", "curl --insecure -f https://localhost:4200 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      start_period: 45s
     networks:
       - BACKEND
 
 
 networks:
   BACKEND:
-    driver: bridge
     name: buy-01_BACKEND
+    driver: bridge
 
 volumes:
   mongo_data:

@@ -35,7 +35,7 @@ export class RegisterComponent {
 
   constructor(private authService: AuthService, private router: Router) { }
 
-onFileSelected(event: any): void {
+  onFileSelected(event: any): void {
     this.imageChangedEvent = event;
     this.showCropper = true; // Show the modal
   }

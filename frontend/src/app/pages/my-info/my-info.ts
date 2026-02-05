@@ -34,19 +34,21 @@ import { ImageCropperModal } from '../../components/image-cropper-modal/image-cr
     ImageCropperModal,
     UpdateInfoForm
   ],
+
   templateUrl: './my-info.html',
   styleUrls: ['./my-info.css']
+  // -----------------------------
 })
-export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
+export class MyInfo implements OnInit {
   currentUser: User | null = null;
   isLoading = true;
   errorMessage: string | null = null;
-   isEditingInfo = false;
-  // --- State for the cropper ---
+
+  // Avatar cropper state
   imageChangedEvent: any = '';
   showCropper = false;
-  // -----------------------------
 
+  isEditingInfo = false;
   constructor(
     private authService: AuthService,
     private userService: UserService,
@@ -81,7 +83,7 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
 
     this.userService.updateAvatar(avatarFile).subscribe({
       next: (updatedUser: User) => {
-       this.ngOnInit();
+        this.ngOnInit();
         this.authService.fetchCurrentUser().subscribe(); // Re-sync global state
       },
       error: (err) => console.error('Failed to update avatar', err)
@@ -124,7 +126,7 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
       }
     });
   }
-// --- Delete User Logic ---
+  // --- Delete User Logic ---
   onDeleteMe(): void {
     // 1. Open the password dialog
     const dialogRef = this.dialog.open(PasswordConfirmDialog, {
@@ -161,9 +163,9 @@ export class MyInfo implements OnInit { // ✅ FIX: Renamed to MyInfo
     this.isEditingInfo = true;
   }
   onFormClosed(isSuccess: boolean): void {
-      this.isEditingInfo = false;
-      if (isSuccess) {
-        this.ngOnInit();
-      }
+    this.isEditingInfo = false;
+    if (isSuccess) {
+      this.ngOnInit();
     }
+  }
 }

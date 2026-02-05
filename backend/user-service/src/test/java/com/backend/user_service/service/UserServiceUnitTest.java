@@ -1,12 +1,18 @@
 package com.backend.user_service.service;
 
-import com.backend.common.dto.InfoUserDTO;
-import com.backend.common.dto.Role;
-import com.backend.common.exception.CustomException;
-import com.backend.common.util.JwtUtil;
-import com.backend.user_service.model.User;
-import com.backend.user_service.repository.UserMapper;
-import com.backend.user_service.repository.UserRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,13 +22,21 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.Optional;
+import com.backend.common.dto.InfoUserDTO;
+import com.backend.common.dto.Role;
+import com.backend.common.exception.CustomException;
+import com.backend.common.util.JwtUtil;
+import com.backend.user_service.dto.loginUserDTO;
+import com.backend.user_service.dto.updateUserDTO;
+import com.backend.user_service.model.User;
+import com.backend.user_service.repository.UserMapper;
+import com.backend.user_service.repository.UserRepository;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import jakarta.servlet.http.Cookie;
+import reactor.core.publisher.Mono;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService Unit Tests")
@@ -34,6 +48,32 @@ class UserServiceUnitTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private UserMapper userMapper;
+
+    @Mock
+    private WebClient.Builder webClientBuilder;
+
+    @Mock
+    private WebClient webClient;
+
+    @Mock
+    private WebClient.RequestBodyUriSpec requestBodyUriSpec;
+
+    @Mock
+    private WebClient.RequestBodySpec requestBodySpec;
+
+    @Mock
+    private WebClient.RequestHeadersSpec requestHeadersSpec;
+
+    @Mock
+    private WebClient.ResponseSpec responseSpec;
+
+    @Mock
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+    @Mock
+    private JwtUtil jwtUtil;
 
     @InjectMocks
     private UserService userService;
@@ -248,7 +288,8 @@ class UserServiceUnitTest {
 
         // Assert
         // If your service publishes to Kafka, verify the template was called
-        // verify(kafkaTemplate).send(anyString(), anyString()); // uncomment if applicable
+        // verify(kafkaTemplate).send(anyString(), anyString()); // uncomment if
+        // applicable
     }
 
     @Test
@@ -279,5 +320,219 @@ class UserServiceUnitTest {
         assertThat(found).isEmpty();
         verify(userRepository).findById("nonexistent");
     }
-}
 
+    @Test
+    @DisplayName("Should login user successfully")
+    void testLoginUserSuccess() {
+        // Arrange
+        loginUserDTO loginDto = new loginUserDTO();
+        loginDto.setEmail("john.doe@example.com");
+        loginDto.setPassword("correctPassword");
+        when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("correctPassword", testUser.getPassword())).thenReturn(true);
+
+        // Act
+        User result = userService.loginUser(loginDto);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getEmail()).isEqualTo("john.doe@example.com");
+        verify(userRepository).findByEmail("john.doe@example.com");
+    }
+
+    @Test
+    @DisplayName("Should throw exception for wrong password in login")
+    void testLoginUserWrongPassword() {
+        // Arrange
+        loginUserDTO loginDto = new loginUserDTO();
+        loginDto.setEmail("john.doe@example.com");
+        loginDto.setPassword("wrongPassword");
+        when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("wrongPassword", testUser.getPassword())).thenReturn(false);
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.loginUser(loginDto))
+                .isInstanceOf(CustomException.class)
+                .hasMessageContaining("wrong email or password");
+    }
+
+    @Test
+    @DisplayName("Should get user by ID successfully")
+    void testGetUserById() {
+        // Arrange
+        when(userRepository.findById("user123")).thenReturn(Optional.of(testUser));
+
+        // Act
+        InfoUserDTO result = userService.getUserById("user123");
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo("user123");
+        assertThat(result.getEmail()).isEqualTo("john.doe@example.com");
+        verify(userRepository).findById("user123");
+    }
+
+    @Test
+    @DisplayName("Should throw exception when user ID not found")
+    void testGetUserByIdNotFound() {
+        // Arrange
+        when(userRepository.findById("nonexistent")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.getUserById("nonexistent"))
+                .isInstanceOf(CustomException.class);
+        verify(userRepository).findById("nonexistent");
+    }
+
+    @Test
+    @DisplayName("Should get user by email successfully")
+    void testGetUserByEmail() {
+        // Arrange
+        when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(testUser));
+
+        // Act
+        InfoUserDTO result = userService.getUserByEmail("john.doe@example.com");
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getEmail()).isEqualTo("john.doe@example.com");
+        verify(userRepository).findByEmail("john.doe@example.com");
+    }
+
+    @Test
+    @DisplayName("Should update user info successfully")
+    void testUpdateUserInfo() {
+        // Arrange
+        updateUserDTO updateDto = new updateUserDTO();
+        updateDto.setFirstName("Jane");
+        updateDto.setLastName("Smith");
+
+        when(userRepository.findById("user123")).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        // Act
+        UserService.UserUpdateResult result = userService.updateUserInfo("user123", updateDto);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.newJwtNeeded()).isFalse();
+        verify(userRepository).findById("user123");
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Should generate cookie successfully")
+    void testGenerateCookie() {
+        // Arrange
+        when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(testUser));
+        when(jwtUtil.generateToken(any(), eq("john.doe@example.com"))).thenReturn("jwt-token");
+
+        // Act
+        Cookie result = userService.generateCookie("john.doe@example.com");
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo("jwt");
+        verify(userRepository).findByEmail("john.doe@example.com");
+    }
+
+    @Test
+    @DisplayName("Should generate empty cookie successfully")
+    void testGenerateEmptyCookie() {
+        // Act
+        Cookie result = userService.generateEmptyCookie();
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo("jwt");
+        assertThat(result.getValue()).isNull();
+    }
+
+    @Test
+    @DisplayName("Should delete user successfully")
+    void testDeleteUserSuccess() {
+        // Arrange
+        testUser.setRole(Role.SELLER);
+        testUser.setAvatarUrl("http://example.com/avatar.jpg");
+        when(userRepository.findById("user123")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("correctPassword", testUser.getPassword())).thenReturn(true);
+
+        // Act
+        userService.deleteUser("user123", "correctPassword");
+
+        // Assert
+        verify(userRepository).findById("user123");
+        verify(kafkaTemplate).send("user-deleted-topic", "user123");
+        verify(kafkaTemplate).send("user-avatar-deleted-topic", "http://example.com/avatar.jpg");
+        verify(userRepository).deleteById("user123");
+    }
+
+    @Test
+    @DisplayName("Should delete avatar successfully")
+    void testDeleteAvatar() {
+        // Arrange
+        testUser.setAvatarUrl("http://example.com/avatar.jpg");
+        when(userRepository.findById("user123")).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        // Act
+        userService.deleteAvatar("user123");
+
+        // Assert
+        verify(userRepository).findById("user123");
+        verify(kafkaTemplate).send("user-avatar-deleted-topic", "http://example.com/avatar.jpg");
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Should not send Kafka message when avatar URL is null")
+    void testKafkaSendDeleteAvatarWithNullUrl() {
+        // Act - calling private method indirectly through deleteAvatar
+        testUser.setAvatarUrl(null);
+        when(userRepository.findById("user123")).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        userService.deleteAvatar("user123");
+
+        // Assert - verify Kafka was not called for null avatar
+        verify(kafkaTemplate, never()).send(eq("user-avatar-deleted-topic"), anyString());
+    }
+
+    @Test
+    @DisplayName("Should update user avatar successfully")
+    void testAvatarUpdate() throws IOException {
+        // Arrange
+        testUser.setRole(Role.SELLER);
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(userRepository.findById("user123")).thenReturn(Optional.of(testUser));
+        when(mockFile.isEmpty()).thenReturn(false);
+        when(mockFile.getBytes()).thenReturn("image-data".getBytes());
+        when(webClientBuilder.build()).thenReturn(webClient);
+        when(webClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.contentType(any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any())).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(String.class)).thenReturn(Mono.just("new-avatar-url"));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        // Act
+        userService.AvatarUpdate("user123", mockFile);
+
+        // Assert
+        verify(userRepository).findById("user123");
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when avatar update user not found")
+    void testAvatarUpdateUserNotFound() {
+        // Arrange
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(userRepository.findById("nonexistent")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> userService.AvatarUpdate("nonexistent", mockFile))
+                .isInstanceOf(CustomException.class);
+    }
+}

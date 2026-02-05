@@ -21,7 +21,7 @@ export class ImageCropperModal {
   croppedImage: any = '';
   croppedBlob: Blob | null = null;
 
-  constructor() {}
+  constructor() { }
 
   // This is called every time the user moves the cropper
   imageCropped(event: ImageCroppedEvent) {

@@ -39,7 +39,7 @@ export class CreateProduct {
   // ----------------------------------------
 
   constructor(
-     private authService: AuthService,
+    private authService: AuthService,
     private fb: FormBuilder,
     private productService: ProductService,
     private router: Router
@@ -52,14 +52,14 @@ export class CreateProduct {
     });
   }
   ngOnInit(): void {
-      // Guarantees the AuthService.subject is populated even after a refresh
-      this.authService.fetchCurrentUser().subscribe({
-        error: () => {
-          // 401 → user not logged in → subject already cleared by the service
-          // (nothing else to do – navbar will show Login/Register)
-        }
-      });
-    }
+    // Guarantees the AuthService.subject is populated even after a refresh
+    this.authService.fetchCurrentUser().subscribe({
+      error: () => {
+        // 401 → user not logged in → subject already cleared by the service
+        // (nothing else to do – navbar will show Login/Register)
+      }
+    });
+  }
   /**
    * ✅ This method now ADDS files and VALIDATES them.
    */

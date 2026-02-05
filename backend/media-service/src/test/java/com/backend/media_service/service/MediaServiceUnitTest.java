@@ -1,8 +1,18 @@
 package com.backend.media_service.service;
 
-import com.backend.common.exception.CustomException;
-import com.backend.media_service.model.Media;
-import com.backend.media_service.repository.MediaRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,14 +22,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import com.backend.common.exception.CustomException;
+import com.backend.media_service.model.Media;
+import com.backend.media_service.repository.MediaRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MediaService Unit Tests")
@@ -292,5 +297,119 @@ class MediaServiceUnitTest {
         assertThat(saved.getId()).isEqualTo("newId");
         verify(mediaRepository).save(any(Media.class));
     }
-}
 
+    @Test
+    @DisplayName("Should update media successfully")
+    void testUpdateMediaSuccess() {
+        // Arrange
+        Media existingMedia = new Media();
+        existingMedia.setId("media123");
+        existingMedia.setImagePath("/api/media/files/old.jpg");
+        existingMedia.setProductID("product123");
+
+        Media updatedMedia = new Media();
+        updatedMedia.setId("media123");
+        updatedMedia.setImagePath("/api/media/files/updated.jpg");
+        updatedMedia.setProductID("product123");
+
+        when(mediaRepository.save(any(Media.class))).thenReturn(updatedMedia);
+
+        // Act
+        Media result = mediaService.updateMedia(existingMedia);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo("media123");
+        assertThat(result.getImagePath()).isEqualTo("/api/media/files/updated.jpg");
+        verify(mediaRepository).save(existingMedia);
+    }
+
+    @Test
+    @DisplayName("Should get limited image URLs for product")
+    void testGetLimitedImageUrlsForProduct() {
+        // Arrange
+        String productId = "product123";
+        int limit = 3;
+
+        Media media1 = new Media();
+        media1.setId("media1");
+        media1.setImagePath("/api/media/files/image1.jpg");
+        media1.setProductID(productId);
+        media1.setCreatedAt(Instant.now().minusSeconds(300));
+
+        Media media2 = new Media();
+        media2.setId("media2");
+        media2.setImagePath("/api/media/files/image2.jpg");
+        media2.setProductID(productId);
+        media2.setCreatedAt(Instant.now().minusSeconds(200));
+
+        Media media3 = new Media();
+        media3.setId("media3");
+        media3.setImagePath("/api/media/files/image3.jpg");
+        media3.setProductID(productId);
+        media3.setCreatedAt(Instant.now().minusSeconds(100));
+
+        when(mediaRepository.findByProductID(eq(productId), any()))
+                .thenReturn(List.of(media1, media2, media3));
+
+        // Act
+        List<String> urls = mediaService.getLimitedImageUrlsForProduct(productId, limit);
+
+        // Assert
+        assertThat(urls).hasSize(3);
+        assertThat(urls).containsExactly(
+                "/api/media/files/image1.jpg",
+                "/api/media/files/image2.jpg",
+                "/api/media/files/image3.jpg");
+        verify(mediaRepository).findByProductID(eq(productId), any());
+    }
+
+    @Test
+    @DisplayName("Should get limited image URLs with fewer results than limit")
+    void testGetLimitedImageUrlsForProduct_FewerThanLimit() {
+        // Arrange
+        String productId = "product123";
+        int limit = 5;
+
+        Media media1 = new Media();
+        media1.setId("media1");
+        media1.setImagePath("/api/media/files/image1.jpg");
+        media1.setProductID(productId);
+
+        Media media2 = new Media();
+        media2.setId("media2");
+        media2.setImagePath("/api/media/files/image2.jpg");
+        media2.setProductID(productId);
+
+        when(mediaRepository.findByProductID(eq(productId), any()))
+                .thenReturn(List.of(media1, media2));
+
+        // Act
+        List<String> urls = mediaService.getLimitedImageUrlsForProduct(productId, limit);
+
+        // Assert
+        assertThat(urls).hasSize(2);
+        assertThat(urls).containsExactly(
+                "/api/media/files/image1.jpg",
+                "/api/media/files/image2.jpg");
+        verify(mediaRepository).findByProductID(eq(productId), any());
+    }
+
+    @Test
+    @DisplayName("Should return empty list when no images found for product")
+    void testGetLimitedImageUrlsForProduct_Empty() {
+        // Arrange
+        String productId = "product123";
+        int limit = 3;
+
+        when(mediaRepository.findByProductID(eq(productId), any()))
+                .thenReturn(List.of());
+
+        // Act
+        List<String> urls = mediaService.getLimitedImageUrlsForProduct(productId, limit);
+
+        // Assert
+        assertThat(urls).isEmpty();
+        verify(mediaRepository).findByProductID(eq(productId), any());
+    }
+}

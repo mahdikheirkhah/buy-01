@@ -1,0 +1,1542 @@
+Branch indexing
+Connecting to https://api.github.com using mahdikheirkhah/****** (multi branch for buy-02)
+Obtained Jenkinsfile from 5fedaba7e1c78eef3fe550607826a93ce2e490d2
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins in /var/jenkins_home/workspace/buy-01-multibranch_main
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Declarative: Checkout SCM)
+[Pipeline] checkout
+The recommended git tool is: git
+using credential multi-branch-github
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/buy-01-multibranch_main/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/mahdikheirkhah/buy-01.git # timeout=10
+Fetching without tags
+Fetching upstream changes from https://github.com/mahdikheirkhah/buy-01.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+using GIT_ASKPASS to set credentials multi branch for buy-02
+ > git fetch --no-tags --force --progress -- https://github.com/mahdikheirkhah/buy-01.git +refs/heads/main:refs/remotes/origin/main # timeout=10
+Checking out Revision 5fedaba7e1c78eef3fe550607826a93ce2e490d2 (main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 5fedaba7e1c78eef3fe550607826a93ce2e490d2 # timeout=10
+Commit message: "fix: remove UserServiceApplicationTests entirely"
+ > git rev-list --no-walk cab170877da5647aa4d462463ecd091de4634bd1 # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] withCredentials
+Masking supported pattern matches of $GITHUB_TOKEN or $GITHUB_TOKEN_PSW
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] timeout
+Timeout set to expire in 2 hr 0 min
+[Pipeline] {
+[Pipeline] timestamps
+[Pipeline] {
+[Pipeline] ansiColor
+[Pipeline] {
+[2026-01-22T10:49:59.431Z] 
+[Pipeline] stage
+[Pipeline] { (⏳ Initialization)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+[2026-01-22T10:49:59.507Z] ==========================================
+[Pipeline] echo
+[2026-01-22T10:49:59.511Z] 🚀 Buy-01 E-Commerce CI/CD Pipeline
+[Pipeline] echo
+[2026-01-22T10:49:59.515Z] ==========================================
+[Pipeline] echo
+[2026-01-22T10:49:59.520Z] Branch: main
+[Pipeline] echo
+[2026-01-22T10:49:59.524Z] Build: #15
+[Pipeline] echo
+[2026-01-22T10:49:59.529Z] Image Tag: 15
+[Pipeline] echo
+[2026-01-22T10:49:59.533Z] Run Tests: true
+[Pipeline] echo
+[2026-01-22T10:49:59.538Z] Run Integration Tests: false
+[Pipeline] echo
+[2026-01-22T10:49:59.542Z] Deploy Locally: true
+[Pipeline] echo
+[2026-01-22T10:49:59.547Z] ==========================================
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (📥 Checkout)
+[Pipeline] echo
+[2026-01-22T10:49:59.605Z] 📥 Checking out branch: main
+[Pipeline] checkout
+[2026-01-22T10:49:59.610Z] The recommended git tool is: git
+[2026-01-22T10:49:59.610Z] using credential gitea-credentials
+[2026-01-22T10:49:59.612Z]  > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/buy-01-multibranch_main/.git # timeout=10
+[2026-01-22T10:49:59.614Z] Fetching changes from the remote Git repository
+[2026-01-22T10:49:59.615Z]  > git config remote.origin.url https://01.gritlab.ax/git/mkheirkh/buy-01.git # timeout=10
+[2026-01-22T10:49:59.617Z] Fetching upstream changes from https://01.gritlab.ax/git/mkheirkh/buy-01.git
+[2026-01-22T10:49:59.617Z]  > git --version # timeout=10
+[2026-01-22T10:49:59.619Z]  > git --version # 'git version 2.47.3'
+[2026-01-22T10:49:59.619Z] using GIT_ASKPASS to set credentials Gitea Access Token for Buy-01
+[2026-01-22T10:49:59.622Z]  > git fetch --tags --force --progress -- https://01.gritlab.ax/git/mkheirkh/buy-01.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+[2026-01-22T10:49:59.807Z]  > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+[2026-01-22T10:49:59.810Z] Checking out Revision f632d7efd4668c98724376418127c977489478ae (refs/remotes/origin/main)
+[2026-01-22T10:49:59.810Z]  > git config core.sparsecheckout # timeout=10
+[2026-01-22T10:49:59.812Z]  > git checkout -f f632d7efd4668c98724376418127c977489478ae # timeout=10
+[2026-01-22T10:49:59.822Z] Commit message: "feat: establish best practices ecosystem with collaborative development process"
+[2026-01-22T10:49:59.823Z]  > git rev-list --no-walk f632d7efd4668c98724376418127c977489478ae # timeout=10
+[Pipeline] echo
+[2026-01-22T10:50:00.552Z] ✅ Checkout completed from Gitea
+[Pipeline] sh
+[2026-01-22T10:50:00.828Z] + git log --oneline -5
+[2026-01-22T10:50:00.828Z] f632d7e feat: establish best practices ecosystem with collaborative development process
+[2026-01-22T10:50:00.828Z] c2fb6d7 fix: suppress SonarQube warning for Random in non-cryptographic dummy data generator
+[2026-01-22T10:50:00.828Z] a4edb27 fix: resolve SonarQube code quality issues - replace System.out/err with SLF4J loggers
+[2026-01-22T10:50:00.828Z] bffc294 fix: use lightweight alpine-chrome image for frontend tests and increase timeout
+[2026-01-22T10:50:00.828Z] 4266fcf fix: use official SonarSource scanner image for Frontend analysis
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🚀 Start SonarQube Early)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+[2026-01-22T10:50:01.087Z] 🚀 Starting SonarQube service early (before tests)...
+[Pipeline] sh
+[2026-01-22T10:50:01.361Z] ✅ SonarQube is already running
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🏗️ Build)
+[Pipeline] parallel
+[Pipeline] { (Branch: Backend Build)
+[Pipeline] { (Branch: Frontend Build)
+[Pipeline] stage
+[Pipeline] { (Backend Build)
+[Pipeline] stage
+[Pipeline] { (Frontend Build)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+[2026-01-22T10:50:01.667Z] 🏗️ Building backend microservices...
+[Pipeline] sh
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+[2026-01-22T10:50:01.715Z] 🏗️ Building frontend...
+[Pipeline] sh
+[2026-01-22T10:50:01.929Z] + docker run --rm --volumes-from jenkins-cicd -w /var/jenkins_home/workspace/buy-01-multibranch_main/backend -v jenkins_m2_cache:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -e TESTCONTAINERS_RYUK_DISABLED=true --network host maven:3.9.6-amazoncorretto-17 mvn clean install -B -DskipTests
+[2026-01-22T10:50:01.993Z] + export NODE_OPTIONS=--max-old-space-size=4096
+[2026-01-22T10:50:01.993Z] + docker run --rm --volumes-from jenkins-cicd -w /var/jenkins_home/workspace/buy-01-multibranch_main/frontend -e NODE_OPTIONS=--max-old-space-size=4096 node:22 sh -c npm install --legacy-peer-deps && npm run build
+[2026-01-22T10:50:04.451Z] [INFO] Scanning for projects...
+[2026-01-22T10:50:05.417Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:50:05.417Z] [INFO] Reactor Build Order:
+[2026-01-22T10:50:05.417Z] [INFO] 
+[2026-01-22T10:50:05.417Z] [INFO] backend                                                            [pom]
+[2026-01-22T10:50:05.417Z] [INFO] common                                                             [jar]
+[2026-01-22T10:50:05.417Z] [INFO] discovery-service                                                  [jar]
+[2026-01-22T10:50:05.417Z] [INFO] API Gateway                                                        [jar]
+[2026-01-22T10:50:05.417Z] [INFO] user-service                                                       [jar]
+[2026-01-22T10:50:05.417Z] [INFO] product-service                                                    [jar]
+[2026-01-22T10:50:05.417Z] [INFO] media-service                                                      [jar]
+[2026-01-22T10:50:05.417Z] [INFO] dummy-data                                                         [jar]
+[2026-01-22T10:50:05.417Z] [INFO] 
+[2026-01-22T10:50:05.417Z] [INFO] ------------------------< com.backend:backend >-------------------------
+[2026-01-22T10:50:05.417Z] [INFO] Building backend 0.0.1-SNAPSHOT                                    [1/8]
+[2026-01-22T10:50:05.417Z] [INFO]   from pom.xml
+[2026-01-22T10:50:05.417Z] [INFO] --------------------------------[ pom ]---------------------------------
+[2026-01-22T10:50:05.417Z] [INFO] 
+[2026-01-22T10:50:05.417Z] [INFO] --- clean:3.2.0:clean (default-clean) @ backend ---
+[2026-01-22T10:50:05.978Z] [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/target
+[2026-01-22T10:50:05.978Z] [INFO] 
+[2026-01-22T10:50:05.978Z] [INFO] --- install:3.1.1:install (default-install) @ backend ---
+[2026-01-22T10:50:05.978Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/pom.xml to /root/.m2/repository/com/backend/backend/0.0.1-SNAPSHOT/backend-0.0.1-SNAPSHOT.pom
+[2026-01-22T10:50:05.978Z] [INFO] 
+[2026-01-22T10:50:05.978Z] [INFO] -------------------------< com.backend:common >-------------------------
+[2026-01-22T10:50:05.978Z] [INFO] Building common 0.0.1-SNAPSHOT                                     [2/8]
+[2026-01-22T10:50:05.978Z] [INFO]   from common/pom.xml
+[2026-01-22T10:50:05.978Z] [INFO] --------------------------------[ jar ]---------------------------------
+[2026-01-22T10:50:06.901Z] [INFO] 
+[2026-01-22T10:50:06.901Z] [INFO] --- clean:3.2.0:clean (default-clean) @ common ---
+[2026-01-22T10:50:06.901Z] [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/common/target
+[2026-01-22T10:50:06.901Z] [INFO] 
+[2026-01-22T10:50:06.901Z] [INFO] --- resources:3.3.1:resources (default-resources) @ common ---
+[2026-01-22T10:50:07.153Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:07.153Z] [INFO] Copying 1 resource from src/main/resources to target/classes
+[2026-01-22T10:50:07.153Z] [INFO] 
+[2026-01-22T10:50:07.153Z] [INFO] --- compiler:3.13.0:compile (default-compile) @ common ---
+[2026-01-22T10:50:07.197Z] 
+[2026-01-22T10:50:07.197Z] up to date, audited 616 packages in 4s
+[2026-01-22T10:50:07.197Z] 
+[2026-01-22T10:50:07.197Z] 108 packages are looking for funding
+[2026-01-22T10:50:07.197Z]   run `npm fund` for details
+[2026-01-22T10:50:07.197Z] 
+[2026-01-22T10:50:07.197Z] 13 vulnerabilities (3 moderate, 10 high)
+[2026-01-22T10:50:07.197Z] 
+[2026-01-22T10:50:07.197Z] To address all issues, run:
+[2026-01-22T10:50:07.197Z]   npm audit fix
+[2026-01-22T10:50:07.197Z] 
+[2026-01-22T10:50:07.197Z] Run `npm audit` for details.
+[2026-01-22T10:50:07.197Z] npm notice
+[2026-01-22T10:50:07.197Z] npm notice New major version of npm available! 10.9.4 -> 11.8.0
+[2026-01-22T10:50:07.197Z] npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.8.0
+[2026-01-22T10:50:07.197Z] npm notice To update run: npm install -g npm@11.8.0
+[2026-01-22T10:50:07.197Z] npm notice
+[2026-01-22T10:50:07.197Z] 
+[2026-01-22T10:50:07.197Z] > frontend@0.0.0 build
+[2026-01-22T10:50:07.197Z] > ng build
+[2026-01-22T10:50:07.197Z] 
+[2026-01-22T10:50:07.405Z] [INFO] Recompiling the module because of changed source code.
+[2026-01-22T10:50:07.405Z] [INFO] Compiling 10 source files with javac [debug release 17] to target/classes
+[2026-01-22T10:50:10.457Z] ❯ Building...
+[2026-01-22T10:50:11.543Z] [INFO] 
+[2026-01-22T10:50:11.543Z] [INFO] --- resources:3.3.1:testResources (default-testResources) @ common ---
+[2026-01-22T10:50:11.543Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:11.543Z] [INFO] skip non existing resourceDirectory /var/jenkins_home/workspace/buy-01-multibranch_main/backend/common/src/test/resources
+[2026-01-22T10:50:11.543Z] [INFO] 
+[2026-01-22T10:50:11.543Z] [INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ common ---
+[2026-01-22T10:50:11.543Z] [INFO] No sources to compile
+[2026-01-22T10:50:11.543Z] [INFO] 
+[2026-01-22T10:50:11.543Z] [INFO] --- surefire:3.2.2:test (default-test) @ common ---
+[2026-01-22T10:50:12.479Z] [INFO] Tests are skipped.
+[2026-01-22T10:50:12.480Z] [INFO] 
+[2026-01-22T10:50:12.480Z] [INFO] --- jar:3.3.0:jar (default-jar) @ common ---
+[2026-01-22T10:50:12.731Z] [INFO] Building jar: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/common/target/common-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:12.983Z] [INFO] 
+[2026-01-22T10:50:12.983Z] [INFO] --- install:3.1.1:install (default-install) @ common ---
+[2026-01-22T10:50:12.983Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/common/pom.xml to /root/.m2/repository/com/backend/common/0.0.1-SNAPSHOT/common-0.0.1-SNAPSHOT.pom
+[2026-01-22T10:50:12.984Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/common/target/common-0.0.1-SNAPSHOT.jar to /root/.m2/repository/com/backend/common/0.0.1-SNAPSHOT/common-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:12.984Z] [INFO] 
+[2026-01-22T10:50:12.984Z] [INFO] -------------------< com.backend:discovery-service >--------------------
+[2026-01-22T10:50:12.984Z] [INFO] Building discovery-service 0.0.1-SNAPSHOT                          [3/8]
+[2026-01-22T10:50:12.984Z] [INFO]   from discovery-service/pom.xml
+[2026-01-22T10:50:12.984Z] [INFO] --------------------------------[ jar ]---------------------------------
+[2026-01-22T10:50:14.331Z] [INFO] 
+[2026-01-22T10:50:14.331Z] [INFO] --- clean:3.2.0:clean (default-clean) @ discovery-service ---
+[2026-01-22T10:50:14.331Z] [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/target
+[2026-01-22T10:50:14.331Z] [INFO] 
+[2026-01-22T10:50:14.331Z] [INFO] --- resources:3.3.1:resources (default-resources) @ discovery-service ---
+[2026-01-22T10:50:14.331Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:14.331Z] [INFO] Copying 4 resources from src/main/resources to target/classes
+[2026-01-22T10:50:14.331Z] [INFO] 
+[2026-01-22T10:50:14.331Z] [INFO] --- compiler:3.13.0:compile (default-compile) @ discovery-service ---
+[2026-01-22T10:50:14.331Z] [INFO] Recompiling the module because of changed dependency.
+[2026-01-22T10:50:14.331Z] [INFO] Compiling 2 source files with javac [debug release 17] to target/classes
+[2026-01-22T10:50:16.825Z] [INFO] 
+[2026-01-22T10:50:16.825Z] [INFO] --- resources:3.3.1:testResources (default-testResources) @ discovery-service ---
+[2026-01-22T10:50:16.825Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:16.825Z] [INFO] skip non existing resourceDirectory /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/src/test/resources
+[2026-01-22T10:50:16.825Z] [INFO] 
+[2026-01-22T10:50:16.825Z] [INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ discovery-service ---
+[2026-01-22T10:50:16.825Z] [INFO] Recompiling the module because of changed dependency.
+[2026-01-22T10:50:16.825Z] [INFO] Compiling 1 source file with javac [debug release 17] to target/test-classes
+[2026-01-22T10:50:18.184Z] [INFO] 
+[2026-01-22T10:50:18.184Z] [INFO] --- surefire:3.2.2:test (default-test) @ discovery-service ---
+[2026-01-22T10:50:18.435Z] [INFO] Tests are skipped.
+[2026-01-22T10:50:18.435Z] [INFO] 
+[2026-01-22T10:50:18.435Z] [INFO] --- jar:3.3.0:jar (default-jar) @ discovery-service ---
+[2026-01-22T10:50:18.436Z] [INFO] Building jar: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/target/discovery-service-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:18.436Z] [INFO] 
+[2026-01-22T10:50:18.436Z] [INFO] --- spring-boot:3.2.8:repackage (default) @ discovery-service ---
+[2026-01-22T10:50:20.930Z] [INFO] Replacing main artifact /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/target/discovery-service-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[2026-01-22T10:50:20.930Z] [INFO] The original artifact has been renamed to /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/target/discovery-service-0.0.1-SNAPSHOT.jar.original
+[2026-01-22T10:50:20.930Z] [INFO] 
+[2026-01-22T10:50:20.930Z] [INFO] --- install:3.1.1:install (default-install) @ discovery-service ---
+[2026-01-22T10:50:20.930Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/pom.xml to /root/.m2/repository/com/backend/discovery-service/0.0.1-SNAPSHOT/discovery-service-0.0.1-SNAPSHOT.pom
+[2026-01-22T10:50:20.930Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/discovery-service/target/discovery-service-0.0.1-SNAPSHOT.jar to /root/.m2/repository/com/backend/discovery-service/0.0.1-SNAPSHOT/discovery-service-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:20.930Z] [INFO] 
+[2026-01-22T10:50:20.930Z] [INFO] ----------------------< com.backend:api-gateway >-----------------------
+[2026-01-22T10:50:20.930Z] [INFO] Building API Gateway 0.0.1-SNAPSHOT                                [4/8]
+[2026-01-22T10:50:20.930Z] [INFO]   from api-gateway/pom.xml
+[2026-01-22T10:50:20.930Z] [INFO] --------------------------------[ jar ]---------------------------------
+[2026-01-22T10:50:21.484Z] [INFO] 
+[2026-01-22T10:50:21.484Z] [INFO] --- clean:3.2.0:clean (default-clean) @ api-gateway ---
+[2026-01-22T10:50:21.484Z] [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/target
+[2026-01-22T10:50:21.484Z] [INFO] 
+[2026-01-22T10:50:21.484Z] [INFO] --- resources:3.3.1:resources (default-resources) @ api-gateway ---
+[2026-01-22T10:50:21.484Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:21.484Z] [INFO] Copying 4 resources from src/main/resources to target/classes
+[2026-01-22T10:50:21.484Z] [INFO] 
+[2026-01-22T10:50:21.484Z] [INFO] --- compiler:3.13.0:compile (default-compile) @ api-gateway ---
+[2026-01-22T10:50:21.484Z] [INFO] Recompiling the module because of changed dependency.
+[2026-01-22T10:50:21.484Z] [INFO] Compiling 9 source files with javac [debug release 17] to target/classes
+[2026-01-22T10:50:23.974Z] [INFO] 
+[2026-01-22T10:50:23.974Z] [INFO] --- resources:3.3.1:testResources (default-testResources) @ api-gateway ---
+[2026-01-22T10:50:23.974Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:23.974Z] [INFO] skip non existing resourceDirectory /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/src/test/resources
+[2026-01-22T10:50:23.974Z] [INFO] 
+[2026-01-22T10:50:23.974Z] [INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ api-gateway ---
+[2026-01-22T10:50:23.974Z] [INFO] Recompiling the module because of changed dependency.
+[2026-01-22T10:50:23.974Z] [INFO] Compiling 1 source file with javac [debug release 17] to target/test-classes
+[2026-01-22T10:50:24.526Z] [INFO] 
+[2026-01-22T10:50:24.526Z] [INFO] --- surefire:3.2.2:test (default-test) @ api-gateway ---
+[2026-01-22T10:50:24.526Z] [INFO] Tests are skipped.
+[2026-01-22T10:50:24.526Z] [INFO] 
+[2026-01-22T10:50:24.527Z] [INFO] --- jar:3.3.0:jar (default-jar) @ api-gateway ---
+[2026-01-22T10:50:24.527Z] [INFO] Building jar: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:24.527Z] [INFO] 
+[2026-01-22T10:50:24.527Z] [INFO] --- spring-boot:3.2.8:repackage (default) @ api-gateway ---
+[2026-01-22T10:50:25.089Z] [INFO] Replacing main artifact /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[2026-01-22T10:50:25.089Z] [INFO] The original artifact has been renamed to /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar.original
+[2026-01-22T10:50:25.089Z] [INFO] 
+[2026-01-22T10:50:25.089Z] [INFO] --- install:3.1.1:install (default-install) @ api-gateway ---
+[2026-01-22T10:50:25.089Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/pom.xml to /root/.m2/repository/com/backend/api-gateway/0.0.1-SNAPSHOT/api-gateway-0.0.1-SNAPSHOT.pom
+[2026-01-22T10:50:25.089Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar to /root/.m2/repository/com/backend/api-gateway/0.0.1-SNAPSHOT/api-gateway-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:25.298Z] ✔ Building...
+[2026-01-22T10:50:25.298Z] Initial chunk files   | Names         |  Raw size | Estimated transfer size
+[2026-01-22T10:50:25.298Z] main-SYDKVATZ.js      | main          | 932.38 kB |               191.50 kB
+[2026-01-22T10:50:25.298Z] styles-Q77YOUOS.css   | styles        |  96.44 kB |                 7.22 kB
+[2026-01-22T10:50:25.298Z] polyfills-5CFQRCPP.js | polyfills     |  34.59 kB |                11.33 kB
+[2026-01-22T10:50:25.298Z] 
+[2026-01-22T10:50:25.298Z]                       | Initial total |   1.06 MB |               210.05 kB
+[2026-01-22T10:50:25.298Z] 
+[2026-01-22T10:50:25.298Z] Application bundle generation complete. [14.407 seconds] - 2026-01-22T10:50:24.756Z
+[2026-01-22T10:50:25.298Z] 
+[2026-01-22T10:50:25.298Z] ▲ [WARNING] NG8113: EditProductModal is not used within the template of ProductCard [plugin angular-compiler]
+[2026-01-22T10:50:25.298Z] 
+[2026-01-22T10:50:25.298Z]     src/app/components/product-card/product-card.ts:25:4:
+[2026-01-22T10:50:25.298Z]       25 │     EditProductModal
+[2026-01-22T10:50:25.298Z]          ╵     ~~~~~~~~~~~~~~~~
+[2026-01-22T10:50:25.298Z] 
+[2026-01-22T10:50:25.298Z] 
+[2026-01-22T10:50:25.299Z] ▲ [WARNING] NG8113: RouterLink is not used within the template of CreateProduct [plugin angular-compiler]
+[2026-01-22T10:50:25.299Z] 
+[2026-01-22T10:50:25.299Z]     src/app/pages/create-product/create-product.ts:19:4:
+[2026-01-22T10:50:25.299Z]       19 │     RouterLink,
+[2026-01-22T10:50:25.299Z]          ╵     ~~~~~~~~~~
+[2026-01-22T10:50:25.299Z] 
+[2026-01-22T10:50:25.299Z] 
+[2026-01-22T10:50:25.299Z] ▲ [WARNING] NG8113: PasswordConfirmDialog is not used within the template of MyInfo [plugin angular-compiler]
+[2026-01-22T10:50:25.299Z] 
+[2026-01-22T10:50:25.299Z]     src/app/pages/my-info/my-info.ts:32:4:
+[2026-01-22T10:50:25.299Z]       32 │     PasswordConfirmDialog,
+[2026-01-22T10:50:25.299Z]          ╵     ~~~~~~~~~~~~~~~~~~~~~
+[2026-01-22T10:50:25.299Z] 
+[2026-01-22T10:50:25.299Z] 
+[2026-01-22T10:50:25.299Z] ▲ [WARNING] NG8113: ConfirmDialog is not used within the template of MyInfo [plugin angular-compiler]
+[2026-01-22T10:50:25.299Z] 
+[2026-01-22T10:50:25.299Z]     src/app/pages/my-info/my-info.ts:33:4:
+[2026-01-22T10:50:25.299Z]       33 │     ConfirmDialog,
+[2026-01-22T10:50:25.299Z]          ╵     ~~~~~~~~~~~~~
+[2026-01-22T10:50:25.299Z] 
+[2026-01-22T10:50:25.299Z] 
+[2026-01-22T10:50:25.299Z] Output location: /var/jenkins_home/workspace/buy-01-multibranch_main/frontend/dist/frontend
+[2026-01-22T10:50:25.299Z] 
+[2026-01-22T10:50:25.340Z] [INFO] 
+[2026-01-22T10:50:25.340Z] [INFO] ----------------------< com.backend:user-service >----------------------
+[2026-01-22T10:50:25.340Z] [INFO] Building user-service 0.0.1-SNAPSHOT                               [5/8]
+[2026-01-22T10:50:25.340Z] [INFO]   from user-service/pom.xml
+[2026-01-22T10:50:25.340Z] [INFO] --------------------------------[ jar ]---------------------------------
+[2026-01-22T10:50:26.254Z] [INFO] 
+[2026-01-22T10:50:26.254Z] [INFO] --- clean:3.2.0:clean (default-clean) @ user-service ---
+[2026-01-22T10:50:26.254Z] [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target
+[2026-01-22T10:50:26.254Z] [INFO] 
+[2026-01-22T10:50:26.254Z] [INFO] --- resources:3.3.1:resources (default-resources) @ user-service ---
+[2026-01-22T10:50:26.254Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:26.254Z] [INFO] Copying 4 resources from src/main/resources to target/classes
+[2026-01-22T10:50:26.254Z] [INFO] 
+[2026-01-22T10:50:26.254Z] [INFO] --- compiler:3.11.0:compile (default-compile) @ user-service ---
+[2026-01-22T10:50:26.507Z] [INFO] Changes detected - recompiling the module! :dependency
+[2026-01-22T10:50:26.507Z] [INFO] Compiling 14 source files with javac [debug release 17] to target/classes
+[2026-01-22T10:50:26.645Z] + [ -d /var/jenkins_home/workspace/buy-01-multibranch_main/frontend/dist ]
+[2026-01-22T10:50:26.645Z] + echo ✅ Frontend dist created
+[2026-01-22T10:50:26.645Z] ✅ Frontend dist created
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[2026-01-22T10:50:29.776Z] [WARNING] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/src/main/java/com/backend/user_service/repository/UserMapper.java:[12,10] Unmapped target properties: "id, password, role, avatarUrl".
+[2026-01-22T10:50:29.777Z] [INFO] 
+[2026-01-22T10:50:29.777Z] [INFO] --- resources:3.3.1:testResources (default-testResources) @ user-service ---
+[2026-01-22T10:50:29.777Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:29.777Z] [INFO] Copying 2 resources from src/test/resources to target/test-classes
+[2026-01-22T10:50:29.777Z] [INFO] 
+[2026-01-22T10:50:29.777Z] [INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ user-service ---
+[2026-01-22T10:50:29.777Z] [INFO] Changes detected - recompiling the module! :dependency
+[2026-01-22T10:50:29.777Z] [INFO] Compiling 5 source files with javac [debug release 17] to target/test-classes
+[2026-01-22T10:50:30.694Z] [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/src/test/java/com/backend/user_service/TestKafkaConfig.java: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/src/test/java/com/backend/user_service/TestKafkaConfig.java uses unchecked or unsafe operations.
+[2026-01-22T10:50:30.694Z] [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/src/test/java/com/backend/user_service/TestKafkaConfig.java: Recompile with -Xlint:unchecked for details.
+[2026-01-22T10:50:30.694Z] [INFO] 
+[2026-01-22T10:50:30.694Z] [INFO] --- surefire:3.2.2:test (default-test) @ user-service ---
+[2026-01-22T10:50:30.694Z] [INFO] Tests are skipped.
+[2026-01-22T10:50:30.694Z] [INFO] 
+[2026-01-22T10:50:30.694Z] [INFO] --- jar:3.3.0:jar (default-jar) @ user-service ---
+[2026-01-22T10:50:30.694Z] [INFO] Building jar: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target/user-service-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:30.694Z] [INFO] 
+[2026-01-22T10:50:30.694Z] [INFO] --- spring-boot:3.2.8:repackage (default) @ user-service ---
+[2026-01-22T10:50:31.249Z] [INFO] Replacing main artifact /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target/user-service-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[2026-01-22T10:50:31.249Z] [INFO] The original artifact has been renamed to /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target/user-service-0.0.1-SNAPSHOT.jar.original
+[2026-01-22T10:50:31.249Z] [INFO] 
+[2026-01-22T10:50:31.249Z] [INFO] --- install:3.1.1:install (default-install) @ user-service ---
+[2026-01-22T10:50:31.249Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/pom.xml to /root/.m2/repository/com/backend/user-service/0.0.1-SNAPSHOT/user-service-0.0.1-SNAPSHOT.pom
+[2026-01-22T10:50:31.249Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target/user-service-0.0.1-SNAPSHOT.jar to /root/.m2/repository/com/backend/user-service/0.0.1-SNAPSHOT/user-service-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:31.249Z] [INFO] 
+[2026-01-22T10:50:31.249Z] [INFO] --------------------< com.backend:product-service >---------------------
+[2026-01-22T10:50:31.249Z] [INFO] Building product-service 0.0.1-SNAPSHOT                            [6/8]
+[2026-01-22T10:50:31.249Z] [INFO]   from product-service/pom.xml
+[2026-01-22T10:50:31.249Z] [INFO] --------------------------------[ jar ]---------------------------------
+[2026-01-22T10:50:31.249Z] [INFO] 
+[2026-01-22T10:50:31.249Z] [INFO] --- clean:3.2.0:clean (default-clean) @ product-service ---
+[2026-01-22T10:50:31.249Z] [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/target
+[2026-01-22T10:50:31.249Z] [INFO] 
+[2026-01-22T10:50:31.249Z] [INFO] --- resources:3.3.1:resources (default-resources) @ product-service ---
+[2026-01-22T10:50:31.249Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:31.249Z] [INFO] Copying 4 resources from src/main/resources to target/classes
+[2026-01-22T10:50:31.249Z] [INFO] 
+[2026-01-22T10:50:31.249Z] [INFO] --- compiler:3.11.0:compile (default-compile) @ product-service ---
+[2026-01-22T10:50:31.500Z] [INFO] Changes detected - recompiling the module! :dependency
+[2026-01-22T10:50:31.500Z] [INFO] Compiling 15 source files with javac [debug release 17] to target/classes
+[2026-01-22T10:50:33.366Z] [WARNING] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/src/main/java/com/backend/product_service/service/ProductMapper.java:[14,10] Unmapped target properties: "id, sellerID, createdAt, updatedAt".
+[2026-01-22T10:50:33.366Z] [INFO] 
+[2026-01-22T10:50:33.366Z] [INFO] --- resources:3.3.1:testResources (default-testResources) @ product-service ---
+[2026-01-22T10:50:33.366Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:33.366Z] [INFO] Copying 1 resource from src/test/resources to target/test-classes
+[2026-01-22T10:50:33.366Z] [INFO] 
+[2026-01-22T10:50:33.366Z] [INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ product-service ---
+[2026-01-22T10:50:33.366Z] [INFO] Changes detected - recompiling the module! :dependency
+[2026-01-22T10:50:33.366Z] [INFO] Compiling 5 source files with javac [debug release 17] to target/test-classes
+[2026-01-22T10:50:34.723Z] [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/src/test/java/com/backend/product_service/TestKafkaConfig.java: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/src/test/java/com/backend/product_service/TestKafkaConfig.java uses unchecked or unsafe operations.
+[2026-01-22T10:50:34.723Z] [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/src/test/java/com/backend/product_service/TestKafkaConfig.java: Recompile with -Xlint:unchecked for details.
+[2026-01-22T10:50:34.723Z] [INFO] 
+[2026-01-22T10:50:34.723Z] [INFO] --- surefire:3.2.2:test (default-test) @ product-service ---
+[2026-01-22T10:50:34.723Z] [INFO] Tests are skipped.
+[2026-01-22T10:50:34.723Z] [INFO] 
+[2026-01-22T10:50:34.723Z] [INFO] --- jar:3.3.0:jar (default-jar) @ product-service ---
+[2026-01-22T10:50:34.723Z] [INFO] Building jar: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/target/product-service-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:34.723Z] [INFO] 
+[2026-01-22T10:50:34.723Z] [INFO] --- spring-boot:3.2.8:repackage (default) @ product-service ---
+[2026-01-22T10:50:34.974Z] [INFO] Replacing main artifact /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/target/product-service-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[2026-01-22T10:50:34.974Z] [INFO] The original artifact has been renamed to /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/target/product-service-0.0.1-SNAPSHOT.jar.original
+[2026-01-22T10:50:34.974Z] [INFO] 
+[2026-01-22T10:50:34.974Z] [INFO] --- install:3.1.1:install (default-install) @ product-service ---
+[2026-01-22T10:50:34.974Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/pom.xml to /root/.m2/repository/com/backend/product-service/0.0.1-SNAPSHOT/product-service-0.0.1-SNAPSHOT.pom
+[2026-01-22T10:50:34.974Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service/target/product-service-0.0.1-SNAPSHOT.jar to /root/.m2/repository/com/backend/product-service/0.0.1-SNAPSHOT/product-service-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:35.229Z] [INFO] 
+[2026-01-22T10:50:35.229Z] [INFO] ---------------------< com.backend:media-service >----------------------
+[2026-01-22T10:50:35.229Z] [INFO] Building media-service 0.0.1-SNAPSHOT                              [7/8]
+[2026-01-22T10:50:35.229Z] [INFO]   from media-service/pom.xml
+[2026-01-22T10:50:35.229Z] [INFO] --------------------------------[ jar ]---------------------------------
+[2026-01-22T10:50:35.229Z] [INFO] 
+[2026-01-22T10:50:35.229Z] [INFO] --- clean:3.2.0:clean (default-clean) @ media-service ---
+[2026-01-22T10:50:35.229Z] [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/media-service/target
+[2026-01-22T10:50:35.229Z] [INFO] 
+[2026-01-22T10:50:35.229Z] [INFO] --- resources:3.3.1:resources (default-resources) @ media-service ---
+[2026-01-22T10:50:35.229Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:35.229Z] [INFO] Copying 4 resources from src/main/resources to target/classes
+[2026-01-22T10:50:35.229Z] [INFO] 
+[2026-01-22T10:50:35.229Z] [INFO] --- compiler:3.13.0:compile (default-compile) @ media-service ---
+[2026-01-22T10:50:35.229Z] [INFO] Recompiling the module because of changed dependency.
+[2026-01-22T10:50:35.230Z] [INFO] Compiling 8 source files with javac [debug release 17] to target/classes
+[2026-01-22T10:50:35.784Z] [INFO] 
+[2026-01-22T10:50:35.784Z] [INFO] --- resources:3.3.1:testResources (default-testResources) @ media-service ---
+[2026-01-22T10:50:35.784Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:35.784Z] [INFO] Copying 1 resource from src/test/resources to target/test-classes
+[2026-01-22T10:50:35.784Z] [INFO] 
+[2026-01-22T10:50:35.784Z] [INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ media-service ---
+[2026-01-22T10:50:35.784Z] [INFO] Recompiling the module because of changed dependency.
+[2026-01-22T10:50:35.785Z] [INFO] Compiling 5 source files with javac [debug release 17] to target/test-classes
+[2026-01-22T10:50:36.699Z] [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/media-service/src/test/java/com/backend/media_service/TestKafkaConfig.java: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/media-service/src/test/java/com/backend/media_service/TestKafkaConfig.java uses unchecked or unsafe operations.
+[2026-01-22T10:50:36.699Z] [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/media-service/src/test/java/com/backend/media_service/TestKafkaConfig.java: Recompile with -Xlint:unchecked for details.
+[2026-01-22T10:50:36.699Z] [INFO] 
+[2026-01-22T10:50:36.699Z] [INFO] --- surefire:3.2.2:test (default-test) @ media-service ---
+[2026-01-22T10:50:36.699Z] [INFO] Tests are skipped.
+[2026-01-22T10:50:36.699Z] [INFO] 
+[2026-01-22T10:50:36.700Z] [INFO] --- jar:3.3.0:jar (default-jar) @ media-service ---
+[2026-01-22T10:50:36.702Z] [INFO] Building jar: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/media-service/target/media-service-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:36.702Z] [INFO] 
+[2026-01-22T10:50:36.702Z] [INFO] --- spring-boot:3.2.8:repackage (default) @ media-service ---
+[2026-01-22T10:50:36.956Z] [INFO] Replacing main artifact /var/jenkins_home/workspace/buy-01-multibranch_main/backend/media-service/target/media-service-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[2026-01-22T10:50:36.956Z] [INFO] The original artifact has been renamed to /var/jenkins_home/workspace/buy-01-multibranch_main/backend/media-service/target/media-service-0.0.1-SNAPSHOT.jar.original
+[2026-01-22T10:50:36.956Z] [INFO] 
+[2026-01-22T10:50:36.956Z] [INFO] --- install:3.1.1:install (default-install) @ media-service ---
+[2026-01-22T10:50:36.956Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/media-service/pom.xml to /root/.m2/repository/com/backend/media-service/0.0.1-SNAPSHOT/media-service-0.0.1-SNAPSHOT.pom
+[2026-01-22T10:50:36.956Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/media-service/target/media-service-0.0.1-SNAPSHOT.jar to /root/.m2/repository/com/backend/media-service/0.0.1-SNAPSHOT/media-service-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:37.513Z] [INFO] 
+[2026-01-22T10:50:37.513Z] [INFO] -----------------------< com.backend:dummy-data >-----------------------
+[2026-01-22T10:50:37.513Z] [INFO] Building dummy-data 0.0.1-SNAPSHOT                                 [8/8]
+[2026-01-22T10:50:37.513Z] [INFO]   from dummy-data/pom.xml
+[2026-01-22T10:50:37.513Z] [INFO] --------------------------------[ jar ]---------------------------------
+[2026-01-22T10:50:37.513Z] [INFO] 
+[2026-01-22T10:50:37.513Z] [INFO] --- clean:3.2.0:clean (default-clean) @ dummy-data ---
+[2026-01-22T10:50:37.513Z] [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/dummy-data/target
+[2026-01-22T10:50:37.513Z] [INFO] 
+[2026-01-22T10:50:37.513Z] [INFO] --- resources:3.3.1:resources (default-resources) @ dummy-data ---
+[2026-01-22T10:50:37.513Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:37.513Z] [INFO] Copying 4 resources from src/main/resources to target/classes
+[2026-01-22T10:50:37.513Z] [INFO] 
+[2026-01-22T10:50:37.513Z] [INFO] --- compiler:3.13.0:compile (default-compile) @ dummy-data ---
+[2026-01-22T10:50:37.513Z] [INFO] Recompiling the module because of changed dependency.
+[2026-01-22T10:50:37.513Z] [INFO] Compiling 3 source files with javac [debug release 17] to target/classes
+[2026-01-22T10:50:38.066Z] [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/dummy-data/src/main/java/com/backend/dummy_data/generator/DummyDataGenerator.java: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/dummy-data/src/main/java/com/backend/dummy_data/generator/DummyDataGenerator.java uses unchecked or unsafe operations.
+[2026-01-22T10:50:38.066Z] [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/dummy-data/src/main/java/com/backend/dummy_data/generator/DummyDataGenerator.java: Recompile with -Xlint:unchecked for details.
+[2026-01-22T10:50:38.066Z] [INFO] 
+[2026-01-22T10:50:38.066Z] [INFO] --- resources:3.3.1:testResources (default-testResources) @ dummy-data ---
+[2026-01-22T10:50:38.066Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:38.066Z] [INFO] skip non existing resourceDirectory /var/jenkins_home/workspace/buy-01-multibranch_main/backend/dummy-data/src/test/resources
+[2026-01-22T10:50:38.066Z] [INFO] 
+[2026-01-22T10:50:38.066Z] [INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ dummy-data ---
+[2026-01-22T10:50:38.066Z] [INFO] Recompiling the module because of changed dependency.
+[2026-01-22T10:50:38.066Z] [INFO] Compiling 1 source file with javac [debug release 17] to target/test-classes
+[2026-01-22T10:50:38.318Z] [INFO] 
+[2026-01-22T10:50:38.318Z] [INFO] --- surefire:3.2.2:test (default-test) @ dummy-data ---
+[2026-01-22T10:50:38.318Z] [INFO] Tests are skipped.
+[2026-01-22T10:50:38.318Z] [INFO] 
+[2026-01-22T10:50:38.318Z] [INFO] --- jar:3.3.0:jar (default-jar) @ dummy-data ---
+[2026-01-22T10:50:38.318Z] [INFO] Building jar: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/dummy-data/target/dummy-data-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:38.318Z] [INFO] 
+[2026-01-22T10:50:38.318Z] [INFO] --- spring-boot:3.2.8:repackage (default) @ dummy-data ---
+[2026-01-22T10:50:38.570Z] [INFO] Replacing main artifact /var/jenkins_home/workspace/buy-01-multibranch_main/backend/dummy-data/target/dummy-data-0.0.1-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[2026-01-22T10:50:38.570Z] [INFO] The original artifact has been renamed to /var/jenkins_home/workspace/buy-01-multibranch_main/backend/dummy-data/target/dummy-data-0.0.1-SNAPSHOT.jar.original
+[2026-01-22T10:50:38.570Z] [INFO] 
+[2026-01-22T10:50:38.570Z] [INFO] --- install:3.1.1:install (default-install) @ dummy-data ---
+[2026-01-22T10:50:38.570Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/dummy-data/pom.xml to /root/.m2/repository/com/backend/dummy-data/0.0.1-SNAPSHOT/dummy-data-0.0.1-SNAPSHOT.pom
+[2026-01-22T10:50:38.570Z] [INFO] Installing /var/jenkins_home/workspace/buy-01-multibranch_main/backend/dummy-data/target/dummy-data-0.0.1-SNAPSHOT.jar to /root/.m2/repository/com/backend/dummy-data/0.0.1-SNAPSHOT/dummy-data-0.0.1-SNAPSHOT.jar
+[2026-01-22T10:50:38.821Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:50:38.821Z] [INFO] Reactor Summary for backend 0.0.1-SNAPSHOT:
+[2026-01-22T10:50:38.821Z] [INFO] 
+[2026-01-22T10:50:38.821Z] [INFO] backend ............................................ SUCCESS [  0.708 s]
+[2026-01-22T10:50:38.821Z] [INFO] common ............................................. SUCCESS [  7.050 s]
+[2026-01-22T10:50:38.821Z] [INFO] discovery-service .................................. SUCCESS [  7.877 s]
+[2026-01-22T10:50:38.821Z] [INFO] API Gateway ........................................ SUCCESS [  4.422 s]
+[2026-01-22T10:50:38.821Z] [INFO] user-service ....................................... SUCCESS [  5.929 s]
+[2026-01-22T10:50:38.821Z] [INFO] product-service .................................... SUCCESS [  3.860 s]
+[2026-01-22T10:50:38.821Z] [INFO] media-service ...................................... SUCCESS [  2.371 s]
+[2026-01-22T10:50:38.821Z] [INFO] dummy-data ......................................... SUCCESS [  1.174 s]
+[2026-01-22T10:50:38.821Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:50:38.821Z] [INFO] BUILD SUCCESS
+[2026-01-22T10:50:38.821Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:50:38.821Z] [INFO] Total time:  34.292 s
+[2026-01-22T10:50:38.821Z] [INFO] Finished at: 2026-01-22T10:50:38Z
+[2026-01-22T10:50:38.821Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:50:39.073Z] + echo ✅ Backend build completed
+[2026-01-22T10:50:39.073Z] ✅ Backend build completed
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // parallel
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🧪 Test Backend (Unit))
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+[2026-01-22T10:50:39.405Z] 🧪 Running backend unit tests...
+[Pipeline] echo
+[2026-01-22T10:50:39.426Z] Testing user-service...
+[Pipeline] sh
+[2026-01-22T10:50:39.697Z] + [ -d /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service ]
+[2026-01-22T10:50:39.697Z] + docker run --rm --volumes-from jenkins-cicd -v jenkins_m2_cache:/root/.m2 -w /var/jenkins_home/workspace/buy-01-multibranch_main/backend maven:3.9.6-amazoncorretto-17 mvn test -B -Dtest=*UnitTest -pl user-service
+[2026-01-22T10:50:41.563Z] [INFO] Scanning for projects...
+[2026-01-22T10:50:42.115Z] [INFO] 
+[2026-01-22T10:50:42.115Z] [INFO] ----------------------< com.backend:user-service >----------------------
+[2026-01-22T10:50:42.115Z] [INFO] Building user-service 0.0.1-SNAPSHOT
+[2026-01-22T10:50:42.115Z] [INFO]   from pom.xml
+[2026-01-22T10:50:42.115Z] [INFO] --------------------------------[ jar ]---------------------------------
+[2026-01-22T10:50:43.982Z] [INFO] 
+[2026-01-22T10:50:43.982Z] [INFO] --- resources:3.3.1:resources (default-resources) @ user-service ---
+[2026-01-22T10:50:43.982Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:43.982Z] [INFO] Copying 4 resources from src/main/resources to target/classes
+[2026-01-22T10:50:43.982Z] [INFO] 
+[2026-01-22T10:50:43.982Z] [INFO] --- compiler:3.11.0:compile (default-compile) @ user-service ---
+[2026-01-22T10:50:43.982Z] [INFO] Nothing to compile - all classes are up to date
+[2026-01-22T10:50:43.982Z] [INFO] 
+[2026-01-22T10:50:43.982Z] [INFO] --- resources:3.3.1:testResources (default-testResources) @ user-service ---
+[2026-01-22T10:50:43.982Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:43.982Z] [INFO] Copying 2 resources from src/test/resources to target/test-classes
+[2026-01-22T10:50:43.982Z] [INFO] 
+[2026-01-22T10:50:43.982Z] [INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ user-service ---
+[2026-01-22T10:50:44.234Z] [INFO] Nothing to compile - all classes are up to date
+[2026-01-22T10:50:44.234Z] [INFO] 
+[2026-01-22T10:50:44.234Z] [INFO] --- surefire:3.2.2:test (default-test) @ user-service ---
+[2026-01-22T10:50:44.486Z] [INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[2026-01-22T10:50:44.486Z] [INFO] 
+[2026-01-22T10:50:44.486Z] [INFO] -------------------------------------------------------
+[2026-01-22T10:50:44.486Z] [INFO]  T E S T S
+[2026-01-22T10:50:44.486Z] [INFO] -------------------------------------------------------
+[2026-01-22T10:50:45.398Z] [INFO] Running com.backend.user_service.service.UserServiceUnitTest
+[2026-01-22T10:50:45.650Z] OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[2026-01-22T10:50:46.998Z] [INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.629 s -- in com.backend.user_service.service.UserServiceUnitTest
+[2026-01-22T10:50:46.999Z] [INFO] 
+[2026-01-22T10:50:46.999Z] [INFO] Results:
+[2026-01-22T10:50:46.999Z] [INFO] 
+[2026-01-22T10:50:46.999Z] [INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0
+[2026-01-22T10:50:46.999Z] [INFO] 
+[2026-01-22T10:50:46.999Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:50:46.999Z] [INFO] BUILD SUCCESS
+[2026-01-22T10:50:46.999Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:50:46.999Z] [INFO] Total time:  5.385 s
+[2026-01-22T10:50:46.999Z] [INFO] Finished at: 2026-01-22T10:50:46Z
+[2026-01-22T10:50:46.999Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:50:47.251Z] + echo ✅ user-service unit tests passed
+[2026-01-22T10:50:47.251Z] ✅ user-service unit tests passed
+[Pipeline] echo
+[2026-01-22T10:50:47.282Z] Testing product-service...
+[Pipeline] sh
+[2026-01-22T10:50:47.552Z] + [ -d /var/jenkins_home/workspace/buy-01-multibranch_main/backend/product-service ]
+[2026-01-22T10:50:47.552Z] + docker run --rm --volumes-from jenkins-cicd -v jenkins_m2_cache:/root/.m2 -w /var/jenkins_home/workspace/buy-01-multibranch_main/backend maven:3.9.6-amazoncorretto-17 mvn test -B -Dtest=*UnitTest -pl product-service
+[2026-01-22T10:50:50.042Z] [INFO] Scanning for projects...
+[2026-01-22T10:50:50.042Z] [INFO] 
+[2026-01-22T10:50:50.042Z] [INFO] --------------------< com.backend:product-service >---------------------
+[2026-01-22T10:50:50.042Z] [INFO] Building product-service 0.0.1-SNAPSHOT
+[2026-01-22T10:50:50.042Z] [INFO]   from pom.xml
+[2026-01-22T10:50:50.042Z] [INFO] --------------------------------[ jar ]---------------------------------
+[2026-01-22T10:50:51.388Z] [INFO] 
+[2026-01-22T10:50:51.388Z] [INFO] --- resources:3.3.1:resources (default-resources) @ product-service ---
+[2026-01-22T10:50:51.388Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:51.388Z] [INFO] Copying 4 resources from src/main/resources to target/classes
+[2026-01-22T10:50:51.388Z] [INFO] 
+[2026-01-22T10:50:51.388Z] [INFO] --- compiler:3.11.0:compile (default-compile) @ product-service ---
+[2026-01-22T10:50:51.639Z] [INFO] Nothing to compile - all classes are up to date
+[2026-01-22T10:50:51.639Z] [INFO] 
+[2026-01-22T10:50:51.639Z] [INFO] --- resources:3.3.1:testResources (default-testResources) @ product-service ---
+[2026-01-22T10:50:51.639Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:51.639Z] [INFO] Copying 1 resource from src/test/resources to target/test-classes
+[2026-01-22T10:50:51.639Z] [INFO] 
+[2026-01-22T10:50:51.639Z] [INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ product-service ---
+[2026-01-22T10:50:51.639Z] [INFO] Nothing to compile - all classes are up to date
+[2026-01-22T10:50:51.639Z] [INFO] 
+[2026-01-22T10:50:51.639Z] [INFO] --- surefire:3.2.2:test (default-test) @ product-service ---
+[2026-01-22T10:50:51.890Z] [INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[2026-01-22T10:50:51.890Z] [INFO] 
+[2026-01-22T10:50:51.890Z] [INFO] -------------------------------------------------------
+[2026-01-22T10:50:51.890Z] [INFO]  T E S T S
+[2026-01-22T10:50:51.890Z] [INFO] -------------------------------------------------------
+[2026-01-22T10:50:52.442Z] [INFO] Running com.backend.product_service.service.ProductServiceUnitTest
+[2026-01-22T10:50:52.692Z] OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[2026-01-22T10:50:54.041Z] Get product by productID: product123
+[2026-01-22T10:50:54.041Z] Get product by productID: nonexistent
+[2026-01-22T10:50:54.041Z] Get product by productID: product123
+[2026-01-22T10:50:54.041Z] Get product by productID: product123
+[2026-01-22T10:50:54.293Z] [INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.668 s -- in com.backend.product_service.service.ProductServiceUnitTest
+[2026-01-22T10:50:54.293Z] [INFO] 
+[2026-01-22T10:50:54.293Z] [INFO] Results:
+[2026-01-22T10:50:54.293Z] [INFO] 
+[2026-01-22T10:50:54.293Z] [INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0
+[2026-01-22T10:50:54.293Z] [INFO] 
+[2026-01-22T10:50:54.293Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:50:54.293Z] [INFO] BUILD SUCCESS
+[2026-01-22T10:50:54.293Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:50:54.293Z] [INFO] Total time:  4.569 s
+[2026-01-22T10:50:54.293Z] [INFO] Finished at: 2026-01-22T10:50:54Z
+[2026-01-22T10:50:54.293Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:50:54.293Z] + echo ✅ product-service unit tests passed
+[2026-01-22T10:50:54.293Z] ✅ product-service unit tests passed
+[Pipeline] echo
+[2026-01-22T10:50:54.321Z] Testing media-service...
+[Pipeline] sh
+[2026-01-22T10:50:54.600Z] + [ -d /var/jenkins_home/workspace/buy-01-multibranch_main/backend/media-service ]
+[2026-01-22T10:50:54.600Z] + docker run --rm --volumes-from jenkins-cicd -v jenkins_m2_cache:/root/.m2 -w /var/jenkins_home/workspace/buy-01-multibranch_main/backend maven:3.9.6-amazoncorretto-17 mvn test -B -Dtest=*UnitTest -pl media-service
+[2026-01-22T10:50:56.471Z] [INFO] Scanning for projects...
+[2026-01-22T10:50:56.471Z] [INFO] 
+[2026-01-22T10:50:56.471Z] [INFO] ---------------------< com.backend:media-service >----------------------
+[2026-01-22T10:50:56.471Z] [INFO] Building media-service 0.0.1-SNAPSHOT
+[2026-01-22T10:50:56.472Z] [INFO]   from pom.xml
+[2026-01-22T10:50:56.472Z] [INFO] --------------------------------[ jar ]---------------------------------
+[2026-01-22T10:50:57.385Z] [INFO] 
+[2026-01-22T10:50:57.385Z] [INFO] --- resources:3.3.1:resources (default-resources) @ media-service ---
+[2026-01-22T10:50:57.636Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:57.636Z] [INFO] Copying 4 resources from src/main/resources to target/classes
+[2026-01-22T10:50:57.636Z] [INFO] 
+[2026-01-22T10:50:57.636Z] [INFO] --- compiler:3.13.0:compile (default-compile) @ media-service ---
+[2026-01-22T10:50:57.888Z] [INFO] Nothing to compile - all classes are up to date.
+[2026-01-22T10:50:57.888Z] [INFO] 
+[2026-01-22T10:50:57.888Z] [INFO] --- resources:3.3.1:testResources (default-testResources) @ media-service ---
+[2026-01-22T10:50:57.888Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:50:57.888Z] [INFO] Copying 1 resource from src/test/resources to target/test-classes
+[2026-01-22T10:50:57.888Z] [INFO] 
+[2026-01-22T10:50:57.888Z] [INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ media-service ---
+[2026-01-22T10:50:57.888Z] [INFO] Nothing to compile - all classes are up to date.
+[2026-01-22T10:50:57.888Z] [INFO] 
+[2026-01-22T10:50:57.888Z] [INFO] --- surefire:3.2.2:test (default-test) @ media-service ---
+[2026-01-22T10:50:58.139Z] [INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[2026-01-22T10:50:58.139Z] [INFO] 
+[2026-01-22T10:50:58.139Z] [INFO] -------------------------------------------------------
+[2026-01-22T10:50:58.139Z] [INFO]  T E S T S
+[2026-01-22T10:50:58.139Z] [INFO] -------------------------------------------------------
+[2026-01-22T10:50:58.691Z] [INFO] Running com.backend.media_service.service.MediaServiceUnitTest
+[2026-01-22T10:50:58.943Z] OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[2026-01-22T10:50:59.858Z] Media deleted!
+[2026-01-22T10:50:59.858Z] Media deleted!
+[2026-01-22T10:51:00.110Z] [INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.229 s -- in com.backend.media_service.service.MediaServiceUnitTest
+[2026-01-22T10:51:00.110Z] [INFO] 
+[2026-01-22T10:51:00.110Z] [INFO] Results:
+[2026-01-22T10:51:00.110Z] [INFO] 
+[2026-01-22T10:51:00.110Z] [INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0
+[2026-01-22T10:51:00.110Z] [INFO] 
+[2026-01-22T10:51:00.110Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:51:00.110Z] [INFO] BUILD SUCCESS
+[2026-01-22T10:51:00.110Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:51:00.110Z] [INFO] Total time:  3.933 s
+[2026-01-22T10:51:00.110Z] [INFO] Finished at: 2026-01-22T10:50:59Z
+[2026-01-22T10:51:00.110Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:51:00.361Z] + echo ✅ media-service unit tests passed
+[2026-01-22T10:51:00.361Z] ✅ media-service unit tests passed
+[Pipeline] echo
+[2026-01-22T10:51:00.392Z] ✅ All unit tests passed!
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🧪 Test Backend (Integration))
+Stage "🧪 Test Backend (Integration)" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🧪 Test Frontend)
+Stage "🧪 Test Frontend" skipped due to when conditional
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (📊 SonarQube Analysis)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+[2026-01-22T10:51:00.868Z] 📊 Running SonarQube analysis...
+[Pipeline] sh
+[Pipeline] echo
+[2026-01-22T10:51:01.154Z] SonarQube available: true
+[Pipeline] withCredentials
+[2026-01-22T10:51:01.165Z] Masking supported pattern matches of $SONAR_TOKEN
+[Pipeline] {
+[Pipeline] sh
+[2026-01-22T10:51:01.439Z] 📁 Creating SonarQube projects if they don't exist...
+[2026-01-22T10:51:01.439Z] Token: sqa_9704c7... (first 10 chars)
+[2026-01-22T10:51:01.439Z] Checking if user-service project exists...
+[2026-01-22T10:51:01.439Z] Creating user-service project...
+[2026-01-22T10:51:01.439Z] ✅ user-service project created
+[2026-01-22T10:51:01.439Z] Checking if product-service project exists...
+[2026-01-22T10:51:01.439Z] Creating product-service project...
+[2026-01-22T10:51:01.439Z] ✅ product-service project created
+[2026-01-22T10:51:01.439Z] Checking if media-service project exists...
+[2026-01-22T10:51:01.439Z] Creating media-service project...
+[2026-01-22T10:51:01.439Z] ✅ media-service project created
+[2026-01-22T10:51:01.439Z] Checking if api-gateway project exists...
+[2026-01-22T10:51:01.439Z] Creating api-gateway project...
+[2026-01-22T10:51:01.439Z] ✅ api-gateway project created
+[2026-01-22T10:51:01.439Z] Checking if discovery-service project exists...
+[2026-01-22T10:51:01.439Z] Creating discovery-service project...
+[2026-01-22T10:51:01.439Z] ✅ discovery-service project created
+[2026-01-22T10:51:01.439Z] Checking if frontend project exists...
+[2026-01-22T10:51:01.439Z] Creating frontend project...
+[2026-01-22T10:51:01.439Z] ✅ frontend project created
+[2026-01-22T10:51:01.439Z] Waiting 3 seconds for projects to be initialized...
+[Pipeline] sh
+[2026-01-22T10:51:04.951Z] + echo 🔍 Analyzing user-service...
+[2026-01-22T10:51:04.951Z] 🔍 Analyzing user-service...
+[2026-01-22T10:51:04.951Z] + docker run --rm --volumes-from jenkins-cicd -v jenkins_m2_cache:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -w /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service --network buy-01_BACKEND -e TESTCONTAINERS_RYUK_DISABLED=true maven:3.9.6-amazoncorretto-17 mvn clean install sonar:sonar -Dsonar.projectKey=user-service -Dsonar.host.url=http://sonarqube:9000 -Dsonar.login=**** -Dtest=!**/*IntegrationTest -B
+[2026-01-22T10:51:06.300Z] [INFO] Scanning for projects...
+[2026-01-22T10:51:07.214Z] [INFO] 
+[2026-01-22T10:51:07.214Z] [INFO] ----------------------< com.backend:user-service >----------------------
+[2026-01-22T10:51:07.214Z] [INFO] Building user-service 0.0.1-SNAPSHOT
+[2026-01-22T10:51:07.214Z] [INFO]   from pom.xml
+[2026-01-22T10:51:07.214Z] [INFO] --------------------------------[ jar ]---------------------------------
+[2026-01-22T10:51:08.128Z] [INFO] 
+[2026-01-22T10:51:08.128Z] [INFO] --- clean:3.2.0:clean (default-clean) @ user-service ---
+[2026-01-22T10:51:08.128Z] [INFO] Deleting /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target
+[2026-01-22T10:51:08.128Z] [INFO] 
+[2026-01-22T10:51:08.128Z] [INFO] --- resources:3.3.1:resources (default-resources) @ user-service ---
+[2026-01-22T10:51:08.128Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:51:08.128Z] [INFO] Copying 4 resources from src/main/resources to target/classes
+[2026-01-22T10:51:08.128Z] [INFO] 
+[2026-01-22T10:51:08.128Z] [INFO] --- compiler:3.11.0:compile (default-compile) @ user-service ---
+[2026-01-22T10:51:08.380Z] [INFO] Changes detected - recompiling the module! :source
+[2026-01-22T10:51:08.380Z] [INFO] Compiling 14 source files with javac [debug release 17] to target/classes
+[2026-01-22T10:51:12.507Z] [WARNING] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/src/main/java/com/backend/user_service/repository/UserMapper.java:[12,10] Unmapped target properties: "id, password, role, avatarUrl".
+[2026-01-22T10:51:12.507Z] [INFO] 
+[2026-01-22T10:51:12.507Z] [INFO] --- resources:3.3.1:testResources (default-testResources) @ user-service ---
+[2026-01-22T10:51:12.507Z] [WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[2026-01-22T10:51:12.507Z] [INFO] Copying 2 resources from src/test/resources to target/test-classes
+[2026-01-22T10:51:12.507Z] [INFO] 
+[2026-01-22T10:51:12.507Z] [INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ user-service ---
+[2026-01-22T10:51:12.507Z] [INFO] Changes detected - recompiling the module! :dependency
+[2026-01-22T10:51:12.507Z] [INFO] Compiling 5 source files with javac [debug release 17] to target/test-classes
+[2026-01-22T10:51:13.420Z] [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/src/test/java/com/backend/user_service/TestKafkaConfig.java: /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/src/test/java/com/backend/user_service/TestKafkaConfig.java uses unchecked or unsafe operations.
+[2026-01-22T10:51:13.420Z] [INFO] /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/src/test/java/com/backend/user_service/TestKafkaConfig.java: Recompile with -Xlint:unchecked for details.
+[2026-01-22T10:51:13.420Z] [INFO] 
+[2026-01-22T10:51:13.420Z] [INFO] --- surefire:3.2.2:test (default-test) @ user-service ---
+[2026-01-22T10:51:13.671Z] [INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[2026-01-22T10:51:13.922Z] [INFO] 
+[2026-01-22T10:51:13.922Z] [INFO] -------------------------------------------------------
+[2026-01-22T10:51:13.922Z] [INFO]  T E S T S
+[2026-01-22T10:51:13.922Z] [INFO] -------------------------------------------------------
+[2026-01-22T10:51:14.836Z] [INFO] Running com.backend.user_service.controller.UserControllerTest
+[2026-01-22T10:51:15.087Z] OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[2026-01-22T10:51:16.002Z] [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.233 s -- in com.backend.user_service.controller.UserControllerTest
+[2026-01-22T10:51:16.002Z] [INFO] Running com.backend.user_service.service.UserServiceUnitTest
+[2026-01-22T10:51:16.253Z] [INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.288 s -- in com.backend.user_service.service.UserServiceUnitTest
+[2026-01-22T10:51:16.253Z] [INFO] Running com.backend.user_service.UserServiceApplicationTests
+[2026-01-22T10:51:16.504Z] 10:51:16.272 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.backend.user_service.UserServiceApplicationTests]: UserServiceApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+[2026-01-22T10:51:16.755Z] 10:51:16.421 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.backend.user_service.UserServiceApplication for test class com.backend.user_service.UserServiceApplicationTests
+[2026-01-22T10:51:17.007Z] 
+[2026-01-22T10:51:17.007Z]   .   ____          _            __ _ _
+[2026-01-22T10:51:17.007Z]  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+[2026-01-22T10:51:17.007Z] ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+[2026-01-22T10:51:17.007Z]  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+[2026-01-22T10:51:17.007Z]   '  |____| .__|_| |_|_| |_\__, | / / / /
+[2026-01-22T10:51:17.007Z]  =========|_|==============|___/=/_/_/_/
+[2026-01-22T10:51:17.007Z]  :: Spring Boot ::                (v3.2.8)
+[2026-01-22T10:51:17.007Z] 
+[2026-01-22T10:51:17.007Z] 2026-01-22T10:51:16.899Z  INFO 67 --- [USER-SERVICE] [           main] c.b.u.UserServiceApplicationTests        : Starting UserServiceApplicationTests using Java 17.0.11 with PID 67 (started by root in /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service)
+[2026-01-22T10:51:17.007Z] 2026-01-22T10:51:16.901Z DEBUG 67 --- [USER-SERVICE] [           main] c.b.u.UserServiceApplicationTests        : Running with Spring Boot v3.2.8, Spring v6.1.11
+[2026-01-22T10:51:17.007Z] 2026-01-22T10:51:16.901Z  INFO 67 --- [USER-SERVICE] [           main] c.b.u.UserServiceApplicationTests        : The following 1 profile is active: "test"
+[2026-01-22T10:51:17.922Z] 2026-01-22T10:51:17.693Z  INFO 67 --- [USER-SERVICE] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data MongoDB repositories in DEFAULT mode.
+[2026-01-22T10:51:18.173Z] 2026-01-22T10:51:17.866Z  INFO 67 --- [USER-SERVICE] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 151 ms. Found 1 MongoDB repository interface.
+[2026-01-22T10:51:18.173Z] 2026-01-22T10:51:18.068Z  INFO 67 --- [USER-SERVICE] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=883a890b-0b7b-3c67-ad69-60b86fced6f6
+[2026-01-22T10:51:18.425Z] 2026-01-22T10:51:18.277Z  INFO 67 --- [USER-SERVICE] [           main] org.mongodb.driver.client                : MongoClient with metadata {"driver": {"name": "mongo-java-driver|sync|spring-boot", "version": "4.11.2"}, "os": {"type": "Linux", "name": "Linux", "architecture": "aarch64", "version": "6.12.54-linuxkit"}, "platform": "Java/Amazon.com Inc./17.0.11+9-LTS"} created with settings MongoClientSettings{readPreference=primary, writeConcern=WriteConcern{w=null, wTimeout=null ms, journal=null}, retryWrites=true, retryReads=true, readConcern=ReadConcern{level=null}, credential=null, transportSettings=null, streamFactoryFactory=null, commandListeners=[], codecRegistry=ProvidersCodecRegistry{codecProviders=[ValueCodecProvider{}, BsonValueCodecProvider{}, DBRefCodecProvider{}, DBObjectCodecProvider{}, DocumentCodecProvider{}, CollectionCodecProvider{}, IterableCodecProvider{}, MapCodecProvider{}, GeoJsonCodecProvider{}, GridFSFileCodecProvider{}, Jsr310CodecProvider{}, JsonObjectCodecProvider{}, BsonCodecProvider{}, EnumCodecProvider{}, com.mongodb.client.model.mql.ExpressionCodecProvider@2d172c7, com.mongodb.Jep395RecordCodecProvider@115ef673, com.mongodb.KotlinCodecProvider@8ce3f27]}, loggerSettings=LoggerSettings{maxDocumentLength=1000}, clusterSettings={hosts=[localhost:27017], srvServiceName=mongodb, mode=SINGLE, requiredClusterType=UNKNOWN, requiredReplicaSetName='null', serverSelector='null', clusterListeners='[]', serverSelectionTimeout='30000 ms', localThreshold='15 ms'}, socketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=0, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, heartbeatSocketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=10000, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, connectionPoolSettings=ConnectionPoolSettings{maxSize=100, minSize=0, maxWaitTimeMS=120000, maxConnectionLifeTimeMS=0, maxConnectionIdleTimeMS=0, maintenanceInitialDelayMS=0, maintenanceFrequencyMS=60000, connectionPoolListeners=[], maxConnecting=2}, serverSettings=ServerSettings{heartbeatFrequencyMS=10000, minHeartbeatFrequencyMS=500, serverListeners='[]', serverMonitorListeners='[]'}, sslSettings=SslSettings{enabled=false, invalidHostNameAllowed=false, context=null}, applicationName='null', compressorList=[], uuidRepresentation=JAVA_LEGACY, serverApi=null, autoEncryptionSettings=null, dnsClient=null, inetAddressResolver=null, contextProvider=null}
+[2026-01-22T10:51:18.425Z] 2026-01-22T10:51:18.292Z  INFO 67 --- [USER-SERVICE] [localhost:27017] org.mongodb.driver.cluster               : Exception in monitor thread while connecting to server localhost:27017
+[2026-01-22T10:51:18.425Z] 
+[2026-01-22T10:51:18.425Z] com.mongodb.MongoSocketOpenException: Exception opening socket
+[2026-01-22T10:51:18.425Z] 	at com.mongodb.internal.connection.SocketStream.lambda$open$0(SocketStream.java:84) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:18.425Z] 	at java.base/java.util.Optional.orElseThrow(Optional.java:403) ~[na:na]
+[2026-01-22T10:51:18.425Z] 	at com.mongodb.internal.connection.SocketStream.open(SocketStream.java:84) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:18.425Z] 	at com.mongodb.internal.connection.InternalStreamConnection.open(InternalStreamConnection.java:211) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:18.425Z] 	at com.mongodb.internal.connection.DefaultServerMonitor$ServerMonitorRunnable.lookupServerDescription(DefaultServerMonitor.java:193) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:18.425Z] 	at com.mongodb.internal.connection.DefaultServerMonitor$ServerMonitorRunnable.run(DefaultServerMonitor.java:153) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:18.425Z] 	at java.base/java.lang.Thread.run(Thread.java:840) ~[na:na]
+[2026-01-22T10:51:18.425Z] Caused by: java.net.ConnectException: Connection refused
+[2026-01-22T10:51:18.425Z] 	at java.base/sun.nio.ch.Net.pollConnect(Native Method) ~[na:na]
+[2026-01-22T10:51:18.425Z] 	at java.base/sun.nio.ch.Net.pollConnectNow(Net.java:672) ~[na:na]
+[2026-01-22T10:51:18.425Z] 	at java.base/sun.nio.ch.NioSocketImpl.timedFinishConnect(NioSocketImpl.java:547) ~[na:na]
+[2026-01-22T10:51:18.425Z] 	at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:602) ~[na:na]
+[2026-01-22T10:51:18.425Z] 	at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:327) ~[na:na]
+[2026-01-22T10:51:18.425Z] 	at java.base/java.net.Socket.connect(Socket.java:633) ~[na:na]
+[2026-01-22T10:51:18.425Z] 	at com.mongodb.internal.connection.SocketStreamHelper.initialize(SocketStreamHelper.java:76) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:18.425Z] 	at com.mongodb.internal.connection.SocketStream.initializeSocket(SocketStream.java:104) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:18.425Z] 	at com.mongodb.internal.connection.SocketStream.open(SocketStream.java:78) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:18.425Z] 	... 4 common frames omitted
+[2026-01-22T10:51:18.425Z] 
+[2026-01-22T10:51:18.676Z] 2026-01-22T10:51:18.501Z DEBUG 67 --- [USER-SERVICE] [           main] .m.c.i.MongoPersistentEntityIndexCreator : Analyzing class class com.backend.user_service.model.User for index information
+[2026-01-22T10:51:19.228Z] 2026-01-22T10:51:19.118Z  INFO 67 --- [USER-SERVICE] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@47c422d3, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@382608d0, org.springframework.security.web.context.SecurityContextHolderFilter@6097f225, org.springframework.security.web.header.HeaderWriterFilter@19542115, org.springframework.security.web.authentication.logout.LogoutFilter@f26cd76, com.backend.common.config.filter.GatewayHeadersFilter@3c468360, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@1e5e2e06, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@ecb8b3e, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@7841c990, org.springframework.security.web.session.SessionManagementFilter@477e5b69, org.springframework.security.web.access.ExceptionTranslationFilter@530e08a7, org.springframework.security.web.access.intercept.AuthorizationFilter@47e70f54]
+[2026-01-22T10:51:19.479Z] 2026-01-22T10:51:19.321Z  INFO 67 --- [USER-SERVICE] [           main] DiscoveryClientOptionalArgsConfiguration : Eureka HTTP Client uses RestTemplate.
+[2026-01-22T10:51:19.479Z] 2026-01-22T10:51:19.367Z  INFO 67 --- [USER-SERVICE] [           main] o.a.k.clients.admin.AdminClientConfig    : AdminClientConfig values: 
+[2026-01-22T10:51:19.479Z] 	auto.include.jmx.reporter = true
+[2026-01-22T10:51:19.479Z] 	bootstrap.servers = []
+[2026-01-22T10:51:19.479Z] 	client.dns.lookup = use_all_dns_ips
+[2026-01-22T10:51:19.479Z] 	client.id = 
+[2026-01-22T10:51:19.479Z] 	connections.max.idle.ms = 300000
+[2026-01-22T10:51:19.479Z] 	default.api.timeout.ms = 60000
+[2026-01-22T10:51:19.479Z] 	metadata.max.age.ms = 300000
+[2026-01-22T10:51:19.479Z] 	metric.reporters = []
+[2026-01-22T10:51:19.479Z] 	metrics.num.samples = 2
+[2026-01-22T10:51:19.479Z] 	metrics.recording.level = INFO
+[2026-01-22T10:51:19.479Z] 	metrics.sample.window.ms = 30000
+[2026-01-22T10:51:19.479Z] 	receive.buffer.bytes = 65536
+[2026-01-22T10:51:19.479Z] 	reconnect.backoff.max.ms = 1000
+[2026-01-22T10:51:19.479Z] 	reconnect.backoff.ms = 50
+[2026-01-22T10:51:19.479Z] 	request.timeout.ms = 30000
+[2026-01-22T10:51:19.479Z] 	retries = 2147483647
+[2026-01-22T10:51:19.479Z] 	retry.backoff.ms = 100
+[2026-01-22T10:51:19.479Z] 	sasl.client.callback.handler.class = null
+[2026-01-22T10:51:19.479Z] 	sasl.jaas.config = null
+[2026-01-22T10:51:19.479Z] 	sasl.kerberos.kinit.cmd = /usr/bin/kinit
+[2026-01-22T10:51:19.479Z] 	sasl.kerberos.min.time.before.relogin = 60000
+[2026-01-22T10:51:19.479Z] 	sasl.kerberos.service.name = null
+[2026-01-22T10:51:19.479Z] 	sasl.kerberos.ticket.renew.jitter = 0.05
+[2026-01-22T10:51:19.479Z] 	sasl.kerberos.ticket.renew.window.factor = 0.8
+[2026-01-22T10:51:19.479Z] 	sasl.login.callback.handler.class = null
+[2026-01-22T10:51:19.479Z] 	sasl.login.class = null
+[2026-01-22T10:51:19.480Z] 	sasl.login.connect.timeout.ms = null
+[2026-01-22T10:51:19.480Z] 	sasl.login.read.timeout.ms = null
+[2026-01-22T10:51:19.480Z] 	sasl.login.refresh.buffer.seconds = 300
+[2026-01-22T10:51:19.480Z] 	sasl.login.refresh.min.period.seconds = 60
+[2026-01-22T10:51:19.480Z] 	sasl.login.refresh.window.factor = 0.8
+[2026-01-22T10:51:19.480Z] 	sasl.login.refresh.window.jitter = 0.05
+[2026-01-22T10:51:19.480Z] 	sasl.login.retry.backoff.max.ms = 10000
+[2026-01-22T10:51:19.480Z] 	sasl.login.retry.backoff.ms = 100
+[2026-01-22T10:51:19.480Z] 	sasl.mechanism = GSSAPI
+[2026-01-22T10:51:19.480Z] 	sasl.oauthbearer.clock.skew.seconds = 30
+[2026-01-22T10:51:19.480Z] 	sasl.oauthbearer.expected.audience = null
+[2026-01-22T10:51:19.480Z] 	sasl.oauthbearer.expected.issuer = null
+[2026-01-22T10:51:19.480Z] 	sasl.oauthbearer.jwks.endpoint.refresh.ms = 3600000
+[2026-01-22T10:51:19.480Z] 	sasl.oauthbearer.jwks.endpoint.retry.backoff.max.ms = 10000
+[2026-01-22T10:51:19.480Z] 	sasl.oauthbearer.jwks.endpoint.retry.backoff.ms = 100
+[2026-01-22T10:51:19.480Z] 	sasl.oauthbearer.jwks.endpoint.url = null
+[2026-01-22T10:51:19.480Z] 	sasl.oauthbearer.scope.claim.name = scope
+[2026-01-22T10:51:19.480Z] 	sasl.oauthbearer.sub.claim.name = sub
+[2026-01-22T10:51:19.480Z] 	sasl.oauthbearer.token.endpoint.url = null
+[2026-01-22T10:51:19.480Z] 	security.protocol = PLAINTEXT
+[2026-01-22T10:51:19.480Z] 	security.providers = null
+[2026-01-22T10:51:19.480Z] 	send.buffer.bytes = 131072
+[2026-01-22T10:51:19.480Z] 	socket.connection.setup.timeout.max.ms = 30000
+[2026-01-22T10:51:19.480Z] 	socket.connection.setup.timeout.ms = 10000
+[2026-01-22T10:51:19.480Z] 	ssl.cipher.suites = null
+[2026-01-22T10:51:19.480Z] 	ssl.enabled.protocols = [TLSv1.2, TLSv1.3]
+[2026-01-22T10:51:19.480Z] 	ssl.endpoint.identification.algorithm = https
+[2026-01-22T10:51:19.480Z] 	ssl.engine.factory.class = null
+[2026-01-22T10:51:19.480Z] 	ssl.key.password = null
+[2026-01-22T10:51:19.480Z] 	ssl.keymanager.algorithm = SunX509
+[2026-01-22T10:51:19.480Z] 	ssl.keystore.certificate.chain = null
+[2026-01-22T10:51:19.480Z] 	ssl.keystore.key = null
+[2026-01-22T10:51:19.480Z] 	ssl.keystore.location = null
+[2026-01-22T10:51:19.480Z] 	ssl.keystore.password = null
+[2026-01-22T10:51:19.480Z] 	ssl.keystore.type = JKS
+[2026-01-22T10:51:19.480Z] 	ssl.protocol = TLSv1.3
+[2026-01-22T10:51:19.480Z] 	ssl.provider = null
+[2026-01-22T10:51:19.480Z] 	ssl.secure.random.implementation = null
+[2026-01-22T10:51:19.480Z] 	ssl.trustmanager.algorithm = PKIX
+[2026-01-22T10:51:19.480Z] 	ssl.truststore.certificates = null
+[2026-01-22T10:51:19.480Z] 	ssl.truststore.location = null
+[2026-01-22T10:51:19.480Z] 	ssl.truststore.password = null
+[2026-01-22T10:51:19.480Z] 	ssl.truststore.type = JKS
+[2026-01-22T10:51:19.480Z] 
+[2026-01-22T10:51:19.731Z] 2026-01-22T10:51:19.385Z ERROR 67 --- [USER-SERVICE] [           main] o.springframework.kafka.core.KafkaAdmin  : Could not create admin
+[2026-01-22T10:51:19.731Z] 
+[2026-01-22T10:51:19.731Z] org.apache.kafka.common.KafkaException: Failed to create new KafkaAdminClient
+[2026-01-22T10:51:19.732Z] 	at org.apache.kafka.clients.admin.KafkaAdminClient.createInternal(KafkaAdminClient.java:519) ~[kafka-clients-3.6.2.jar:na]
+[2026-01-22T10:51:19.732Z] 	at org.apache.kafka.clients.admin.Admin.create(Admin.java:144) ~[kafka-clients-3.6.2.jar:na]
+[2026-01-22T10:51:19.732Z] 	at org.apache.kafka.clients.admin.AdminClient.create(AdminClient.java:49) ~[kafka-clients-3.6.2.jar:na]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.kafka.core.KafkaAdmin.createAdmin(KafkaAdmin.java:379) ~[spring-kafka-3.1.7.jar:3.1.7]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.kafka.core.KafkaAdmin.initialize(KafkaAdmin.java:240) ~[spring-kafka-3.1.7.jar:3.1.7]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.kafka.core.KafkaAdmin.afterSingletonsInstantiated(KafkaAdmin.java:222) ~[spring-kafka-3.1.7.jar:3.1.7]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:986) ~[spring-beans-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:971) ~[spring-context-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:625) ~[spring-context-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:456) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:335) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.lambda$loadContext$3(SpringBootContextLoader.java:137) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:58) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:46) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.boot.SpringApplication.withHook(SpringApplication.java:1463) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.boot.test.context.SpringBootContextLoader$ContextLoaderHook.run(SpringBootContextLoader.java:553) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:137) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:108) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:225) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:152) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.injectDependencies(DependencyInjectionTestExecutionListener.java:142) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.prepareTestInstance(DependencyInjectionTestExecutionListener.java:98) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:163) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:19.732Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$10(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.732Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.executeAndMaskThrowable(ClassBasedTestDescriptor.java:383) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.732Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$11(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.732Z] 	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+[2026-01-22T10:51:19.732Z] 	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179) ~[na:na]
+[2026-01-22T10:51:19.732Z] 	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1625) ~[na:na]
+[2026-01-22T10:51:19.732Z] 	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509) ~[na:na]
+[2026-01-22T10:51:19.732Z] 	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+[2026-01-22T10:51:19.732Z] 	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:310) ~[na:na]
+[2026-01-22T10:51:19.732Z] 	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:735) ~[na:na]
+[2026-01-22T10:51:19.732Z] 	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:734) ~[na:na]
+[2026-01-22T10:51:19.732Z] 	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:762) ~[na:na]
+[2026-01-22T10:51:19.732Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.invokeTestInstancePostProcessors(ClassBasedTestDescriptor.java:377) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$instantiateAndPostProcessTestInstance$6(ClassBasedTestDescriptor.java:290) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.instantiateAndPostProcessTestInstance(ClassBasedTestDescriptor.java:289) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$4(ClassBasedTestDescriptor.java:279) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.733Z] 	at java.base/java.util.Optional.orElseGet(Optional.java:364) ~[na:na]
+[2026-01-22T10:51:19.733Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$5(ClassBasedTestDescriptor.java:278) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.jupiter.engine.execution.TestInstancesProvider.getTestInstances(TestInstancesProvider.java:31) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$prepare$0(TestMethodTestDescriptor.java:106) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:105) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:69) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$prepare$2(NodeTestTask.java:123) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.prepare(NodeTestTask.java:123) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:90) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.733Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:19.734Z] 	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:19.734Z] 	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:19.734Z] 	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:19.734Z] 	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:19.734Z] 	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:19.734Z] 	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:19.734Z] 	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:19.734Z] 	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:19.734Z] Caused by: org.apache.kafka.common.config.ConfigException: No resolvable bootstrap urls given in bootstrap.servers
+[2026-01-22T10:51:19.734Z] 	at org.apache.kafka.clients.ClientUtils.parseAndValidateAddresses(ClientUtils.java:101) ~[kafka-clients-3.6.2.jar:na]
+[2026-01-22T10:51:19.734Z] 	at org.apache.kafka.clients.ClientUtils.parseAndValidateAddresses(ClientUtils.java:60) ~[kafka-clients-3.6.2.jar:na]
+[2026-01-22T10:51:19.734Z] 	at org.apache.kafka.clients.ClientUtils.parseAndValidateAddresses(ClientUtils.java:56) ~[kafka-clients-3.6.2.jar:na]
+[2026-01-22T10:51:19.734Z] 	at org.apache.kafka.clients.admin.KafkaAdminClient.createInternal(KafkaAdminClient.java:492) ~[kafka-clients-3.6.2.jar:na]
+[2026-01-22T10:51:19.734Z] 	... 93 common frames omitted
+[2026-01-22T10:51:19.734Z] 
+[2026-01-22T10:51:19.734Z] 2026-01-22T10:51:19.407Z  INFO 67 --- [USER-SERVICE] [           main] c.b.u.UserServiceApplicationTests        : Started UserServiceApplicationTests in 2.824 seconds (process running for 5.608)
+[2026-01-22T10:51:19.734Z] 2026-01-22T10:51:19.423Z DEBUG 67 --- [USER-SERVICE] [           main] o.s.d.m.r.query.MongoQueryCreator        : Created query Query: { "email" : "admin@admin.com"}, Fields: {}, Sort: {}
+[2026-01-22T10:51:19.734Z] 2026-01-22T10:51:19.436Z DEBUG 67 --- [USER-SERVICE] [           main] o.s.data.mongodb.core.MongoTemplate      : find using query: { "email" : "admin@admin.com"} fields: Document{{}} sort: { "email" : "admin@admin.com"} for class: class com.backend.user_service.model.User in collection: users
+[2026-01-22T10:51:19.734Z] 2026-01-22T10:51:19.480Z  INFO 67 --- [USER-SERVICE] [           main] org.mongodb.driver.cluster               : No server chosen by ReadPreferenceServerSelector{readPreference=primary} from cluster description ClusterDescription{type=UNKNOWN, connectionMode=SINGLE, serverDescriptions=[ServerDescription{address=localhost:27017, type=UNKNOWN, state=CONNECTING, exception={com.mongodb.MongoSocketOpenException: Exception opening socket}, caused by {java.net.ConnectException: Connection refused}}]}. Waiting for 30000 ms before timing out
+[2026-01-22T10:51:51.690Z] 2026-01-22T10:51:49.504Z  INFO 67 --- [USER-SERVICE] [           main] .s.b.a.l.ConditionEvaluationReportLogger : 
+[2026-01-22T10:51:51.690Z] 
+[2026-01-22T10:51:51.690Z] Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+[2026-01-22T10:51:51.690Z] 2026-01-22T10:51:49.551Z ERROR 67 --- [USER-SERVICE] [           main] o.s.boot.SpringApplication               : Application run failed
+[2026-01-22T10:51:51.690Z] 
+[2026-01-22T10:51:51.690Z] org.springframework.dao.DataAccessResourceFailureException: Timed out after 30000 ms while waiting for a server that matches ReadPreferenceServerSelector{readPreference=primary}. Client view of cluster state is {type=UNKNOWN, servers=[{address=localhost:27017, type=UNKNOWN, state=CONNECTING, exception={com.mongodb.MongoSocketOpenException: Exception opening socket}, caused by {java.net.ConnectException: Connection refused}}]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.mongodb.core.MongoExceptionTranslator.translateExceptionIfPossible(MongoExceptionTranslator.java:88) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.mongodb.core.MongoTemplate.potentiallyConvertRuntimeException(MongoTemplate.java:3002) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.mongodb.core.MongoTemplate.executeFindMultiInternal(MongoTemplate.java:2927) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.mongodb.core.MongoTemplate.doFind(MongoTemplate.java:2625) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.mongodb.core.ExecutableFindOperationSupport$ExecutableFindSupport.doFind(ExecutableFindOperationSupport.java:177) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.mongodb.core.ExecutableFindOperationSupport$ExecutableFindSupport.oneValue(ExecutableFindOperationSupport.java:112) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.mongodb.repository.query.AbstractMongoQuery.lambda$getExecution$7(AbstractMongoQuery.java:202) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.mongodb.repository.query.AbstractMongoQuery.doExecute(AbstractMongoQuery.java:147) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.mongodb.repository.query.AbstractMongoQuery.execute(AbstractMongoQuery.java:119) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.doInvoke(RepositoryMethodInvoker.java:170) ~[spring-data-commons-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.invoke(RepositoryMethodInvoker.java:158) ~[spring-data-commons-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.doInvoke(QueryExecutorMethodInterceptor.java:164) ~[spring-data-commons-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.invoke(QueryExecutorMethodInterceptor.java:143) ~[spring-data-commons-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor.invoke(DefaultMethodInvokingMethodInterceptor.java:70) ~[spring-data-commons-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.data.mongodb.repository.support.CrudMethodMetadataPostProcessor$CrudMethodMetadataPopulatingMethodInterceptor.invoke(CrudMethodMetadataPostProcessor.java:129) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.690Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.691Z] 	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.691Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.691Z] 	at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:223) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.691Z] 	at jdk.proxy2/jdk.proxy2.$Proxy150.findByEmail(Unknown Source) ~[na:na]
+[2026-01-22T10:51:51.691Z] 	at com.backend.user_service.config.AdminUserInitializer.run(AdminUserInitializer.java:41) ~[classes/:na]
+[2026-01-22T10:51:51.691Z] 	at org.springframework.boot.SpringApplication.lambda$callRunner$5(SpringApplication.java:790) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.691Z] 	at org.springframework.util.function.ThrowingConsumer$1.acceptWithException(ThrowingConsumer.java:83) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.691Z] 	at org.springframework.util.function.ThrowingConsumer.accept(ThrowingConsumer.java:60) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.691Z] 	at org.springframework.util.function.ThrowingConsumer$1.accept(ThrowingConsumer.java:88) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:798) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:789) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.boot.SpringApplication.lambda$callRunners$3(SpringApplication.java:774) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.SortedOps$SizedRefSortingSink.end(SortedOps.java:357) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:510) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:150) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:173) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:774) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:342) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.lambda$loadContext$3(SpringBootContextLoader.java:137) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:58) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:46) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.boot.SpringApplication.withHook(SpringApplication.java:1463) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.boot.test.context.SpringBootContextLoader$ContextLoaderHook.run(SpringBootContextLoader.java:553) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:137) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:108) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:225) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:152) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.injectDependencies(DependencyInjectionTestExecutionListener.java:142) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.prepareTestInstance(DependencyInjectionTestExecutionListener.java:98) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.692Z] 	at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:163) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.692Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$10(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.692Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.executeAndMaskThrowable(ClassBasedTestDescriptor.java:383) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.692Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$11(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1625) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:310) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:735) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:734) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:762) ~[na:na]
+[2026-01-22T10:51:51.692Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.invokeTestInstancePostProcessors(ClassBasedTestDescriptor.java:377) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.692Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$instantiateAndPostProcessTestInstance$6(ClassBasedTestDescriptor.java:290) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.692Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.instantiateAndPostProcessTestInstance(ClassBasedTestDescriptor.java:289) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$4(ClassBasedTestDescriptor.java:279) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.693Z] 	at java.base/java.util.Optional.orElseGet(Optional.java:364) ~[na:na]
+[2026-01-22T10:51:51.693Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$5(ClassBasedTestDescriptor.java:278) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.jupiter.engine.execution.TestInstancesProvider.getTestInstances(TestInstancesProvider.java:31) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$prepare$0(TestMethodTestDescriptor.java:106) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:105) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:69) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$prepare$2(NodeTestTask.java:123) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.prepare(NodeTestTask.java:123) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:90) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.693Z] 	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.693Z] 	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.693Z] 	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.693Z] 	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.693Z] 	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.693Z] 	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.693Z] 	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.693Z] 	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.693Z] Caused by: com.mongodb.MongoTimeoutException: Timed out after 30000 ms while waiting for a server that matches ReadPreferenceServerSelector{readPreference=primary}. Client view of cluster state is {type=UNKNOWN, servers=[{address=localhost:27017, type=UNKNOWN, state=CONNECTING, exception={com.mongodb.MongoSocketOpenException: Exception opening socket}, caused by {java.net.ConnectException: Connection refused}}]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.internal.connection.BaseCluster.createTimeoutException(BaseCluster.java:380) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.internal.connection.BaseCluster.selectServer(BaseCluster.java:125) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.internal.connection.SingleServerCluster.selectServer(SingleServerCluster.java:46) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.internal.binding.ClusterBinding.getReadConnectionSource(ClusterBinding.java:116) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.client.internal.ClientSessionBinding.getConnectionSource(ClientSessionBinding.java:128) ~[mongodb-driver-sync-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.client.internal.ClientSessionBinding.getReadConnectionSource(ClientSessionBinding.java:92) ~[mongodb-driver-sync-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.internal.operation.SyncOperationHelper.withSuppliedResource(SyncOperationHelper.java:144) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection(SyncOperationHelper.java:125) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.internal.operation.FindOperation.lambda$execute$2(FindOperation.java:322) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.internal.operation.SyncOperationHelper.lambda$decorateReadWithRetries$12(SyncOperationHelper.java:292) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.internal.async.function.RetryingSyncSupplier.get(RetryingSyncSupplier.java:67) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.internal.operation.FindOperation.execute(FindOperation.java:333) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.internal.operation.FindOperation.execute(FindOperation.java:73) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.client.internal.MongoClientDelegate$DelegateOperationExecutor.execute(MongoClientDelegate.java:153) ~[mongodb-driver-sync-4.11.2.jar:na]
+[2026-01-22T10:51:51.693Z] 	at com.mongodb.client.internal.MongoIterableImpl.execute(MongoIterableImpl.java:130) ~[mongodb-driver-sync-4.11.2.jar:na]
+[2026-01-22T10:51:51.694Z] 	at com.mongodb.client.internal.MongoIterableImpl.iterator(MongoIterableImpl.java:90) ~[mongodb-driver-sync-4.11.2.jar:na]
+[2026-01-22T10:51:51.694Z] 	at org.springframework.data.mongodb.core.MongoTemplate.executeFindMultiInternal(MongoTemplate.java:2914) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.694Z] 	... 119 common frames omitted
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] ============================
+[2026-01-22T10:51:51.694Z] CONDITIONS EVALUATION REPORT
+[2026-01-22T10:51:51.694Z] ============================
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] Positive matches:
+[2026-01-22T10:51:51.694Z] -----------------
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z]     None
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] Negative matches:
+[2026-01-22T10:51:51.694Z] -----------------
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z]     None
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] Exclusions:
+[2026-01-22T10:51:51.694Z] -----------
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z]     None
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] Unconditional classes:
+[2026-01-22T10:51:51.694Z] ----------------------
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z]     None
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] 2026-01-22T10:51:49.590Z  WARN 67 --- [USER-SERVICE] [           main] o.s.test.context.TestContextManager      : Caught exception while allowing TestExecutionListener [org.springframework.test.context.support.DependencyInjectionTestExecutionListener] to prepare test instance [com.backend.user_service.UserServiceApplicationTests@22942eff]
+[2026-01-22T10:51:51.694Z] 
+[2026-01-22T10:51:51.694Z] java.lang.IllegalStateException: Failed to load ApplicationContext for [MergedContextConfiguration@ad6255e testClass = com.backend.user_service.UserServiceApplicationTests, locations = [], classes = [com.backend.user_service.UserServiceApplication], contextInitializerClasses = [], activeProfiles = ["test"], propertySourceDescriptors = [], propertySourceProperties = ["spring.data.mongodb.uri=mongodb://localhost:27017/test", "spring.kafka.bootstrap-servers=", "spring.cloud.discovery.enabled=false", "eureka.client.enabled=false", "spring.kafka.consumer.auto-startup=false", "spring.kafka.listener.auto-startup=false", "org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true", "spring.main.web-application-type=none"], contextCustomizers = [[ImportsContextCustomizer@81a56b2 key = [org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoReactiveDataAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration, org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration, org.springframework.boot.autoconfigure.ssl.SslAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration, com.backend.user_service.TestKafkaConfig, org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfiguration]], org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@36a6bea6, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@65c33b92, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@36417a54, org.springframework.boot.test.web.reactive.server.WebTestClientContextCustomizer@1ac4ccad, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@1bc0d349, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@0, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@71904469, org.springframework.boot.test.context.SpringBootTestAnnotation@5f6f837b], contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]
+[2026-01-22T10:51:51.694Z] 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:180) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.694Z] 	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.694Z] 	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.injectDependencies(DependencyInjectionTestExecutionListener.java:142) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.694Z] 	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.prepareTestInstance(DependencyInjectionTestExecutionListener.java:98) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.694Z] 	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.694Z] 	at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:163) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$10(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.executeAndMaskThrowable(ClassBasedTestDescriptor.java:383) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$11(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+[2026-01-22T10:51:51.694Z] 	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179) ~[na:na]
+[2026-01-22T10:51:51.694Z] 	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1625) ~[na:na]
+[2026-01-22T10:51:51.694Z] 	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509) ~[na:na]
+[2026-01-22T10:51:51.694Z] 	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+[2026-01-22T10:51:51.694Z] 	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:310) ~[na:na]
+[2026-01-22T10:51:51.694Z] 	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:735) ~[na:na]
+[2026-01-22T10:51:51.694Z] 	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:734) ~[na:na]
+[2026-01-22T10:51:51.694Z] 	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:762) ~[na:na]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.invokeTestInstancePostProcessors(ClassBasedTestDescriptor.java:377) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$instantiateAndPostProcessTestInstance$6(ClassBasedTestDescriptor.java:290) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.instantiateAndPostProcessTestInstance(ClassBasedTestDescriptor.java:289) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$4(ClassBasedTestDescriptor.java:279) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at java.base/java.util.Optional.orElseGet(Optional.java:364) ~[na:na]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$5(ClassBasedTestDescriptor.java:278) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.execution.TestInstancesProvider.getTestInstances(TestInstancesProvider.java:31) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$prepare$0(TestMethodTestDescriptor.java:106) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:105) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:69) ~[junit-jupiter-engine-5.10.3.jar:5.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$prepare$2(NodeTestTask.java:123) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.prepare(NodeTestTask.java:123) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:90) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.694Z] 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+[2026-01-22T10:51:51.694Z] 	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.694Z] 	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.10.3.jar:1.10.3]
+[2026-01-22T10:51:51.695Z] 	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.695Z] 	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.695Z] 	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.695Z] 	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122) ~[surefire-junit-platform-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.695Z] 	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.695Z] 	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.695Z] 	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.695Z] 	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495) ~[surefire-booter-3.2.2.jar:3.2.2]
+[2026-01-22T10:51:51.695Z] Caused by: org.springframework.dao.DataAccessResourceFailureException: Timed out after 30000 ms while waiting for a server that matches ReadPreferenceServerSelector{readPreference=primary}. Client view of cluster state is {type=UNKNOWN, servers=[{address=localhost:27017, type=UNKNOWN, state=CONNECTING, exception={com.mongodb.MongoSocketOpenException: Exception opening socket}, caused by {java.net.ConnectException: Connection refused}}]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.mongodb.core.MongoExceptionTranslator.translateExceptionIfPossible(MongoExceptionTranslator.java:88) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.mongodb.core.MongoTemplate.potentiallyConvertRuntimeException(MongoTemplate.java:3002) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.mongodb.core.MongoTemplate.executeFindMultiInternal(MongoTemplate.java:2927) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.mongodb.core.MongoTemplate.doFind(MongoTemplate.java:2625) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.mongodb.core.ExecutableFindOperationSupport$ExecutableFindSupport.doFind(ExecutableFindOperationSupport.java:177) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.mongodb.core.ExecutableFindOperationSupport$ExecutableFindSupport.oneValue(ExecutableFindOperationSupport.java:112) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.mongodb.repository.query.AbstractMongoQuery.lambda$getExecution$7(AbstractMongoQuery.java:202) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.mongodb.repository.query.AbstractMongoQuery.doExecute(AbstractMongoQuery.java:147) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.mongodb.repository.query.AbstractMongoQuery.execute(AbstractMongoQuery.java:119) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.doInvoke(RepositoryMethodInvoker.java:170) ~[spring-data-commons-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.invoke(RepositoryMethodInvoker.java:158) ~[spring-data-commons-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.doInvoke(QueryExecutorMethodInterceptor.java:164) ~[spring-data-commons-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.invoke(QueryExecutorMethodInterceptor.java:143) ~[spring-data-commons-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor.invoke(DefaultMethodInvokingMethodInterceptor.java:70) ~[spring-data-commons-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.data.mongodb.repository.support.CrudMethodMetadataPostProcessor$CrudMethodMetadataPopulatingMethodInterceptor.invoke(CrudMethodMetadataPostProcessor.java:129) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:223) ~[spring-aop-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.695Z] 	at jdk.proxy2/jdk.proxy2.$Proxy150.findByEmail(Unknown Source) ~[na:na]
+[2026-01-22T10:51:51.695Z] 	at com.backend.user_service.config.AdminUserInitializer.run(AdminUserInitializer.java:41) ~[classes/:na]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.boot.SpringApplication.lambda$callRunner$5(SpringApplication.java:790) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.util.function.ThrowingConsumer$1.acceptWithException(ThrowingConsumer.java:83) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.util.function.ThrowingConsumer.accept(ThrowingConsumer.java:60) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.util.function.ThrowingConsumer$1.accept(ThrowingConsumer.java:88) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:798) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:789) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.boot.SpringApplication.lambda$callRunners$3(SpringApplication.java:774) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.695Z] 	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183) ~[na:na]
+[2026-01-22T10:51:51.695Z] 	at java.base/java.util.stream.SortedOps$SizedRefSortingSink.end(SortedOps.java:357) ~[na:na]
+[2026-01-22T10:51:51.695Z] 	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:510) ~[na:na]
+[2026-01-22T10:51:51.695Z] 	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+[2026-01-22T10:51:51.695Z] 	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:150) ~[na:na]
+[2026-01-22T10:51:51.695Z] 	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:173) ~[na:na]
+[2026-01-22T10:51:51.695Z] 	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234) ~[na:na]
+[2026-01-22T10:51:51.695Z] 	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596) ~[na:na]
+[2026-01-22T10:51:51.695Z] 	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:774) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:342) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.lambda$loadContext$3(SpringBootContextLoader.java:137) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:58) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:46) ~[spring-core-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.boot.SpringApplication.withHook(SpringApplication.java:1463) ~[spring-boot-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.boot.test.context.SpringBootContextLoader$ContextLoaderHook.run(SpringBootContextLoader.java:553) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:137) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:108) ~[spring-boot-test-3.2.8.jar:3.2.8]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:225) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:152) ~[spring-test-6.1.11.jar:6.1.11]
+[2026-01-22T10:51:51.696Z] 	... 73 common frames omitted
+[2026-01-22T10:51:51.696Z] Caused by: com.mongodb.MongoTimeoutException: Timed out after 30000 ms while waiting for a server that matches ReadPreferenceServerSelector{readPreference=primary}. Client view of cluster state is {type=UNKNOWN, servers=[{address=localhost:27017, type=UNKNOWN, state=CONNECTING, exception={com.mongodb.MongoSocketOpenException: Exception opening socket}, caused by {java.net.ConnectException: Connection refused}}]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.internal.connection.BaseCluster.createTimeoutException(BaseCluster.java:380) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.internal.connection.BaseCluster.selectServer(BaseCluster.java:125) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.internal.connection.SingleServerCluster.selectServer(SingleServerCluster.java:46) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.internal.binding.ClusterBinding.getReadConnectionSource(ClusterBinding.java:116) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.client.internal.ClientSessionBinding.getConnectionSource(ClientSessionBinding.java:128) ~[mongodb-driver-sync-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.client.internal.ClientSessionBinding.getReadConnectionSource(ClientSessionBinding.java:92) ~[mongodb-driver-sync-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.internal.operation.SyncOperationHelper.withSuppliedResource(SyncOperationHelper.java:144) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection(SyncOperationHelper.java:125) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.internal.operation.FindOperation.lambda$execute$2(FindOperation.java:322) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.internal.operation.SyncOperationHelper.lambda$decorateReadWithRetries$12(SyncOperationHelper.java:292) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.internal.async.function.RetryingSyncSupplier.get(RetryingSyncSupplier.java:67) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.internal.operation.FindOperation.execute(FindOperation.java:333) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.internal.operation.FindOperation.execute(FindOperation.java:73) ~[mongodb-driver-core-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.client.internal.MongoClientDelegate$DelegateOperationExecutor.execute(MongoClientDelegate.java:153) ~[mongodb-driver-sync-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.client.internal.MongoIterableImpl.execute(MongoIterableImpl.java:130) ~[mongodb-driver-sync-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at com.mongodb.client.internal.MongoIterableImpl.iterator(MongoIterableImpl.java:90) ~[mongodb-driver-sync-4.11.2.jar:na]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.data.mongodb.core.MongoTemplate.executeFindMultiInternal(MongoTemplate.java:2914) ~[spring-data-mongodb-4.2.8.jar:4.2.8]
+[2026-01-22T10:51:51.696Z] 	... 119 common frames omitted
+[2026-01-22T10:51:51.696Z] 
+[2026-01-22T10:51:51.696Z] [ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 33.50 s <<< FAILURE! -- in com.backend.user_service.UserServiceApplicationTests
+[2026-01-22T10:51:51.696Z] [ERROR] com.backend.user_service.UserServiceApplicationTests.contextLoads -- Time elapsed: 0.010 s <<< ERROR!
+[2026-01-22T10:51:51.696Z] java.lang.IllegalStateException: Failed to load ApplicationContext for [MergedContextConfiguration@ad6255e testClass = com.backend.user_service.UserServiceApplicationTests, locations = [], classes = [com.backend.user_service.UserServiceApplication], contextInitializerClasses = [], activeProfiles = ["test"], propertySourceDescriptors = [], propertySourceProperties = ["spring.data.mongodb.uri=mongodb://localhost:27017/test", "spring.kafka.bootstrap-servers=", "spring.cloud.discovery.enabled=false", "eureka.client.enabled=false", "spring.kafka.consumer.auto-startup=false", "spring.kafka.listener.auto-startup=false", "org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true", "spring.main.web-application-type=none"], contextCustomizers = [[ImportsContextCustomizer@81a56b2 key = [org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoReactiveDataAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration, org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration, org.springframework.boot.autoconfigure.ssl.SslAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration, com.backend.user_service.TestKafkaConfig, org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfiguration]], org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@36a6bea6, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@65c33b92, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@36417a54, org.springframework.boot.test.web.reactive.server.WebTestClientContextCustomizer@1ac4ccad, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@1bc0d349, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@0, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@71904469, org.springframework.boot.test.context.SpringBootTestAnnotation@5f6f837b], contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:180)
+[2026-01-22T10:51:51.696Z] 	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130)
+[2026-01-22T10:51:51.696Z] 	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.injectDependencies(DependencyInjectionTestExecutionListener.java:142)
+[2026-01-22T10:51:51.696Z] 	at org.springframework.test.context.support.DependencyInjectionTestExecutionListener.prepareTestInstance(DependencyInjectionTestExecutionListener.java:98)
+[2026-01-22T10:51:51.696Z] 	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260)
+[2026-01-22T10:51:51.696Z] 	at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:163)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1625)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:310)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:735)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:734)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:762)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.Optional.orElseGet(Optional.java:364)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+[2026-01-22T10:51:51.696Z] 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+[2026-01-22T10:51:51.696Z] Caused by: org.springframework.dao.DataAccessResourceFailureException: Timed out after 30000 ms while waiting for a server that matches ReadPreferenceServerSelector{readPreference=primary}. Client view of cluster state is {type=UNKNOWN, servers=[{address=localhost:27017, type=UNKNOWN, state=CONNECTING, exception={com.mongodb.MongoSocketOpenException: Exception opening socket}, caused by {java.net.ConnectException: Connection refused}}]
+[2026-01-22T10:51:51.696Z] 	at org.springframework.data.mongodb.core.MongoExceptionTranslator.translateExceptionIfPossible(MongoExceptionTranslator.java:88)
+[2026-01-22T10:51:51.696Z] 	at org.springframework.data.mongodb.core.MongoTemplate.potentiallyConvertRuntimeException(MongoTemplate.java:3002)
+[2026-01-22T10:51:51.696Z] 	at org.springframework.data.mongodb.core.MongoTemplate.executeFindMultiInternal(MongoTemplate.java:2927)
+[2026-01-22T10:51:51.696Z] 	at org.springframework.data.mongodb.core.MongoTemplate.doFind(MongoTemplate.java:2625)
+[2026-01-22T10:51:51.696Z] 	at org.springframework.data.mongodb.core.ExecutableFindOperationSupport$ExecutableFindSupport.doFind(ExecutableFindOperationSupport.java:177)
+[2026-01-22T10:51:51.696Z] 	at org.springframework.data.mongodb.core.ExecutableFindOperationSupport$ExecutableFindSupport.oneValue(ExecutableFindOperationSupport.java:112)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.data.mongodb.repository.query.AbstractMongoQuery.lambda$getExecution$7(AbstractMongoQuery.java:202)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.data.mongodb.repository.query.AbstractMongoQuery.doExecute(AbstractMongoQuery.java:147)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.data.mongodb.repository.query.AbstractMongoQuery.execute(AbstractMongoQuery.java:119)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.doInvoke(RepositoryMethodInvoker.java:170)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.invoke(RepositoryMethodInvoker.java:158)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.doInvoke(QueryExecutorMethodInterceptor.java:164)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.invoke(QueryExecutorMethodInterceptor.java:143)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor.invoke(DefaultMethodInvokingMethodInterceptor.java:70)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.data.mongodb.repository.support.CrudMethodMetadataPostProcessor$CrudMethodMetadataPopulatingMethodInterceptor.invoke(CrudMethodMetadataPostProcessor.java:129)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:223)
+[2026-01-22T10:51:51.697Z] 	at jdk.proxy2/jdk.proxy2.$Proxy150.findByEmail(Unknown Source)
+[2026-01-22T10:51:51.697Z] 	at com.backend.user_service.config.AdminUserInitializer.run(AdminUserInitializer.java:41)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.boot.SpringApplication.lambda$callRunner$5(SpringApplication.java:790)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.util.function.ThrowingConsumer$1.acceptWithException(ThrowingConsumer.java:83)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.util.function.ThrowingConsumer.accept(ThrowingConsumer.java:60)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.util.function.ThrowingConsumer$1.accept(ThrowingConsumer.java:88)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:798)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:789)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.boot.SpringApplication.lambda$callRunners$3(SpringApplication.java:774)
+[2026-01-22T10:51:51.697Z] 	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:183)
+[2026-01-22T10:51:51.697Z] 	at java.base/java.util.stream.SortedOps$SizedRefSortingSink.end(SortedOps.java:357)
+[2026-01-22T10:51:51.697Z] 	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:510)
+[2026-01-22T10:51:51.697Z] 	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499)
+[2026-01-22T10:51:51.697Z] 	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:150)
+[2026-01-22T10:51:51.697Z] 	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:173)
+[2026-01-22T10:51:51.697Z] 	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)
+[2026-01-22T10:51:51.697Z] 	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:596)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:774)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:342)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.lambda$loadContext$3(SpringBootContextLoader.java:137)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:58)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:46)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.boot.SpringApplication.withHook(SpringApplication.java:1463)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.boot.test.context.SpringBootContextLoader$ContextLoaderHook.run(SpringBootContextLoader.java:553)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:137)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:108)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:225)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:152)
+[2026-01-22T10:51:51.697Z] 	... 17 more
+[2026-01-22T10:51:51.697Z] Caused by: com.mongodb.MongoTimeoutException: Timed out after 30000 ms while waiting for a server that matches ReadPreferenceServerSelector{readPreference=primary}. Client view of cluster state is {type=UNKNOWN, servers=[{address=localhost:27017, type=UNKNOWN, state=CONNECTING, exception={com.mongodb.MongoSocketOpenException: Exception opening socket}, caused by {java.net.ConnectException: Connection refused}}]
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.internal.connection.BaseCluster.createTimeoutException(BaseCluster.java:380)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.internal.connection.BaseCluster.selectServer(BaseCluster.java:125)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.internal.connection.SingleServerCluster.selectServer(SingleServerCluster.java:46)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.internal.binding.ClusterBinding.getReadConnectionSource(ClusterBinding.java:116)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.client.internal.ClientSessionBinding.getConnectionSource(ClientSessionBinding.java:128)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.client.internal.ClientSessionBinding.getReadConnectionSource(ClientSessionBinding.java:92)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.internal.operation.SyncOperationHelper.withSuppliedResource(SyncOperationHelper.java:144)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection(SyncOperationHelper.java:125)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.internal.operation.FindOperation.lambda$execute$2(FindOperation.java:322)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.internal.operation.SyncOperationHelper.lambda$decorateReadWithRetries$12(SyncOperationHelper.java:292)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.internal.async.function.RetryingSyncSupplier.get(RetryingSyncSupplier.java:67)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.internal.operation.FindOperation.execute(FindOperation.java:333)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.internal.operation.FindOperation.execute(FindOperation.java:73)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.client.internal.MongoClientDelegate$DelegateOperationExecutor.execute(MongoClientDelegate.java:153)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.client.internal.MongoIterableImpl.execute(MongoIterableImpl.java:130)
+[2026-01-22T10:51:51.697Z] 	at com.mongodb.client.internal.MongoIterableImpl.iterator(MongoIterableImpl.java:90)
+[2026-01-22T10:51:51.697Z] 	at org.springframework.data.mongodb.core.MongoTemplate.executeFindMultiInternal(MongoTemplate.java:2914)
+[2026-01-22T10:51:51.697Z] 	... 63 more
+[2026-01-22T10:51:51.697Z] 
+[2026-01-22T10:51:51.697Z] [INFO] 
+[2026-01-22T10:51:51.697Z] [INFO] Results:
+[2026-01-22T10:51:51.697Z] [INFO] 
+[2026-01-22T10:51:51.697Z] [ERROR] Errors: 
+[2026-01-22T10:51:51.698Z] [ERROR]   UserServiceApplicationTests.contextLoads » IllegalState Failed to load ApplicationContext for [MergedContextConfiguration@ad6255e testClass = com.backend.user_service.UserServiceApplicationTests, locations = [], classes = [com.backend.user_service.UserServiceApplication], contextInitializerClasses = [], activeProfiles = ["test"], propertySourceDescriptors = [], propertySourceProperties = ["spring.data.mongodb.uri=mongodb://localhost:27017/test", "spring.kafka.bootstrap-servers=", "spring.cloud.discovery.enabled=false", "eureka.client.enabled=false", "spring.kafka.consumer.auto-startup=false", "spring.kafka.listener.auto-startup=false", "org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true", "spring.main.web-application-type=none"], contextCustomizers = [[ImportsContextCustomizer@81a56b2 key = [org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoReactiveDataAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration, org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration, org.springframework.boot.autoconfigure.ssl.SslAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration, com.backend.user_service.TestKafkaConfig, org.springframework.boot.autoconfigure.data.mongo.MongoReactiveRepositoriesAutoConfiguration]], org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@36a6bea6, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@65c33b92, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@36417a54, org.springframework.boot.test.web.reactive.server.WebTestClientContextCustomizer@1ac4ccad, org.springframework.boot.test.web.reactor.netty.DisableReactorResourceFactoryGlobalResourcesContextCustomizerFactory$DisableReactorResourceFactoryGlobalResourcesContextCustomizerCustomizer@1bc0d349, org.springframework.boot.test.autoconfigure.actuate.observability.ObservabilityContextCustomizerFactory$DisableObservabilityContextCustomizer@1f, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@0, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizer@71904469, org.springframework.boot.test.context.SpringBootTestAnnotation@5f6f837b], contextLoader = org.springframework.boot.test.context.SpringBootContextLoader, parent = null]
+[2026-01-22T10:51:51.698Z] [INFO] 
+[2026-01-22T10:51:51.698Z] [ERROR] Tests run: 16, Failures: 0, Errors: 1, Skipped: 0
+[2026-01-22T10:51:51.698Z] [INFO] 
+[2026-01-22T10:51:51.698Z] [INFO] 
+[2026-01-22T10:51:51.698Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:51:51.698Z] [INFO] Skipping user-service
+[2026-01-22T10:51:51.698Z] [INFO] This project has been banned from the build due to previous failures.
+[2026-01-22T10:51:51.698Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:51:51.698Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:51:51.698Z] [INFO] BUILD FAILURE
+[2026-01-22T10:51:51.698Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:51:51.698Z] [INFO] Total time:  43.525 s
+[2026-01-22T10:51:51.698Z] [INFO] Finished at: 2026-01-22T10:51:49Z
+[2026-01-22T10:51:51.698Z] [INFO] ------------------------------------------------------------------------
+[2026-01-22T10:51:51.698Z] [ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.2.2:test (default-test) on project user-service: 
+[2026-01-22T10:51:51.698Z] [ERROR] 
+[2026-01-22T10:51:51.698Z] [ERROR] Please refer to /var/jenkins_home/workspace/buy-01-multibranch_main/backend/user-service/target/surefire-reports for the individual test results.
+[2026-01-22T10:51:51.698Z] [ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[2026-01-22T10:51:51.698Z] [ERROR] -> [Help 1]
+[2026-01-22T10:51:51.698Z] [ERROR] 
+[2026-01-22T10:51:51.698Z] [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[2026-01-22T10:51:51.698Z] [ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[2026-01-22T10:51:51.698Z] [ERROR] 
+[2026-01-22T10:51:51.698Z] [ERROR] For more information about the errors and possible solutions, please read the following articles:
+[2026-01-22T10:51:51.698Z] [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (📊 Quality Gate)
+Stage "📊 Quality Gate" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (�🐳 Dockerize & Push)
+Stage "�🐳 Dockerize & Push" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🚀 Deploy Locally)
+Stage "🚀 Deploy Locally" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (🚀 Deploy Remote)
+Stage "🚀 Deploy Remote" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (✅ Post-Deployment Verification)
+Stage "✅ Post-Deployment Verification" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (📦 Archive Artifacts)
+Stage "📦 Archive Artifacts" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+[2026-01-22T10:51:52.344Z] 🧹 Pipeline execution completed
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+[2026-01-22T10:51:52.390Z] ❌ Pipeline failed!
+[Pipeline] sh
+[2026-01-22T10:51:52.652Z] + cat .backup/latest-backup-path.txt
+[2026-01-22T10:51:52.652Z] + echo 
+[Pipeline] echo
+[2026-01-22T10:51:52.662Z] Rollback info captured: NO
+[Pipeline] emailext
+[2026-01-22T10:51:52.677Z] Sending email to: mohammad.kheirkhah@gritlab.ax
+[Pipeline] echo
+[2026-01-22T10:51:53.713Z] ⏭️  Skipping GitHub status reporting (SKIP_GITHUB_STATUS=true)
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[2026-01-22T10:51:53.769Z] 
+[Pipeline] // ansiColor
+[Pipeline] }
+[Pipeline] // timestamps
+[Pipeline] }
+[Pipeline] // timeout
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // withCredentials
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+ERROR: script returned exit code 1
+
+GitHub has been notified of this commit’s build result
+
+Finished: FAILURE

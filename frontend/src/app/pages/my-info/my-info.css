@@ -4,6 +4,12 @@
   padding: 24px;
 }
 
+.my-info-container {
+  max-width: 800px;
+  margin: 80px auto 40px;
+  padding: 24px;
+}
+
 h2 {
   color: var(--navy);
   text-align: center;

@@ -23,20 +23,38 @@ form {
   align-items: center;
 }
 
-/* * ✅ This gives all your form elements a limited width
- * and ensures they are responsive.
-*/
+.container {
+  max-width: 700px;
+  margin: 80px auto 40px;
+  padding: 24px 32px;
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.container h1 {
+  text-align: center;
+  color: var(--navy);
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 mat-form-field,
 .form-group,
 .file-errors,
 .file-list {
   width: 100%;
-  max-width: 500px; /* <--- This is the limited length */
+  max-width: 500px;
   margin-bottom: 12px;
   box-sizing: border-box;
 }
 
-/* --- File Input Section --- */
 .form-group label {
   display: block;
   margin-bottom: 8px;
@@ -50,10 +68,9 @@ mat-form-field,
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #f9f9f9;
-  box-sizing: border-box; /* Ensures padding fits */
+  box-sizing: border-box;
 }
 
-/* --- File Error & List Styles --- */
 .file-errors {
   padding: 10px;
   background-color: #fff0f0;
@@ -119,7 +136,6 @@ mat-form-field,
   font-size: 20px;
 }
 
-/* --- Loading Spinner --- */
 .upload-spinner {
   display: flex;
   flex-direction: column;
@@ -135,10 +151,9 @@ mat-form-field,
   color: var(--navy);
 }
 
-/* --- Submit Button --- */
 button[type="submit"] {
   width: 100%;
-  max-width: 500px; /* ✅ Make the button match the fields */
+  max-width: 500px;
   background-color: var(--green);
   color: var(--white);
   padding: 12px 0;

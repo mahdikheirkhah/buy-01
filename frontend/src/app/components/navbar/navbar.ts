@@ -27,7 +27,7 @@ import { MatBadgeModule } from '@angular/material/badge';
     MatBadgeModule
   ],
   templateUrl: './navbar.html',
-  styleUrls: ['./navbar.css'] // Use styleUrls (plural)
+  styleUrls: ['./navbar.css']
 })
 export class Navbar implements OnInit, OnDestroy {
   @Output() toggleSidenav = new EventEmitter<void>();

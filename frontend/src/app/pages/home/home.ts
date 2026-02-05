@@ -16,7 +16,7 @@ import { User } from '../../models/user.model';
     CommonModule,
     FormsModule,
     MatPaginatorModule,
-    ProductCard // Import the reusable card component
+    ProductCard
   ],
   templateUrl: './home.html',
   styleUrls: ['./home.css']

@@ -8,7 +8,7 @@
   <component name="SonarLintProjectConfiguration">
     <option name="bindingEnabled" value="true" />
     <option name="connectionName" value="SonarQube Local" />
-    <option name="projectKey" value="buy-01-backend" />
+    <option name="projectKey" value="user-service" />
   </component>
   <component name="SonarLintServersConfiguration">
     <servers>
