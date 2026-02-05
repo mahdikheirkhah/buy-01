@@ -76,45 +76,55 @@ pipeline {
                     def sourceRepo = isPullRequest ? 'GitHub' : 'Unknown'
                     def isGitHubSource = isPullRequest ? 'true' : 'false'
                     
+                    // Get the actual branch name for this build
+                    def branchToCheckout = env.BRANCH_NAME ?: params.BRANCH
+                    
                     echo "📥 Build Type: ${isPullRequest ? 'Pull Request #' + env.CHANGE_ID : 'Branch Build'}"
-                    echo "📥 Detecting source repository..."
+                    echo "📥 Branch to checkout: ${branchToCheckout}"
+                    echo "📥 GIT_COMMIT from trigger: ${env.GIT_COMMIT ?: 'not set'}"
                     
                     if (isPullRequest) {
-                        echo "🔀 PR build detected - checking out from GitHub"
+                        echo "🔀 PR build detected - checking out PR HEAD (latest commit only)"
                         sourceRepo = 'GitHub'
                         isGitHubSource = 'true'
                         
+                        // For PRs: checkout the specific PR merge ref (latest commit)
                         checkout([
                             $class: 'GitSCM',
-                            branches: [[name: "**"]],
+                            branches: [[name: "FETCH_HEAD"]],
                             userRemoteConfigs: [[
                                 url: 'https://github.com/mahdikheirkhah/buy-01.git',
                                 credentialsId: 'multi-branch-github',
-                                refspec: '+refs/pull/*/head:refs/remotes/origin/PR-*'
+                                refspec: "+refs/pull/${env.CHANGE_ID}/head:FETCH_HEAD"
                             ]],
                             extensions: [
-                                [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                                [$class: 'CloneOption', depth: 1, noTags: true, reference: '', shallow: true, timeout: 120],
+                                [$class: 'WipeWorkspace']
                             ]
                         ])
-                        echo "✅ Checkout completed from GitHub (PR #${env.CHANGE_ID})"
+                        echo "✅ Checkout completed - PR #${env.CHANGE_ID} HEAD"
                         
                     } else {
-                        echo "🌿 Branch build detected - checking out and detecting source..."
+                        echo "🌿 Branch build detected - checking out branch HEAD..."
                         
                         // Try GitHub first, then fallback to Gitea
                         try {
+                            // For branches: checkout the actual branch HEAD (not all history)
                             checkout([
                                 $class: 'GitSCM',
-                                branches: [[name: "*/${params.BRANCH}"]],
+                                branches: [[name: "refs/heads/${branchToCheckout}"]],
                                 userRemoteConfigs: [[
                                     url: 'https://github.com/mahdikheirkhah/buy-01.git',
-                                    credentialsId: 'multi-branch-github'
+                                    credentialsId: 'multi-branch-github',
+                                    refspec: "+refs/heads/${branchToCheckout}:refs/remotes/origin/${branchToCheckout}"
                                 ]],
                                 extensions: [
-                                    [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                                    [$class: 'CloneOption', depth: 1, noTags: true, reference: '', shallow: true, timeout: 120],
+                                    [$class: 'WipeWorkspace'],
+                                    [$class: 'LocalBranch', localBranch: branchToCheckout]
                                 ]
                             ])
-                            echo "✅ Checkout completed from GitHub"
+                            echo "✅ Checkout completed from GitHub - branch: ${branchToCheckout}"
                             sourceRepo = 'GitHub'
                             isGitHubSource = 'true'
                             
@@ -126,16 +136,19 @@ pipeline {
                             
                             checkout([
                                 $class: 'GitSCM',
-                                branches: [[name: "*/${params.BRANCH}"]],
+                                branches: [[name: "refs/heads/${branchToCheckout}"]],
                                 userRemoteConfigs: [[
                                     url: 'https://01.gritlab.ax/git/mkheirkh/safe-zone',
-                                    credentialsId: 'gitea-credentials'
+                                    credentialsId: 'gitea-credentials',
+                                    refspec: "+refs/heads/${branchToCheckout}:refs/remotes/origin/${branchToCheckout}"
                                 ]],
                                 extensions: [
-                                    [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                                    [$class: 'CloneOption', depth: 1, noTags: true, reference: '', shallow: true, timeout: 120],
+                                    [$class: 'WipeWorkspace'],
+                                    [$class: 'LocalBranch', localBranch: branchToCheckout]
                                 ]
                             ])
-                            echo "✅ Checkout completed from Gitea"
+                            echo "✅ Checkout completed from Gitea - branch: ${branchToCheckout}"
                             sourceRepo = 'Gitea'
                             isGitHubSource = 'false'
                         }
@@ -146,16 +159,21 @@ pipeline {
                     env.IS_GITHUB_SOURCE = isGitHubSource
                     env.IS_PULL_REQUEST = isPullRequest ? 'true' : 'false'
                     
+                    // Store the actual commit SHA for status reporting
+                    env.GIT_COMMIT_SHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    
                     echo "📍 Source: ${sourceRepo}"
-                    echo "📍 Checking out branch: ${params.BRANCH}"
+                    echo "📍 Branch: ${branchToCheckout}"
+                    echo "📍 Commit SHA: ${env.GIT_COMMIT_SHA}"
                     
                     sh '''
                         echo ""
                         echo "📋 Git Information:"
                         echo "Current commit: $(git rev-parse HEAD)"
-                        echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
-                        echo "Recent commits:"
-                        git log --oneline -5
+                        echo "Current branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'detached HEAD')"
+                        echo ""
+                        echo "Latest commit (this is what we're building):"
+                        git log --oneline -1
                         
                         echo ""
                         echo "🔍 Verifying workspace..."
@@ -876,8 +894,8 @@ EOF
                     echo "Check Conclusion: ${checkConclusion}"
                     
                     try {
-                        // Get commit SHA at Groovy level
-                        def commitSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                        // Use the commit SHA we captured during checkout (not git rev-parse again)
+                        def commitSha = env.GIT_COMMIT_SHA ?: sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                         
                         // Map build status to GitHub Statuses API states (success, failure, error, pending)
                         def ghState = 'success'
