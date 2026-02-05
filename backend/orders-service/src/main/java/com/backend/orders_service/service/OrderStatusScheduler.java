@@ -29,6 +29,13 @@ public class OrderStatusScheduler {
     private final OrderRepository orderRepository;
     private final ProductInventoryClient productInventoryClient;
 
+    /**
+     * Schedules a post-checkout status update with random delay jitter.
+     * Uses ThreadLocalRandom which is safe here because this is for load
+     * distribution,
+     * not security-critical (no tokens, keys, or secrets are generated).
+     */
+    @SuppressWarnings("java:S2245") // ThreadLocalRandom is safe for scheduling jitter
     public void schedulePostCheckoutUpdate(@NotNull String orderId) {
         long delay = ThreadLocalRandom.current().nextLong(MIN_DELAY_MS, MAX_DELAY_MS + 1);
         Instant runAt = Instant.now().plusMillis(delay);
@@ -59,6 +66,13 @@ public class OrderStatusScheduler {
         });
     }
 
+    /**
+     * Picks the next order status with 75% delivered, 25% cancelled probability.
+     * Uses ThreadLocalRandom which is safe here because this is demo/simulation
+     * logic,
+     * not security-critical (no tokens, keys, or secrets are generated).
+     */
+    @SuppressWarnings("java:S2245") // ThreadLocalRandom is safe for status simulation
     private OrderStatus pickNextStatus() {
         int roll = ThreadLocalRandom.current().nextInt(100);
         return roll < 75 ? OrderStatus.DELIVERED : OrderStatus.CANCELLED;
