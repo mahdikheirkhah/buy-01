@@ -296,7 +296,7 @@ pipeline {
                 script {
                     echo "🧪 Running backend unit tests..."
 
-                    def services = ['user-service', 'product-service', 'media-service']
+                    def services = ['user-service', 'product-service', 'media-service', 'orders-service']
                     def failedTests = []
 
                     services.each { service ->
@@ -455,7 +455,7 @@ pipeline {
                             sh '''#!/bin/bash
                                 echo "📁 Creating SonarQube projects if they don't exist..."
 
-                                for service in user-service product-service media-service api-gateway discovery-service frontend; do
+                                for service in user-service product-service media-service orders-service api-gateway discovery-service frontend; do
                                     echo "Checking if $service project exists..."
                                     PROJECT_EXISTS=$(curl -s -u ${SONAR_TOKEN}: http://sonarqube:9000/api/projects/search?projects=$service | grep -o "\\"key\\":\\"$service\\"" || echo "")
                                     if [ -z "$PROJECT_EXISTS" ]; then
@@ -473,7 +473,7 @@ pipeline {
                                 sleep 3
                             '''
 
-                        def services = ['user-service', 'product-service', 'media-service', 'api-gateway', 'discovery-service']
+                        def services = ['user-service', 'product-service', 'media-service', 'orders-service', 'api-gateway', 'discovery-service']
                         services.each { service ->
                             // ✅ FIXED: Move COVERAGE_EXCLUDE definition inside the shell command
                             sh """
@@ -558,9 +558,9 @@ pipeline {
                         def qgResult = sh(script: '''#!/bin/bash
                             echo "Fetching quality gate status for all services..."
                             
-                            SERVICES="user-service product-service media-service api-gateway discovery-service frontend"
+                            SERVICES="user-service product-service media-service orders-service api-gateway discovery-service frontend"
                             PASSED_COUNT=0
-                            TOTAL_COUNT=6
+                            TOTAL_COUNT=8
                             FAILED_SERVICES=""
                             
                             for service in $SERVICES; do
@@ -622,7 +622,7 @@ pipeline {
                             # =========================================
                             # PART A: BACKEND SERVICES
                             # =========================================
-                            BACKEND_SERVICES="discovery-service api-gateway user-service product-service media-service dummy-data"
+                            BACKEND_SERVICES="discovery-service api-gateway user-service product-service media-service orders-service dummy-data"
                             
                             for service in $BACKEND_SERVICES; do
                                 echo "-----------------------------------------------"
@@ -742,7 +742,7 @@ EOF
                             sleep 2
                             
                             # Force remove specific containers if they still exist
-                            for container in frontend discovery-service api-gateway user-service product-service media-service dummy-data sonarqube zookeeper kafka database; do
+                            for container in frontend discovery-service api-gateway user-service product-service media-service orders-service dummy-data sonarqube zookeeper kafka database; do
                                 if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
                                     echo "🗑️  Removing container: $container"
                                     docker rm -f "$container" 2>/dev/null || true

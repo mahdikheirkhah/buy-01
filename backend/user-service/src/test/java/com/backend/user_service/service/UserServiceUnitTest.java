@@ -30,6 +30,7 @@ import com.backend.common.dto.Role;
 import com.backend.common.exception.CustomException;
 import com.backend.common.util.JwtUtil;
 import com.backend.user_service.dto.LoginUserDTO;
+import com.backend.user_service.dto.UpdateUserDTO;
 import com.backend.user_service.model.User;
 import com.backend.user_service.repository.UserMapper;
 import com.backend.user_service.repository.UserRepository;
@@ -402,7 +403,7 @@ class UserServiceUnitTest {
     @DisplayName("Should update user info successfully")
     void testUpdateUserInfo() {
         // Arrange
-        updateUserDTO updateDto = new updateUserDTO();
+        UpdateUserDTO updateDto = new UpdateUserDTO();
         updateDto.setFirstName("Jane");
         updateDto.setLastName("Smith");
 

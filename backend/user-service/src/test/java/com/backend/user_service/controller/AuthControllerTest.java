@@ -29,7 +29,7 @@ import org.springframework.security.core.Authentication;
 
 import com.backend.common.dto.Role;
 import com.backend.user_service.dto.LoginUserDTO;
-import com.backend.user_service.dto.registerUserDTO;
+import com.backend.user_service.dto.RegisterUserDTO;
 import com.backend.user_service.model.User;
 import com.backend.user_service.service.UserService;
 
@@ -105,7 +105,7 @@ public class AuthControllerTest {
     @Test
     void testHandleUserRegistration_Success() {
         // Arrange
-        registerUserDTO reg = registerUserDTO.builder()
+        RegisterUserDTO reg = RegisterUserDTO.builder()
                 .firstName("John")
                 .lastName("Doe")
                 .email("john.doe@example.com")
