@@ -296,7 +296,8 @@ pipeline {
                 script {
                     echo "🧪 Running backend unit tests..."
 
-                    def services = ['user-service', 'product-service', 'media-service', 'orders-service']
+                    // Note: orders-service excluded - no unit tests yet
+                    def services = ['user-service', 'product-service', 'media-service']
                     def failedTests = []
 
                     services.each { service ->
