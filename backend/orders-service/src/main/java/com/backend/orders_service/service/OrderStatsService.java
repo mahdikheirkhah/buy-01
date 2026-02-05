@@ -279,7 +279,7 @@ public class OrderStatsService {
             if (item instanceof JsonNode) {
                 JsonNode itemNode = (JsonNode) item;
                 if (itemNode.has("price") && !itemNode.get("price").isNull()) {
-                    return new BigDecimal(itemNode.get("price").asDouble());
+                    return BigDecimal.valueOf(itemNode.get("price").asDouble());
                 }
             } else {
                 // Handle OrderItem
@@ -290,7 +290,7 @@ public class OrderStatsService {
                     priceField.setAccessible(true);
                     Object price = priceField.get(orderItem);
                     if (price != null) {
-                        return new BigDecimal(price.toString());
+                        return new BigDecimal(price.toString()); // String constructor is safe
                     }
                 } catch (Exception e) {
                     // Continue to fetch from service
@@ -300,7 +300,7 @@ public class OrderStatsService {
             // Fetch all product details at once (uses cache if available)
             Map<String, Object> product = getProductDetails(productId);
             if (product != null && product.containsKey("price")) {
-                return new BigDecimal(product.get("price").toString());
+                return new BigDecimal(product.get("price").toString()); // String constructor is safe
             }
         } catch (Exception e) {
             log.warn("Could not fetch price for product {}", productId, e);
