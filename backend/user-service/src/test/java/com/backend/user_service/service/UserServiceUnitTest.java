@@ -29,8 +29,7 @@ import com.backend.common.dto.InfoUserDTO;
 import com.backend.common.dto.Role;
 import com.backend.common.exception.CustomException;
 import com.backend.common.util.JwtUtil;
-import com.backend.user_service.dto.loginUserDTO;
-import com.backend.user_service.dto.updateUserDTO;
+import com.backend.user_service.dto.LoginUserDTO;
 import com.backend.user_service.model.User;
 import com.backend.user_service.repository.UserMapper;
 import com.backend.user_service.repository.UserRepository;
@@ -325,7 +324,7 @@ class UserServiceUnitTest {
     @DisplayName("Should login user successfully")
     void testLoginUserSuccess() {
         // Arrange
-        loginUserDTO loginDto = new loginUserDTO();
+        LoginUserDTO loginDto = new LoginUserDTO();
         loginDto.setEmail("john.doe@example.com");
         loginDto.setPassword("correctPassword");
         when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(testUser));
@@ -344,7 +343,7 @@ class UserServiceUnitTest {
     @DisplayName("Should throw exception for wrong password in login")
     void testLoginUserWrongPassword() {
         // Arrange
-        loginUserDTO loginDto = new loginUserDTO();
+        LoginUserDTO loginDto = new LoginUserDTO();
         loginDto.setEmail("john.doe@example.com");
         loginDto.setPassword("wrongPassword");
         when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(testUser));

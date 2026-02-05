@@ -2,6 +2,7 @@ package com.backend.user_service.dto;
 
 import com.backend.common.dto.Role;
 import com.backend.user_service.model.User;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -14,7 +15,7 @@ import lombok.NoArgsConstructor; // Import this
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class registerUserDTO {
+public class RegisterUserDTO {
     @NotBlank(message = "First name is required")
     private String firstName;
     @NotBlank(message = "Last name is required")
