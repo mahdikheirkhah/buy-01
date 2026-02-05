@@ -28,7 +28,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 
 import com.backend.common.dto.Role;
-import com.backend.user_service.dto.loginUserDTO;
+import com.backend.user_service.dto.LoginUserDTO;
 import com.backend.user_service.dto.registerUserDTO;
 import com.backend.user_service.model.User;
 import com.backend.user_service.service.UserService;
@@ -59,7 +59,7 @@ public class AuthControllerTest {
     @Test
     void testHandleUserLogin_Success() {
         // Arrange
-        loginUserDTO dto = new loginUserDTO();
+        LoginUserDTO dto = new LoginUserDTO();
         dto.setEmail("user@example.com");
         dto.setPassword("secret123");
 
@@ -85,7 +85,7 @@ public class AuthControllerTest {
     @Test
     void testHandleUserLogin_BadCredentials() {
         // Arrange
-        loginUserDTO dto = new loginUserDTO();
+        LoginUserDTO dto = new LoginUserDTO();
         dto.setEmail("bad@example.com");
         dto.setPassword("wrong");
 

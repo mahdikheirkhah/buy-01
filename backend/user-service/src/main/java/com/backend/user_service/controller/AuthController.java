@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.backend.user_service.dto.loginUserDTO;
-import com.backend.user_service.dto.registerUserDTO;
+import com.backend.user_service.dto.LoginUserDTO;
+import com.backend.user_service.dto.RegisterUserDTO;
 import com.backend.user_service.service.UserService;
 
 import jakarta.servlet.http.Cookie;
@@ -40,14 +40,14 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> handleUserRegistration(
-            @RequestPart("userDto") @Valid registerUserDTO userDto,
+            @RequestPart("userDto") @Valid RegisterUserDTO userDto,
             @RequestPart(value = "avatarFile", required = false) MultipartFile avatarFile) {
         userService.registerUser(userDto.ToUser(), avatarFile);
         return ResponseEntity.ok(Map.of("message", "User registered successfully"));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> handleUserLogin(@RequestBody loginUserDTO loginUserDTO,
+    public ResponseEntity<Map<String, String>> handleUserLogin(@RequestBody LoginUserDTO loginUserDTO,
             HttpServletResponse response) {
         try {
             Authentication authentication = authenticationManager.authenticate(
