@@ -2,6 +2,10 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
+# Copy pom + sources
+
+# Copy pom + sources
+
 # Copy all backend code
 COPY backend/ .
 

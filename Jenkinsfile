@@ -73,15 +73,17 @@ pipeline {
                     deleteDir()
                     
                     def isPullRequest = (env.CHANGE_ID != null)
-                    def sourceRepo = isPullRequest ? 'GitHub' : 'Gitea'
-                    env.GIT_SOURCE = sourceRepo
+                    def sourceRepo = isPullRequest ? 'GitHub' : 'Unknown'
+                    def isGitHubSource = isPullRequest ? 'true' : 'false'
                     
                     echo "📥 Build Type: ${isPullRequest ? 'Pull Request #' + env.CHANGE_ID : 'Branch Build'}"
-                    echo "📥 Source: ${sourceRepo}"
-                    echo "📥 Checking out branch: ${params.BRANCH}"
+                    echo "📥 Detecting source repository..."
                     
                     if (isPullRequest) {
                         echo "🔀 PR build detected - checking out from GitHub"
+                        sourceRepo = 'GitHub'
+                        isGitHubSource = 'true'
+                        
                         checkout([
                             $class: 'GitSCM',
                             branches: [[name: "**"]],
@@ -97,20 +99,55 @@ pipeline {
                         echo "✅ Checkout completed from GitHub (PR #${env.CHANGE_ID})"
                         
                     } else {
-                        echo "🌿 Branch build detected - checking out from Gitea"
-                        checkout([
-                            $class: 'GitSCM',
-                            branches: [[name: "*/${params.BRANCH}"]],
-                            userRemoteConfigs: [[
-                                url: 'https://01.gritlab.ax/git/mkheirkh/safe-zone',
-                                credentialsId: 'gitea-credentials'
-                            ]],
-                            extensions: [
-                                [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
-                            ]
-                        ])
-                        echo "✅ Checkout completed from Gitea"
+                        echo "🌿 Branch build detected - checking out and detecting source..."
+                        
+                        // Try GitHub first, then fallback to Gitea
+                        try {
+                            checkout([
+                                $class: 'GitSCM',
+                                branches: [[name: "*/${params.BRANCH}"]],
+                                userRemoteConfigs: [[
+                                    url: 'https://github.com/mahdikheirkhah/buy-01.git',
+                                    credentialsId: 'multi-branch-github'
+                                ]],
+                                extensions: [
+                                    [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                                ]
+                            ])
+                            echo "✅ Checkout completed from GitHub"
+                            sourceRepo = 'GitHub'
+                            isGitHubSource = 'true'
+                            
+                        } catch (Exception e) {
+                            echo "⚠️  GitHub checkout failed: ${e.message}"
+                            echo "🔄 Attempting checkout from Gitea..."
+                            
+                            deleteDir()
+                            
+                            checkout([
+                                $class: 'GitSCM',
+                                branches: [[name: "*/${params.BRANCH}"]],
+                                userRemoteConfigs: [[
+                                    url: 'https://01.gritlab.ax/git/mkheirkh/safe-zone',
+                                    credentialsId: 'gitea-credentials'
+                                ]],
+                                extensions: [
+                                    [$class: 'CloneOption', depth: 0, noTags: false, reference: '', shallow: false, timeout: 120]
+                                ]
+                            ])
+                            echo "✅ Checkout completed from Gitea"
+                            sourceRepo = 'Gitea'
+                            isGitHubSource = 'false'
+                        }
                     }
+                    
+                    // Store detection results in environment
+                    env.GIT_SOURCE = sourceRepo
+                    env.IS_GITHUB_SOURCE = isGitHubSource
+                    env.IS_PULL_REQUEST = isPullRequest ? 'true' : 'false'
+                    
+                    echo "📍 Source: ${sourceRepo}"
+                    echo "📍 Checking out branch: ${params.BRANCH}"
                     
                     sh '''
                         echo ""
@@ -547,197 +584,41 @@ pipeline {
                 }
             }
         }
-
-        stage('📤 Report to GitHub') {
+        
+        stage('🐳 Build & Push Docker Images') {
             when {
-                expression { params.SKIP_GITHUB_STATUS == false }
-                expression { env.GIT_SOURCE == 'GitHub' }
+                expression { params.SKIP_DEPLOY == false }
             }
             steps {
                 script {
-                    echo "📤 Reporting build status to GitHub..."
-                    
-                    def buildStatus = currentBuild.result ?: 'SUCCESS'
-                    def githubStatus = 'success'
-                    def description = 'All checks passed!'
-                    
-                    if (buildStatus == 'FAILURE') {
-                        githubStatus = 'failure'
-                        description = 'Build failed - check Jenkins for details'
-                    } else if (buildStatus == 'UNSTABLE') {
-                        githubStatus = 'error'
-                        description = 'Build unstable - quality gate issues'
-                    }
-                    
-                    echo "Build Status: ${buildStatus}"
-                    echo "GitHub Status: ${githubStatus}"
-                    
-                    try {
-                        withCredentials([usernamePassword(
-                            credentialsId: 'multi-branch-github',
-                            passwordVariable: 'GITHUB_TOKEN',
-                            usernameVariable: 'GITHUB_USER'
-                        )]) {
-                            sh '''#!/bin/bash
-                                set -e
-                                
-                                echo "🔍 Step 1: Verify token exists"
-                                if [ -z "${GITHUB_TOKEN}" ]; then
-                                    echo "❌ ERROR: GITHUB_TOKEN is empty!"
-                                    exit 1
-                                fi
-                                echo "✅ Token exists (length: ${#GITHUB_TOKEN})"
-                                
-                                echo ""
-                                echo "🔍 Step 2: Get commit SHA"
-                                COMMIT_SHA=$(git rev-parse HEAD)
-                                echo "📍 Current commit: $COMMIT_SHA"
-                                
-                                echo ""
-                                echo "🔍 Step 3: Get current branch"
-                                CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-                                echo "📍 Current branch: $CURRENT_BRANCH"
-                                
-                                echo ""
-                                echo "🔍 Step 4: Test GitHub API connectivity"
-                                HTTP_TEST=$(curl -s -o /dev/null -w "%{http_code}" https://api.github.com/)
-                                echo "GitHub API Status: $HTTP_TEST"
-                                
-                                if [ "$HTTP_TEST" != "200" ]; then
-                                    echo "⚠️  Warning: GitHub API may not be reachable"
-                                fi
-                                
-                                echo ""
-                                echo "🔍 Step 5: Build API endpoint"
-                                GITHUB_API="https://api.github.com/repos/''' + env.GITHUB_REPO + '''/statuses/${COMMIT_SHA}"
-                                echo "API Endpoint: $GITHUB_API"
-                                
-                                echo ""
-                                echo "🔍 Step 6: Create JSON payload"
-                                PAYLOAD=$(cat <<'EOF'
-                                {
-                                  "state": "''' + githubStatus + '''",
-                                  "description": "''' + description + '''",
-                                  "target_url": "''' + env.BUILD_URL + '''",
-                                  "context": "Jenkins CI/CD Pipeline"
-                                }
-                                EOF
-                                )
-                                echo "Payload: $PAYLOAD"
-                                
-                                echo ""
-                                echo "🔍 Step 7: Send status to GitHub"
-                                RESPONSE=$(curl -s -w "\\nHTTP_CODE:%{http_code}" \\
-                                  -X POST \\
-                                  -H "Authorization: token ${GITHUB_TOKEN}" \\
-                                  -H "Content-Type: application/json" \\
-                                  -H "Accept: application/vnd.github.v3+json" \\
-                                  -d "$PAYLOAD" \\
-                                  "${GITHUB_API}")
-                                
-                                echo ""
-                                echo "🔍 Step 8: Parse response"
-                                HTTP_CODE=$(echo "$RESPONSE" | grep "HTTP_CODE:" | cut -d':' -f2)
-                                RESPONSE_BODY=$(echo "$RESPONSE" | grep -v "HTTP_CODE:")
-                                
-                                echo "HTTP Code: $HTTP_CODE"
-                                echo "Response Body: $RESPONSE_BODY"
-                                
-                                if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
-                                    echo "✅ GitHub status updated successfully"
-                                else
-                                    echo "❌ Failed to update GitHub status"
-                                    echo "Full response: $RESPONSE"
-                                    exit 1
-                                fi
-                            '''
-                        }
-                        echo "✅ GitHub status reporting completed"
-                    } catch (Exception e) {
-                        echo "❌ GitHub status reporting failed: ${e.message}"
-                        echo "This is not critical - continuing pipeline..."
-                    }
-                }
-            }
-        }
-
-        stage('🔐 GitHub PR Protection') {
-            when {
-                allOf {
-                    expression { env.CHANGE_ID != null }
-                    expression { params.SKIP_GITHUB_STATUS == false }
-                    expression { env.GIT_SOURCE == 'GitHub' }
-                }
-            }
-            steps {
-                script {
-                    echo "🔐 Enforcing branch protection rules..."
+                    echo "🐳 Building and Pushing Docker Images..."
                     
                     withCredentials([usernamePassword(
-                        credentialsId: 'multi-branch-github',
-                        passwordVariable: 'GITHUB_TOKEN',
-                        usernameVariable: 'GITHUB_USER'
+                        credentialsId: env.DOCKER_CREDENTIAL_ID, 
+                        passwordVariable: 'DOCKER_PASSWORD', 
+                        usernameVariable: 'DOCKER_USERNAME'
                     )]) {
-                        sh '''#!/bin/bash
-                            set -e
+                        sh '''
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
                             
-                            PR_NUMBER=${CHANGE_ID}
-                            COMMIT_SHA=$(git rev-parse HEAD)
+                            # =========================================
+                            # PART A: BACKEND SERVICES
+                            # =========================================
+                            BACKEND_SERVICES="discovery-service api-gateway user-service product-service media-service dummy-data"
                             
-                            echo "📍 PR: #${PR_NUMBER}"
-                            echo "📍 Commit: ${COMMIT_SHA}"
-                            
-                            GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/pulls/${PR_NUMBER}"
-                            
-                            PR_INFO=$(curl -s \\
-                              -H "Authorization: token ${GITHUB_TOKEN}" \\
-                              -H "Accept: application/vnd.github.v3+json" \\
-                              "${GITHUB_API}")
-                            
-                            BASE_BRANCH=$(echo "${PR_INFO}" | grep -o '"base":[^}]*' | grep -o '"ref":"[^"]*"' | cut -d'"' -f4)
-                            HEAD_BRANCH=$(echo "${PR_INFO}" | grep -o '"head":[^}]*' | grep -o '"ref":"[^"]*"' | cut -d'"' -f4)
-                            
-                            echo "Base branch (target): ${BASE_BRANCH}"
-                            echo "Head branch (source): ${HEAD_BRANCH}"
-                            
-                            if [ "${BASE_BRANCH}" = "main" ]; then
-                                echo "🛡️  PR to main branch - enforcing strict checks"
+                            for service in $BACKEND_SERVICES; do
+                                echo "-----------------------------------------------"
+                                echo "🔨 Processing Backend Service: $service"
                                 
-                                STATUS_API="https://api.github.com/repos/${GITHUB_REPO}/commits/${COMMIT_SHA}/status"
+                                cd ${WORKSPACE}/${BACKEND_DIR}/$service
                                 
-                                STATUS_INFO=$(curl -s \\
-                                  -H "Authorization: token ${GITHUB_TOKEN}" \\
-                                  -H "Accept: application/vnd.github.v3+json" \\
-                                  "${STATUS_API}")
+                                if [ -f target/*.jar ]; then
                                 
-                                OVERALL_STATE=$(echo "${STATUS_INFO}" | grep -o '"state":"[^"]*"' | head -1 | cut -d'"' -f4)
-                                
-                                echo "Overall status: ${OVERALL_STATE}"
-                                
-                                if [ "${OVERALL_STATE}" = "success" ] || [ "${OVERALL_STATE}" = "pending" ]; then
-                                    echo "✅ Status checks passed - merge allowed"
-                                else
-                                    echo "❌ Status checks failed - cannot merge"
-                                    exit 1
-                                fi
-
-                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                                if [ $? -ne 0 ]; then
-                                    echo "❌ Docker login failed!"
-                                    exit 1
-                                fi
-                                echo "✅ Docker Hub login successful"
-                            '''
-
-                            def services = ['discovery-service', 'api-gateway', 'user-service', 'product-service', 'media-service', 'orders-service', 'dummy-data']
-
-                            services.each { service ->
-                                sh '''
-                                    cd ${WORKSPACE}/${BACKEND_DIR}/''' + service + '''
-
-                                    if [ -f target/*.jar ]; then
-                                        cat > Dockerfile.tmp << 'EOF'
-FROM amazoncorretto:21-alpine
+# ---------------------------------------------------------
+# ✅ FIX: The EOF below must be flush left (NO SPACES before it)
+# ---------------------------------------------------------
+cat > Dockerfile.tmp << EOF
+FROM amazoncorretto:17-alpine
 RUN apk add --no-cache curl
 WORKDIR /app
 COPY target/*.jar app.jar
@@ -971,27 +852,41 @@ EOF
             script {
                 echo "Pipeline execution completed"
             }
+        }
+        
+        cleanup {
             script {
-                // Report status to GitHub regardless of build result
-                if (params.SKIP_GITHUB_STATUS == false && env.GIT_SOURCE == 'GitHub') {
-                    echo "📤 Reporting build status to GitHub..."
+                // Report status to GitHub after pipeline completes (ONLY for GitHub source)
+                if (params.SKIP_GITHUB_STATUS == false && env.IS_GITHUB_SOURCE == 'true') {
+                    echo "📤 Reporting final build status to GitHub..."
                     
                     def buildStatus = currentBuild.result ?: 'SUCCESS'
-                    def githubStatus = 'success'
-                    def description = 'All checks passed!'
+                    def checkConclusion = 'success'
+                    def summary = 'Build passed - all checks completed!'
                     
                     if (buildStatus == 'FAILURE') {
-                        githubStatus = 'failure'
-                        description = 'Build failed - check Jenkins for details'
+                        checkConclusion = 'failure'
+                        summary = 'Build failed - check Jenkins for details'
                     } else if (buildStatus == 'UNSTABLE') {
-                        githubStatus = 'error'
-                        description = 'Build unstable - quality gate issues'
+                        checkConclusion = 'neutral'
+                        summary = 'Build unstable - quality gate issues detected'
                     }
                     
-                    echo "Build Status: ${buildStatus}"
-                    echo "GitHub Status: ${githubStatus}"
+                    echo "Final Build Status: ${buildStatus}"
+                    echo "Check Conclusion: ${checkConclusion}"
                     
                     try {
+                        // Get commit SHA at Groovy level
+                        def commitSha = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                        
+                        // Map build status to GitHub Statuses API states (success, failure, error, pending)
+                        def ghState = 'success'
+                        if (checkConclusion == 'failure') {
+                            ghState = 'failure'
+                        } else if (checkConclusion == 'neutral') {
+                            ghState = 'failure'  // GitHub Statuses API doesn't have 'neutral'
+                        }
+                        
                         withCredentials([usernamePassword(
                             credentialsId: 'multi-branch-github',
                             passwordVariable: 'GITHUB_TOKEN',
@@ -1000,40 +895,55 @@ EOF
                             sh '''#!/bin/bash
                                 set -e
                                 
-                                COMMIT_SHA=$(git rev-parse HEAD)
-                                GITHUB_API="https://api.github.com/repos/''' + env.GITHUB_REPO + '''/statuses/${COMMIT_SHA}"
+                                echo "🔍 Commit information..."
+                                echo "Commit: ''' + commitSha + '''"
                                 
-                                PAYLOAD=$(cat <<'EOF'
-                                {
-                                  "state": "''' + githubStatus + '''",
-                                  "description": "''' + description + '''",
-                                  "context": "continuous-integration/jenkins",
-                                  "target_url": "''' + env.BUILD_URL + '''"
-                                }
-                                EOF
-                                )
+                                echo ""
+                                echo "📤 Sending status to GitHub Statuses API..."
+                                GITHUB_API="https://api.github.com/repos/''' + env.GITHUB_REPO + '''/statuses/''' + commitSha + '''"
+                                echo "Endpoint: ${GITHUB_API}"
                                 
-                                HTTP_CODE=$(curl -s -o /tmp/status-response.json -w "%{http_code}" \\
-                                  -X POST \\
-                                  -H "Authorization: token ${GITHUB_TOKEN}" \\
-                                  -H "Content-Type: application/json" \\
-                                  -d "${PAYLOAD}" \\
+                                PAYLOAD='{"state":"''' + ghState + '''", "context":"Jenkins", "description":"''' + summary + '''", "target_url":"''' + env.BUILD_URL + '''"}'
+                                
+                                echo "Payload:"
+                                echo "${PAYLOAD}"
+                                echo ""
+                                echo "📍 Sending POST request to: ${GITHUB_API}"
+                                echo ""
+                                
+                                HTTP_CODE=$(curl -s -o /tmp/status-response.json -w "%{http_code}" \
+                                  -X POST \
+                                  -H "Authorization: token ${GITHUB_TOKEN}" \
+                                  -H "Content-Type: application/json" \
+                                  -H "Accept: application/vnd.github.v3+json" \
+                                  -d "${PAYLOAD}" \
                                   "${GITHUB_API}")
                                 
-                                if [ "${HTTP_CODE}" = "201" ] || [ "${HTTP_CODE}" = "200" ]; then
-                                    echo "✅ GitHub status updated: ''' + githubStatus + '''"
+                                echo "HTTP Response Code: ${HTTP_CODE}"
+                                
+                                if [ "${HTTP_CODE}" = "201" ]; then
+                                    echo "✅ GitHub status reported successfully"
                                 else
-                                    echo "⚠️  Failed to update GitHub status (HTTP ${HTTP_CODE})"
+                                    echo "⚠️  GitHub status response:"
                                     cat /tmp/status-response.json
                                 fi
                             '''
                         }
                     } catch (Exception e) {
-                        echo "❌ Failed to report status to GitHub: ${e.message}"
+                        echo "⚠️  Warning: Failed to report status to GitHub: ${e.message}"
+                        echo "   This is non-critical and will not affect the build result"
+                    }
+                } else {
+                    if (env.IS_GITHUB_SOURCE != 'true') {
+                        echo "ℹ️  Skipping GitHub status report - this build is from Gitea (not GitHub)"
+                    } else {
+                        echo "ℹ️  Skipping GitHub status report - disabled via SKIP_GITHUB_STATUS parameter"
                     }
                 }
             }
         }
+        
+        
         success {
             script {
                 echo "✅ Pipeline completed successfully!"
