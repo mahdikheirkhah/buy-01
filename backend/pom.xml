@@ -10,13 +10,13 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>common</module>
         <module>discovery-service</module>
         <module>api-gateway</module>
         <module>user-service</module>
         <module>product-service</module>
         <module>media-service</module>
         <module>orders-service</module>
-        <module>common</module>
         <module>dummy-data</module>
     </modules>
 
