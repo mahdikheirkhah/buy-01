@@ -16,7 +16,7 @@
       </MavenSettings>
       <method v="2" />
       <option name="NAME" value="SonarQube Analysis - Backend" />
-      <option name="PROGRAM_PARAMETERS" value="sonar:sonar -Dsonar.projectKey=buy-01-backend -Dsonar.host.url=http://localhost:9000 -Dsonar.login=admin" />
+      <option name="PROGRAM_PARAMETERS" value="sonar:sonar -Dsonar.projectKey=user-service -Dsonar.host.url=http://localhost:9000 -Dsonar.login=admin" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend" />
       <option name="MODULE_NAME" value="buy-01" />
       <method v="2" />

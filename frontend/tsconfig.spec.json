@@ -6,7 +6,8 @@
     "outDir": "./out-tsc/spec",
     "types": [
       "jasmine"
-    ]
+    ],
+    "module": "es2020"
   },
   "include": [
     "src/**/*.ts"

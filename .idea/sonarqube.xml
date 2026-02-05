@@ -13,6 +13,6 @@
   </component>
   <component name="SonarQubeProjectConfiguration">
     <option name="serverName" value="SonarQube Local" />
-    <option name="projectKey" value="buy-01-backend" />
+    <option name="projectKey" value="user-service" />
   </component>
 </project>

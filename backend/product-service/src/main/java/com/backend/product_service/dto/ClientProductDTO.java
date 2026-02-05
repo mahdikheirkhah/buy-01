@@ -12,15 +12,15 @@ import java.util.List;
 
 @Builder
 public class ClientProductDTO {
-    @NotBlank(message = "name is required ")
-    @Size(min = 3, max = 100, message = "name should be between 3 to 100 characters")
+    @NotBlank(message = "Name is mandatory")
+    @Size(min = 3, max = 100, message = "Name should have 3-100 characters")
     private String name;
-    @NotBlank(message = "description is required")
-    @Size(min = 5 , message = "description should consist at least 5 characters")
+    @NotBlank(message = "Description is mandatory")
+    @Size(min = 5, message = "Description should have minimum 5 characters")
     private String description;
-    @Positive(message = "price should be positive")
+    @Positive(message = "Price should be a positive number")
     private Double price;
-    @PositiveOrZero(message = "quantity should be zero or more")
+    @PositiveOrZero(message = "Quantity should be non-negative")
     private Integer quantity;
 
     public List<ClientProductDTO> fromProductList(List<Product> productList) {

@@ -20,12 +20,12 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private cookieService: CookieService
-  ) {}
+  ) { }
 
-    // ADD THIS GETTER BACK
-    public get currentUserRole(): string | null {
-      return this.currentUserSubject.value?.role || null;
-    }
+  // ADD THIS GETTER BACK
+  public get currentUserRole(): string | null {
+    return this.currentUserSubject.value?.role || null;
+  }
   /** Call this from an APP_INITIALIZER or a root guard */
   init(): Observable<User | null> {
     if (this.userLoaded) {
@@ -63,6 +63,7 @@ export class AuthService {
   }
 
   logout(): Observable<any> {
+    this.cookieService.delete('jwt');  // ✅ Delete cookie FIRST
     return this.http.post(`${this.usersApiUrl}/logout`, {}, { withCredentials: true }).pipe(
       tap(() => this.currentUserSubject.next(null))
     );

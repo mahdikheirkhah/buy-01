@@ -1,15 +1,15 @@
 <div class="container">
   <h1>Create a New Product</h1>
-
   <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
-
+    
+    <!-- Loading Spinner -->
     <div *ngIf="isUploading" class="upload-spinner">
       <mat-spinner></mat-spinner>
       <p>Creating product and uploading images, please wait...</p>
     </div>
 
+    <!-- Form Fields -->
     <ng-container *ngIf="!isUploading">
-
       <mat-form-field appearance="fill">
         <mat-label>Product Name</mat-label>
         <input matInput formControlName="name" required>
@@ -30,6 +30,7 @@
         <input matInput type="number" formControlName="quantity" required>
       </mat-form-field>
 
+      <!-- File Upload -->
       <div class="form-group">
         <label for="images">Product Images (Max 2MB each)</label>
         <input type="file"
@@ -39,10 +40,12 @@
                multiple>
       </div>
 
+      <!-- File Errors -->
       <div class="file-errors" *ngIf="fileErrors.length > 0">
         <p *ngFor="let error of fileErrors">{{ error }}</p>
       </div>
 
+      <!-- Selected Files List -->
       <div class="file-list" *ngIf="selectedFiles.length > 0">
         <p>Selected Files:</p>
         <ul>
@@ -55,10 +58,11 @@
         </ul>
       </div>
 
+      <!-- Submit Button -->
       <button mat-raised-button color="primary" type="submit" [disabled]="!productForm.valid || selectedFiles.length === 0">
         Create Product
       </button>
-
     </ng-container>
+
   </form>
 </div>

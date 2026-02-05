@@ -1,16 +1,13 @@
 package com.backend.user_service.service;
 
-import com.backend.common.dto.InfoUserDTO;
-import com.backend.common.exception.CustomException;
-import com.backend.common.util.JwtUtil;
-import com.backend.user_service.dto.loginUserDTO;
-import com.backend.user_service.dto.UpdateUserDTO;
-import com.backend.common.dto.Role;
-import com.backend.user_service.model.User;
-import com.backend.user_service.repository.UserMapper;
-import com.backend.user_service.repository.UserRepository;
-import jakarta.servlet.http.Cookie;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -25,9 +22,17 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.*;
-import org.springframework.core.io.ByteArrayResource;
-import java.io.IOException;
+import com.backend.common.dto.InfoUserDTO;
+import com.backend.common.dto.Role;
+import com.backend.common.exception.CustomException;
+import com.backend.common.util.JwtUtil;
+import com.backend.user_service.dto.UpdateUserDTO;
+import com.backend.user_service.dto.loginUserDTO;
+import com.backend.user_service.model.User;
+import com.backend.user_service.repository.UserMapper;
+import com.backend.user_service.repository.UserRepository;
+
+import jakarta.servlet.http.Cookie;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -308,13 +313,10 @@ public class UserService implements UserDetailsService {
 
     public Cookie createCookie(String token, int maxAge) {
         Cookie jwtCookie = new Cookie("jwt", token);
-        // jwtCookie.setHttpOnly(true); // <-- Comment out or remove this line
         jwtCookie.setSecure(true);
         jwtCookie.setPath("/");
         jwtCookie.setMaxAge(maxAge);
-        jwtCookie.setAttribute("SameSite", "Lax"); // Keep SameSite
+        jwtCookie.setAttribute("SameSite", "Lax");
         return jwtCookie;
     }
-
-    // ... other methods XDD
 }

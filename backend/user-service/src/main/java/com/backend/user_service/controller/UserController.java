@@ -66,12 +66,6 @@ public class UserController {
         return ResponseEntity.ok(seller);
     }
 
-    // @GetMapping("/email")
-    // public ResponseEntity<InfoUserDTO> getUsersByEmail(@RequestParam String
-    // email) {
-    // InfoUserDTO user = userService.getUserByEmail(email);
-    // return ResponseEntity.ok(user);
-    // }
     @PutMapping("/me")
     public ResponseEntity<Map<String, String>> updateMe(
             @Valid @RequestBody UpdateUserDTO userUpdatedInfo,
@@ -100,7 +94,7 @@ public class UserController {
     }
 
     @GetMapping("/email")
-    @PreAuthorize("hasRole('ROLE_ADMIN')") // <-- SECURE THIS ENDPOINT
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<InfoUserDTO> getUsersByEmail(@RequestParam String email) {
         InfoUserDTO user = userService.getUserByEmail(email);
         return ResponseEntity.ok(user);

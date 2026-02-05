@@ -7,7 +7,6 @@ import { SidenavComponent } from '../../components/sidenav/sidenav.component';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  // ✅ Add all the necessary imports here
   imports: [
     RouterOutlet,
     MatSidenavModule,
@@ -17,4 +16,4 @@ import { SidenavComponent } from '../../components/sidenav/sidenav.component';
   templateUrl: './main-layout.html',
   styleUrls: ['./main-layout.css']
 })
-export class MainLayout {}
+export class MainLayout { }

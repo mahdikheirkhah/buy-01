@@ -16,7 +16,7 @@ export interface PasswordDialogData {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule, // <-- Add FormsModule for [(ngModel)]
+    FormsModule,
     MatDialogModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -31,7 +31,7 @@ export class PasswordConfirmDialog {
   constructor(
     public dialogRef: MatDialogRef<PasswordConfirmDialog>,
     @Inject(MAT_DIALOG_DATA) public data: PasswordDialogData
-  ) {}
+  ) { }
 
   onCancel(): void {
     this.dialogRef.close(); // Close without any data

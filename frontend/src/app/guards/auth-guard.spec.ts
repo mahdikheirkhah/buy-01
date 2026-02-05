@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { AuthGuard } from './auth-guard';
 
@@ -7,6 +7,8 @@ describe('AuthGuard', () => {
   let guard: AuthGuard;
   let routerMock: jasmine.SpyObj<Router>;
   let cookieServiceMock: jasmine.SpyObj<CookieService>;
+  let mockRoute: ActivatedRouteSnapshot;
+  let mockState: RouterStateSnapshot;
 
   beforeEach(() => {
     routerMock = jasmine.createSpyObj('Router', ['navigate']);
@@ -21,6 +23,8 @@ describe('AuthGuard', () => {
     });
 
     guard = TestBed.inject(AuthGuard);
+    mockRoute = {} as ActivatedRouteSnapshot;
+    mockState = { url: '/login' } as RouterStateSnapshot;
   });
 
   it('should be created', () => {
@@ -37,4 +41,21 @@ describe('AuthGuard', () => {
     expect(guard.canActivate()).toBe(false);
     expect(routerMock.navigate).toHaveBeenCalledWith(['/home']);
   });
+
+  it('should check for jwt cookie', () => {
+    cookieServiceMock.check.and.returnValue(false);
+    guard.canActivate();
+    expect(cookieServiceMock.check).toHaveBeenCalledWith('jwt');
+  });
+
+  it('should handle multiple consecutive calls correctly', () => {
+    cookieServiceMock.check.and.returnValue(true);
+
+    expect(guard.canActivate()).toBe(false);
+    expect(routerMock.navigate).toHaveBeenCalledTimes(1);
+
+    expect(guard.canActivate()).toBe(false);
+    expect(routerMock.navigate).toHaveBeenCalledTimes(2);
+  });
 });
+

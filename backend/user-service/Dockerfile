@@ -2,17 +2,11 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copy all backend code
-COPY backend/ .
+# Copy pom + sources
+COPY pom.xml .
+COPY src ./src
 
-# Build parent POM first (without installing modules)
-RUN mvn -q -N install
-
-# Build common module
-RUN mvn -q -DskipTests -pl common clean install
-
-# Now build the service
-RUN mvn -q -DskipTests -pl user-service clean package
+RUN mvn -q -DskipTests clean package
 
 
 # -------- RUNTIME STAGE --------

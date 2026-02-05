@@ -1,31 +1,22 @@
 <div class="my-info-container">
   <h2>My Information</h2>
 
-  <!-- Loading Spinner -->
   <div *ngIf="isLoading" class="spinner-container">
     <mat-spinner></mat-spinner>
   </div>
 
-  <!-- Error Message -->
   <div *ngIf="errorMessage" class="error-message">
     {{ errorMessage }}
   </div>
 
   <mat-card *ngIf="currentUser && !isLoading">
-
-    <!--
-      This section (Avatar, Details, Actions) is wrapped in an *ngIf.
-      It will HIDE when 'isEditingInfo' is true.
-    -->
     <ng-container *ngIf="!isEditingInfo">
       <div class="avatar-section">
         <h3>Avatar</h3>
-
         <img *ngIf="currentUser.avatarUrl"
              [src]="getAvatarUrl(currentUser.avatarUrl)"
              alt="Your Avatar"
              class="avatar-image">
-
         <div *ngIf="!currentUser.avatarUrl" class="avatar-placeholder">
           <mat-icon>person</mat-icon>
         </div>
@@ -55,7 +46,6 @@
 
       <mat-card-content class="details-section">
         <h3>Details</h3>
-
         <div class="info-row">
           <strong>First Name:</strong>
           <span>{{ currentUser.firstName }}</span>
@@ -77,7 +67,6 @@
       <mat-divider></mat-divider>
 
       <mat-card-actions class="account-actions">
-        <!-- ✅ FIX: This button now toggles the 'isEditingInfo' flag -->
         <button mat-flat-button color="primary" (click)="isEditingInfo = true">
           <mat-icon>edit</mat-icon>
           Update Information
@@ -90,16 +79,11 @@
       </mat-card-actions>
     </ng-container>
 
-    <!--
-      ✅ NEW: This form will APPEAR when 'isEditingInfo' is true.
-      It lives inside the same mat-card.
-    -->
     <app-update-info-form
       *ngIf="isEditingInfo"
       [currentUser]="currentUser"
       (close)="onFormClosed($event)">
     </app-update-info-form>
-
   </mat-card>
 </div>
 
