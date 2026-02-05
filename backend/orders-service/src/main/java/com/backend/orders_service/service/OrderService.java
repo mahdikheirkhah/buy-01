@@ -171,7 +171,7 @@ public class OrderService {
                 // Set price
                 if (product.containsKey("price")) {
                     Object priceObj = product.get("price");
-                    item.setPrice(new BigDecimal(priceObj.toString()));
+                    item.setPrice(new BigDecimal(priceObj.toString())); // String constructor is safe
                     log.info("Set price: {} for productId: {}", priceObj, item.getProductId());
                 }
 
