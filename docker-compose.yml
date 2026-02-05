@@ -193,13 +193,13 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
-      SPRING_DATA_MONGODB_URI: mongodb://admin:password@buy-01:27017/buy01?authSource=admin
+      SPRING_DATA_MONGODB_URI: mongodb://admin:password@database:27017/buy01?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: 'health'
     depends_on:
       discovery-service:
         condition: service_healthy
-      buy-01:
+      database:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 0"]
