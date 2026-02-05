@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
-<testsuite name="Chrome Headless 144.0.0.0 (Mac OS 10.15.7)" package="Frontend Tests" timestamp="2026-01-29T12:45:12" id="0" hostname="mohammad.kheirkhah" tests="437" errors="0" failures="0" time="0.402">
+<testsuite name="Chrome Headless 144.0.0.0 (Mac OS 10.15.7)" package="Frontend Tests" timestamp="2026-02-05T16:26:09" id="0" hostname="mohammad.kheirkhah" tests="437" errors="0" failures="0" time="0.401">
   <properties>
     <property name="browser.fullName" value="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/144.0.0.0 Safari/537.36"/>
   </properties>
   <testcase name="App should create the app" time="0.01" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..App"/>
-  <testcase name="App should have router outlet" time="0.002" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..App"/>
+  <testcase name="App should have router outlet" time="0.003" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..App"/>
   <testcase name="ConfirmDialog should create" time="0.006" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ConfirmDialog"/>
   <testcase name="ConfirmDialog should display provided title and message" time="0.003" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ConfirmDialog"/>
-  <testcase name="ConfirmDialog should close dialog with false on cancel" time="0.003" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ConfirmDialog"/>
+  <testcase name="ConfirmDialog should close dialog with false on cancel" time="0.004" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ConfirmDialog"/>
   <testcase name="ConfirmDialog should close dialog with true on confirm" time="0.003" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ConfirmDialog"/>
-  <testcase name="ConfirmDialog should have dialogRef injected" time="0.002" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ConfirmDialog"/>
+  <testcase name="ConfirmDialog should have dialogRef injected" time="0.003" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ConfirmDialog"/>
   <testcase name="EditProductModal should create" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..EditProductModal">
     <skipped/>
   </testcase>
@@ -373,16 +373,16 @@
   <testcase name="UpdateInfoForm should not send fields that haven't changed" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UpdateInfoForm">
     <skipped/>
   </testcase>
-  <testcase name="AuthGuard should be created" time="0.002" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthGuard"/>
+  <testcase name="AuthGuard should be created" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthGuard"/>
   <testcase name="AuthGuard should allow access when not logged in" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthGuard"/>
-  <testcase name="AuthGuard should redirect to home and deny access when already logged in" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthGuard"/>
+  <testcase name="AuthGuard should redirect to home and deny access when already logged in" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthGuard"/>
   <testcase name="AuthGuard should check for jwt cookie" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthGuard"/>
   <testcase name="AuthGuard should handle multiple consecutive calls correctly" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthGuard"/>
-  <testcase name="LoggedInGuard should be created" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..LoggedInGuard"/>
+  <testcase name="LoggedInGuard should be created" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..LoggedInGuard"/>
   <testcase name="LoggedInGuard should allow access when logged in" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..LoggedInGuard"/>
-  <testcase name="LoggedInGuard should redirect to login and deny access when not logged in" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..LoggedInGuard"/>
-  <testcase name="LoggedInGuard should check for jwt cookie" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..LoggedInGuard"/>
-  <testcase name="LoggedInGuard should prevent navigation multiple times when not logged in" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..LoggedInGuard"/>
+  <testcase name="LoggedInGuard should redirect to login and deny access when not logged in" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..LoggedInGuard"/>
+  <testcase name="LoggedInGuard should check for jwt cookie" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..LoggedInGuard"/>
+  <testcase name="LoggedInGuard should prevent navigation multiple times when not logged in" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..LoggedInGuard"/>
   <testcase name="LoggedInGuard should handle edge case of undefined cookie check" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..LoggedInGuard"/>
   <testcase name="authInterceptor should be created" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
   <testcase name="authInterceptor should pass through the request" time="0.002" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
@@ -390,12 +390,12 @@
   <testcase name="authInterceptor should handle PUT requests" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
   <testcase name="authInterceptor should handle DELETE requests" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
   <testcase name="authInterceptor should handle different content types" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
-  <testcase name="authInterceptor should handle error responses" time="0.224" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
+  <testcase name="authInterceptor should handle error responses" time="0.213" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
   <testcase name="authInterceptor should handle 403 forbidden responses" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
-  <testcase name="authInterceptor should handle 404 not found responses" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
-  <testcase name="authInterceptor should handle 500 server error responses" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
-  <testcase name="authInterceptor should handle network timeout errors" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
-  <testcase name="authInterceptor should handle successful response with data" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
+  <testcase name="authInterceptor should handle 404 not found responses" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
+  <testcase name="authInterceptor should handle 500 server error responses" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
+  <testcase name="authInterceptor should handle network timeout errors" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
+  <testcase name="authInterceptor should handle successful response with data" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
   <testcase name="authInterceptor should handle requests with custom headers" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
   <testcase name="authInterceptor should handle PATCH requests" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
   <testcase name="authInterceptor should handle requests with query parameters" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..authInterceptor"/>
@@ -405,13 +405,13 @@
   <testcase name="errorInterceptor should be created" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..errorInterceptor"/>
   <testcase name="errorInterceptor should handle 401 errors and redirect to login" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..errorInterceptor"/>
   <testcase name="errorInterceptor should handle 403 errors" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..errorInterceptor"/>
-  <testcase name="errorInterceptor should handle 404 errors" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..errorInterceptor"/>
-  <testcase name="errorInterceptor should handle 500 errors" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..errorInterceptor"/>
-  <testcase name="errorInterceptor should handle generic errors" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..errorInterceptor"/>
-  <testcase name="errorInterceptor should pass through successful requests" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..errorInterceptor"/>
-  <testcase name="AuthLayout should create" time="0.002" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthLayout"/>
+  <testcase name="errorInterceptor should handle 404 errors" time="0.011" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..errorInterceptor"/>
+  <testcase name="errorInterceptor should handle 500 errors" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..errorInterceptor"/>
+  <testcase name="errorInterceptor should handle generic errors" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..errorInterceptor"/>
+  <testcase name="errorInterceptor should pass through successful requests" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..errorInterceptor"/>
+  <testcase name="AuthLayout should create" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthLayout"/>
   <testcase name="AuthLayout should have router-outlet" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthLayout"/>
-  <testcase name="MainLayout should create" time="0.017" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..MainLayout"/>
+  <testcase name="MainLayout should create" time="0.023" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..MainLayout"/>
   <testcase name="MainLayout should have router-outlet" time="0.005" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..MainLayout"/>
   <testcase name="CreateProduct should create" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..CreateProduct">
     <skipped/>
@@ -765,32 +765,32 @@
     <skipped/>
   </testcase>
   <testcase name="AuthService Service Creation should be created" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Service Creation"/>
-  <testcase name="AuthService Service Creation should initialize with null currentUser" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Service Creation"/>
+  <testcase name="AuthService Service Creation should initialize with null currentUser" time="0.003" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Service Creation"/>
   <testcase name="AuthService login() should send login request with credentials" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService login()"/>
   <testcase name="AuthService login() should fetch current user after successful login" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService login()"/>
   <testcase name="AuthService login() should update currentUser$ after successful login" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService login()"/>
-  <testcase name="AuthService login() should handle login error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService login()"/>
+  <testcase name="AuthService login() should handle login error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService login()"/>
   <testcase name="AuthService logout() should send logout request" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService logout()"/>
-  <testcase name="AuthService logout() should clear currentUser$ on logout" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService logout()"/>
-  <testcase name="AuthService logout() should handle logout error gracefully" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService logout()"/>
+  <testcase name="AuthService logout() should clear currentUser$ on logout" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService logout()"/>
+  <testcase name="AuthService logout() should handle logout error gracefully" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService logout()"/>
   <testcase name="AuthService Logout Additional Tests should clear cookies on logout" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Logout Additional Tests"/>
-  <testcase name="AuthService Logout Additional Tests should send logout request to server" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Logout Additional Tests"/>
+  <testcase name="AuthService Logout Additional Tests should send logout request to server" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Logout Additional Tests"/>
   <testcase name="AuthService Logout Additional Tests should include credentials in logout request" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Logout Additional Tests"/>
-  <testcase name="AuthService Logout Additional Tests should handle logout error gracefully" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Logout Additional Tests"/>
-  <testcase name="AuthService Logout Additional Tests should handle logout with server error" time="0.004" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Logout Additional Tests"/>
-  <testcase name="AuthService Logout Additional Tests should delete jwt cookie even if request fails" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Logout Additional Tests"/>
+  <testcase name="AuthService Logout Additional Tests should handle logout error gracefully" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Logout Additional Tests"/>
+  <testcase name="AuthService Logout Additional Tests should handle logout with server error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Logout Additional Tests"/>
+  <testcase name="AuthService Logout Additional Tests should delete jwt cookie even if request fails" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..AuthService Logout Additional Tests"/>
   <testcase name="ProductService Service Creation should be created" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Service Creation"/>
   <testcase name="ProductService createProduct() should send POST request to create product" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService createProduct()"/>
   <testcase name="ProductService createProduct() should handle product creation success" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService createProduct()"/>
   <testcase name="ProductService createProduct() should handle product creation error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService createProduct()"/>
   <testcase name="ProductService uploadProductImage() should send FormData with image file" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService uploadProductImage()"/>
-  <testcase name="ProductService uploadProductImage() should include file and productId in FormData" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService uploadProductImage()"/>
-  <testcase name="ProductService uploadProductImage() should return media ID on successful upload" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService uploadProductImage()"/>
-  <testcase name="ProductService uploadProductImage() should handle image upload error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService uploadProductImage()"/>
+  <testcase name="ProductService uploadProductImage() should include file and productId in FormData" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService uploadProductImage()"/>
+  <testcase name="ProductService uploadProductImage() should return media ID on successful upload" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService uploadProductImage()"/>
+  <testcase name="ProductService uploadProductImage() should handle image upload error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService uploadProductImage()"/>
   <testcase name="ProductService getMyProducts() should fetch seller products with pagination" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getMyProducts()"/>
-  <testcase name="ProductService getMyProducts() should return Page&lt;ProductCardDTO>" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getMyProducts()"/>
+  <testcase name="ProductService getMyProducts() should return Page&lt;ProductCardDTO>" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getMyProducts()"/>
   <testcase name="ProductService getMyProducts() should handle pagination parameters correctly" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getMyProducts()"/>
-  <testcase name="ProductService getMyProducts() should handle error when fetching products" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getMyProducts()"/>
+  <testcase name="ProductService getMyProducts() should handle error when fetching products" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getMyProducts()"/>
   <testcase name="ProductService getAllProducts() should fetch all products with pagination" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getAllProducts()"/>
   <testcase name="ProductService getAllProducts() should return paginated products" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getAllProducts()"/>
   <testcase name="ProductService getAllProducts() should sort by newest first" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getAllProducts()"/>
@@ -798,124 +798,124 @@
   <testcase name="ProductService getProductById() should fetch product by ID" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getProductById()"/>
   <testcase name="ProductService getProductById() should return product details" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getProductById()"/>
   <testcase name="ProductService getProductById() should include media information" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getProductById()"/>
-  <testcase name="ProductService getProductById() should handle product not found error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getProductById()"/>
-  <testcase name="ProductService deleteProduct() should send DELETE request to remove product" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService deleteProduct()"/>
+  <testcase name="ProductService getProductById() should handle product not found error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService getProductById()"/>
+  <testcase name="ProductService deleteProduct() should send DELETE request to remove product" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService deleteProduct()"/>
   <testcase name="ProductService deleteProduct() should return success message" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService deleteProduct()"/>
   <testcase name="ProductService deleteProduct() should handle delete error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService deleteProduct()"/>
   <testcase name="ProductService deleteProduct() should handle product not found on delete" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService deleteProduct()"/>
-  <testcase name="ProductService updateProduct() should send PUT request to update product" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService updateProduct()"/>
-  <testcase name="ProductService updateProduct() should return updated product" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService updateProduct()"/>
+  <testcase name="ProductService updateProduct() should send PUT request to update product" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService updateProduct()"/>
+  <testcase name="ProductService updateProduct() should return updated product" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService updateProduct()"/>
   <testcase name="ProductService updateProduct() should handle update error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService updateProduct()"/>
   <testcase name="ProductService updateProduct() should handle unauthorized update attempt" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService updateProduct()"/>
   <testcase name="ProductService deleteProductImage() should send DELETE request to remove media" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService deleteProductImage()"/>
   <testcase name="ProductService deleteProductImage() should return success response" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService deleteProductImage()"/>
   <testcase name="ProductService deleteProductImage() should handle media not found error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService deleteProductImage()"/>
   <testcase name="ProductService deleteProductImage() should handle unauthorized delete attempt" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService deleteProductImage()"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle null pagination parameters" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle negative page index" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle large page size" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle null pagination parameters" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle negative page index" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle large page size" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle empty product list response" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle product with no images" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle product with no images" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle product with single image" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle product with many images" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle zero price product" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle product with many images" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle zero price product" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle negative price in response (edge case)" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle very large price" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle zero quantity" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle very large price" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle zero quantity" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle search with empty results" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle search with special characters" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle update with no changes" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle network error on create" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle server error 500 on delete" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle timeout on file upload" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle network error on create" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle server error 500 on delete" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle timeout on file upload" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle malformed JSON response" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle empty product list with pagination" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle large page size pagination" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle search with special characters" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle search with unicode characters" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle very long product names" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle zero price product" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle large page size pagination" time="0.007" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle search with special characters" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle search with unicode characters" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle very long product names" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle zero price product" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle negative quantity edge case" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle maximum integer price" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle concurrent create and delete operations" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle maximum integer price" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle concurrent create and delete operations" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle concurrent get and list operations" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle multiple pagination requests" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle product update with partial data" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle delete product with special ID format" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle image upload with large file" time="0.005" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle image upload with large file" time="0.004" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should include credentials in all product requests" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle 429 too many requests error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle 503 service unavailable error" time="0.002" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
-  <testcase name="ProductService Edge Cases and Error Scenarios should handle response with null values" time="0.002" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle 429 too many requests error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle 503 service unavailable error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
+  <testcase name="ProductService Edge Cases and Error Scenarios should handle response with null values" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="ProductService Edge Cases and Error Scenarios should handle HTTP client connection timeout" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..ProductService Edge Cases and Error Scenarios"/>
   <testcase name="UserService Service Creation should be created" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Service Creation"/>
-  <testcase name="UserService deleteUser() should send DELETE request with password parameter" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteUser()"/>
-  <testcase name="UserService deleteUser() should include password in query parameters" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteUser()"/>
-  <testcase name="UserService deleteUser() should return success response on delete" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteUser()"/>
+  <testcase name="UserService deleteUser() should send DELETE request with password parameter" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteUser()"/>
+  <testcase name="UserService deleteUser() should include password in query parameters" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteUser()"/>
+  <testcase name="UserService deleteUser() should return success response on delete" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteUser()"/>
   <testcase name="UserService deleteUser() should handle delete error with wrong password" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteUser()"/>
-  <testcase name="UserService deleteUser() should handle delete error when user not found" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteUser()"/>
+  <testcase name="UserService deleteUser() should handle delete error when user not found" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteUser()"/>
   <testcase name="UserService deleteAvatar() should send DELETE request to avatar endpoint" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteAvatar()"/>
-  <testcase name="UserService deleteAvatar() should return text response" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteAvatar()"/>
-  <testcase name="UserService deleteAvatar() should handle delete avatar error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteAvatar()"/>
+  <testcase name="UserService deleteAvatar() should return text response" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteAvatar()"/>
+  <testcase name="UserService deleteAvatar() should handle delete avatar error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteAvatar()"/>
   <testcase name="UserService deleteAvatar() should handle unauthorized delete avatar attempt" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService deleteAvatar()"/>
-  <testcase name="UserService updateAvatar() should send POST request with FormData containing avatar file" time="0.002" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateAvatar()"/>
-  <testcase name="UserService updateAvatar() should include avatarFile in FormData" time="0.002" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateAvatar()"/>
+  <testcase name="UserService updateAvatar() should send POST request with FormData containing avatar file" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateAvatar()"/>
+  <testcase name="UserService updateAvatar() should include avatarFile in FormData" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateAvatar()"/>
   <testcase name="UserService updateAvatar() should return updated user on successful upload" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateAvatar()"/>
-  <testcase name="UserService updateAvatar() should handle avatar upload error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateAvatar()"/>
-  <testcase name="UserService updateAvatar() should handle file too large error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateAvatar()"/>
+  <testcase name="UserService updateAvatar() should handle avatar upload error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateAvatar()"/>
+  <testcase name="UserService updateAvatar() should handle file too large error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateAvatar()"/>
   <testcase name="UserService updateUser() should send PUT request with user data" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
-  <testcase name="UserService updateUser() should return updated user data" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
+  <testcase name="UserService updateUser() should return updated user data" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
   <testcase name="UserService updateUser() should call fetchCurrentUser after successful update" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
-  <testcase name="UserService updateUser() should update only provided fields" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
+  <testcase name="UserService updateUser() should update only provided fields" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
   <testcase name="UserService updateUser() should handle validation error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
   <testcase name="UserService updateUser() should handle conflict error when email exists" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
-  <testcase name="UserService updateUser() should handle unauthorized update attempt" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
-  <testcase name="UserService updateUser() should handle password change in update" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
-  <testcase name="UserService updateUser() should handle wrong current password error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should handle delete with empty password" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should handle delete with special characters in password" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should handle update with null values" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should handle update with empty strings" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService updateUser() should handle unauthorized update attempt" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
+  <testcase name="UserService updateUser() should handle password change in update" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
+  <testcase name="UserService updateUser() should handle wrong current password error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService updateUser()"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should handle delete with empty password" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should handle delete with special characters in password" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should handle update with null values" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should handle update with empty strings" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
   <testcase name="UserService Edge Cases and Error Scenarios should handle update with very long names" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should handle update with special characters in names" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should handle update with invalid email format" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should handle update with special characters in names" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should handle update with invalid email format" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
   <testcase name="UserService Edge Cases and Error Scenarios should handle update only firstName" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should handle update only lastName" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should handle update only email" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should handle update only lastName" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should handle update only email" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
   <testcase name="UserService Edge Cases and Error Scenarios should handle network error on update" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
   <testcase name="UserService Edge Cases and Error Scenarios should handle network error on delete" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
   <testcase name="UserService Edge Cases and Error Scenarios should handle server error 500 on update" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should handle server error 500 on delete" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should handle malformed response on getCurrentUser" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should handle server error 500 on delete" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should handle malformed response on getCurrentUser" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
   <testcase name="UserService Edge Cases and Error Scenarios should handle getCurrentUser with forbidden error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
   <testcase name="UserService Edge Cases and Error Scenarios should handle password change with same old and new password" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
   <testcase name="UserService Edge Cases and Error Scenarios should handle very long password" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should send withCredentials on all requests" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Edge Cases and Error Scenarios should handle concurrent update and delete requests" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
-  <testcase name="UserService Update Avatar Tests should update avatar with File" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update Avatar Tests"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should send withCredentials on all requests" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService Edge Cases and Error Scenarios should handle concurrent update and delete requests" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Edge Cases and Error Scenarios"/>
+  <testcase name="UserService Update Avatar Tests should update avatar with File" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update Avatar Tests"/>
   <testcase name="UserService Update Avatar Tests should handle update avatar error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update Avatar Tests"/>
-  <testcase name="UserService Update Avatar Tests should handle file too large error" time="0.017" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update Avatar Tests"/>
-  <testcase name="UserService Update Avatar Tests should handle unsupported file type" time="0.002" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update Avatar Tests"/>
-  <testcase name="UserService Update Avatar Tests should send FormData with avatarFile key" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update Avatar Tests"/>
+  <testcase name="UserService Update Avatar Tests should handle file too large error" time="0.015" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update Avatar Tests"/>
+  <testcase name="UserService Update Avatar Tests should handle unsupported file type" time="0.003" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update Avatar Tests"/>
+  <testcase name="UserService Update Avatar Tests should send FormData with avatarFile key" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update Avatar Tests"/>
   <testcase name="UserService Update User Validation Tests should handle update with only firstName changed" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update User Validation Tests"/>
   <testcase name="UserService Update User Validation Tests should handle update with only lastName changed" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update User Validation Tests"/>
-  <testcase name="UserService Update User Validation Tests should handle update with only email changed" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update User Validation Tests"/>
-  <testcase name="UserService Update User Validation Tests should handle update with empty values" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update User Validation Tests"/>
+  <testcase name="UserService Update User Validation Tests should handle update with only email changed" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update User Validation Tests"/>
+  <testcase name="UserService Update User Validation Tests should handle update with empty values" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update User Validation Tests"/>
   <testcase name="UserService Update User Validation Tests should handle update with very long names" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Update User Validation Tests"/>
-  <testcase name="UserService Delete User Password Validation Tests should handle delete with empty password" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Delete User Password Validation Tests"/>
-  <testcase name="UserService Delete User Password Validation Tests should handle delete with special characters in password" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Delete User Password Validation Tests"/>
+  <testcase name="UserService Delete User Password Validation Tests should handle delete with empty password" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Delete User Password Validation Tests"/>
+  <testcase name="UserService Delete User Password Validation Tests should handle delete with special characters in password" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Delete User Password Validation Tests"/>
   <testcase name="UserService Delete User Password Validation Tests should handle delete with very long password" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Delete User Password Validation Tests"/>
-  <testcase name="UserService Delete User Password Validation Tests should handle multiple failed delete attempts" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Delete User Password Validation Tests"/>
+  <testcase name="UserService Delete User Password Validation Tests should handle multiple failed delete attempts" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Delete User Password Validation Tests"/>
   <testcase name="UserService Delete Avatar Error Handling should handle delete avatar when no avatar exists" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Delete Avatar Error Handling"/>
-  <testcase name="UserService Delete Avatar Error Handling should handle delete avatar server error" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Delete Avatar Error Handling"/>
-  <testcase name="UserService URL and Credentials Tests should use HTTPS for all requests" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService URL and Credentials Tests"/>
-  <testcase name="UserService URL and Credentials Tests should include credentials in all requests" time="0.004" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService URL and Credentials Tests"/>
-  <testcase name="UserService Response Type Tests should handle JSON response from updateUser" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Response Type Tests"/>
-  <testcase name="UserService Response Type Tests should handle text response from deleteAvatar" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Response Type Tests"/>
-  <testcase name="UserService Response Type Tests should handle JSON response from updateAvatar" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Response Type Tests"/>
-  <testcase name="UserService Network Resilience Tests should handle timeout error on updateUser" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Network Resilience Tests"/>
-  <testcase name="UserService Network Resilience Tests should handle connection refused error on deleteUser" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Network Resilience Tests"/>
-  <testcase name="UserService Network Resilience Tests should handle CORS error on updateAvatar" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Network Resilience Tests"/>
+  <testcase name="UserService Delete Avatar Error Handling should handle delete avatar server error" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Delete Avatar Error Handling"/>
+  <testcase name="UserService URL and Credentials Tests should use HTTPS for all requests" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService URL and Credentials Tests"/>
+  <testcase name="UserService URL and Credentials Tests should include credentials in all requests" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService URL and Credentials Tests"/>
+  <testcase name="UserService Response Type Tests should handle JSON response from updateUser" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Response Type Tests"/>
+  <testcase name="UserService Response Type Tests should handle text response from deleteAvatar" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Response Type Tests"/>
+  <testcase name="UserService Response Type Tests should handle JSON response from updateAvatar" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Response Type Tests"/>
+  <testcase name="UserService Network Resilience Tests should handle timeout error on updateUser" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Network Resilience Tests"/>
+  <testcase name="UserService Network Resilience Tests should handle connection refused error on deleteUser" time="0.001" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Network Resilience Tests"/>
+  <testcase name="UserService Network Resilience Tests should handle CORS error on updateAvatar" time="0" classname="Chrome_Headless_144_0_0_0_(Mac_OS_10_15_7)..UserService Network Resilience Tests"/>
   <system-out>
     <![CDATA[Chrome Headless 144.0.0.0 (Mac OS 10.15.7) LOG: 'Session expired or token is invalid. Redirecting to login.'
 ,Chrome Headless 144.0.0.0 (Mac OS 10.15.7) ERROR: Error: NG04002: Cannot match any routes. URL Segment: 'login'

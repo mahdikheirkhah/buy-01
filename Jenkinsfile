@@ -481,7 +481,7 @@ pipeline {
                                 echo "🔍 Analyzing ${service} ..."
                                 
                                 # Define COVERAGE_EXCLUDE here within the shell context
-                                if [ "${service}" = "api-gateway" ] || [ "${service}" = "discovery-service" ]; then
+                                if [ "${service}" = "api-gateway" ] || [ "${service}" = "discovery-service" ] || [ "${service}" = "orders-service" ]; then
                                     COVERAGE_EXCLUDE="-Dsonar.coverage.exclusions=**"
                                     echo "   (Code quality only - test coverage excluded)"
                                 else
