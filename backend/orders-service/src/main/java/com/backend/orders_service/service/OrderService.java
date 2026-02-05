@@ -42,7 +42,7 @@ public class OrderService {
     private final OrderStatusScheduler orderStatusScheduler;
     private final RestTemplate restTemplate;
     private static final String PRODUCT_SERVICE_URL = "http://product-service"; // Eureka service discovery
-    private static final String PRODUCT_CACHE_SIZE = "100"; // Max products to cache
+    private static final String CANNOT_MODIFY_ORDER_MSG = "Cannot modify order in status: ";
 
     public Order createOrder(CreateOrderRequest req) {
         Order order = Order.builder()
@@ -68,6 +68,15 @@ public class OrderService {
 
     public Optional<Order> findLatestPendingOrder(String userId) {
         return orderRepository.findFirstByUserIdAndStatusOrderByOrderDateDesc(userId, OrderStatus.PENDING);
+    }
+
+    /**
+     * Validates that the order is in PENDING status, throws exception otherwise.
+     */
+    private void validatePendingStatus(Order order) {
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException(CANNOT_MODIFY_ORDER_MSG + order.getStatus());
+        }
     }
 
     /**
@@ -121,9 +130,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
         // Only allow modifications to PENDING orders
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
-        }
+        validatePendingStatus(order);
 
         // Populate product details if not already set
         if (item.getPrice() == null || item.getSellerId() == null || item.getProductName() == null) {
@@ -153,62 +160,66 @@ public class OrderService {
      */
     private void populateProductDetails(OrderItem item) {
         try {
-            String productUrl = PRODUCT_SERVICE_URL + "/api/products/" + item.getProductId();
-            log.info("Fetching product details from: {}", productUrl);
-
-            // Create headers with X-User-ID (required by product-service)
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("X-User-ID", "system-service"); // Use system user ID for internal service calls
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            @SuppressWarnings("unchecked")
-            Map<String, Object> product = restTemplate.exchange(productUrl, org.springframework.http.HttpMethod.GET,
-                    entity, Map.class).getBody();
-
+            Map<String, Object> product = fetchProductFromService(item.getProductId());
             if (product != null) {
-                log.info("Product found: {}", product);
-
-                // Set price
-                if (product.containsKey("price")) {
-                    Object priceObj = product.get("price");
-                    item.setPrice(new BigDecimal(priceObj.toString())); // String constructor is safe
-                    log.info("Set price: {} for productId: {}", priceObj, item.getProductId());
-                }
-
-                // Set sellerId
-                if (product.containsKey("sellerId")) {
-                    String sellerId = product.get("sellerId").toString();
-                    item.setSellerId(sellerId);
-                    log.info("Set sellerId: {} for productId: {}", sellerId, item.getProductId());
-                }
-
-                // Set product name
-                if (product.containsKey("name")) {
-                    String productName = product.get("name").toString();
-                    item.setProductName(productName);
-                    log.info("Set productName: {} for productId: {}", productName, item.getProductId());
-                }
-
-                log.info("Successfully populated product details for productId: {}", item.getProductId());
+                applyProductDetails(item, product);
             } else {
                 log.warn("Product not found from API for productId: {}", item.getProductId());
-                if (item.getPrice() == null)
-                    item.setPrice(BigDecimal.ZERO);
-                if (item.getProductName() == null)
-                    item.setProductName("Unknown Product");
-                if (item.getSellerId() == null)
-                    item.setSellerId("Unknown Seller");
+                setDefaultProductDetails(item);
             }
         } catch (Exception e) {
             log.error("Failed to fetch product details for productId: {}, Exception: {}", item.getProductId(),
                     e.getMessage(), e);
-            // Set defaults if fetch fails
-            if (item.getPrice() == null)
-                item.setPrice(BigDecimal.ZERO);
-            if (item.getProductName() == null)
-                item.setProductName("Unknown Product");
-            if (item.getSellerId() == null)
-                item.setSellerId("Unknown Seller");
+            setDefaultProductDetails(item);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> fetchProductFromService(String productId) {
+        String productUrl = PRODUCT_SERVICE_URL + "/api/products/" + productId;
+        log.info("Fetching product details from: {}", productUrl);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-User-ID", "system-service");
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        return restTemplate.exchange(productUrl, org.springframework.http.HttpMethod.GET,
+                entity, Map.class).getBody();
+    }
+
+    private void applyProductDetails(OrderItem item, Map<String, Object> product) {
+        log.info("Product found: {}", product);
+
+        if (product.containsKey("price")) {
+            Object priceObj = product.get("price");
+            item.setPrice(new BigDecimal(priceObj.toString()));
+            log.info("Set price: {} for productId: {}", priceObj, item.getProductId());
+        }
+
+        if (product.containsKey("sellerId")) {
+            String sellerId = product.get("sellerId").toString();
+            item.setSellerId(sellerId);
+            log.info("Set sellerId: {} for productId: {}", sellerId, item.getProductId());
+        }
+
+        if (product.containsKey("name")) {
+            String productName = product.get("name").toString();
+            item.setProductName(productName);
+            log.info("Set productName: {} for productId: {}", productName, item.getProductId());
+        }
+
+        log.info("Successfully populated product details for productId: {}", item.getProductId());
+    }
+
+    private void setDefaultProductDetails(OrderItem item) {
+        if (item.getPrice() == null) {
+            item.setPrice(BigDecimal.ZERO);
+        }
+        if (item.getProductName() == null) {
+            item.setProductName("Unknown Product");
+        }
+        if (item.getSellerId() == null) {
+            item.setSellerId("Unknown Seller");
         }
     }
 
@@ -221,9 +232,7 @@ public class OrderService {
     public Order updateOrderItem(String orderId, String productId, OrderItem updatedItem) {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
-        }
+        validatePendingStatus(order);
 
         // Find item by productId
         boolean found = false;
@@ -245,9 +254,7 @@ public class OrderService {
     public Order removeItemFromOrder(String orderId, String productId) {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
-        }
+        validatePendingStatus(order);
 
         // Remove item by productId
         boolean removed = order.getItems().removeIf(item -> item.getProductId().equals(productId));
@@ -262,9 +269,7 @@ public class OrderService {
     public Order clearOrderItems(String orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Cannot modify order in status: " + order.getStatus());
-        }
+        validatePendingStatus(order);
 
         order.setItems(new ArrayList<>());
         return orderRepository.save(order);
@@ -318,6 +323,13 @@ public class OrderService {
         return saved;
     }
 
+    /**
+     * Simulates payment processing with 80% success rate.
+     * Uses ThreadLocalRandom which is safe here because this is demo/simulation
+     * logic,
+     * not security-critical (no tokens, keys, or secrets are generated).
+     */
+    @SuppressWarnings("java:S2245") // ThreadLocalRandom is safe for non-security simulation
     private boolean simulatePayment() {
         return ThreadLocalRandom.current().nextInt(100) < 80;
     }
