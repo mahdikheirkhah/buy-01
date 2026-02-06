@@ -23,7 +23,8 @@ describe('OrderService', () => {
         paymentMethod: PaymentMethod.CARD,
         orderDate: '2026-02-06T10:00:00Z',
         createdAt: '2026-02-06T10:00:00Z',
-        updatedAt: '2026-02-06T10:00:00Z'
+        updatedAt: '2026-02-06T10:00:00Z',
+        isRemoved: false
     };
 
     const mockRedoOrderResponse: RedoOrderResponse = {
@@ -190,6 +191,32 @@ describe('OrderService', () => {
             expect(req.request.withCredentials).toBe(true);
 
             req.flush(null);
+        });
+    });
+
+    describe('cancelShippingOrder()', () => {
+        it('should send DELETE request and handle success', () => {
+            service.cancelShippingOrder('order-123').subscribe(result => {
+                expect(result).toEqual({});
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123');
+            expect(req.request.method).toBe('DELETE');
+            expect(req.request.withCredentials).toBe(true);
+
+            req.flush(null);
+        });
+
+        it('should extract error message on failure', () => {
+            service.cancelShippingOrder('order-123').subscribe(result => {
+                expect(result.error).toBe('Order can only be cancelled when in SHIPPING status');
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123');
+            req.flush(
+                { error: 'Order can only be cancelled when in SHIPPING status' },
+                { status: 400, statusText: 'Bad Request' }
+            );
         });
     });
 
