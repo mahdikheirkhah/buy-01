@@ -21,7 +21,12 @@
       <mat-card-header>
         <mat-card-title>Order #{{ order.id }}</mat-card-title>
         <mat-card-subtitle>
-          Placed on {{ order.orderDate | date:'medium' }}
+          <div class="date-info">
+            <div>Placed on: {{ order.createdAt | date:'medium' }}</div>
+            <div *ngIf="order.updatedAt && order.updatedAt !== order.createdAt" class="last-update">
+              Last updated: {{ order.updatedAt | date:'medium' }}
+            </div>
+          </div>
         </mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>

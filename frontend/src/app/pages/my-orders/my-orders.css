@@ -44,6 +44,23 @@ mat-card-header {
   margin-bottom: 1rem;
 }
 
+.date-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.date-info div {
+  color: #666;
+}
+
+.last-update {
+  color: #2196f3;
+  font-style: italic;
+}
+
 mat-chip-set {
   margin-left: auto;
 }
