@@ -27,6 +27,7 @@ xdescribe('EditProductModal', () => {
     description: 'Test Description',
     price: 99.99,
     quantity: 10,
+    sellerId: 'seller-123',
     sellerFirstName: 'John',
     sellerLastName: 'Doe',
     sellerEmail: 'john@example.com',

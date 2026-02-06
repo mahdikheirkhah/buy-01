@@ -2,23 +2,16 @@
 
 # --- Configuration Variables ---
 
-# List of all Java services, defined by their path relative to the project root.
-# Each service has its own Dockerfile in its directory.
-# NOTE: 'backend/auth-service' has been removed as authentication logic is now in 'user-service'.
-# NOTE: Ensure these folders exist: backend/api-gateway, backend/user-service, etc.
-JAVA_SERVICE_PATHS = backend/api-gateway backend/user-service backend/product-service backend/media-service backend/dummy-data backend/discovery-service
+JAVA_SERVICE_PATHS = backend/api-gateway backend/user-service backend/product-service backend/media-service backend/orders-service backend/dummy-data backend/discovery-service
 
 FRONTEND_DIR = frontend
 
 # --- Primary Targets ---
 
-# Default target: Run 'make build' then 'make up'.
 all: build up
 
-# Build all Docker images (Java services and Frontend).
 build: build-java build-frontend
 
-# Start all services defined in docker-compose.yml in detached mode (-d).
 up:
 	@echo "--- Starting Docker Compose Services ---"
 	docker-compose up -d
@@ -42,8 +35,6 @@ down:
 
 # --- Build Sub-Targets ---
 
-# Build Java Microservice images.
-# Each service has its own Dockerfile in its service directory.
 build-java:
 	@echo "--- Building Java Microservices ---"
 	@for service_path in $(JAVA_SERVICE_PATHS); do \
@@ -52,10 +43,9 @@ build-java:
 		docker build --file $$service_path/Dockerfile \
 		--tag mahdikheirkhah/$$service_name:latest \
 		--tag mahdikheirkhah/$$service_name:$${IMAGE_TAG:-latest} \
-		$$service_path ; \
+		. ; \
 	done
 
-# Build Angular Frontend image.
 build-frontend:
 	@echo "--- Building Angular Frontend ---"
 	docker build --file $(FRONTEND_DIR)/Dockerfile \
@@ -65,7 +55,6 @@ build-frontend:
 
 # --- Clean Target ---
 
-# Clean up local Maven artifacts and remove custom Docker images.
 clean: down
 	@echo "--- Cleaning Maven build artifacts ---"
 	mvn clean

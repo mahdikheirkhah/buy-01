@@ -1,0 +1,80 @@
+<div class="cart-container">
+  <h1>Shopping Cart</h1>
+
+  <div *ngIf="isLoading" class="loading">
+    <p>Loading cart...</p>
+  </div>
+
+  <div *ngIf="!isLoading && (!cart || cart.items.length === 0)" class="empty-cart">
+    <mat-icon>shopping_cart</mat-icon>
+    <p>Your cart is empty</p>
+    <button mat-raised-button color="primary" routerLink="/products">
+      Continue Shopping
+    </button>
+  </div>
+
+  <div *ngIf="!isLoading && cart && cart.items.length > 0" class="cart-content">
+    <div class="cart-items">
+      <mat-card *ngFor="let item of cart.items" class="cart-item">
+        <div class="item-image">
+          <img [src]="getImageUrl(item.productId)" [alt]="getProductName(item.productId)">
+        </div>
+        
+        <div class="item-details">
+          <h3>
+            <a [routerLink]="['/product', item.productId]">{{ getProductName(item.productId) }}</a>
+          </h3>
+          <p class="item-price">{{ getProductPrice(item.productId) | currency:'USD' }} each</p>
+        </div>
+
+        <div class="item-quantity">
+          <mat-form-field appearance="outline">
+            <mat-label>Quantity</mat-label>
+            <input 
+              matInput 
+              type="number" 
+              [value]="item.quantity"
+              min="1"
+              (change)="updateQuantity(item, $any($event.target).value)">
+          </mat-form-field>
+        </div>
+
+        <div class="item-total">
+          <p>{{ getItemSubtotal(item) | currency:'USD' }}</p>
+        </div>
+
+        <div class="item-actions">
+          <button mat-icon-button color="warn" (click)="removeItem(item.productId)" title="Remove item">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </mat-card>
+    </div>
+
+    <div class="cart-summary">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Order Summary</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="summary-row">
+            <span>Items ({{ cart.items.length }})</span>
+            <span>{{ getTotal() | currency:'USD' }}</span>
+          </div>
+          <div class="summary-row total">
+            <span><strong>Total</strong></span>
+            <span><strong>{{ getTotal() | currency:'USD' }}</strong></span>
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-stroked-button color="warn" (click)="clearCartItems()" class="clear-btn">
+            Clear Cart
+          </button>
+          <button mat-raised-button color="primary" (click)="proceedToCheckout()" class="checkout-btn">
+            Proceed to Checkout
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </div>
+</div>

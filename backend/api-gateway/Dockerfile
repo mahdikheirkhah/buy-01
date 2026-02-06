@@ -13,9 +13,9 @@ RUN mvn -q -DskipTests clean package
 FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
-COPY --from=build /app/target/api-gateway-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/api-gateway/target/api-gateway-0.0.1-SNAPSHOT.jar app.jar
 
 # Copy SSL keystore
-COPY src/main/resources/certs/keystore.p12 src/main/resources/certs/keystore.p12
+COPY backend/api-gateway/src/main/resources/certs/keystore.p12 src/main/resources/certs/keystore.p12
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

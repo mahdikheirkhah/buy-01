@@ -39,81 +39,83 @@ public class GlobalExceptionHandler {
     // 2. Spring Security Authentication Exceptions
     // ────────────────────────────────────────────────────────────────
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, Object>> handleBadCredentials() {
-        return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+    public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid username or password");
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleUserNotFound() {
-        return buildResponse(HttpStatus.UNAUTHORIZED, "User not found");
+    public ResponseEntity<Map<String, Object>> handleUsernameNotFound(UsernameNotFoundException ex) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(DisabledException.class)
-    public ResponseEntity<Map<String, Object>> handleDisabled() {
-        return buildResponse(HttpStatus.FORBIDDEN, "Account is disabled");
+    public ResponseEntity<Map<String, Object>> handleDisabled(DisabledException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, "User account is disabled");
     }
 
     @ExceptionHandler(LockedException.class)
-    public ResponseEntity<Map<String, Object>> handleLocked() {
-        return buildResponse(HttpStatus.FORBIDDEN, "Account is locked");
+    public ResponseEntity<Map<String, Object>> handleLocked(LockedException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, "User account is locked");
     }
 
     @ExceptionHandler(AccountExpiredException.class)
-    public ResponseEntity<Map<String, Object>> handleExpired() {
-        return buildResponse(HttpStatus.FORBIDDEN, "Account has expired");
+    public ResponseEntity<Map<String, Object>> handleAccountExpired(AccountExpiredException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, "User account has expired");
     }
 
     @ExceptionHandler(CredentialsExpiredException.class)
-    public ResponseEntity<Map<String, Object>> handleCredentialsExpired() {
-        return buildResponse(HttpStatus.FORBIDDEN, "Credentials have expired");
+    public ResponseEntity<Map<String, Object>> handleCredentialsExpired(CredentialsExpiredException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, "User credentials have expired");
     }
 
     // ────────────────────────────────────────────────────────────────
-    // 3. Validation
+    // 3. Spring Validation Exceptions
     // ────────────────────────────────────────────────────────────────
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
-                .collect(Collectors.toMap(
-                        FieldError::getField,
-                        err -> err.getDefaultMessage() != null ? err.getDefaultMessage() : "invalid"
-                ));
+    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = error instanceof FieldError ? ((FieldError) error).getField() : error.getObjectName();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
         return buildFieldErrorResponse(HttpStatus.BAD_REQUEST, errors);
     }
 
     // ────────────────────────────────────────────────────────────────
-    // 4. File Upload
+    // 4. File Upload Exceptions
     // ────────────────────────────────────────────────────────────────
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<Map<String, Object>> handleFileSize() {
-        return buildResponse(HttpStatus.PAYLOAD_TOO_LARGE, "File size exceeds 2 MB limit.");
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException ex) {
+        return buildResponse(HttpStatus.PAYLOAD_TOO_LARGE, "File size exceeds the maximum limit.");
     }
 
     @ExceptionHandler(InvalidFileTypeException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidFileType(InvalidFileTypeException ex) {
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+        return buildResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage());
     }
 
     // ────────────────────────────────────────────────────────────────
-    // 5. 404
+    // 5. 404 Not Found Exceptions
     // ────────────────────────────────────────────────────────────────
     @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleNotFound(NoHandlerFoundException ex) {
-        return buildResponse(HttpStatus.NOT_FOUND, "Endpoint not found: " + ex.getRequestURL());
+    public ResponseEntity<Map<String, Object>> handleNoHandlerFound(NoHandlerFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, "The requested resource was not found.");
     }
 
     // ────────────────────────────────────────────────────────────────
-    // 6. Fallback
+    // 6. Catch-All Exception Handler
     // ────────────────────────────────────────────────────────────────
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
-        ex.printStackTrace();
+    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred.");
     }
 
-    // ────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────
     // Helper Methods
-    // ────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
         Map<String, Object> body = new HashMap<>();
         body.put(TIMESTAMP, LocalDateTime.now());

@@ -1,0 +1,137 @@
+:host ::ng-deep .add-to-cart-dialog {
+  .mdc-dialog__container {
+    max-width: 480px;
+  }
+}
+
+.product-info {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.product-info h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+
+.price {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1976d2;
+  margin: 0.75rem 0;
+  letter-spacing: -0.5px;
+}
+
+.stock {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4caf50;
+  margin: 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.stock mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #4caf50;
+}
+
+.stock.low-stock {
+  color: #ff6f00;
+}
+
+.stock.low-stock mat-icon {
+  color: #ff6f00;
+}
+
+.quantity-selector {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #f9fafb 100%);
+  border-radius: 8px;
+  border: 1px solid #e8ecef;
+}
+
+.quantity-selector label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 0.95rem;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.quantity-controls button {
+  transition: all 0.2s ease;
+}
+
+.quantity-controls button:hover:not(:disabled) {
+  background-color: #e3f2fd;
+  transform: scale(1.05);
+}
+
+.quantity-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.quantity-controls mat-form-field {
+  width: 100px;
+}
+
+.quantity-controls input {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #f3f6ff 0%, #e8f0ff 100%);
+  border-radius: 8px;
+  border-left: 4px solid #1976d2;
+  margin-top: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.total span:first-child {
+  font-weight: 600;
+  color: #424242;
+  font-size: 0.95rem;
+}
+
+.total-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1976d2;
+}
+
+mat-dialog-actions {
+  padding: 1.5rem 0 0 0;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+mat-dialog-actions button {
+  min-width: 120px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}

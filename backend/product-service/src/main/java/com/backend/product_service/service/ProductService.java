@@ -27,6 +27,8 @@ import com.backend.common.exception.CustomException;
 import com.backend.product_service.dto.CreateProductDTO;
 import com.backend.product_service.dto.ProductCardDTO;
 import com.backend.product_service.dto.ProductDTO;
+import com.backend.product_service.dto.ProductSimpleDTO;
+import com.backend.product_service.dto.StockAdjustmentRequest;
 import com.backend.product_service.dto.UpdateProductDTO;
 import com.backend.product_service.model.Product;
 import com.backend.product_service.repository.ProductRepository;
@@ -34,14 +36,12 @@ import com.backend.product_service.repository.ProductRepository;
 @Service
 public class ProductService {
     private final ProductRepository productRepository;
-    private final ProductMapper productMapper;
     private final WebClient.Builder webClientBuilder;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Autowired
-    public ProductService(ProductRepository productRepository, ProductMapper productMapper,
+    public ProductService(ProductRepository productRepository,
             WebClient.Builder webClientBuilder, KafkaTemplate<String, String> kafkaTemplate) {
-        this.productMapper = productMapper;
         this.productRepository = productRepository;
         this.webClientBuilder = webClientBuilder;
         this.kafkaTemplate = kafkaTemplate;
@@ -63,13 +63,40 @@ public class ProductService {
                 .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
     }
 
+    /**
+     * Get product DTO with minimal details (just product info from database)
+     * Used for internal service-to-service calls that only need basic product data
+     * No external calls - returns data directly from database
+     */
+    public ProductSimpleDTO getProductDTOOnly(String productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
+        if (product == null) {
+            return null;
+        }
+        // Return simple DTO with just product data including sellerID
+        return new ProductSimpleDTO(product);
+    }
+
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
     public UpdateProductDTO updateProduct(String productId, String sellerId, UpdateProductDTO productDto) {
         Product existingProduct = checkProduct(productId, sellerId);
-        productMapper.updateProductFromDto(productDto, existingProduct);
+        // Manual mapping to avoid MapStruct bean dependency
+        if (productDto.getName() != null) {
+            existingProduct.setName(productDto.getName());
+        }
+        if (productDto.getDescription() != null) {
+            existingProduct.setDescription(productDto.getDescription());
+        }
+        if (productDto.getPrice() != null) {
+            existingProduct.setPrice(productDto.getPrice());
+        }
+        if (productDto.getQuantity() != null) {
+            existingProduct.setQuantity(productDto.getQuantity());
+        }
         Product savedProduct = productRepository.save(existingProduct);
         return UpdateProductDTO.builder()
                 .name(savedProduct.getName())
@@ -190,17 +217,6 @@ public class ProductService {
             return List.of();
         }
     }
-    // public List<ProductDTO> getAllProductsWithSellerID(String sellerId) {
-    // Product product = productRepository.findBySellerID(sellerId);
-    // if (product == null) {
-    // return null;
-    // }
-    // ProductDTO result;
-    // InfoUserDTO seller = getSellersInfo(sellerId);
-    // getMedia(.getProductId());
-    //
-    // return result;
-    // }
 
     private List<ProductDTO> appendSellersToProduct(List<Product> products, List<InfoUserDTO> sellers) {
         assert sellers != null;
@@ -222,6 +238,41 @@ public class ProductService {
 
         // Save and return the product so we can get its ID
         return productRepository.save(product);
+    }
+
+    public void adjustProductStock(List<StockAdjustmentRequest> adjustments) {
+        if (adjustments == null || adjustments.isEmpty()) {
+            return;
+        }
+
+        for (StockAdjustmentRequest adjustment : adjustments) {
+            Product product = productRepository.findById(adjustment.getProductId())
+                    .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
+
+            if (product.getQuantity() < adjustment.getQuantity()) {
+                throw new CustomException(
+                        String.format("Product '%s' is out of stock. Available: %d, Requested: %d",
+                                product.getName(), product.getQuantity(), adjustment.getQuantity()),
+                        HttpStatus.BAD_REQUEST);
+            }
+
+            product.setQuantity(product.getQuantity() - adjustment.getQuantity());
+            productRepository.save(product);
+        }
+    }
+
+    public void restockProducts(List<StockAdjustmentRequest> adjustments) {
+        if (adjustments == null || adjustments.isEmpty()) {
+            return;
+        }
+
+        for (StockAdjustmentRequest adjustment : adjustments) {
+            Product product = productRepository.findById(adjustment.getProductId())
+                    .orElseThrow(() -> new CustomException("Product not found", HttpStatus.NOT_FOUND));
+
+            product.setQuantity(product.getQuantity() + adjustment.getQuantity());
+            productRepository.save(product);
+        }
     }
 
     public void createImage(MultipartFile file, String productId, String sellerId, String role) {

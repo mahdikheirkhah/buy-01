@@ -4,16 +4,25 @@ WORKDIR /app
 
 # Copy pom + sources
 
-COPY pom.xml .
-COPY src ./src
+# Copy pom + sources
 
-RUN mvn -q -DskipTests clean package
+# Copy all backend code
+COPY backend/ .
+
+# Build parent POM first (without installing modules)
+RUN mvn -q -N install
+
+# Build common module
+RUN mvn -q -DskipTests -pl common clean install
+
+# Now build the service
+RUN mvn -q -DskipTests -pl media-service clean package
 
 
 # -------- RUNTIME STAGE --------
 FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
-COPY --from=build  /app/target/media-service-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/media-service/target/media-service-0.0.1-SNAPSHOT.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

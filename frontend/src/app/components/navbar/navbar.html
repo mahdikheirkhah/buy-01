@@ -10,6 +10,12 @@
 
   <ng-container *ngIf="currentUser$ | async as user; else loggedOutButtons">
 
+    <ng-container *ngIf="user.role === 'CLIENT'">
+      <button mat-icon-button routerLink="/cart" [matBadge]="(cartItemCount$ | async) || 0" matBadgeColor="accent" [matBadgeHidden]="((cartItemCount$ | async) || 0) === 0">
+        <mat-icon>shopping_cart</mat-icon>
+      </button>
+    </ng-container>
+
     <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-button">
 
       <img *ngIf="user.role === 'SELLER' && user.avatarUrl"
@@ -28,6 +34,12 @@
         <mat-icon>person</mat-icon>
         <span>My Profile</span>
       </button>
+      <ng-container *ngIf="user.role === 'CLIENT'">
+        <button mat-menu-item routerLink="/my-orders">
+          <mat-icon>history</mat-icon>
+          <span>Order History</span>
+        </button>
+      </ng-container>
       <button mat-menu-item (click)="onLogout()">
         <mat-icon>exit_to_app</mat-icon>
         <span>Logout</span>

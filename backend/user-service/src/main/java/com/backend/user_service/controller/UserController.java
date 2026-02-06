@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.backend.common.dto.InfoUserDTO;
-import com.backend.user_service.dto.updateUserDTO;
+import com.backend.user_service.dto.UpdateUserDTO;
 import com.backend.user_service.service.UserService;
 
 import jakarta.servlet.http.Cookie;
@@ -68,7 +68,7 @@ public class UserController {
 
     @PutMapping("/me")
     public ResponseEntity<Map<String, String>> updateMe(
-            @Valid @RequestBody updateUserDTO userUpdatedInfo,
+            @Valid @RequestBody UpdateUserDTO userUpdatedInfo,
             @RequestHeader("X-User-ID") String userId,
             HttpServletResponse response) {
         UserService.UserUpdateResult result = userService.updateUserInfo(userId, userUpdatedInfo);

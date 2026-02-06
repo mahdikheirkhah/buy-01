@@ -47,6 +47,17 @@
         <span>({{ product.sellerEmail }})</span>
       </div>
 
+      <div class="cart-actions" *ngIf="canAddToCart() && product.quantity > 0">
+        <button mat-raised-button color="accent" (click)="onAddToCart()">
+          <mat-icon>add_shopping_cart</mat-icon>
+          Add to Cart
+        </button>
+      </div>
+
+      <div class="out-of-stock-container" *ngIf="product.quantity === 0">
+        <p class="out-of-stock-message">Out of Stock</p>
+      </div>
+
       <div class="action-buttons" *ngIf="product.createdByMe">
         <button mat-raised-button color="primary" (click)="onEdit()">
           <mat-icon>edit</mat-icon>

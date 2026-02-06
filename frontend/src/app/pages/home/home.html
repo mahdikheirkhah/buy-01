@@ -7,6 +7,84 @@
   <div *ngIf="errorMessage" class="error-banner">
     <p>{{ errorMessage }}</p>
   </div>
+  <div *ngIf="filterError" class="error-banner">
+    <p>{{ filterError }}</p>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="search-filter-container">
+    <div class="search-box">
+      <input 
+        type="text" 
+        placeholder="Search by product name or description..." 
+        [(ngModel)]="searchKeyword"
+        class="search-input"
+      />
+    </div>
+
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label>Price Range</label>
+        <div class="filter-inputs">
+          <input 
+            type="number" 
+            placeholder="Min Price" 
+            [(ngModel)]="minPrice"
+            min="0"
+            class="filter-input"
+          />
+          <input 
+            type="number" 
+            placeholder="Max Price" 
+            [(ngModel)]="maxPrice"
+            min="0"
+            class="filter-input"
+          />
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Quantity Available</label>
+        <div class="filter-inputs">
+          <input 
+            type="number" 
+            placeholder="Min Qty" 
+            [(ngModel)]="minQuantity"
+            min="0"
+            class="filter-input"
+          />
+          <input 
+            type="number" 
+            placeholder="Max Qty" 
+            [(ngModel)]="maxQuantity"
+            min="0"
+            class="filter-input"
+          />
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Product Date Range</label>
+        <div class="filter-inputs">
+          <input 
+            type="date" 
+            [(ngModel)]="startDate"
+            class="filter-input"
+          />
+          <input 
+            type="date" 
+            [(ngModel)]="endDate"
+            class="filter-input"
+          />
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button (click)="onSearch()" class="btn-search">Search</button>
+        <button (click)="clearFilters()" class="btn-clear">Clear All</button>
+      </div>
+    </div>
+  </div>
 
   <div class="product-grid" *ngIf="products.length > 0; else noProducts">
 
