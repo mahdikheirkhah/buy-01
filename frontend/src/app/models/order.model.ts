@@ -45,3 +45,10 @@ export interface CheckoutRequest {
 export interface UpdateOrderStatusRequest {
     status: OrderStatus;
 }
+
+export interface RedoOrderResponse {
+    order: Order | null;
+    message: string;
+    outOfStockProducts: string[];
+    partiallyFilledProducts: string[];
+}

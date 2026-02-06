@@ -190,7 +190,14 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        return ResponseEntity.ok(orderService.redoOrder(orderId));
+        com.backend.orders_service.dto.RedoOrderResponse response = orderService.redoOrder(orderId);
+
+        // If no items could be added, return error response
+        if (response.getOrder() == null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     // ────────────────────────────────────────────────────────────────

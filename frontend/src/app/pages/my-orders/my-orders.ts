@@ -95,12 +95,31 @@ export class MyOrders implements OnInit {
 
     reorder(orderId: string): void {
         this.orderService.redoOrder(orderId).subscribe({
-            next: (newOrder) => {
-                alert('Order recreated! Check your cart.');
+            next: (response) => {
+                let alertMessage = response.message;
+
+                // Append details about stock issues
+                if (response.outOfStockProducts && response.outOfStockProducts.length > 0) {
+                    alertMessage += '\n\nOut of stock:\n• ' + response.outOfStockProducts.join('\n• ');
+                }
+                if (response.partiallyFilledProducts && response.partiallyFilledProducts.length > 0) {
+                    alertMessage += '\n\nReduced quantities:\n• ' + response.partiallyFilledProducts.join('\n• ');
+                }
+
+                alert(alertMessage);
             },
             error: (err) => {
                 console.error('Failed to reorder:', err);
-                alert('Failed to recreate order');
+                // Check if error response contains our custom error body
+                if (err.error && err.error.message) {
+                    let alertMessage = err.error.message;
+                    if (err.error.outOfStockProducts && err.error.outOfStockProducts.length > 0) {
+                        alertMessage += '\n\nOut of stock:\n• ' + err.error.outOfStockProducts.join('\n• ');
+                    }
+                    alert(alertMessage);
+                } else {
+                    alert('Failed to recreate order');
+                }
             }
         });
     }

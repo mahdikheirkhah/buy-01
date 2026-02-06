@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, map, of, throwError } from 'rxjs';
 import { tap, catchError, switchMap } from 'rxjs/operators';
-import { Order, OrderItem, CreateOrderRequest, UpdateOrderStatusRequest, PaymentMethod, CheckoutRequest } from '../models/order.model';
+import { Order, OrderItem, CreateOrderRequest, UpdateOrderStatusRequest, PaymentMethod, CheckoutRequest, RedoOrderResponse } from '../models/order.model';
 import { Page } from './product-service';
 
 @Injectable({
@@ -51,8 +51,8 @@ export class OrderService {
         return this.http.delete<void>(`${this.orderApiUrl}/${orderId}`, { withCredentials: true });
     }
 
-    redoOrder(orderId: string): Observable<Order> {
-        return this.http.post<Order>(`${this.orderApiUrl}/${orderId}/redo`, {}, { withCredentials: true });
+    redoOrder(orderId: string): Observable<RedoOrderResponse> {
+        return this.http.post<RedoOrderResponse>(`${this.orderApiUrl}/${orderId}/redo`, {}, { withCredentials: true });
     }
 
     // ==================== ORDER ITEM MANAGEMENT ====================
