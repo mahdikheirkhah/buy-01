@@ -64,7 +64,7 @@ describe('MyOrders', () => {
     };
 
     beforeEach(async () => {
-        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getUserOrders', 'redoOrder']);
+        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getUserOrders', 'redoOrder', 'cancelShippingOrder']);
         authServiceSpy = jasmine.createSpyObj('AuthService', [], {
             currentUser$: of(mockUser)
         });
@@ -205,11 +205,11 @@ describe('MyOrders', () => {
         });
 
         it('should return correct color for DELIVERED', () => {
-            expect(component.getStatusColor(OrderStatus.DELIVERED)).toBe('accent');
+            expect(component.getStatusColor(OrderStatus.DELIVERED)).toBe('success');
         });
 
         it('should return correct color for CANCELLED', () => {
-            expect(component.getStatusColor(OrderStatus.CANCELLED)).toBe('warn');
+            expect(component.getStatusColor(OrderStatus.CANCELLED)).toBe('error');
         });
 
         it('should return empty string for unknown status', () => {

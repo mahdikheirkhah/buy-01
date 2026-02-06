@@ -58,7 +58,7 @@ describe('OrderDetail', () => {
 
     beforeEach(async () => {
         paramMapSubject = new Subject();
-        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getOrderById', 'redoOrder']);
+        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getOrderById', 'redoOrder', 'cancelShippingOrder']);
         productServiceSpy = jasmine.createSpyObj('ProductService', ['getProductById']);
 
         await TestBed.configureTestingModule({
@@ -284,11 +284,11 @@ describe('OrderDetail', () => {
         });
 
         it('should return correct color for DELIVERED', () => {
-            expect(component.getStatusColor(OrderStatus.DELIVERED)).toBe('accent');
+            expect(component.getStatusColor(OrderStatus.DELIVERED)).toBe('success');
         });
 
         it('should return correct color for CANCELLED', () => {
-            expect(component.getStatusColor(OrderStatus.CANCELLED)).toBe('warn');
+            expect(component.getStatusColor(OrderStatus.CANCELLED)).toBe('error');
         });
 
         it('should return empty string for unknown status', () => {
