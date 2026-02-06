@@ -147,6 +147,29 @@ export class MyOrders implements OnInit {
         });
     }
 
+    removeOrder(orderId: string): void {
+        const confirmed = confirm('Are you sure you want to remove this order from history?');
+        if (!confirmed) {
+            return;
+        }
+
+        this.orderService.removeOrder(orderId).subscribe({
+            next: (response) => {
+                if (response.error) {
+                    alert('Cannot remove order: ' + response.error);
+                } else {
+                    alert('Order removed from history successfully.');
+                    // Reload orders to refresh the list
+                    this.fetchOrders();
+                }
+            },
+            error: (err) => {
+                console.error('Failed to remove order:', err);
+                alert('Failed to remove order. Please try again.');
+            }
+        });
+    }
+
     getProductName(productId: string): string {
         const detail = this.productDetails[productId];
         return detail ? detail.name : 'Loading...';

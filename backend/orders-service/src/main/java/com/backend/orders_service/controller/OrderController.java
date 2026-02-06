@@ -301,6 +301,28 @@ public class OrderController {
         }
     }
 
+    @PutMapping("/{orderId}/remove")
+    public ResponseEntity<?> removeOrder(@PathVariable String orderId, HttpServletRequest request) {
+        Order order = orderService.getOrderById(orderId);
+        if (order == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Check authorization
+        if (!hasAccessToOrder(order, request)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            orderService.removeOrder(orderId);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            // Order is not in DELIVERED or CANCELLED status
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    java.util.Map.of("error", e.getMessage()));
+        }
+    }
+
     // ────────────────────────────────────────────────────────────────
     // HELPER METHODS
     // ────────────────────────────────────────────────────────────────

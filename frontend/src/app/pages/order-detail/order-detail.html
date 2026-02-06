@@ -98,6 +98,11 @@
         <mat-icon>cancel</mat-icon>
         Cancel Order
       </button>
+      <button *ngIf="(order.status === 'DELIVERED' || order.status === 'CANCELLED') && !order.isRemoved"
+        mat-raised-button color="warn" (click)="removeOrder(order.id)">
+        <mat-icon>delete</mat-icon>
+        Remove
+      </button>
       <button mat-raised-button color="primary" (click)="reorder(order.id)">
         <mat-icon>refresh</mat-icon>
         Reorder

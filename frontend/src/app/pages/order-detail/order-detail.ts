@@ -129,6 +129,29 @@ export class OrderDetail implements OnInit {
         });
     }
 
+    removeOrder(orderId: string): void {
+        const confirmed = confirm('Are you sure you want to remove this order from history?');
+        if (!confirmed) {
+            return;
+        }
+
+        this.orderService.removeOrder(orderId).subscribe({
+            next: (response) => {
+                if (response.error) {
+                    alert('Cannot remove order: ' + response.error);
+                } else {
+                    alert('Order removed from history successfully.');
+                    // Navigate back to orders list
+                    this.router.navigate(['/my-orders']);
+                }
+            },
+            error: (err) => {
+                console.error('Failed to remove order:', err);
+                alert('Failed to remove order. Please try again.');
+            }
+        });
+    }
+
     getStatusColor(status: OrderStatus): string {
         switch (status) {
             case OrderStatus.PENDING: return 'accent';

@@ -63,7 +63,7 @@ public class OrderService {
     public Page<Order> getOrdersByUserId(String userId, int page, int size) {
         Sort sort = Sort.by(Sort.Direction.DESC, "updatedAt", "orderDate", "createdAt");
         Pageable p = PageRequest.of(page, size, sort);
-        return orderRepository.findByUserId(userId, p);
+        return orderRepository.findByUserIdAndIsRemovedFalse(userId, p);
     }
 
     public Optional<Order> findLatestPendingOrder(String userId) {
@@ -96,6 +96,11 @@ public class OrderService {
     public void cancelOrder(String orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow();
 
+        // Check if order is removed
+        if (order.isRemoved()) {
+            throw new IllegalStateException("Cannot cancel a removed order");
+        }
+
         // Only allow cancellation if order is in SHIPPING status
         if (order.getStatus() != OrderStatus.SHIPPING) {
             throw new IllegalStateException(
@@ -117,8 +122,28 @@ public class OrderService {
         log.info("Order {} has been cancelled", orderId);
     }
 
+    public void removeOrder(String orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+
+        // Only allow removal if order is DELIVERED or CANCELLED
+        if (order.getStatus() != OrderStatus.DELIVERED && order.getStatus() != OrderStatus.CANCELLED) {
+            throw new IllegalStateException(
+                    "Order can only be removed when in DELIVERED or CANCELLED status. Current status: "
+                            + order.getStatus());
+        }
+
+        order.setRemoved(true);
+        orderRepository.save(order);
+        log.info("Order {} has been marked as removed", orderId);
+    }
+
     public com.backend.orders_service.dto.RedoOrderResponse redoOrder(String orderId) {
         Order existing = orderRepository.findById(orderId).orElseThrow();
+
+        // Check if order is removed
+        if (existing.isRemoved()) {
+            throw new IllegalStateException("Cannot reorder a removed order");
+        }
 
         java.util.List<String> outOfStockProducts = new java.util.ArrayList<>();
         java.util.List<String> partiallyFilledProducts = new java.util.ArrayList<>();
@@ -236,6 +261,11 @@ public class OrderService {
                 item.getQuantity());
 
         Order order = orderRepository.findById(orderId).orElseThrow();
+
+        // Check if order is removed
+        if (order.isRemoved()) {
+            throw new IllegalStateException("Cannot add items to a removed order");
+        }
 
         // Only allow modifications to PENDING orders
         validatePendingStatus(order);

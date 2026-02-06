@@ -1,187 +1,53 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, map, of, throwError } from 'rxjs';
-import { tap, catchError, switchMap } from 'rxjs/operators';
-import { Order, OrderItem, CreateOrderRequest, UpdateOrderStatusRequest, PaymentMethod, CheckoutRequest, RedoOrderResponse } from '../models/order.model';
-import { Page } from './product-service';
+package com.backend.orders_service.model;
 
-@Injectable({
-    providedIn: 'root'
-})
-export class OrderService {
-    private orderApiUrl = 'https://localhost:8443/api/orders';
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
-    // Cart management - holds the current pending order
-    public cartSubject = new BehaviorSubject<Order | null>(null);
-    public cart$ = this.cartSubject.asObservable();
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-    // Cart item count for badge
-    public cartItemCount$ = this.cart$.pipe(
-        map(cart => cart ? cart.items.length : 0)
-    );
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    constructor(private http: HttpClient) { }
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "orders")
+public class Order {
+    @Id
+    private String id;
 
-    // ==================== ORDER CRUD ====================
+    @NotBlank
+    private String userId;
 
-    createOrder(request: CreateOrderRequest): Observable<Order> {
-        return this.http.post<Order>(this.orderApiUrl, request, { withCredentials: true });
-    }
+    @NotBlank
+    private String shippingAddress;
 
-    getOrderById(orderId: string): Observable<Order> {
-        return this.http.get<Order>(`${this.orderApiUrl}/${orderId}`, { withCredentials: true });
-    }
+    @NotNull
+    private OrderStatus status;
 
-    getUserOrders(userId: string, page: number, size: number): Observable<Page<Order>> {
-        let params = new HttpParams()
-            .set('page', page.toString())
-            .set('size', size.toString());
+    @Builder.Default
+    private List<OrderItem> items = new ArrayList<>();
 
-        return this.http.get<Page<Order>>(`${this.orderApiUrl}/user/${userId}`, {
-            withCredentials: true,
-            params: params
-        });
-    }
+    private PaymentMethod paymentMethod;
 
-    updateOrderStatus(orderId: string, request: UpdateOrderStatusRequest): Observable<Order> {
-        return this.http.put<Order>(`${this.orderApiUrl}/${orderId}/status`, request, { withCredentials: true });
-    }
+    private Instant orderDate;
 
-    cancelOrder(orderId: string): Observable<void> {
-        return this.http.delete<void>(`${this.orderApiUrl}/${orderId}`, { withCredentials: true });
-    }
+    @CreatedDate
+    private Instant createdAt;
 
-    cancelShippingOrder(orderId: string): Observable<{ error?: string }> {
-        return this.http.delete<{ error?: string }>(`${this.orderApiUrl}/${orderId}`, { withCredentials: true })
-            .pipe(
-                map(() => ({})), // Success returns empty object
-                catchError(error => {
-                    // Extract error message from response
-                    const errorMsg = error.error?.error || error.message || 'Failed to cancel order';
-                    return of({ error: errorMsg });
-                })
-            );
-    }
+    @LastModifiedDate
+    private Instant updatedAt;
 
-    redoOrder(orderId: string): Observable<RedoOrderResponse> {
-        return this.http.post<RedoOrderResponse>(`${this.orderApiUrl}/${orderId}/redo`, {}, { withCredentials: true });
-    }
+    @Builder.Default
+    private boolean isRemoved = false;
 
-    // ==================== ORDER ITEM MANAGEMENT ====================
-
-    addItemToOrder(orderId: string, item: OrderItem): Observable<Order> {
-        return this.http.post<Order>(`${this.orderApiUrl}/${orderId}/items`, item, { withCredentials: true })
-            .pipe(tap(order => {
-                if (order.status === 'PENDING') {
-                    this.cartSubject.next(order);
-                }
-            }));
-    }
-
-    updateOrderItem(orderId: string, productId: string, item: OrderItem): Observable<Order> {
-        return this.http.put<Order>(`${this.orderApiUrl}/${orderId}/items/${productId}`, item, { withCredentials: true })
-            .pipe(tap(order => {
-                if (order.status === 'PENDING') {
-                    this.cartSubject.next(order);
-                }
-            }));
-    }
-
-    removeItemFromOrder(orderId: string, productId: string): Observable<Order> {
-        return this.http.delete<Order>(`${this.orderApiUrl}/${orderId}/items/${productId}`, { withCredentials: true })
-            .pipe(tap(order => {
-                if (order.status === 'PENDING') {
-                    this.cartSubject.next(order);
-                }
-            }));
-    }
-
-    checkoutOrder(orderId: string, request: CheckoutRequest): Observable<Order> {
-        return this.http.post<Order>(`${this.orderApiUrl}/${orderId}/checkout`, request, { withCredentials: true })
-            .pipe(tap(order => {
-                // After successful checkout, clear the cart from local state
-                // The backend will have created a new empty cart for the user
-                this.cartSubject.next(null);
-            }));
-    }
-
-    clearCartItems(orderId: string): Observable<Order> {
-        return this.http.delete<Order>(`${this.orderApiUrl}/${orderId}/items`, { withCredentials: true })
-            .pipe(tap(order => {
-                if (order.status === 'PENDING') {
-                    this.cartSubject.next(order);
-                }
-            }));
-    }
-
-    // ==================== CART HELPERS ====================
-
-    /**
-     * Load or create the user's current cart (PENDING order)
-     */
-    loadCart(userId: string): Observable<Order | null> {
-        return this.getActiveCart(userId).pipe(
-            tap(order => this.cartSubject.next(order))
-        );
-    }
-
-    /**
-     * Get or create a PENDING order for the cart
-     */
-    getOrCreateCart(userId: string, shippingAddress: string): Observable<Order> {
-        return this.getActiveCart(userId).pipe(
-            switchMap(existingCart => {
-                if (existingCart) {
-                    this.cartSubject.next(existingCart);
-                    return of(existingCart);
-                }
-
-                return this.createOrder({
-                    userId,
-                    shippingAddress,
-                    items: [],
-                    paymentMethod: PaymentMethod.CARD
-                }).pipe(
-                    tap(newOrder => this.cartSubject.next(newOrder))
-                );
-            })
-        );
-    }
-
-    getActiveCart(userId: string): Observable<Order | null> {
-        return this.http.get<Order>(`${this.orderApiUrl}/user/${userId}/cart`, {
-            withCredentials: true,
-            observe: 'response'
-        }).pipe(
-            map(response => response.body ?? null),
-            catchError(err => {
-                if (err.status === 404 || err.status === 204) {
-                    return of(null);
-                }
-                return throwError(() => err);
-            })
-        );
-    }
-
-    /**
-     * Clear the cart from memory (call after checkout)
-     */
-    clearCart(): void {
-        this.cartSubject.next(null);
-    }
-
-    /**
-     * Get current cart value
-     */
-    getCurrentCart(): Order | null {
-        return this.cartSubject.value;
-    }
-
-    /**
-     * Get cart item count
-     */
-    getCartItemCount(): number {
-        const cart = this.getCurrentCart();
-        return cart ? cart.items.reduce((count, item) => count + item.quantity, 0) : 0;
-    }
 }

@@ -47,4 +47,7 @@ public class Order {
     @LastModifiedDate
     private Instant updatedAt;
 
+    @Builder.Default
+    private boolean isRemoved = false;
+
 }

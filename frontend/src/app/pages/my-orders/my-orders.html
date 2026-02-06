@@ -55,6 +55,11 @@
           <mat-icon>cancel</mat-icon>
           Cancel
         </button>
+        <button *ngIf="(order.status === 'DELIVERED' || order.status === 'CANCELLED') && !order.isRemoved" mat-button
+          color="warn" (click)="removeOrder(order.id)">
+          <mat-icon>delete</mat-icon>
+          Remove
+        </button>
         <button mat-button [routerLink]="['/order', order.id]" color="primary">
           <mat-icon>info</mat-icon>
           View Details

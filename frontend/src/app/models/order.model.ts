@@ -14,6 +14,7 @@ export interface Order {
     orderDate: string;
     createdAt: string;
     updatedAt: string;
+    isRemoved: boolean;
 }
 
 export enum OrderStatus {
