@@ -97,6 +97,7 @@ export class MyStatsComponent implements OnInit {
             lastOrderDate: raw.lastOrderDate ?? raw.lastOrder ?? null,
             bestProductId: raw.bestProductId ?? raw.mostPurchasedProductId ?? null,
             bestProductName: raw.bestProductName ?? raw.mostPurchasedProductName ?? null,
+            bestProductCount: raw.bestProductCount ?? raw.mostPurchasedProductCount ?? 0,
             mostBoughtCategory: raw.mostBoughtCategory ?? raw.bestCategory ?? raw.favoriteCategory,
             loyaltyPoints: raw.loyaltyPoints ?? 0,
             savedAddresses: raw.savedAddresses ?? [],
