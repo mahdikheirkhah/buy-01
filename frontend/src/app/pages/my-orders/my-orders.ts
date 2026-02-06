@@ -83,8 +83,8 @@ export class MyOrders implements OnInit {
             case OrderStatus.PENDING: return 'accent';
             case OrderStatus.PROCESSING: return 'primary';
             case OrderStatus.SHIPPED: return 'primary';
-            case OrderStatus.DELIVERED: return 'accent';
-            case OrderStatus.CANCELLED: return 'warn';
+            case OrderStatus.DELIVERED: return 'success';
+            case OrderStatus.CANCELLED: return 'error';
             default: return '';
         }
     }

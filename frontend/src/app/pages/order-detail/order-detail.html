@@ -19,7 +19,7 @@
     <!-- Order Summary Card -->
     <mat-card class="order-summary">
       <mat-card-header>
-        <mat-card-title>Order #{{ order.id.substring(0, 8) }}</mat-card-title>
+        <mat-card-title>Order #{{ order.id }}</mat-card-title>
         <mat-card-subtitle>
           Placed on {{ order.orderDate | date:'medium' }}
         </mat-card-subtitle>
@@ -28,7 +28,7 @@
         <div class="summary-grid">
           <div class="summary-item">
             <span class="label">Status</span>
-            <mat-chip [color]="getStatusColor(order.status)" selected>
+            <mat-chip [ngClass]="'status-' + order.status.toLowerCase()" selected class="status-chip">
               {{ order.status }}
             </mat-chip>
           </div>
@@ -52,7 +52,7 @@
           <div class="item-image">
             <img [src]="getImageUrl(item.productId)" [alt]="getProductName(item.productId)">
           </div>
-          
+
           <div class="item-details">
             <h3>
               <a [routerLink]="['/product', item.productId]">{{ getProductName(item.productId) }}</a>

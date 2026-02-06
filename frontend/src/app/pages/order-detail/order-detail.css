@@ -21,7 +21,8 @@
   color: #333;
 }
 
-.loading, .not-found {
+.loading,
+.not-found {
   text-align: center;
   padding: 4rem 2rem;
 }
@@ -175,6 +176,66 @@
 
 .order-actions button {
   min-width: 150px;
+}
+
+/* Status chip colors */
+.status-chip {
+  font-weight: 600 !important;
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-delivered,
+::ng-deep .status-chip.status-shipped {
+  background-color: #4caf50 !important;
+}
+
+::ng-deep .status-chip.status-delivered .mdc-evolution-chip__cell,
+::ng-deep .status-chip.status-shipped .mdc-evolution-chip__cell {
+  background-color: #4caf50 !important;
+}
+
+::ng-deep .status-chip.status-delivered .mdc-evolution-chip__action,
+::ng-deep .status-chip.status-shipped .mdc-evolution-chip__action {
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-cancelled {
+  background-color: #f44336 !important;
+}
+
+::ng-deep .status-chip.status-cancelled .mdc-evolution-chip__cell {
+  background-color: #f44336 !important;
+}
+
+::ng-deep .status-chip.status-cancelled .mdc-evolution-chip__action {
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-pending {
+  background-color: #ff9800 !important;
+}
+
+::ng-deep .status-chip.status-pending .mdc-evolution-chip__cell {
+  background-color: #ff9800 !important;
+}
+
+::ng-deep .status-chip.status-pending .mdc-evolution-chip__action {
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-processing,
+::ng-deep .status-chip.status-shipping {
+  background-color: #2196f3 !important;
+}
+
+::ng-deep .status-chip.status-processing .mdc-evolution-chip__cell,
+::ng-deep .status-chip.status-shipping .mdc-evolution-chip__cell {
+  background-color: #2196f3 !important;
+}
+
+::ng-deep .status-chip.status-processing .mdc-evolution-chip__action,
+::ng-deep .status-chip.status-shipping .mdc-evolution-chip__action {
+  color: white !important;
 }
 
 @media (max-width: 768px) {

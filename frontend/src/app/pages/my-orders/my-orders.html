@@ -13,12 +13,12 @@
   <div *ngIf="!isLoading && orders.length > 0" class="orders-list">
     <mat-card *ngFor="let order of orders" class="order-card">
       <mat-card-header>
-        <mat-card-title>Order #{{ order.id.substring(0, 8) }}</mat-card-title>
+        <mat-card-title>Order #{{ order.id }}</mat-card-title>
         <mat-card-subtitle>
           {{ order.orderDate | date:'medium' }}
         </mat-card-subtitle>
         <mat-chip-set>
-          <mat-chip [color]="getStatusColor(order.status)" selected>
+          <mat-chip [ngClass]="'status-' + order.status.toLowerCase()" selected class="status-chip">
             {{ order.status }}
           </mat-chip>
         </mat-chip-set>
@@ -58,12 +58,7 @@
     </mat-card>
   </div>
 
-  <mat-paginator
-    *ngIf="!isLoading && orders.length > 0"
-    [length]="totalElements"
-    [pageIndex]="pageIndex"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[5, 10, 20]"
-    (page)="onPageChange($event)">
+  <mat-paginator *ngIf="!isLoading && orders.length > 0" [length]="totalElements" [pageIndex]="pageIndex"
+    [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 20]" (page)="onPageChange($event)">
   </mat-paginator>
 </div>
