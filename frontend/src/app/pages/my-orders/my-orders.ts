@@ -107,6 +107,11 @@ export class MyOrders implements OnInit {
                 }
 
                 alert(alertMessage);
+
+                // Update cart with the new order if items were added
+                if (response.order && response.order.items && response.order.items.length > 0) {
+                    this.orderService.cartSubject.next(response.order);
+                }
             },
             error: (err) => {
                 console.error('Failed to reorder:', err);

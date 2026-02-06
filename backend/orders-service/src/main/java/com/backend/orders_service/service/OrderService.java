@@ -428,7 +428,8 @@ public class OrderService {
         order.setPaymentMethod(request.getPaymentMethod());
 
         if (request.getPaymentMethod() == PaymentMethod.CARD && !simulatePayment()) {
-            throw new IllegalStateException("Payment was declined");
+            throw new IllegalStateException(
+                    "Payment processing failed. Please check your card details and try again. If the problem persists, please contact your bank or try a different payment method.");
         }
 
         try {

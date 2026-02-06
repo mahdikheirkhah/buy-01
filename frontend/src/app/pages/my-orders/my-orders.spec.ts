@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, BehaviorSubject } from 'rxjs';
 import { MyOrders } from './my-orders';
 import { OrderService } from '../../services/order.service';
 import { AuthService } from '../../services/auth';
@@ -66,7 +66,9 @@ describe('MyOrders', () => {
     };
 
     beforeEach(async () => {
-        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getUserOrders', 'redoOrder', 'cancelShippingOrder', 'removeOrder']);
+        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getUserOrders', 'redoOrder', 'cancelShippingOrder', 'removeOrder'], {
+            cartSubject: new BehaviorSubject<Order | null>(null)
+        });
         authServiceSpy = jasmine.createSpyObj('AuthService', [], {
             currentUser$: of(mockUser)
         });

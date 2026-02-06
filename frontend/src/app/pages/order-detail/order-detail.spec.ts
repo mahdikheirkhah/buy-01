@@ -3,7 +3,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError, Subject } from 'rxjs';
+import { of, throwError, Subject, BehaviorSubject } from 'rxjs';
 import { OrderDetail } from './order-detail';
 import { OrderService } from '../../services/order.service';
 import { ProductService } from '../../services/product-service';
@@ -59,7 +59,9 @@ describe('OrderDetail', () => {
 
     beforeEach(async () => {
         paramMapSubject = new Subject();
-        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getOrderById', 'redoOrder', 'cancelShippingOrder', 'removeOrder']);
+        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getOrderById', 'redoOrder', 'cancelShippingOrder', 'removeOrder'], {
+            cartSubject: new BehaviorSubject<Order | null>(null)
+        });
         productServiceSpy = jasmine.createSpyObj('ProductService', ['getProductById']);
 
         await TestBed.configureTestingModule({

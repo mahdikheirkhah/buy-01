@@ -85,8 +85,9 @@ export class OrderDetail implements OnInit {
 
                 alert(alertMessage);
 
-                // Only navigate to cart if order was created
-                if (response.order) {
+                // Update cart with the new order if items were added
+                if (response.order && response.order.items && response.order.items.length > 0) {
+                    this.orderService.cartSubject.next(response.order);
                     this.router.navigate(['/cart']);
                 }
             },
