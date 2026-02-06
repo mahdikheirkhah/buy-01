@@ -10,6 +10,7 @@
 /node_modules
 npm-debug.log
 yarn-error.log
+package-debug.log*
 
 # IDEs and editors
 .idea/
@@ -29,7 +30,7 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
-/.angular/cache
+/.angular/
 .sass-cache/
 /connect.lock
 /coverage
@@ -38,6 +39,25 @@ testem.log
 /typings
 __screenshots__/
 
+# Test results
+/junit-results/
+*.xml
+
 # System files
 .DS_Store
 Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
