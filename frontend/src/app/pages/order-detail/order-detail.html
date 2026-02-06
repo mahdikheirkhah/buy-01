@@ -94,6 +94,10 @@
 
     <!-- Actions -->
     <div class="order-actions">
+      <button *ngIf="order.status === 'SHIPPING'" mat-raised-button color="warn" (click)="cancelOrder(order.id)">
+        <mat-icon>cancel</mat-icon>
+        Cancel Order
+      </button>
       <button mat-raised-button color="primary" (click)="reorder(order.id)">
         <mat-icon>refresh</mat-icon>
         Reorder

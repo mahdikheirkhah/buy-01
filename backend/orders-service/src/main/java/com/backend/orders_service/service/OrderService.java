@@ -95,8 +95,26 @@ public class OrderService {
 
     public void cancelOrder(String orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow();
+
+        // Only allow cancellation if order is in SHIPPING status
+        if (order.getStatus() != OrderStatus.SHIPPING) {
+            throw new IllegalStateException(
+                    "Order can only be cancelled when in SHIPPING status. Current status: " + order.getStatus());
+        }
+
+        // Restore stock for all items
+        try {
+            productInventoryClient.increaseStock(order.getItems());
+            log.info("Successfully restored stock for cancelled order {}", orderId);
+        } catch (Exception ex) {
+            log.error("Failed to restore stock for cancelled order {}", orderId, ex);
+            throw new CustomException("Failed to restore stock for order cancellation",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
+        log.info("Order {} has been cancelled", orderId);
     }
 
     public com.backend.orders_service.dto.RedoOrderResponse redoOrder(String orderId) {

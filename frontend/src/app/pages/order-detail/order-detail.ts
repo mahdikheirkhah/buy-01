@@ -106,6 +106,29 @@ export class OrderDetail implements OnInit {
         });
     }
 
+    cancelOrder(orderId: string): void {
+        const confirmed = confirm('Are you sure you want to cancel this order?');
+        if (!confirmed) {
+            return;
+        }
+
+        this.orderService.cancelShippingOrder(orderId).subscribe({
+            next: (response) => {
+                if (response.error) {
+                    alert('Cannot cancel order: ' + response.error);
+                } else {
+                    alert('Order cancelled successfully. Stock has been restored.');
+                    // Reload order details to show updated status
+                    this.loadOrderDetail();
+                }
+            },
+            error: (err) => {
+                console.error('Failed to cancel order:', err);
+                alert('Failed to cancel order. Please try again.');
+            }
+        });
+    }
+
     getStatusColor(status: OrderStatus): string {
         switch (status) {
             case OrderStatus.PENDING: return 'accent';

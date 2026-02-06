@@ -124,6 +124,29 @@ export class MyOrders implements OnInit {
         });
     }
 
+    cancelOrder(orderId: string): void {
+        const confirmed = confirm('Are you sure you want to cancel this order? Stock will be restored.');
+        if (!confirmed) {
+            return;
+        }
+
+        this.orderService.cancelShippingOrder(orderId).subscribe({
+            next: (response) => {
+                if (response.error) {
+                    alert('Cannot cancel order: ' + response.error);
+                } else {
+                    alert('Order cancelled successfully. Stock has been restored.');
+                    // Reload orders to show updated status
+                    this.fetchOrders();
+                }
+            },
+            error: (err) => {
+                console.error('Failed to cancel order:', err);
+                alert('Failed to cancel order. Please try again.');
+            }
+        });
+    }
+
     getProductName(productId: string): string {
         const detail = this.productDetails[productId];
         return detail ? detail.name : 'Loading...';

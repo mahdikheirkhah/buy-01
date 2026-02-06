@@ -163,19 +163,30 @@ public class OrderController {
     }
 
     @DeleteMapping("/{orderId}")
-    public ResponseEntity<Void> cancel(@PathVariable String orderId, HttpServletRequest request) {
+    public ResponseEntity<?> cancel(@PathVariable String orderId, HttpServletRequest request) {
         Order order = orderService.getOrderById(orderId);
         if (order == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // Check authorization
+        // Check authorization - user must own the order
         if (!hasAccessToOrder(order, request)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    java.util.Map.of("error", "You don't have permission to cancel this order"));
         }
 
-        orderService.cancelOrder(orderId);
-        return ResponseEntity.noContent().build();
+        try {
+            orderService.cancelOrder(orderId);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException e) {
+            // Order is not in SHIPPING status
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    java.util.Map.of("error", e.getMessage()));
+        } catch (com.backend.common.exception.CustomException e) {
+            // Stock restoration failed
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    java.util.Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/{orderId}/redo")

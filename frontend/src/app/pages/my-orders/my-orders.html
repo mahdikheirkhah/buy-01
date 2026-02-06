@@ -51,6 +51,10 @@
       </mat-card-content>
 
       <mat-card-actions>
+        <button *ngIf="order.status === 'SHIPPING'" mat-button color="warn" (click)="cancelOrder(order.id)">
+          <mat-icon>cancel</mat-icon>
+          Cancel
+        </button>
         <button mat-button [routerLink]="['/order', order.id]" color="primary">
           <mat-icon>info</mat-icon>
           View Details

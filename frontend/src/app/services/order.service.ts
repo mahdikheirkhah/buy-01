@@ -51,6 +51,18 @@ export class OrderService {
         return this.http.delete<void>(`${this.orderApiUrl}/${orderId}`, { withCredentials: true });
     }
 
+    cancelShippingOrder(orderId: string): Observable<{ error?: string }> {
+        return this.http.delete<{ error?: string }>(`${this.orderApiUrl}/${orderId}`, { withCredentials: true })
+            .pipe(
+                map(() => ({})), // Success returns empty object
+                catchError(error => {
+                    // Extract error message from response
+                    const errorMsg = error.error?.error || error.message || 'Failed to cancel order';
+                    return of({ error: errorMsg });
+                })
+            );
+    }
+
     redoOrder(orderId: string): Observable<RedoOrderResponse> {
         return this.http.post<RedoOrderResponse>(`${this.orderApiUrl}/${orderId}/redo`, {}, { withCredentials: true });
     }
