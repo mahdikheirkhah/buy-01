@@ -1,6 +1,3 @@
-public class OrderServiceUnitTest {
-    
-}
 package com.backend.orders_service.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
