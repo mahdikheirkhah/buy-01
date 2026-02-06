@@ -1,0 +1,102 @@
+<div class="order-detail-container">
+  <div class="order-header">
+    <button mat-icon-button (click)="goBack()" class="back-btn">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1>Order Details</h1>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">
+    <p>Loading order details...</p>
+  </div>
+
+  <div *ngIf="!isLoading && !order" class="not-found">
+    <mat-icon>error</mat-icon>
+    <p>Order not found</p>
+  </div>
+
+  <div *ngIf="!isLoading && order" class="order-content">
+    <!-- Order Summary Card -->
+    <mat-card class="order-summary">
+      <mat-card-header>
+        <mat-card-title>Order #{{ order.id.substring(0, 8) }}</mat-card-title>
+        <mat-card-subtitle>
+          Placed on {{ order.orderDate | date:'medium' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">Status</span>
+            <mat-chip [color]="getStatusColor(order.status)" selected>
+              {{ order.status }}
+            </mat-chip>
+          </div>
+          <div class="summary-item">
+            <span class="label">Shipping Address</span>
+            <p class="value">{{ order.shippingAddress }}</p>
+          </div>
+          <div class="summary-item">
+            <span class="label">Payment Method</span>
+            <p class="value">{{ order.paymentMethod }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Order Items (like Cart) -->
+    <div class="order-items-section">
+      <h2>Items in Order</h2>
+      <div class="order-items">
+        <mat-card *ngFor="let item of order.items" class="order-item">
+          <div class="item-image">
+            <img [src]="getImageUrl(item.productId)" [alt]="getProductName(item.productId)">
+          </div>
+          
+          <div class="item-details">
+            <h3>
+              <a [routerLink]="['/product', item.productId]">{{ getProductName(item.productId) }}</a>
+            </h3>
+            <p class="item-price">{{ getProductPrice(item.productId) | currency:'USD' }} each</p>
+          </div>
+
+          <div class="item-quantity">
+            <p>Qty: <strong>{{ item.quantity }}</strong></p>
+          </div>
+
+          <div class="item-total">
+            <p>{{ getItemSubtotal(item) | currency:'USD' }}</p>
+          </div>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Order Total -->
+    <mat-card class="order-total">
+      <mat-card-content>
+        <div class="total-summary">
+          <div class="summary-row">
+            <span>Items ({{ order.items.length }})</span>
+            <span>{{ getTotal() | currency:'USD' }}</span>
+          </div>
+          <div class="summary-row total">
+            <span><strong>Total</strong></span>
+            <span><strong>{{ getTotal() | currency:'USD' }}</strong></span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Actions -->
+    <div class="order-actions">
+      <button mat-raised-button color="primary" (click)="reorder(order.id)">
+        <mat-icon>refresh</mat-icon>
+        Reorder
+      </button>
+      <button mat-stroked-button [routerLink]="['/my-orders']">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Orders
+      </button>
+    </div>
+  </div>
+</div>

@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
-# Copy source code and build
+# Copy source code
 COPY . .
 RUN npm run build -- --configuration production
 
@@ -28,4 +28,5 @@ COPY certs /etc/nginx/certs
 # Expose the port nginx will listen on (4200 instead of 80)
 EXPOSE 4200
 
-CMD ["nginx", "-g", "daemon off;"]
+# Run Angular dev server with HTTPS and disable HMR polling
+CMD ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--ssl", "true", "--ssl-cert", "certs/frontend-dev.pem", "--ssl-key", "certs/frontend-dev.key", "--poll"]

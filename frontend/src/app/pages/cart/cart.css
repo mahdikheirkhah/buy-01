@@ -1,0 +1,142 @@
+.cart-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.loading, .empty-cart {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-cart mat-icon {
+  font-size: 5rem;
+  width: 5rem;
+  height: 5rem;
+  color: #ccc;
+  margin-bottom: 1rem;
+}
+
+.cart-content {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 2rem;
+}
+
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 100px 1fr auto auto auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+}
+
+.item-image {
+  width: 100px;
+  height: 100px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #f5f5f5;
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-details h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+}
+
+.item-details h3 a {
+  color: #333;
+  text-decoration: none;
+}
+
+.item-details h3 a:hover {
+  color: #1976d2;
+}
+
+.item-price {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.item-quantity mat-form-field {
+  width: 80px;
+}
+
+.item-total {
+  font-size: 1.1rem;
+  font-weight: 500;
+  min-width: 100px;
+  text-align: right;
+}
+
+.cart-summary {
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.summary-row.total {
+  border-top: 2px solid #333;
+  border-bottom: none;
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+}
+
+.clear-btn {
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.checkout-btn {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+  .cart-content {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-item {
+    grid-template-columns: 80px 1fr;
+    gap: 0.5rem;
+  }
+
+  .item-quantity,
+  .item-total,
+  .item-actions {
+    grid-column: 2;
+  }
+
+  .cart-summary {
+    position: static;
+  }
+}

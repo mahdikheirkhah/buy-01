@@ -27,7 +27,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.AuthenticationManager;
 
 import com.backend.common.dto.InfoUserDTO;
-import com.backend.user_service.dto.updateUserDTO;
+import com.backend.user_service.dto.UpdateUserDTO;
 import com.backend.user_service.service.UserService;
 
 import jakarta.servlet.http.Cookie;
@@ -171,7 +171,7 @@ class UserControllerTest {
     @Test
     void testUpdateMe_Success() {
         // Arrange
-        updateUserDTO updateDto = new updateUserDTO();
+        UpdateUserDTO updateDto = new UpdateUserDTO();
         updateDto.setFirstName("Jane");
 
         Cookie mockCookie = new Cookie("jwt", "token");

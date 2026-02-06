@@ -1,21 +1,37 @@
 package com.backend.product_service.repository;
 
-import com.backend.product_service.model.Product;
+import java.time.Instant;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.repository.MongoRepository; // <-- Change this back
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-import java.util.List;
-// PagingAndSortingRepository is no longer needed here
+import com.backend.product_service.model.Product;
 
-public interface ProductRepository extends MongoRepository<Product, String> { // <-- Use MongoRepository
+public interface ProductRepository extends MongoRepository<Product, String>, ProductRepositoryCustom {
 
-    // This new method will find all products by a seller, with pagination
+    // Find products by seller with pagination
     Page<Product> findBySellerID(String sellerId, Pageable pageable);
 
     List<Product> findAllBySellerID(String sellerId);
-    // You now get all these methods:
-    // 1. Basic CRUD: save(), findById(), delete() (from CrudRepository)
-    // 2. Paging/Sorting: findAll(Pageable), findAll(Sort) (from PagingAndSortingRepository)
-    // 3. Mongo-specific: insert(), findAll(Example) (from MongoRepository)
+
+    /**
+     * Search and filter products with dynamic criteria
+     * Uses MongoDB aggregation-style query with proper null handling
+     * Filters:
+     * - keyword: searches in name and description (case-insensitive regex)
+     * - price: between minPrice and maxPrice (if provided)
+     * - quantity: between minQuantity and maxQuantity (if provided)
+     * - createdAt: between startDate and endDate (if provided)
+     */
+    Page<Product> searchAndFilterProducts(
+            String keyword,
+            Double minPrice,
+            Double maxPrice,
+            Integer minQuantity,
+            Integer maxQuantity,
+            Instant startDate,
+            Instant endDate,
+            Pageable pageable);
 }

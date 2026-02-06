@@ -26,8 +26,8 @@ import com.backend.common.dto.InfoUserDTO;
 import com.backend.common.dto.Role;
 import com.backend.common.exception.CustomException;
 import com.backend.common.util.JwtUtil;
-import com.backend.user_service.dto.loginUserDTO;
-import com.backend.user_service.dto.updateUserDTO;
+import com.backend.user_service.dto.LoginUserDTO;
+import com.backend.user_service.dto.UpdateUserDTO;
 import com.backend.user_service.model.User;
 import com.backend.user_service.repository.UserMapper;
 import com.backend.user_service.repository.UserRepository;
@@ -143,7 +143,7 @@ public class UserService implements UserDetailsService {
         return mediaResponse;
     }
 
-    public User loginUser(loginUserDTO loginUserDTO) {
+    public User loginUser(LoginUserDTO loginUserDTO) {
         User user = checkUserExistence(loginUserDTO.getEmail())
                 .orElseThrow(() -> new CustomException("wrong email or password", HttpStatus.BAD_REQUEST));
         if (checkPassword(loginUserDTO.getPassword(), user.getPassword())) {
@@ -155,7 +155,7 @@ public class UserService implements UserDetailsService {
     public record UserUpdateResult(boolean newJwtNeeded, String userEmail) {
     }
 
-    public UserUpdateResult updateUserInfo(String userID, updateUserDTO userUpdatedInfo) {
+    public UserUpdateResult updateUserInfo(String userID, UpdateUserDTO userUpdatedInfo) {
 
         User user = userRepository.findById(userID)
                 .orElseThrow(() -> new CustomException(msg_not_auth, HttpStatus.FORBIDDEN));
@@ -205,7 +205,7 @@ public class UserService implements UserDetailsService {
         return new UserUpdateResult(newJwt, user.getEmail());
     }
 
-    public void updateUser(updateUserDTO userForm, String loggedInUserId, String userEmail, MultipartFile avatarFile) {
+    public void updateUser(UpdateUserDTO userForm, String loggedInUserId, String userEmail, MultipartFile avatarFile) {
         User user = checkUpdateUser(loggedInUserId, userEmail);
         String oldAvatarUrl = user.getAvatarUrl();
         if (avatarFile != null && !avatarFile.isEmpty()) {

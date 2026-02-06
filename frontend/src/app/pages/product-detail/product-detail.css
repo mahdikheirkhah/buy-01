@@ -113,8 +113,21 @@
     gap: 16px;
   }
 
-  @media (max-width: 768px) {
-    .product-content-grid {
-      grid-template-columns: 1fr;
-    }
-  }
+.out-of-stock-container {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.out-of-stock-message {
+  color: #d32f2f;
+  font-weight: 600;
+  font-size: 18px;
+  padding: 16px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  text-align: center;
+  width: 100%;
+}
+

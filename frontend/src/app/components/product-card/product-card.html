@@ -3,12 +3,12 @@
   <div class="card-image-container">
 
     <img
-      *ngFor="let imageUrl of product.imageUrls; let i = index"
+      *ngFor="let imageUrl of product.imageUrls || []; let i = index"
       mat-card-image
       [src]="getImageUrl(imageUrl)"
       [class.active]="i === currentImageIndex" alt="{{ product.name }} (image {{i + 1}})">
 
-    <div *ngIf="product.imageUrls.length === 0" class="no-image-placeholder">
+    <div *ngIf="!product.imageUrls || product.imageUrls.length === 0" class="no-image-placeholder">
       <mat-icon>image_not_supported</mat-icon>
     </div>
   </div>
@@ -23,8 +23,21 @@
     <p><strong>Quantity:</strong> {{ product.quantity }}</p>
   </mat-card-content>
 
-  <mat-card-actions *ngIf="product.createdByMe">
-    <button mat-button (click)="onEdit($event)">EDIT</button>
-    <button mat-button color="warn" (click)="onDelete($event)">DELETE</button>
+  <mat-card-actions>
+    <ng-container *ngIf="product.createdByMe">
+      <button mat-button (click)="onEdit($event)">EDIT</button>
+      <button mat-button color="warn" (click)="onDelete($event)">DELETE</button>
+    </ng-container>
+    <ng-container *ngIf="!product.createdByMe && currentUserRole === 'CLIENT'">
+      <ng-container *ngIf="product.quantity > 0">
+        <button mat-button color="accent" (click)="onAddToCart($event)">
+          <mat-icon>add_shopping_cart</mat-icon>
+          ADD TO CART
+        </button>
+      </ng-container>
+      <ng-container *ngIf="product.quantity === 0">
+        <p class="out-of-stock-message">Out of Stock</p>
+      </ng-container>
+    </ng-container>
   </mat-card-actions>
 </mat-card>

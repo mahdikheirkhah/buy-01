@@ -12,6 +12,11 @@ import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 import { ProductService } from '../../services/product-service';
 import { EditProductModal } from '../edit-product-modal/edit-product-modal';
 import { ProductDetailDTO, MediaUploadResponseDTO } from '../../models/product.model';
+import { AuthService } from '../../services/auth';
+import { AddToCartDialog } from '../add-to-cart-dialog/add-to-cart-dialog';
+import { OrderService } from '../../services/order.service';
+import { throwError } from 'rxjs';
+import { switchMap, take } from 'rxjs/operators';
 @Component({
   selector: 'app-product-card',
   standalone: true,
@@ -37,11 +42,18 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
   currentImageIndex = 0;
   imageChangeInterval: any = null;
   // -------------------------
+  public currentUserRole: string | null = null;
 
   constructor(private router: Router,
     private productService: ProductService,
-    public dialog: MatDialog
-  ) { }
+    public dialog: MatDialog,
+    private authService: AuthService,
+    private orderService: OrderService
+  ) {
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUserRole = user?.role || null;
+    });
+  }
 
   ngOnInit(): void {
     // Start the carousel when the component loads
@@ -57,10 +69,10 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
 
   startImageCarousel(): void {
     // Only start if there's more than one image
-    if (this.product && this.product.imageUrls.length > 1) {
+    if (this.product && this.product.imageUrls && this.product.imageUrls.length > 1) {
       this.imageChangeInterval = setInterval(() => {
         // This moves to the next image, wrapping around to 0
-        if (this.product) {
+        if (this.product && this.product.imageUrls) {
           this.currentImageIndex = (this.currentImageIndex + 1) % this.product.imageUrls.length;
         }
       }, 3000); // Change image every 3 seconds
@@ -80,6 +92,58 @@ export class ProductCard implements OnInit, OnDestroy { // <-- Implement interfa
     this.startImageCarousel(); // Restart when mouse leaves
   }
   // ------------------------------------------
+
+  onAddToCart(event: MouseEvent): void {
+    event.stopPropagation();
+    if (!this.product) return;
+
+    // Fetch full product details for stock info
+    this.productService.getProductById(this.product.id).subscribe({
+      next: (fullProduct) => {
+        const dialogRef = this.dialog.open(AddToCartDialog, {
+          width: '400px',
+          data: {
+            productId: this.product!.id,
+            productName: this.product!.name,
+            price: this.product!.price,
+            availableStock: fullProduct.quantity,
+            sellerId: fullProduct.sellerId
+          }
+        });
+
+        dialogRef.afterClosed().subscribe((result) => {
+          const quantityValue = typeof result === 'number' ? result : result?.quantity;
+          const quantity = Number(quantityValue);
+
+          if (!result || !Number.isFinite(quantity) || quantity < 1) {
+            return;
+          }
+
+          this.authService.currentUser$.pipe(
+            take(1),
+            switchMap(user => {
+              if (!user) {
+                return throwError(() => new Error('User not authenticated'));
+              }
+
+              return this.orderService.getOrCreateCart(user.id, 'Default Address');
+            }),
+            switchMap(cart => this.orderService.addItemToOrder(cart.id, {
+              productId: this.product!.id,
+              quantity
+            }))
+          ).subscribe({
+            next: (updatedCart) => {
+              console.log('Item added to cart', updatedCart);
+              this.orderService.cartSubject.next(updatedCart);
+            },
+            error: (err) => console.error('Failed to add item to cart', err)
+          });
+        });
+      },
+      error: (err) => console.error('Failed to fetch product details', err)
+    });
+  }
 
   // Helper to get the image URL (unchanged)
   getImageUrl(imagePath: string): string {

@@ -1,7 +1,13 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
 .product-card {
   display: flex;
   flex-direction: column;
   width: 100%;
+  height: 100%;
   cursor: pointer; /* ✅ Makes it look clickable */
   transition: box-shadow 0.2s ease-in-out; /* ✅ Adds a nice hover effect */
 }
@@ -89,4 +95,11 @@ mat-card-actions button[color="warn"] {
 
 mat-card-actions button[color="warn"]:hover {
   background-color: #da190b; /* Darker red on hover */
+}
+.out-of-stock-message {
+  color: #d32f2f;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 8px 0;
+  text-align: center;
 }

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -50,9 +49,6 @@ class ProductServiceUnitTest {
 
     @Mock
     private ProductRepository productRepository;
-
-    @Mock
-    private ProductMapper productMapper;
 
     @Mock
     private WebClient.Builder webClientBuilder;
@@ -381,7 +377,6 @@ class ProductServiceUnitTest {
                 .build();
 
         when(productRepository.findById("product123")).thenReturn(Optional.of(testProduct));
-        doNothing().when(productMapper).updateProductFromDto(any(UpdateProductDTO.class), any(Product.class));
         when(productRepository.save(any(Product.class))).thenReturn(testProduct);
 
         // Act
@@ -390,7 +385,6 @@ class ProductServiceUnitTest {
         // Assert
         assertThat(result).isNotNull();
         verify(productRepository).findById("product123");
-        verify(productMapper).updateProductFromDto(eq(updateDTO), any(Product.class));
         verify(productRepository).save(any(Product.class));
     }
 

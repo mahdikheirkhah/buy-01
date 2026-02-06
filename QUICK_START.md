@@ -21,7 +21,7 @@ docker ps
 
 # You should see:
 # - api-gateway (Port 8443)
-# - user-service (Port 8081)
+# - user-service (Port 8081)fmmfkmfmfmf
 # - product-service (Port 8082)
 # - media-service (Port 8083)
 # - discovery-service (Port 8761)

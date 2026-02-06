@@ -11,6 +11,11 @@ import { AuthLayout } from './layouts/auth-layout/auth-layout';
 import { LoggedInGuard } from './guards/logged-in-guard';
 import { AuthGuard } from './guards/auth-guard';
 import { ProductDetail } from './pages/product-detail/product-detail';
+import { Cart } from './pages/cart/cart';
+import { Checkout } from './pages/checkout/checkout';
+import { MyOrders } from './pages/my-orders/my-orders';
+import { OrderDetail } from './pages/order-detail/order-detail';
+import { MyStatsComponent } from './pages/my-stats/my-stats.component';
 
 export const routes: Routes = [
   {
@@ -29,8 +34,13 @@ export const routes: Routes = [
     canActivate: [LoggedInGuard],
     children: [
       { path: 'home', component: HomeComponent },
+      { path: 'my-stats', component: MyStatsComponent },
       { path: 'my-info', component: MyInfo },
       { path: 'my-products', component: MyProducts },
+      { path: 'my-orders', component: MyOrders },
+      { path: 'order/:id', component: OrderDetail },
+      { path: 'cart', component: Cart },
+      { path: 'checkout', component: Checkout },
       { path: 'create-product', component: CreateProduct },
       { path: 'product/:id', component: ProductDetail },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
