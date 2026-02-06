@@ -1,5 +1,58 @@
+# OS files
 *.DS_Store
-\.vscode
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Environment files
 .env
 .env.local
 .env.*.local
+
+# ===== Frontend =====
+# Dependencies
+frontend/node_modules/
+node_modules/
+
+# Build outputs
+frontend/dist/
+frontend/.angular/
+
+# Test coverage
+frontend/coverage/
+frontend/junit-results/
+
+# ===== Backend =====
+# Maven build outputs
+**/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# User uploaded files
+backend/media-service/uploads/
+
+# ===== External Libraries =====
+# Groovy libs (use Maven/Gradle instead)
+lib/
+
+# ===== Docker =====
+# Docker build cache
+.docker/
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== Misc =====
+*.jar
+*.war
+*.class
+*.tmp
+*.bak
+*.swp
+*~
+
+# SonarQube
+.scannerwork/
