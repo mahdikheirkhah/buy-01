@@ -13,6 +13,7 @@ export interface UserProfile {
     lastOrderDate?: string;
     bestProductId?: string;
     bestProductName?: string;
+    bestProductCount: number;
     mostBoughtCategory?: string;
     loyaltyPoints: number;
     savedAddresses: string[];

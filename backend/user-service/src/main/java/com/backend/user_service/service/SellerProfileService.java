@@ -65,8 +65,9 @@ public class SellerProfileService {
                 profile.setTotalOrders(((Number) statsMap.getOrDefault("totalDeliveredOrders", 0)).intValue());
                 profile.setTotalCustomers(((Number) statsMap.getOrDefault("totalUniqueCustomers", 0)).intValue());
 
-                // Map delivery rating and cancellation rate from orders-service
-                profile.setDeliveryRating(((Number) statsMap.getOrDefault("deliveryRating", 5.0)).doubleValue());
+                // Map delivery rate and cancellation rate from orders-service (both as
+                // percentages)
+                profile.setDeliveryRating(((Number) statsMap.getOrDefault("deliveryRate", 100.0)).doubleValue());
                 profile.setCancellationRate(
                         (int) Math.round(((Number) statsMap.getOrDefault("cancellationRate", 0.0)).doubleValue()));
 
@@ -116,10 +117,10 @@ public class SellerProfileService {
                 .totalOneStarReviews(0)
                 .isVerified(false)
                 .isActive(true)
-                .deliveryRating(0.0)
+                .deliveryRating(100.0) // 100% delivery rate for new sellers
                 .communicationRating(0.0)
                 .returnRate(0)
-                .cancellationRate(0)
+                .cancellationRate(0) // 0% cancellation rate for new sellers
                 .joinDate(Instant.now())
                 .lastSaleDate(null)
                 .createdAt(Instant.now())

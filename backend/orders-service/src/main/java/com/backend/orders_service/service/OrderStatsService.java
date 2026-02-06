@@ -298,10 +298,10 @@ public class OrderStatsService {
             Map<String, Object> stats = new HashMap<>();
             int totalOrders = deliveredOrdersSet.size() + cancelledOrdersSet.size();
 
-            double deliveryRating = 5.0;
+            // Both metrics as percentages for consistent display
+            double deliveryRatePercent = 100.0;
             if (totalOrders > 0) {
-                double deliveryRate = (double) deliveredOrdersSet.size() / totalOrders;
-                deliveryRating = Math.max(1.0, 5.0 * deliveryRate);
+                deliveryRatePercent = (double) deliveredOrdersSet.size() / totalOrders * 100;
             }
 
             double cancellationRatePercent = 0.0;
@@ -315,7 +315,7 @@ public class OrderStatsService {
             stats.put("totalCancelledOrders", cancelledOrdersSet.size());
             stats.put("totalUniqueCustomers", customersSet.size());
             stats.put("lastDeliveredDate", lastDeliveredDate);
-            stats.put("deliveryRating", deliveryRating);
+            stats.put("deliveryRate", deliveryRatePercent);
             stats.put("cancellationRate", cancellationRatePercent);
             return stats;
         }

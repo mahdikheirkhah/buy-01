@@ -107,7 +107,7 @@
                   <a [routerLink]="['/product', userProfile.bestProductId]" class="product-link">
                     {{ userProfile.bestProductName || 'Unknown Product' }}
                   </a>
-                  (Purchased {{ userProfile.totalOrders > 0 ? 'multiple times' : '0 times' }})
+                  ({{ userProfile.bestProductCount }} {{ userProfile.bestProductCount === 1 ? 'unit' : 'units' }} purchased)
                 </ng-container>
                 <ng-template #noProduct>
                   <span>Not available</span>
@@ -245,8 +245,8 @@
           </mat-card-header>
           <mat-card-content>
             <div class="detail-row">
-              <span class="label">Delivery Rating:</span>
-              <span class="value">{{ sellerProfile.deliveryRating.toFixed(1) }}/5</span>
+              <span class="label">Delivery Rate:</span>
+              <span class="value">{{ sellerProfile.deliveryRating.toFixed(1) }}%</span>
             </div>
             <div class="detail-row">
               <span class="label">Cancellation Rate:</span>
