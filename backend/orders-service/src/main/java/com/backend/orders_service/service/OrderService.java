@@ -99,17 +99,107 @@ public class OrderService {
         orderRepository.save(order);
     }
 
-    public Order redoOrder(String orderId) {
+    public com.backend.orders_service.dto.RedoOrderResponse redoOrder(String orderId) {
         Order existing = orderRepository.findById(orderId).orElseThrow();
-        Order copy = Order.builder()
-                .userId(existing.getUserId())
-                .shippingAddress(existing.getShippingAddress())
-                .items(existing.getItems())
-                .paymentMethod(existing.getPaymentMethod())
-                .status(OrderStatus.PENDING)
-                .orderDate(Instant.now())
+
+        java.util.List<String> outOfStockProducts = new java.util.ArrayList<>();
+        java.util.List<String> partiallyFilledProducts = new java.util.ArrayList<>();
+        java.util.List<OrderItem> adjustedItems = new java.util.ArrayList<>();
+
+        // Check stock availability for each item
+        for (OrderItem originalItem : existing.getItems()) {
+            try {
+                ProductInventoryClient.ProductDetail productDetail = productInventoryClient
+                        .getProductDetails(originalItem.getProductId());
+
+                int availableQuantity = productDetail.getQuantity() != null ? productDetail.getQuantity() : 0;
+                String productName = productDetail.getName() != null ? productDetail.getName()
+                        : originalItem.getProductName();
+
+                if (availableQuantity == 0) {
+                    // Product is out of stock
+                    outOfStockProducts.add(String.format("'%s' is out of stock", productName));
+                } else if (availableQuantity < originalItem.getQuantity()) {
+                    // Partial stock available
+                    partiallyFilledProducts.add(String.format("'%s' has only %d available instead of %d",
+                            productName, availableQuantity, originalItem.getQuantity()));
+
+                    OrderItem adjustedItem = new OrderItem(
+                            originalItem.getProductId(),
+                            availableQuantity,
+                            originalItem.getPrice(),
+                            originalItem.getSellerId(),
+                            productName);
+                    adjustedItems.add(adjustedItem);
+                } else {
+                    // Full stock available - copy original item
+                    OrderItem copiedItem = new OrderItem(
+                            originalItem.getProductId(),
+                            originalItem.getQuantity(),
+                            originalItem.getPrice(),
+                            originalItem.getSellerId(),
+                            productName);
+                    adjustedItems.add(copiedItem);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to check stock for product {}: {}", originalItem.getProductId(), e.getMessage());
+                // If we can't check stock, treat as out of stock for safety
+                outOfStockProducts.add(String.format("'%s' could not be verified (may be unavailable)",
+                        originalItem.getProductName() != null ? originalItem.getProductName()
+                                : originalItem.getProductId()));
+            }
+        }
+
+        // Build response message
+        String message;
+        if (adjustedItems.isEmpty()) {
+            message = "No items could be added to cart. All products are out of stock.";
+        } else if (outOfStockProducts.isEmpty() && partiallyFilledProducts.isEmpty()) {
+            message = "All items successfully added to cart";
+        } else {
+            message = "Some items could not be fully added to cart";
+        }
+
+        // Only create/update order if there are items to add
+        Order order = null;
+        if (!adjustedItems.isEmpty()) {
+            // Find or create pending order for user
+            Optional<Order> pendingOrder = findLatestPendingOrder(existing.getUserId());
+
+            if (pendingOrder.isPresent()) {
+                // Add items to existing pending order
+                final Order existingOrder = pendingOrder.get();
+                for (OrderItem newItem : adjustedItems) {
+                    // Merge with existing items if same product
+                    existingOrder.getItems().stream()
+                            .filter(existingItem -> existingItem.getProductId().equals(newItem.getProductId()))
+                            .findFirst()
+                            .ifPresentOrElse(
+                                    existingItem -> existingItem
+                                            .setQuantity(existingItem.getQuantity() + newItem.getQuantity()),
+                                    () -> existingOrder.getItems().add(newItem));
+                }
+                order = orderRepository.save(existingOrder);
+            } else {
+                // Create new pending order
+                order = Order.builder()
+                        .userId(existing.getUserId())
+                        .shippingAddress(existing.getShippingAddress())
+                        .items(adjustedItems)
+                        .paymentMethod(existing.getPaymentMethod())
+                        .status(OrderStatus.PENDING)
+                        .orderDate(Instant.now())
+                        .build();
+                order = orderRepository.save(order);
+            }
+        }
+
+        return com.backend.orders_service.dto.RedoOrderResponse.builder()
+                .order(order)
+                .message(message)
+                .outOfStockProducts(outOfStockProducts)
+                .partiallyFilledProducts(partiallyFilledProducts)
                 .build();
-        return orderRepository.save(copy);
     }
 
     // ────────────────────────────────────────────────────────────────
