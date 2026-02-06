@@ -28,22 +28,22 @@ The foundational microservices architecture with the following components:
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                  Angular Frontend                    │
-│              (Port 4200, HTTPS Enabled)              │
+│                  Angular Frontend                   │
+│              (Port 4200, HTTPS Enabled)             │
 └────────────────────┬────────────────────────────────┘
                      │
-┌────────────────────▼────────────────────────────────┐
+┌────────────────────▼─────────────────────────────────┐
 │          API Gateway (Spring Cloud Gateway)          │
 │          Port 8443 (HTTPS), Routes & Auth            │
 └──────┬──────────┬──────────┬──────────┬──────────────┘
        │          │          │          │
-┌──────▼──┐ ┌────▼────┐ ┌───▼────┐ ┌──▼──────┐
+┌──────▼───┐ ┌────▼────┐ ┌───▼────┐ ┌──▼──────┐
 │ Discovery│ │User     │ │Product │ │ Media   │
 │ Service  │ │Service  │ │Service │ │ Service │
 │(8761)    │ │(8081)   │ │(8082)  │ │(8083)   │
 └──────────┘ └─────────┘ └────────┘ └─────────┘
              │                              │
-     ┌───────▼──────────────────────────┬──▼────────┐
+     ┌───────▼───────────────────────────┬──▼────────┐
      │     MongoDB (NoSQL Database)      │  Kafka    │
      │     Port 27017, Replicas Ready    │(Async Msg)│
      └───────────────────────────────────┴───────────┘
@@ -1040,10 +1040,17 @@ npm install -D sonar-scanner
 
 ### Authentication
 
-All endpoints except public product GETs require JWT Bearer token:
+JWT tokens are stored in **HTTP-only secure cookies** for enhanced security. The browser automatically sends the cookie with each request, so no manual `Authorization` header is needed.
+
+**How it works:**
+
+- On successful login/register, the server sets an HTTP-only cookie containing the JWT
+- The cookie is automatically included in subsequent requests by the browser
+- This prevents XSS attacks from accessing the token via JavaScript
 
 ```bash
-Authorization: Bearer <jwt-token>
+# Cookie is set automatically by the server after login:
+Set-Cookie: jwt=eyJhbGc...; HttpOnly; Secure; SameSite=Strict; Path=/
 ```
 
 ### Core Endpoints
@@ -1076,6 +1083,7 @@ Response:
   "refreshToken": "eyJhbGc...",
   "expiresIn": 3600
 }
+# Note: Token is also set as HTTP-only cookie automatically
 ```
 
 **User Profile**
@@ -1487,214 +1495,7 @@ mvn sonar:sonar -Dsonar.host.url=http://localhost:9000
 
 ## 🔧 Troubleshooting
 
-### Common Issues and Solutions
-
-#### 1. Ports Already in Use
-
-**Problem**: Port 8443, 8761, 4200, etc. already in use
-
-```bash
-# Find process using port
-lsof -i :8443
-lsof -i :4200
-
-# Kill process (if needed)
-kill -9 <PID>
-
-# Or, change ports in docker-compose.yml
-```
-
-#### 2. Docker Build Failures
-
-**Problem**: Docker build fails with "service not found"
-
-```bash
-# Ensure all services are in correct paths
-ls -la backend/api-gateway
-ls -la backend/user-service
-ls -la backend/product-service
-ls -la backend/media-service
-
-# Rebuild with no cache
-docker-compose build --no-cache
-
-# Or use Makefile
-make build
-```
-
-#### 3. MongoDB Connection Error
-
-**Problem**: Services can't connect to MongoDB
-
-```bash
-# Check if MongoDB is running
-docker ps | grep mongo
-
-# Check MongoDB logs
-docker logs buy-01
-
-# If not running, start it
-docker-compose up -d buy-01
-
-# Verify connection
-docker exec -it buy-01 mongosh --eval "db.adminCommand('ping')"
-```
-
-#### 4. Kafka Connection Issues
-
-**Problem**: Kafka connection refused
-
-```bash
-# Ensure Zookeeper is running first
-docker-compose up -d zookeeper
-sleep 10
-
-# Start Kafka
-docker-compose up -d kafka
-
-# Test Kafka connectivity
-docker-compose exec kafka kafka-broker-api-versions --bootstrap-server localhost:29092
-```
-
-#### 5. Frontend Compilation Errors
-
-**Problem**: Angular build fails
-
-```bash
-cd frontend
-
-# Clear npm cache and reinstall
-rm -rf node_modules package-lock.json
-npm cache clean --force
-npm install
-
-# Rebuild
-npm run build
-
-# Check for TypeScript errors
-npm run lint
-```
-
-#### 6. JWT Token Issues
-
-**Problem**: 401 Unauthorized on API calls
-
-```bash
-# Check if API Gateway has correct secret key
-# In backend/api-gateway/src/main/resources/application.properties:
-# jwt.secret must match the secret used in user-service
-
-# Regenerate token
-curl -X POST http://localhost:8443/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"password123"}'
-
-# Use returned token in subsequent requests
-Authorization: Bearer <token>
-```
-
-#### 7. Certificate/HTTPS Issues
-
-**Problem**: SSL certificate validation errors
-
-```bash
-# Regenerate certificates
-cd backend/certificates
-./generate-certificates.sh
-
-# Restart services
-docker-compose restart
-
-# Or import certificate to your browser/system
-# File: backend/certificates/ca/ca-cert.pem
-```
-
-#### 8. ngrok Tunnel Errors
-
-**Problem**: `ERR_NGROK_3200` or tunnel is offline
-
-```bash
-# Check if ngrok is running
-ps aux | grep ngrok
-
-# Restart ngrok tunnels
-kill $(cat .ngrok_pids) 2>/dev/null && rm .ngrok_pids
-./setup.sh --ngrok
-
-# Verify tunnels are active
-curl http://localhost:4040/api/tunnels
-
-# Check ngrok dashboard
-open http://localhost:4040
-```
-
-**Problem**: ngrok not installed
-
-```bash
-# Install ngrok
-brew install ngrok/ngrok/ngrok          # macOS
-snap install ngrok                       # Linux
-# Or download: https://ngrok.com/download
-
-# Authenticate
-ngrok config add-authtoken <your-token>
-# Get token: https://dashboard.ngrok.com/get-started/your-authtoken
-```
-
-**Problem**: ngrok tunnel won't start
-
-```bash
-# Check if ports are available
-lsof -i :4200  # Frontend
-lsof -i :8080  # Jenkins
-
-# Ensure services are running first
-docker ps
-
-# Start ngrok manually
-ngrok http 4200  # Frontend
-ngrok http 8080  # Jenkins (in separate terminal)
-```
-
-### Debug Mode
-
-#### Enable Debug Logging
-
-```bash
-# Set environment variable
-export DEBUG=true
-
-# Or in docker-compose.yml
-environment:
-  SPRING_JPA_SHOW_SQL: true
-  LOGGING_LEVEL_ROOT: DEBUG
-```
-
-#### View Service Logs
-
-```bash
-# All services
-docker-compose logs -f
-
-# Specific service
-docker-compose logs -f api-gateway
-
-# Last N lines
-docker-compose logs --tail=100 user-service
-```
-
-#### Access Service Shells
-
-```bash
-# Java service
-docker exec -it api-gateway bash
-
-# Database
-docker exec -it buy-01 mongosh
-
-# Message Queue
-docker exec -it kafka bash
-```
+For detailed troubleshooting guides and solutions to common issues, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ---
 
@@ -1747,5 +1548,3 @@ docker exec -it kafka bash
 
 ---
 
-**Last Updated**: January 23, 2026  
-**Version**: 1.0.0
