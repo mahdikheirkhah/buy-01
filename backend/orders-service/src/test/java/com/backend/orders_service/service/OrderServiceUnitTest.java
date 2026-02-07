@@ -69,7 +69,8 @@ class OrderServiceUnitTest {
                 2,
                 new BigDecimal("29.99"),
                 "seller-456",
-                "Test Product");
+                "Test Product",
+                null);
 
         testOrder = Order.builder()
                 .id("order-123")
@@ -172,7 +173,7 @@ class OrderServiceUnitTest {
         void testGetOrdersByUserIdSuccess() {
             List<Order> orders = List.of(testOrder);
             Page<Order> page = new PageImpl<>(orders);
-            when(orderRepository.findByUserId(eq("user-456"), any(Pageable.class))).thenReturn(page);
+            when(orderRepository.findByUserIdAndIsRemovedFalse(eq("user-456"), any(Pageable.class))).thenReturn(page);
 
             Page<Order> result = orderService.getOrdersByUserId("user-456", 0, 10);
 
@@ -185,7 +186,8 @@ class OrderServiceUnitTest {
         @DisplayName("Should return empty page when no orders found")
         void testGetOrdersByUserIdEmpty() {
             Page<Order> emptyPage = new PageImpl<>(List.of());
-            when(orderRepository.findByUserId(eq("user-456"), any(Pageable.class))).thenReturn(emptyPage);
+            when(orderRepository.findByUserIdAndIsRemovedFalse(eq("user-456"), any(Pageable.class)))
+                    .thenReturn(emptyPage);
 
             Page<Order> result = orderService.getOrdersByUserId("user-456", 0, 10);
 
@@ -251,6 +253,7 @@ class OrderServiceUnitTest {
         @Test
         @DisplayName("Should cancel order successfully")
         void testCancelOrderSuccess() {
+            testOrder.setStatus(OrderStatus.SHIPPING);
             when(orderRepository.findById("order-123")).thenReturn(Optional.of(testOrder));
             when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -371,7 +374,7 @@ class OrderServiceUnitTest {
         @DisplayName("Should merge items with same productId in existing cart")
         void testRedoOrderMergeItems() {
             OrderItem existingItem = new OrderItem("prod-123", 3, new BigDecimal("29.99"), "seller-456",
-                    "Test Product");
+                    "Test Product", null);
             Order existingPendingOrder = Order.builder()
                     .id("existing-cart")
                     .userId("user-456")
@@ -427,7 +430,8 @@ class OrderServiceUnitTest {
         @DisplayName("Should add new item to order")
         void testAddNewItemToOrder() {
             testOrder.setItems(new ArrayList<>());
-            OrderItem newItem = new OrderItem("prod-789", 1, new BigDecimal("19.99"), "seller-789", "New Product");
+            OrderItem newItem = new OrderItem("prod-789", 1, new BigDecimal("19.99"), "seller-789", "New Product",
+                    null);
 
             when(orderRepository.findById("order-123")).thenReturn(Optional.of(testOrder));
             when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -442,7 +446,7 @@ class OrderServiceUnitTest {
         @DisplayName("Should merge quantity when adding existing product")
         void testAddExistingItemMergesQuantity() {
             OrderItem additionalItem = new OrderItem("prod-123", 3, new BigDecimal("29.99"), "seller-456",
-                    "Test Product");
+                    "Test Product", null);
 
             when(orderRepository.findById("order-123")).thenReturn(Optional.of(testOrder));
             when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -457,7 +461,7 @@ class OrderServiceUnitTest {
         @DisplayName("Should throw exception when order is not PENDING")
         void testAddItemToNonPendingOrder() {
             testOrder.setStatus(OrderStatus.SHIPPING);
-            OrderItem newItem = new OrderItem("prod-789", 1, null, null, null);
+            OrderItem newItem = new OrderItem("prod-789", 1, null, null, null, null);
 
             when(orderRepository.findById("order-123")).thenReturn(Optional.of(testOrder));
 
@@ -473,7 +477,8 @@ class OrderServiceUnitTest {
         @Test
         @DisplayName("Should update order item successfully")
         void testUpdateOrderItemSuccess() {
-            OrderItem updatedItem = new OrderItem("prod-123", 5, new BigDecimal("29.99"), "seller-456", "Test Product");
+            OrderItem updatedItem = new OrderItem("prod-123", 5, new BigDecimal("29.99"), "seller-456", "Test Product",
+                    null);
 
             when(orderRepository.findById("order-123")).thenReturn(Optional.of(testOrder));
             when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -486,7 +491,7 @@ class OrderServiceUnitTest {
         @Test
         @DisplayName("Should throw exception when product not in order")
         void testUpdateOrderItemNotFound() {
-            OrderItem updatedItem = new OrderItem("nonexistent", 5, null, null, null);
+            OrderItem updatedItem = new OrderItem("nonexistent", 5, null, null, null, null);
 
             when(orderRepository.findById("order-123")).thenReturn(Optional.of(testOrder));
 
@@ -499,7 +504,7 @@ class OrderServiceUnitTest {
         @DisplayName("Should throw exception when order is not PENDING")
         void testUpdateItemInNonPendingOrder() {
             testOrder.setStatus(OrderStatus.DELIVERED);
-            OrderItem updatedItem = new OrderItem("prod-123", 5, null, null, null);
+            OrderItem updatedItem = new OrderItem("prod-123", 5, null, null, null, null);
 
             when(orderRepository.findById("order-123")).thenReturn(Optional.of(testOrder));
 
