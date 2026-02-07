@@ -3,11 +3,11 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError, Subject } from 'rxjs';
+import { of, throwError, Subject, BehaviorSubject } from 'rxjs';
 import { OrderDetail } from './order-detail';
 import { OrderService } from '../../services/order.service';
 import { ProductService } from '../../services/product-service';
-import { Order, OrderStatus, PaymentMethod, RedoOrderResponse } from '../../models/order.model';
+import { Order, OrderStatus, OrderItem, PaymentMethod, RedoOrderResponse } from '../../models/order.model';
 import { ProductDetailDTO } from '../../models/product.model';
 
 describe('OrderDetail', () => {
@@ -31,7 +31,8 @@ describe('OrderDetail', () => {
         paymentMethod: PaymentMethod.CARD,
         orderDate: '2026-02-06T10:00:00Z',
         createdAt: '2026-02-06T10:00:00Z',
-        updatedAt: '2026-02-06T10:00:00Z'
+        updatedAt: '2026-02-06T10:00:00Z',
+        isRemoved: false
     };
 
     const mockProductDetail: ProductDetailDTO = {
@@ -58,7 +59,9 @@ describe('OrderDetail', () => {
 
     beforeEach(async () => {
         paramMapSubject = new Subject();
-        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getOrderById', 'redoOrder']);
+        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getOrderById', 'redoOrder', 'cancelShippingOrder', 'removeOrder'], {
+            cartSubject: new BehaviorSubject<Order | null>(null)
+        });
         productServiceSpy = jasmine.createSpyObj('ProductService', ['getProductById']);
 
         await TestBed.configureTestingModule({
@@ -273,6 +276,106 @@ describe('OrderDetail', () => {
         }));
     });
 
+    // ============ Cancel Order Tests ============
+    describe('cancelOrder()', () => {
+        beforeEach(() => {
+            spyOn(window, 'alert');
+            spyOn(window, 'confirm').and.returnValue(true);
+        });
+
+        it('should cancel shipping order successfully', fakeAsync(() => {
+            orderServiceSpy.cancelShippingOrder.and.returnValue(of({}));
+            spyOn(component, 'loadOrderDetail');
+
+            component.cancelOrder('order-123');
+            tick();
+
+            expect(orderServiceSpy.cancelShippingOrder).toHaveBeenCalledWith('order-123');
+            expect(window.alert).toHaveBeenCalledWith('Order cancelled successfully. Stock has been restored.');
+            expect(component.loadOrderDetail).toHaveBeenCalled();
+        }));
+
+        it('should show error when cancellation fails', fakeAsync(() => {
+            orderServiceSpy.cancelShippingOrder.and.returnValue(of({ error: 'Order not in SHIPPING status' }));
+            spyOn(component, 'loadOrderDetail');
+
+            component.cancelOrder('order-123');
+            tick();
+
+            expect(window.alert).toHaveBeenCalledWith('Cannot cancel order: Order not in SHIPPING status');
+            expect(component.loadOrderDetail).not.toHaveBeenCalled();
+        }));
+
+        it('should not proceed if user cancels confirmation', fakeAsync(() => {
+            (window.confirm as jasmine.Spy).and.returnValue(false);
+
+            component.cancelOrder('order-123');
+            tick();
+
+            expect(orderServiceSpy.cancelShippingOrder).not.toHaveBeenCalled();
+        }));
+
+        it('should handle cancellation error', fakeAsync(() => {
+            orderServiceSpy.cancelShippingOrder.and.returnValue(throwError(() => new Error('Network error')));
+            spyOn(console, 'error');
+
+            component.cancelOrder('order-123');
+            tick();
+
+            expect(window.alert).toHaveBeenCalledWith('Failed to cancel order. Please try again.');
+        }));
+    });
+
+    // ============ Remove Order Tests ============
+    describe('removeOrder()', () => {
+        beforeEach(() => {
+            spyOn(window, 'alert');
+            spyOn(window, 'confirm').and.returnValue(true);
+        });
+
+        it('should remove order successfully', fakeAsync(() => {
+            orderServiceSpy.removeOrder.and.returnValue(of({}));
+            const navigateSpy = spyOn(router, 'navigate');
+
+            component.removeOrder('order-123');
+            tick();
+
+            expect(orderServiceSpy.removeOrder).toHaveBeenCalledWith('order-123');
+            expect(window.alert).toHaveBeenCalledWith('Order removed from history successfully.');
+            expect(navigateSpy).toHaveBeenCalledWith(['/my-orders']);
+        }));
+
+        it('should show error when removal fails', fakeAsync(() => {
+            orderServiceSpy.removeOrder.and.returnValue(of({ error: 'Order not in DELIVERED or CANCELLED status' }));
+            const navigateSpy = spyOn(router, 'navigate');
+
+            component.removeOrder('order-123');
+            tick();
+
+            expect(window.alert).toHaveBeenCalledWith('Cannot remove order: Order not in DELIVERED or CANCELLED status');
+            expect(navigateSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should not proceed if user cancels confirmation', fakeAsync(() => {
+            (window.confirm as jasmine.Spy).and.returnValue(false);
+
+            component.removeOrder('order-123');
+            tick();
+
+            expect(orderServiceSpy.removeOrder).not.toHaveBeenCalled();
+        }));
+
+        it('should handle removal error', fakeAsync(() => {
+            orderServiceSpy.removeOrder.and.returnValue(throwError(() => new Error('Network error')));
+            spyOn(console, 'error');
+
+            component.removeOrder('order-123');
+            tick();
+
+            expect(window.alert).toHaveBeenCalledWith('Failed to remove order. Please try again.');
+        }));
+    });
+
     // ============ Status Color Tests ============
     describe('getStatusColor()', () => {
         it('should return correct color for PENDING', () => {
@@ -284,11 +387,11 @@ describe('OrderDetail', () => {
         });
 
         it('should return correct color for DELIVERED', () => {
-            expect(component.getStatusColor(OrderStatus.DELIVERED)).toBe('accent');
+            expect(component.getStatusColor(OrderStatus.DELIVERED)).toBe('success');
         });
 
         it('should return correct color for CANCELLED', () => {
-            expect(component.getStatusColor(OrderStatus.CANCELLED)).toBe('warn');
+            expect(component.getStatusColor(OrderStatus.CANCELLED)).toBe('error');
         });
 
         it('should return empty string for unknown status', () => {
@@ -317,18 +420,26 @@ describe('OrderDetail', () => {
 
     // ============ Image URL Tests ============
     describe('getImageUrl()', () => {
-        it('should return media URL when available', () => {
-            component.productDetails = { 'prod-1': mockProductDetail };
-            expect(component.getImageUrl('prod-1')).toBe('https://example.com/image.jpg');
+        it('should return imageUrl with base URL from OrderItem when available', () => {
+            const item: OrderItem = { productId: 'prod-1', quantity: 1, imageUrl: '/api/media/files/image.jpg' };
+            expect(component.getImageUrl(item)).toBe('https://localhost:8443/api/media/files/image.jpg');
         });
 
-        it('should return placeholder when no media', () => {
+        it('should return media URL with base URL from product details when imageUrl not available', () => {
+            component.productDetails = { 'prod-1': mockProductDetail };
+            const item: OrderItem = { productId: 'prod-1', quantity: 1 };
+            expect(component.getImageUrl(item)).toBe('https://localhost:8443https://example.com/image.jpg');
+        });
+
+        it('should return placeholder when no media and no imageUrl', () => {
             component.productDetails = { 'prod-2': mockProductDetail2 };
-            expect(component.getImageUrl('prod-2')).toBe('https://localhost:8443/api/media/files/placeholder.jpg');
+            const item: OrderItem = { productId: 'prod-2', quantity: 1 };
+            expect(component.getImageUrl(item)).toBe('https://localhost:8443/api/media/files/placeholder.jpg');
         });
 
         it('should return placeholder when product not found', () => {
-            expect(component.getImageUrl('unknown')).toBe('https://localhost:8443/api/media/files/placeholder.jpg');
+            const item: OrderItem = { productId: 'unknown', quantity: 1 };
+            expect(component.getImageUrl(item)).toBe('https://localhost:8443/api/media/files/placeholder.jpg');
         });
     });
 

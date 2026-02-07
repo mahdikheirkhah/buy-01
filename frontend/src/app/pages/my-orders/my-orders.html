@@ -13,12 +13,17 @@
   <div *ngIf="!isLoading && orders.length > 0" class="orders-list">
     <mat-card *ngFor="let order of orders" class="order-card">
       <mat-card-header>
-        <mat-card-title>Order #{{ order.id.substring(0, 8) }}</mat-card-title>
+        <mat-card-title>Order #{{ order.id }}</mat-card-title>
         <mat-card-subtitle>
-          {{ order.orderDate | date:'medium' }}
+          <div class="date-info">
+            <div>Placed on: {{ order.createdAt | date:'medium' }}</div>
+            <div *ngIf="order.updatedAt && order.updatedAt !== order.createdAt" class="last-update">
+              Last updated: {{ order.updatedAt | date:'medium' }}
+            </div>
+          </div>
         </mat-card-subtitle>
         <mat-chip-set>
-          <mat-chip [color]="getStatusColor(order.status)" selected>
+          <mat-chip [ngClass]="'status-' + order.status.toLowerCase()" selected class="status-chip">
             {{ order.status }}
           </mat-chip>
         </mat-chip-set>
@@ -33,19 +38,27 @@
 
         <div class="order-items">
           <h3>Items ({{ order.items.length }})</h3>
-          <ul>
-            <li *ngFor="let item of order.items">
-              <span>{{ getProductName(item.productId) }}</span>
-              <span class="item-details">
-                Qty: {{ item.quantity }} × {{ getProductPrice(item.productId) | currency:'USD' }}
-                = {{ getItemSubtotal(item) | currency:'USD' }}
-              </span>
-            </li>
-          </ul>
+          <div class="items-list">
+            <div *ngFor="let item of order.items" class="item-row">
+              <span class="item-name">{{ getProductName(item.productId) }}</span>
+              <span class="item-qty">{{ item.quantity }}x</span>
+              <span class="item-price">{{ getProductPrice(item.productId) | currency:'USD' }}</span>
+              <span class="item-subtotal">{{ getItemSubtotal(item) | currency:'USD' }}</span>
+            </div>
+          </div>
         </div>
       </mat-card-content>
 
       <mat-card-actions>
+        <button *ngIf="order.status === 'SHIPPING'" mat-button color="warn" (click)="cancelOrder(order.id)">
+          <mat-icon>cancel</mat-icon>
+          Cancel
+        </button>
+        <button *ngIf="(order.status === 'DELIVERED' || order.status === 'CANCELLED') && !order.isRemoved" mat-button
+          color="warn" (click)="removeOrder(order.id)">
+          <mat-icon>delete</mat-icon>
+          Remove
+        </button>
         <button mat-button [routerLink]="['/order', order.id]" color="primary">
           <mat-icon>info</mat-icon>
           View Details
@@ -58,12 +71,7 @@
     </mat-card>
   </div>
 
-  <mat-paginator
-    *ngIf="!isLoading && orders.length > 0"
-    [length]="totalElements"
-    [pageIndex]="pageIndex"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[5, 10, 20]"
-    (page)="onPageChange($event)">
+  <mat-paginator *ngIf="!isLoading && orders.length > 0" [length]="totalElements" [pageIndex]="pageIndex"
+    [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 20]" (page)="onPageChange($event)">
   </mat-paginator>
 </div>

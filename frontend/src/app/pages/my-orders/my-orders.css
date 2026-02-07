@@ -10,7 +10,8 @@ h1 {
   color: #333;
 }
 
-.loading, .no-orders {
+.loading,
+.no-orders {
   text-align: center;
   padding: 3rem;
   color: #666;
@@ -41,6 +42,23 @@ mat-card-header {
   padding-bottom: 1rem;
   border-bottom: 1px solid #e0e0e0;
   margin-bottom: 1rem;
+}
+
+.date-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.date-info div {
+  color: #666;
+}
+
+.last-update {
+  color: #2196f3;
+  font-style: italic;
 }
 
 mat-chip-set {
@@ -97,4 +115,122 @@ mat-card-actions button {
 
 mat-paginator {
   margin-top: 2rem;
+}
+
+/* Status chip colors */
+.status-chip {
+  font-weight: 600 !important;
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-delivered,
+::ng-deep .status-chip.status-shipped {
+  background-color: #4caf50 !important;
+}
+
+::ng-deep .status-chip.status-delivered .mdc-evolution-chip__cell,
+::ng-deep .status-chip.status-shipped .mdc-evolution-chip__cell {
+  background-color: #4caf50 !important;
+}
+
+::ng-deep .status-chip.status-delivered .mdc-evolution-chip__action,
+::ng-deep .status-chip.status-shipped .mdc-evolution-chip__action {
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-cancelled {
+  background-color: #f44336 !important;
+}
+
+::ng-deep .status-chip.status-cancelled .mdc-evolution-chip__cell {
+  background-color: #f44336 !important;
+}
+
+::ng-deep .status-chip.status-cancelled .mdc-evolution-chip__action {
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-pending {
+  background-color: #ff9800 !important;
+}
+
+::ng-deep .status-chip.status-pending .mdc-evolution-chip__cell {
+  background-color: #ff9800 !important;
+}
+
+::ng-deep .status-chip.status-pending .mdc-evolution-chip__action {
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-processing,
+::ng-deep .status-chip.status-shipping {
+  background-color: #2196f3 !important;
+}
+
+::ng-deep .status-chip.status-processing .mdc-evolution-chip__cell,
+::ng-deep .status-chip.status-shipping .mdc-evolution-chip__cell {
+  background-color: #2196f3 !important;
+}
+
+::ng-deep .status-chip.status-processing .mdc-evolution-chip__action,
+::ng-deep .status-chip.status-shipping .mdc-evolution-chip__action {
+  color: white !important;
+}
+
+/* Order Items List */
+.order-items {
+  margin-top: 1rem;
+}
+
+.order-items h3 {
+  margin-bottom: 0.75rem;
+  color: #333;
+  font-size: 1rem;
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 2fr 0.5fr 1fr 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.item-row:last-child {
+  border-bottom: none;
+}
+
+.item-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.item-qty {
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.item-price {
+  text-align: center;
+  color: #2196f3;
+  font-size: 0.9rem;
+}
+
+.item-subtotal {
+  text-align: right;
+  font-weight: 500;
+  color: #333;
+  font-size: 0.95rem;
 }

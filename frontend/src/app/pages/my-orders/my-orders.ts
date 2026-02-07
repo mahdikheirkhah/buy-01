@@ -83,8 +83,8 @@ export class MyOrders implements OnInit {
             case OrderStatus.PENDING: return 'accent';
             case OrderStatus.PROCESSING: return 'primary';
             case OrderStatus.SHIPPED: return 'primary';
-            case OrderStatus.DELIVERED: return 'accent';
-            case OrderStatus.CANCELLED: return 'warn';
+            case OrderStatus.DELIVERED: return 'success';
+            case OrderStatus.CANCELLED: return 'error';
             default: return '';
         }
     }
@@ -107,6 +107,11 @@ export class MyOrders implements OnInit {
                 }
 
                 alert(alertMessage);
+
+                // Update cart with the new order if items were added
+                if (response.order && response.order.items && response.order.items.length > 0) {
+                    this.orderService.cartSubject.next(response.order);
+                }
             },
             error: (err) => {
                 console.error('Failed to reorder:', err);
@@ -124,6 +129,52 @@ export class MyOrders implements OnInit {
         });
     }
 
+    cancelOrder(orderId: string): void {
+        const confirmed = confirm('Are you sure you want to cancel this order? Stock will be restored.');
+        if (!confirmed) {
+            return;
+        }
+
+        this.orderService.cancelShippingOrder(orderId).subscribe({
+            next: (response) => {
+                if (response.error) {
+                    alert('Cannot cancel order: ' + response.error);
+                } else {
+                    alert('Order cancelled successfully. Stock has been restored.');
+                    // Reload orders to show updated status
+                    this.fetchOrders();
+                }
+            },
+            error: (err) => {
+                console.error('Failed to cancel order:', err);
+                alert('Failed to cancel order. Please try again.');
+            }
+        });
+    }
+
+    removeOrder(orderId: string): void {
+        const confirmed = confirm('Are you sure you want to remove this order from history?');
+        if (!confirmed) {
+            return;
+        }
+
+        this.orderService.removeOrder(orderId).subscribe({
+            next: (response) => {
+                if (response.error) {
+                    alert('Cannot remove order: ' + response.error);
+                } else {
+                    alert('Order removed from history successfully.');
+                    // Reload orders to refresh the list
+                    this.fetchOrders();
+                }
+            },
+            error: (err) => {
+                console.error('Failed to remove order:', err);
+                alert('Failed to remove order. Please try again.');
+            }
+        });
+    }
+
     getProductName(productId: string): string {
         const detail = this.productDetails[productId];
         return detail ? detail.name : 'Loading...';
@@ -136,6 +187,21 @@ export class MyOrders implements OnInit {
 
     getItemSubtotal(item: OrderItem): number {
         return this.getProductPrice(item.productId) * item.quantity;
+    }
+
+    getProductImage(item: OrderItem): string {
+        // Use imageUrl from order item if available
+        if (item.imageUrl) {
+            return `https://localhost:8443${item.imageUrl}`;
+        }
+
+        // Fallback to product details
+        const detail = this.productDetails[item.productId];
+        if (detail && detail.media && detail.media.length > 0) {
+            return `https://localhost:8443${detail.media[0].fileUrl}`;
+        }
+
+        return 'https://localhost:8443/api/media/files/placeholder.jpg';
     }
 
     private populateProductDetails(orders: Order[]): void {

@@ -13,6 +13,8 @@ import com.backend.orders_service.model.OrderStatus;
 public interface OrderRepository extends MongoRepository<Order, String> {
     Page<Order> findByUserId(String userId, Pageable pageable);
 
+    Page<Order> findByUserIdAndIsRemovedFalse(String userId, Pageable pageable);
+
     List<Order> findTop20ByUserIdOrderByOrderDateDesc(String userId);
 
     List<Order> findByUserIdOrderByOrderDateDesc(String userId);

@@ -85,8 +85,9 @@ export class OrderDetail implements OnInit {
 
                 alert(alertMessage);
 
-                // Only navigate to cart if order was created
-                if (response.order) {
+                // Update cart with the new order if items were added
+                if (response.order && response.order.items && response.order.items.length > 0) {
+                    this.orderService.cartSubject.next(response.order);
                     this.router.navigate(['/cart']);
                 }
             },
@@ -106,12 +107,58 @@ export class OrderDetail implements OnInit {
         });
     }
 
+    cancelOrder(orderId: string): void {
+        const confirmed = confirm('Are you sure you want to cancel this order?');
+        if (!confirmed) {
+            return;
+        }
+
+        this.orderService.cancelShippingOrder(orderId).subscribe({
+            next: (response) => {
+                if (response.error) {
+                    alert('Cannot cancel order: ' + response.error);
+                } else {
+                    alert('Order cancelled successfully. Stock has been restored.');
+                    // Reload order details to show updated status
+                    this.loadOrderDetail();
+                }
+            },
+            error: (err) => {
+                console.error('Failed to cancel order:', err);
+                alert('Failed to cancel order. Please try again.');
+            }
+        });
+    }
+
+    removeOrder(orderId: string): void {
+        const confirmed = confirm('Are you sure you want to remove this order from history?');
+        if (!confirmed) {
+            return;
+        }
+
+        this.orderService.removeOrder(orderId).subscribe({
+            next: (response) => {
+                if (response.error) {
+                    alert('Cannot remove order: ' + response.error);
+                } else {
+                    alert('Order removed from history successfully.');
+                    // Navigate back to orders list
+                    this.router.navigate(['/my-orders']);
+                }
+            },
+            error: (err) => {
+                console.error('Failed to remove order:', err);
+                alert('Failed to remove order. Please try again.');
+            }
+        });
+    }
+
     getStatusColor(status: OrderStatus): string {
         switch (status) {
             case OrderStatus.PENDING: return 'accent';
             case OrderStatus.SHIPPING: return 'primary';
-            case OrderStatus.DELIVERED: return 'accent';
-            case OrderStatus.CANCELLED: return 'warn';
+            case OrderStatus.DELIVERED: return 'success';
+            case OrderStatus.CANCELLED: return 'error';
             default: return '';
         }
     }
@@ -120,11 +167,18 @@ export class OrderDetail implements OnInit {
         return this.order ? this.order.items.reduce((total, item) => total + this.getItemSubtotal(item), 0) : 0;
     }
 
-    getImageUrl(productId: string): string {
-        const detail = this.productDetails[productId];
-        if (detail && detail.media && detail.media.length > 0) {
-            return detail.media[0].fileUrl;
+    getImageUrl(item: OrderItem): string {
+        // Use imageUrl from order item if available
+        if (item.imageUrl) {
+            return `https://localhost:8443${item.imageUrl}`;
         }
+        
+        // Fallback to product details
+        const detail = this.productDetails[item.productId];
+        if (detail && detail.media && detail.media.length > 0) {
+            return `https://localhost:8443${detail.media[0].fileUrl}`;
+        }
+        
         return 'https://localhost:8443/api/media/files/placeholder.jpg';
     }
 

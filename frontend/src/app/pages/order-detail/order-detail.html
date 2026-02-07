@@ -19,16 +19,21 @@
     <!-- Order Summary Card -->
     <mat-card class="order-summary">
       <mat-card-header>
-        <mat-card-title>Order #{{ order.id.substring(0, 8) }}</mat-card-title>
+        <mat-card-title>Order #{{ order.id }}</mat-card-title>
         <mat-card-subtitle>
-          Placed on {{ order.orderDate | date:'medium' }}
+          <div class="date-info">
+            <div>Placed on: {{ order.createdAt | date:'medium' }}</div>
+            <div *ngIf="order.updatedAt && order.updatedAt !== order.createdAt" class="last-update">
+              Last updated: {{ order.updatedAt | date:'medium' }}
+            </div>
+          </div>
         </mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <div class="summary-grid">
           <div class="summary-item">
             <span class="label">Status</span>
-            <mat-chip [color]="getStatusColor(order.status)" selected>
+            <mat-chip [ngClass]="'status-' + order.status.toLowerCase()" selected class="status-chip">
               {{ order.status }}
             </mat-chip>
           </div>
@@ -50,9 +55,9 @@
       <div class="order-items">
         <mat-card *ngFor="let item of order.items" class="order-item">
           <div class="item-image">
-            <img [src]="getImageUrl(item.productId)" [alt]="getProductName(item.productId)">
+            <img [src]="getImageUrl(item)" [alt]="getProductName(item.productId)">
           </div>
-          
+
           <div class="item-details">
             <h3>
               <a [routerLink]="['/product', item.productId]">{{ getProductName(item.productId) }}</a>
@@ -89,6 +94,15 @@
 
     <!-- Actions -->
     <div class="order-actions">
+      <button *ngIf="order.status === 'SHIPPING'" mat-raised-button color="warn" (click)="cancelOrder(order.id)">
+        <mat-icon>cancel</mat-icon>
+        Cancel Order
+      </button>
+      <button *ngIf="(order.status === 'DELIVERED' || order.status === 'CANCELLED') && !order.isRemoved"
+        mat-raised-button color="warn" (click)="removeOrder(order.id)">
+        <mat-icon>delete</mat-icon>
+        Remove
+      </button>
       <button mat-raised-button color="primary" (click)="reorder(order.id)">
         <mat-icon>refresh</mat-icon>
         Reorder

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { of, throwError, BehaviorSubject } from 'rxjs';
 import { MyOrders } from './my-orders';
 import { OrderService } from '../../services/order.service';
 import { AuthService } from '../../services/auth';
@@ -33,13 +33,15 @@ describe('MyOrders', () => {
         paymentMethod: PaymentMethod.CARD,
         orderDate: '2026-02-06T10:00:00Z',
         createdAt: '2026-02-06T10:00:00Z',
-        updatedAt: '2026-02-06T10:00:00Z'
+        updatedAt: '2026-02-06T10:00:00Z',
+        isRemoved: false
     };
 
     const mockPendingOrder: Order = {
         ...mockOrder,
         id: 'order-pending',
-        status: OrderStatus.PENDING
+        status: OrderStatus.PENDING,
+        isRemoved: false
     };
 
     const mockOrdersPage: Page<Order> = {
@@ -64,7 +66,9 @@ describe('MyOrders', () => {
     };
 
     beforeEach(async () => {
-        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getUserOrders', 'redoOrder']);
+        orderServiceSpy = jasmine.createSpyObj('OrderService', ['getUserOrders', 'redoOrder', 'cancelShippingOrder', 'removeOrder'], {
+            cartSubject: new BehaviorSubject<Order | null>(null)
+        });
         authServiceSpy = jasmine.createSpyObj('AuthService', [], {
             currentUser$: of(mockUser)
         });
@@ -205,11 +209,11 @@ describe('MyOrders', () => {
         });
 
         it('should return correct color for DELIVERED', () => {
-            expect(component.getStatusColor(OrderStatus.DELIVERED)).toBe('accent');
+            expect(component.getStatusColor(OrderStatus.DELIVERED)).toBe('success');
         });
 
         it('should return correct color for CANCELLED', () => {
-            expect(component.getStatusColor(OrderStatus.CANCELLED)).toBe('warn');
+            expect(component.getStatusColor(OrderStatus.CANCELLED)).toBe('error');
         });
 
         it('should return empty string for unknown status', () => {
@@ -318,6 +322,106 @@ describe('MyOrders', () => {
             tick();
 
             expect(window.alert).toHaveBeenCalledWith('Failed to recreate order');
+        }));
+    });
+
+    // ============ Cancel Order Tests ============
+    describe('cancelOrder()', () => {
+        beforeEach(() => {
+            spyOn(window, 'alert');
+            spyOn(window, 'confirm').and.returnValue(true);
+        });
+
+        it('should cancel shipping order successfully', fakeAsync(() => {
+            orderServiceSpy.cancelShippingOrder.and.returnValue(of({}));
+            spyOn(component, 'fetchOrders');
+
+            component.cancelOrder('order-123');
+            tick();
+
+            expect(orderServiceSpy.cancelShippingOrder).toHaveBeenCalledWith('order-123');
+            expect(window.alert).toHaveBeenCalledWith('Order cancelled successfully. Stock has been restored.');
+            expect(component.fetchOrders).toHaveBeenCalled();
+        }));
+
+        it('should show error when cancellation fails', fakeAsync(() => {
+            orderServiceSpy.cancelShippingOrder.and.returnValue(of({ error: 'Order not in SHIPPING status' }));
+            spyOn(component, 'fetchOrders');
+
+            component.cancelOrder('order-123');
+            tick();
+
+            expect(window.alert).toHaveBeenCalledWith('Cannot cancel order: Order not in SHIPPING status');
+            expect(component.fetchOrders).not.toHaveBeenCalled();
+        }));
+
+        it('should not proceed if user cancels confirmation', fakeAsync(() => {
+            (window.confirm as jasmine.Spy).and.returnValue(false);
+
+            component.cancelOrder('order-123');
+            tick();
+
+            expect(orderServiceSpy.cancelShippingOrder).not.toHaveBeenCalled();
+        }));
+
+        it('should handle cancellation error', fakeAsync(() => {
+            orderServiceSpy.cancelShippingOrder.and.returnValue(throwError(() => new Error('Network error')));
+            spyOn(console, 'error');
+
+            component.cancelOrder('order-123');
+            tick();
+
+            expect(window.alert).toHaveBeenCalledWith('Failed to cancel order. Please try again.');
+        }));
+    });
+
+    // ============ Remove Order Tests ============
+    describe('removeOrder()', () => {
+        beforeEach(() => {
+            spyOn(window, 'alert');
+            spyOn(window, 'confirm').and.returnValue(true);
+        });
+
+        it('should remove order successfully', fakeAsync(() => {
+            orderServiceSpy.removeOrder.and.returnValue(of({}));
+            spyOn(component, 'fetchOrders');
+
+            component.removeOrder('order-123');
+            tick();
+
+            expect(orderServiceSpy.removeOrder).toHaveBeenCalledWith('order-123');
+            expect(window.alert).toHaveBeenCalledWith('Order removed from history successfully.');
+            expect(component.fetchOrders).toHaveBeenCalled();
+        }));
+
+        it('should show error when removal fails', fakeAsync(() => {
+            orderServiceSpy.removeOrder.and.returnValue(of({ error: 'Order not in DELIVERED or CANCELLED status' }));
+            spyOn(component, 'fetchOrders');
+
+            component.removeOrder('order-123');
+            tick();
+
+            expect(window.alert).toHaveBeenCalledWith('Cannot remove order: Order not in DELIVERED or CANCELLED status');
+            expect(component.fetchOrders).not.toHaveBeenCalled();
+        }));
+
+        it('should not proceed if user cancels confirmation', fakeAsync(() => {
+            (window.confirm as jasmine.Spy).and.returnValue(false);
+
+            component.removeOrder('order-123');
+            tick();
+
+            expect(orderServiceSpy.removeOrder).not.toHaveBeenCalled();
+        }));
+
+        it('should handle removal error', fakeAsync(() => {
+            orderServiceSpy.removeOrder.and.returnValue(throwError(() => new Error('Network error')));
+            spyOn(console, 'error');
+
+            component.removeOrder('order-123');
+            tick();
+
+            expect(window.alert).toHaveBeenCalledWith('Failed to remove order. Please try again.');
         }));
     });
 

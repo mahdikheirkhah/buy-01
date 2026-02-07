@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.backend.common.exception.CustomException;
+import com.backend.orders_service.client.MediaClient;
 import com.backend.orders_service.client.ProductInventoryClient;
 import com.backend.orders_service.dto.CheckoutRequest;
 import com.backend.orders_service.dto.CreateOrderRequest;
@@ -39,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductInventoryClient productInventoryClient;
+    private final MediaClient mediaClient;
     private final OrderStatusScheduler orderStatusScheduler;
     private final RestTemplate restTemplate;
     private static final String PRODUCT_SERVICE_URL = "http://product-service"; // Eureka service discovery
@@ -63,7 +65,7 @@ public class OrderService {
     public Page<Order> getOrdersByUserId(String userId, int page, int size) {
         Sort sort = Sort.by(Sort.Direction.DESC, "updatedAt", "orderDate", "createdAt");
         Pageable p = PageRequest.of(page, size, sort);
-        return orderRepository.findByUserId(userId, p);
+        return orderRepository.findByUserIdAndIsRemovedFalse(userId, p);
     }
 
     public Optional<Order> findLatestPendingOrder(String userId) {
@@ -95,12 +97,55 @@ public class OrderService {
 
     public void cancelOrder(String orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow();
+
+        // Check if order is removed
+        if (order.isRemoved()) {
+            throw new IllegalStateException("Cannot cancel a removed order");
+        }
+
+        // Only allow cancellation if order is in SHIPPING status
+        if (order.getStatus() != OrderStatus.SHIPPING) {
+            throw new IllegalStateException(
+                    "Order can only be cancelled when in SHIPPING status. Current status: " + order.getStatus());
+        }
+
+        // Restore stock for all items
+        try {
+            productInventoryClient.increaseStock(order.getItems());
+            log.info("Successfully restored stock for cancelled order {}", orderId);
+        } catch (Exception ex) {
+            log.error("Failed to restore stock for cancelled order {}", orderId, ex);
+            throw new CustomException("Failed to restore stock for order cancellation",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
+        log.info("Order {} has been cancelled", orderId);
+    }
+
+    public void removeOrder(String orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+
+        // Only allow removal if order is DELIVERED or CANCELLED
+        if (order.getStatus() != OrderStatus.DELIVERED && order.getStatus() != OrderStatus.CANCELLED) {
+            throw new IllegalStateException(
+                    "Order can only be removed when in DELIVERED or CANCELLED status. Current status: "
+                            + order.getStatus());
+        }
+
+        order.setRemoved(true);
+        orderRepository.save(order);
+        log.info("Order {} has been marked as removed", orderId);
     }
 
     public com.backend.orders_service.dto.RedoOrderResponse redoOrder(String orderId) {
         Order existing = orderRepository.findById(orderId).orElseThrow();
+
+        // Check if order is removed
+        if (existing.isRemoved()) {
+            throw new IllegalStateException("Cannot reorder a removed order");
+        }
 
         java.util.List<String> outOfStockProducts = new java.util.ArrayList<>();
         java.util.List<String> partiallyFilledProducts = new java.util.ArrayList<>();
@@ -124,21 +169,25 @@ public class OrderService {
                     partiallyFilledProducts.add(String.format("'%s' has only %d available instead of %d",
                             productName, availableQuantity, originalItem.getQuantity()));
 
-                    OrderItem adjustedItem = new OrderItem(
-                            originalItem.getProductId(),
-                            availableQuantity,
-                            originalItem.getPrice(),
-                            originalItem.getSellerId(),
-                            productName);
+                    OrderItem adjustedItem = OrderItem.builder()
+                            .productId(originalItem.getProductId())
+                            .quantity(availableQuantity)
+                            .price(originalItem.getPrice())
+                            .sellerId(originalItem.getSellerId())
+                            .productName(productName)
+                            .imageUrl(originalItem.getImageUrl())
+                            .build();
                     adjustedItems.add(adjustedItem);
                 } else {
                     // Full stock available - copy original item
-                    OrderItem copiedItem = new OrderItem(
-                            originalItem.getProductId(),
-                            originalItem.getQuantity(),
-                            originalItem.getPrice(),
-                            originalItem.getSellerId(),
-                            productName);
+                    OrderItem copiedItem = OrderItem.builder()
+                            .productId(originalItem.getProductId())
+                            .quantity(originalItem.getQuantity())
+                            .price(originalItem.getPrice())
+                            .sellerId(originalItem.getSellerId())
+                            .productName(productName)
+                            .imageUrl(originalItem.getImageUrl())
+                            .build();
                     adjustedItems.add(copiedItem);
                 }
             } catch (Exception e) {
@@ -219,6 +268,11 @@ public class OrderService {
 
         Order order = orderRepository.findById(orderId).orElseThrow();
 
+        // Check if order is removed
+        if (order.isRemoved()) {
+            throw new IllegalStateException("Cannot add items to a removed order");
+        }
+
         // Only allow modifications to PENDING orders
         validatePendingStatus(order);
 
@@ -296,6 +350,16 @@ public class OrderService {
             String productName = product.get("name").toString();
             item.setProductName(productName);
             log.info("Set productName: {} for productId: {}", productName, item.getProductId());
+        }
+
+        // Fetch and set the first product image
+        try {
+            String imageUrl = mediaClient.getFirstImageUrl(item.getProductId());
+            item.setImageUrl(imageUrl);
+            log.info("Set imageUrl: {} for productId: {}", imageUrl, item.getProductId());
+        } catch (Exception e) {
+            log.warn("Failed to fetch image for productId: {}", item.getProductId(), e);
+            // Image is optional, don't fail if it's not available
         }
 
         log.info("Successfully populated product details for productId: {}", item.getProductId());
@@ -380,7 +444,8 @@ public class OrderService {
         order.setPaymentMethod(request.getPaymentMethod());
 
         if (request.getPaymentMethod() == PaymentMethod.CARD && !simulatePayment()) {
-            throw new IllegalStateException("Payment was declined");
+            throw new IllegalStateException(
+                    "Payment processing failed. Please check your card details and try again. If the problem persists, please contact your bank or try a different payment method.");
         }
 
         try {

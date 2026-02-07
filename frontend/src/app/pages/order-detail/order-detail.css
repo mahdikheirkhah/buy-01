@@ -21,7 +21,8 @@
   color: #333;
 }
 
-.loading, .not-found {
+.loading,
+.not-found {
   text-align: center;
   padding: 4rem 2rem;
 }
@@ -42,6 +43,23 @@
 
 .order-summary {
   margin-bottom: 0;
+}
+
+.date-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.date-info div {
+  color: #666;
+}
+
+.last-update {
+  color: #2196f3;
+  font-style: italic;
 }
 
 .summary-grid {
@@ -139,6 +157,43 @@
   text-align: right;
 }
 
+/* Simplified item list styles */
+.order-item-simple {
+  padding: 0.75rem 1rem;
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 2fr 0.5fr 1fr 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.item-name a {
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.item-name a:hover {
+  color: #1976d2;
+}
+
+.item-qty {
+  text-align: center;
+  color: #666;
+}
+
+.item-price {
+  text-align: center;
+  color: #666;
+}
+
+.item-subtotal {
+  text-align: right;
+  font-weight: 500;
+}
+
 .order-total {
   align-self: flex-end;
   width: 100%;
@@ -175,6 +230,66 @@
 
 .order-actions button {
   min-width: 150px;
+}
+
+/* Status chip colors */
+.status-chip {
+  font-weight: 600 !important;
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-delivered,
+::ng-deep .status-chip.status-shipped {
+  background-color: #4caf50 !important;
+}
+
+::ng-deep .status-chip.status-delivered .mdc-evolution-chip__cell,
+::ng-deep .status-chip.status-shipped .mdc-evolution-chip__cell {
+  background-color: #4caf50 !important;
+}
+
+::ng-deep .status-chip.status-delivered .mdc-evolution-chip__action,
+::ng-deep .status-chip.status-shipped .mdc-evolution-chip__action {
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-cancelled {
+  background-color: #f44336 !important;
+}
+
+::ng-deep .status-chip.status-cancelled .mdc-evolution-chip__cell {
+  background-color: #f44336 !important;
+}
+
+::ng-deep .status-chip.status-cancelled .mdc-evolution-chip__action {
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-pending {
+  background-color: #ff9800 !important;
+}
+
+::ng-deep .status-chip.status-pending .mdc-evolution-chip__cell {
+  background-color: #ff9800 !important;
+}
+
+::ng-deep .status-chip.status-pending .mdc-evolution-chip__action {
+  color: white !important;
+}
+
+::ng-deep .status-chip.status-processing,
+::ng-deep .status-chip.status-shipping {
+  background-color: #2196f3 !important;
+}
+
+::ng-deep .status-chip.status-processing .mdc-evolution-chip__cell,
+::ng-deep .status-chip.status-shipping .mdc-evolution-chip__cell {
+  background-color: #2196f3 !important;
+}
+
+::ng-deep .status-chip.status-processing .mdc-evolution-chip__action,
+::ng-deep .status-chip.status-shipping .mdc-evolution-chip__action {
+  color: white !important;
 }
 
 @media (max-width: 768px) {

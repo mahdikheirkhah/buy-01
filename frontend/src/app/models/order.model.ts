@@ -2,6 +2,10 @@
 export interface OrderItem {
     productId: string;
     quantity: number;
+    price?: number;
+    productName?: string;
+    sellerId?: string;
+    imageUrl?: string;
 }
 
 export interface Order {
@@ -14,6 +18,7 @@ export interface Order {
     orderDate: string;
     createdAt: string;
     updatedAt: string;
+    isRemoved: boolean;
 }
 
 export enum OrderStatus {
