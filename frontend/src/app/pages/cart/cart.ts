@@ -145,7 +145,7 @@ export class Cart implements OnInit {
     getImageUrl(productId: string): string {
         const detail = this.productDetails[productId];
         if (detail && detail.media && detail.media.length > 0) {
-            return detail.media[0].fileUrl;
+            return `https://localhost:8443${detail.media[0].fileUrl}`;
         }
         return 'https://localhost:8443/api/media/files/placeholder.jpg';
     }

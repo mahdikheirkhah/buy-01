@@ -55,7 +55,7 @@
       <div class="order-items">
         <mat-card *ngFor="let item of order.items" class="order-item">
           <div class="item-image">
-            <img [src]="getImageUrl(item.productId)" [alt]="getProductName(item.productId)">
+            <img [src]="getImageUrl(item)" [alt]="getProductName(item.productId)">
           </div>
 
           <div class="item-details">

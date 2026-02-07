@@ -167,11 +167,18 @@ export class OrderDetail implements OnInit {
         return this.order ? this.order.items.reduce((total, item) => total + this.getItemSubtotal(item), 0) : 0;
     }
 
-    getImageUrl(productId: string): string {
-        const detail = this.productDetails[productId];
-        if (detail && detail.media && detail.media.length > 0) {
-            return detail.media[0].fileUrl;
+    getImageUrl(item: OrderItem): string {
+        // Use imageUrl from order item if available
+        if (item.imageUrl) {
+            return `https://localhost:8443${item.imageUrl}`;
         }
+        
+        // Fallback to product details
+        const detail = this.productDetails[item.productId];
+        if (detail && detail.media && detail.media.length > 0) {
+            return `https://localhost:8443${detail.media[0].fileUrl}`;
+        }
+        
         return 'https://localhost:8443/api/media/files/placeholder.jpg';
     }
 

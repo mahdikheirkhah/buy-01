@@ -7,7 +7,7 @@ import { of, throwError, Subject, BehaviorSubject } from 'rxjs';
 import { OrderDetail } from './order-detail';
 import { OrderService } from '../../services/order.service';
 import { ProductService } from '../../services/product-service';
-import { Order, OrderStatus, PaymentMethod, RedoOrderResponse } from '../../models/order.model';
+import { Order, OrderStatus, OrderItem, PaymentMethod, RedoOrderResponse } from '../../models/order.model';
 import { ProductDetailDTO } from '../../models/product.model';
 
 describe('OrderDetail', () => {
@@ -420,18 +420,26 @@ describe('OrderDetail', () => {
 
     // ============ Image URL Tests ============
     describe('getImageUrl()', () => {
-        it('should return media URL when available', () => {
-            component.productDetails = { 'prod-1': mockProductDetail };
-            expect(component.getImageUrl('prod-1')).toBe('https://example.com/image.jpg');
+        it('should return imageUrl with base URL from OrderItem when available', () => {
+            const item: OrderItem = { productId: 'prod-1', quantity: 1, imageUrl: '/api/media/files/image.jpg' };
+            expect(component.getImageUrl(item)).toBe('https://localhost:8443/api/media/files/image.jpg');
         });
 
-        it('should return placeholder when no media', () => {
+        it('should return media URL with base URL from product details when imageUrl not available', () => {
+            component.productDetails = { 'prod-1': mockProductDetail };
+            const item: OrderItem = { productId: 'prod-1', quantity: 1 };
+            expect(component.getImageUrl(item)).toBe('https://localhost:8443https://example.com/image.jpg');
+        });
+
+        it('should return placeholder when no media and no imageUrl', () => {
             component.productDetails = { 'prod-2': mockProductDetail2 };
-            expect(component.getImageUrl('prod-2')).toBe('https://localhost:8443/api/media/files/placeholder.jpg');
+            const item: OrderItem = { productId: 'prod-2', quantity: 1 };
+            expect(component.getImageUrl(item)).toBe('https://localhost:8443/api/media/files/placeholder.jpg');
         });
 
         it('should return placeholder when product not found', () => {
-            expect(component.getImageUrl('unknown')).toBe('https://localhost:8443/api/media/files/placeholder.jpg');
+            const item: OrderItem = { productId: 'unknown', quantity: 1 };
+            expect(component.getImageUrl(item)).toBe('https://localhost:8443/api/media/files/placeholder.jpg');
         });
     });
 

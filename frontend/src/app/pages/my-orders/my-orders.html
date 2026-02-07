@@ -38,15 +38,14 @@
 
         <div class="order-items">
           <h3>Items ({{ order.items.length }})</h3>
-          <ul>
-            <li *ngFor="let item of order.items">
-              <span>{{ getProductName(item.productId) }}</span>
-              <span class="item-details">
-                Qty: {{ item.quantity }} × {{ getProductPrice(item.productId) | currency:'USD' }}
-                = {{ getItemSubtotal(item) | currency:'USD' }}
-              </span>
-            </li>
-          </ul>
+          <div class="items-list">
+            <div *ngFor="let item of order.items" class="item-row">
+              <span class="item-name">{{ getProductName(item.productId) }}</span>
+              <span class="item-qty">{{ item.quantity }}x</span>
+              <span class="item-price">{{ getProductPrice(item.productId) | currency:'USD' }}</span>
+              <span class="item-subtotal">{{ getItemSubtotal(item) | currency:'USD' }}</span>
+            </div>
+          </div>
         </div>
       </mat-card-content>
 

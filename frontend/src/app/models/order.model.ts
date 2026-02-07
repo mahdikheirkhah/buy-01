@@ -2,6 +2,10 @@
 export interface OrderItem {
     productId: string;
     quantity: number;
+    price?: number;
+    productName?: string;
+    sellerId?: string;
+    imageUrl?: string;
 }
 
 export interface Order {
