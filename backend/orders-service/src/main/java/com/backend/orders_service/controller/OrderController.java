@@ -31,11 +31,13 @@ import com.backend.orders_service.service.SellerOrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
 @Validated
+@Slf4j
 public class OrderController {
     private final OrderService orderService;
     private final OrderStatsService orderStatsService;
@@ -73,18 +75,66 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<Order> getOrderById(@PathVariable String orderId, HttpServletRequest request) {
-        Order o = orderService.getOrderById(orderId);
-        if (o == null) {
+    public ResponseEntity<?> getOrderById(@PathVariable String orderId, HttpServletRequest request) {
+        log.info("=== ORDER DETAIL REQUEST START ===");
+        log.info("orderId: {}", orderId);
+
+        // Log all headers for debugging
+        String userRole = request.getHeader(USER_ROLE_HEADER);
+        String requestingUserId = request.getHeader(USER_ID_HEADER);
+        log.info("X-User-Role header: '{}'", userRole);
+        log.info("X-User-ID header: '{}'", requestingUserId);
+
+        Order order = orderService.getOrderById(orderId);
+        if (order == null) {
+            log.warn("Order {} not found", orderId);
             return ResponseEntity.notFound().build();
         }
 
-        // Check authorization
-        if (!hasAccessToOrder(o, request)) {
+        log.info("Order found with {} items", order.getItems().size());
+
+        // Handle seller order detail - check for both "ROLE_SELLER" and "SELLER"
+        boolean isSeller = userRole != null && (userRole.equalsIgnoreCase("ROLE_SELLER")
+                || userRole.equalsIgnoreCase("SELLER") || userRole.contains("SELLER"));
+
+        log.info("Is seller check - userRole: '{}', isSeller: {}", userRole, isSeller);
+
+        if (isSeller) {
+            log.info("Processing as SELLER - Seller ID: {} requesting order detail for order {}", requestingUserId,
+                    orderId);
+
+            // Get seller's view of the order (only their items)
+            com.backend.orders_service.dto.SellerOrderDTO sellerOrderDetail = sellerOrderService
+                    .getSellerOrderDetail(orderId, requestingUserId);
+
+            log.info("SellerOrderDTO result: {}", sellerOrderDetail == null ? "NULL"
+                    : "NOT NULL with " + sellerOrderDetail.getItems().size() + " items");
+
+            if (sellerOrderDetail == null) {
+                log.warn("UNAUTHORIZED - Seller {} has NO items in order {} - returning 403 FORBIDDEN",
+                        requestingUserId, orderId);
+                log.info("=== ORDER DETAIL REQUEST END (FORBIDDEN) ===");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                        java.util.Map.of("error", "You don't have permission to view this order"));
+            }
+
+            log.info("AUTHORIZED - Returning order detail for seller {} with {} items", requestingUserId,
+                    sellerOrderDetail.getItems().size());
+            log.info("=== ORDER DETAIL REQUEST END (SUCCESS) ===");
+            return ResponseEntity.ok(sellerOrderDetail);
+        }
+
+        log.info("Processing as CLIENT - Client {} requesting order detail", requestingUserId);
+        // Handle client order detail
+        if (!hasAccessToOrder(order, request)) {
+            log.warn("CLIENT UNAUTHORIZED - {} does not own order {}", requestingUserId, orderId);
+            log.info("=== ORDER DETAIL REQUEST END (FORBIDDEN) ===");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        return ResponseEntity.ok(o);
+        log.info("CLIENT AUTHORIZED - Returning full order detail");
+        log.info("=== ORDER DETAIL REQUEST END (SUCCESS) ===");
+        return ResponseEntity.ok(order);
     }
 
     @GetMapping("/user/{userId}")

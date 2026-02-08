@@ -23,4 +23,5 @@ public class SellerOrderDTO {
     private OrderStatus status;
     private Instant createdAt;
     private Instant updatedAt;
+    private String imageUrl; // Image URL of the first item in the order
 }

@@ -65,24 +65,35 @@ public class SellerOrderService {
      * Convert Order to SellerOrderDTO, filtering items by sellerId
      * If sellerId is not stored in the item, fetches it from product service
      * Uses caching to avoid redundant API calls
+     * Only includes items where the product's sellerId matches the requesting
+     * seller
      */
     private SellerOrderDTO convertToSellerOrderDTO(Order order, String sellerId) {
         log.info("Processing order {} with {} items for seller {}",
                 order.getId(), order.getItems().size(), sellerId);
 
-        // Filter items that belong to this seller
+        // Filter items that belong to this seller by validating seller ID
         List<OrderItem> sellerItems = order.getItems().stream()
                 .filter(item -> {
                     String resolvedItemSellerId = resolveItemSellerId(item);
                     boolean matches = sellerId.equals(resolvedItemSellerId);
-                    log.info("Item {} - resolvedSellerId: '{}', targetSellerId: '{}', match: {}",
-                            item.getProductId(), resolvedItemSellerId, sellerId, matches);
+
+                    if (matches) {
+                        log.info("Item {} - resolvedSellerId: '{}' - AUTHORIZED for seller {}",
+                                item.getProductId(), resolvedItemSellerId, sellerId);
+                    } else {
+                        log.warn("Item {} - resolvedSellerId: '{}' - UNAUTHORIZED for seller {} (expects: {})",
+                                item.getProductId(), resolvedItemSellerId, sellerId, resolvedItemSellerId);
+                    }
                     return matches;
                 })
                 .collect(Collectors.toList());
 
-        log.info("Order {} - found {} items for seller {}",
+        log.info("Order {} - found {} authorized items for seller {}",
                 order.getId(), sellerItems.size(), sellerId);
+
+        // Get image URL from first item if available
+        String imageUrl = sellerItems.isEmpty() ? null : sellerItems.get(0).getImageUrl();
 
         return SellerOrderDTO.builder()
                 .orderId(order.getId())
@@ -90,6 +101,7 @@ public class SellerOrderService {
                 .status(order.getStatus())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
+                .imageUrl(imageUrl)
                 .build();
     }
 
@@ -118,6 +130,12 @@ public class SellerOrderService {
     private String getProductSellerId(String productId) {
         try {
             Map<String, Object> product = getProductDetails(productId);
+
+            if (product == null) {
+                log.warn("Product details is null for productId: {}", productId);
+                return null;
+            }
+
             log.info("getProductSellerId for productId: {} - received product map with keys: {}",
                     productId, product.keySet());
 
@@ -173,6 +191,40 @@ public class SellerOrderService {
         }
 
         return java.util.Collections.emptyMap();
+    }
+
+    /**
+     * Get a specific order with only the seller's items
+     * Returns null if the seller has no items in this order
+     */
+    public SellerOrderDTO getSellerOrderDetail(String orderId, String sellerId) {
+        log.info("=== GET SELLER ORDER DETAIL START ===");
+        log.info("Getting order detail for seller: {} - orderId: {}", sellerId, orderId);
+
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) {
+            log.warn("Order not found: {}", orderId);
+            log.info("=== GET SELLER ORDER DETAIL END (ORDER NOT FOUND) ===");
+            return null;
+        }
+
+        log.info("Order found - total items in order: {}", order.getItems().size());
+
+        SellerOrderDTO sellerOrderDTO = convertToSellerOrderDTO(order, sellerId);
+
+        log.info("After filtering - seller items count: {}", sellerOrderDTO.getItems().size());
+
+        // If seller has no items in this order, return null
+        if (sellerOrderDTO.getItems().isEmpty()) {
+            log.warn("RESULT: Seller {} has NO authorized items in order {} - returning NULL", sellerId, orderId);
+            log.info("=== GET SELLER ORDER DETAIL END (NO ITEMS) ===");
+            return null;
+        }
+
+        log.info("RESULT: Order detail found for seller {} - order {} has {} authorized items",
+                sellerId, orderId, sellerOrderDTO.getItems().size());
+        log.info("=== GET SELLER ORDER DETAIL END (SUCCESS) ===");
+        return sellerOrderDTO;
     }
 
 }
