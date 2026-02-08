@@ -7,7 +7,7 @@
 
   <div *ngIf="!isLoading && orders.length === 0" class="no-orders">
     <mat-icon>shopping_bag</mat-icon>
-    <p>You haven't placed any orders yet.</p>
+    <p>{{ getEmptyStateMessage() }}</p>
   </div>
 
   <div *ngIf="!isLoading && orders.length > 0" class="orders-list">
@@ -31,8 +31,8 @@
 
       <mat-card-content>
         <div class="order-info">
-          <p><strong>Shipping Address:</strong> {{ order.shippingAddress }}</p>
-          <p><strong>Payment Method:</strong> {{ order.paymentMethod }}</p>
+          <p *ngIf="order.shippingAddress"><strong>Shipping Address:</strong> {{ order.shippingAddress }}</p>
+          <p *ngIf="order.paymentMethod"><strong>Payment Method:</strong> {{ order.paymentMethod }}</p>
           <p><strong>Total:</strong> {{ getTotalAmount(order) | currency:'USD' }}</p>
         </div>
 
@@ -50,12 +50,14 @@
       </mat-card-content>
 
       <mat-card-actions>
-        <button *ngIf="order.status === 'SHIPPING'" mat-button color="warn" (click)="cancelOrder(order.id)">
+        <button *ngIf="order.status === 'SHIPPING' && canPerformActions()" mat-button color="warn"
+          (click)="cancelOrder(order.id)">
           <mat-icon>cancel</mat-icon>
           Cancel
         </button>
-        <button *ngIf="(order.status === 'DELIVERED' || order.status === 'CANCELLED') && !order.isRemoved" mat-button
-          color="warn" (click)="removeOrder(order.id)">
+        <button
+          *ngIf="(order.status === 'DELIVERED' || order.status === 'CANCELLED') && !order.isRemoved && canPerformActions()"
+          mat-button color="warn" (click)="removeOrder(order.id)">
           <mat-icon>delete</mat-icon>
           Remove
         </button>
@@ -63,7 +65,7 @@
           <mat-icon>info</mat-icon>
           View Details
         </button>
-        <button mat-button (click)="reorder(order.id)">
+        <button *ngIf="canPerformActions()" mat-button (click)="reorder(order.id)">
           <mat-icon>refresh</mat-icon>
           Reorder
         </button>
