@@ -234,13 +234,13 @@ export class MyOrders implements OnInit {
         if (item.imageUrl) {
             return `https://localhost:8443${item.imageUrl}`;
         }
-
+        
         // Fallback to product details
         const detail = this.productDetails[item.productId];
         if (detail && detail.media && detail.media.length > 0) {
             return `https://localhost:8443${detail.media[0].fileUrl}`;
         }
-
+        
         return 'https://localhost:8443/api/media/files/placeholder.jpg';
     }
 
