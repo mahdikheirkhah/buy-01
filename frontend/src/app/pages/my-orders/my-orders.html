@@ -1,8 +1,54 @@
 <div class="my-orders-container">
   <h1>My Orders</h1>
 
-  <div *ngIf="isLoading" class="loading">
+  <div *ngIf="isLoading && pageIndex === 0" class="loading">
     <p>Loading orders...</p>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="search-filter-container" *ngIf="!isLoading || orders.length > 0">
+    <div class="search-box">
+      <input type="text" placeholder="Search by product name or order ID..." [(ngModel)]="searchKeyword"
+        class="search-input" />
+    </div>
+
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label>Order Total Price Range</label>
+        <div class="filter-inputs">
+          <input type="number" placeholder="Min Price" [(ngModel)]="minOrderPrice" min="0" class="filter-input" />
+          <input type="number" placeholder="Max Price" [(ngModel)]="maxOrderPrice" min="0" class="filter-input" />
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Last Updated Date Range</label>
+        <div class="filter-inputs">
+          <input type="date" [(ngModel)]="minUpdateDate" class="filter-input" />
+          <input type="date" [(ngModel)]="maxUpdateDate" class="filter-input" />
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Order Status</label>
+        <div class="status-checkboxes">
+          <label *ngFor="let status of availableStatuses" class="status-checkbox">
+            <input type="checkbox" [checked]="isStatusSelected(status)" (change)="toggleStatusFilter(status)" />
+            {{ status }}
+          </label>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button (click)="onSearch()" class="btn-search">Search</button>
+        <button (click)="clearFilters()" class="btn-clear">Clear All</button>
+      </div>
+    </div>
+
+    <!-- Filter Error Message -->
+    <div *ngIf="filterError" class="error-message">
+      {{ filterError }}
+    </div>
   </div>
 
   <div *ngIf="!isLoading && orders.length === 0" class="no-orders">

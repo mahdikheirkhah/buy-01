@@ -140,7 +140,7 @@ describe('OrderService', () => {
 
     describe('getUserOrders()', () => {
         it('should send GET request with pagination params', () => {
-            service.getUserOrders('user-456', 0, 10).subscribe(result => {
+            service.getUserOrders('user-456', 0, 10, undefined, undefined, undefined, undefined, undefined, undefined).subscribe(result => {
                 expect(result).toEqual(mockOrdersPage);
             });
 
@@ -154,7 +154,7 @@ describe('OrderService', () => {
         });
 
         it('should handle different page sizes', () => {
-            service.getUserOrders('user-456', 2, 5).subscribe();
+            service.getUserOrders('user-456', 2, 5, undefined, undefined, undefined, undefined, undefined, undefined).subscribe();
 
             const req = httpMock.expectOne(
                 'https://localhost:8443/api/orders/user/user-456?page=2&size=5'

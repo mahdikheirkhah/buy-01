@@ -24,6 +24,8 @@ import com.backend.orders_service.dto.CreateOrderRequest;
 import com.backend.orders_service.dto.UpdateOrderStatusRequest;
 import com.backend.orders_service.model.Order;
 import com.backend.orders_service.model.OrderItem;
+import com.backend.orders_service.model.OrderStatus;
+import com.backend.orders_service.service.OrderSearchService;
 import com.backend.orders_service.service.OrderService;
 import com.backend.orders_service.service.OrderStatsService;
 import com.backend.orders_service.service.SellerOrderService;
@@ -41,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderController {
     private final OrderService orderService;
     private final OrderStatsService orderStatsService;
-    private final SellerOrderService sellerOrderService;
+    private final OrderSearchService orderSearchService;
 
     private static final String USER_ID_HEADER = "X-User-ID";
     private static final String USER_ROLE_HEADER = "X-User-Role";
@@ -104,7 +106,7 @@ public class OrderController {
                     orderId);
 
             // Get seller's view of the order (only their items)
-            com.backend.orders_service.dto.SellerOrderDTO sellerOrderDetail = sellerOrderService
+            com.backend.orders_service.dto.SellerOrderDTO sellerOrderDetail = orderSearchService
                     .getSellerOrderDetail(orderId, requestingUserId);
 
             log.info("SellerOrderDTO result: {}", sellerOrderDetail == null ? "NULL"
@@ -141,6 +143,12 @@ public class OrderController {
     public Object getUserOrders(@PathVariable String userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String minUpdateDate,
+            @RequestParam(required = false) String maxUpdateDate,
+            @RequestParam(required = false) List<OrderStatus> statuses,
             HttpServletRequest request) {
 
         // Get user role from header
@@ -152,13 +160,31 @@ public class OrderController {
             return Page.empty();
         }
 
-        // If user is SELLER, get seller orders
+        // If user is SELLER, get seller orders with search/filters
         if (userRole != null && userRole.contains(Role.SELLER.toString())) {
-            return sellerOrderService.getSellerOrders(userId, page, size);
+            return orderSearchService.searchAndFilterSellerOrders(
+                    userId,
+                    keyword,
+                    minPrice,
+                    maxPrice,
+                    minUpdateDate,
+                    maxUpdateDate,
+                    statuses,
+                    page,
+                    size);
         }
 
-        // Otherwise, get client orders (default behavior)
-        return orderService.getOrdersByUserId(userId, page, size);
+        // Otherwise, get client orders with search/filters (default behavior)
+        return orderSearchService.searchAndFilterOrders(
+                userId,
+                keyword,
+                minPrice,
+                maxPrice,
+                minUpdateDate,
+                maxUpdateDate,
+                statuses,
+                page,
+                size);
     }
 
     @GetMapping("/user/{userId}/cart")
@@ -180,6 +206,7 @@ public class OrderController {
      * Only accessible from internal services
      */
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ROLE_ADMIN')") // Restrict to admin or internal services
     public ResponseEntity<List<Order>> getAllOrders() {
         List<Order> allOrders = orderService.getAllOrders();
         return ResponseEntity.ok(allOrders);

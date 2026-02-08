@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,6 +20,7 @@ import { ProductDetailDTO } from '../../models/product.model';
     standalone: true,
     imports: [
         CommonModule,
+        FormsModule,
         RouterLink,
         MatCardModule,
         MatButtonModule,
@@ -39,6 +41,22 @@ export class MyOrders implements OnInit {
     userRole: string | null = null;
     productDetails: Record<string, ProductDetailDTO> = {};
 
+    // Search and filter properties
+    searchKeyword: string = '';
+    minOrderPrice: number | null = null;
+    maxOrderPrice: number | null = null;
+    minUpdateDate: string = '';
+    maxUpdateDate: string = '';
+    selectedStatuses: OrderStatus[] = [];
+    filterError: string | null = null;
+
+    // Available order statuses for multi-select filter
+    availableStatuses: OrderStatus[] = [
+        OrderStatus.SHIPPING,
+        OrderStatus.CANCELLED,
+        OrderStatus.DELIVERED
+    ];
+
     constructor(
         private orderService: OrderService,
         private authService: AuthService,
@@ -58,22 +76,40 @@ export class MyOrders implements OnInit {
     fetchOrders(): void {
         if (!this.userId) return;
 
+        // Validate filters before hitting the API
+        if (!this.isFilterValid()) {
+            return;
+        }
+
         this.isLoading = true;
-        this.orderService.getUserOrders(this.userId, this.pageIndex, this.pageSize)
-            .subscribe({
-                next: (page: Page<Order>) => {
-                    console.log('Fetched orders page:', page);
-                    this.orders = page.content.filter(order => order.status !== OrderStatus.PENDING);
-                    console.log('Filtered orders (excluding PENDING):', this.orders);
-                    this.totalElements = page.totalElements;
-                    this.populateProductDetails(this.orders);
-                    this.isLoading = false;
-                },
-                error: (err) => {
-                    console.error('Failed to fetch orders:', err);
-                    this.isLoading = false;
-                }
-            });
+
+        // Convert selectedStatuses to string array for API call
+        const statusStrings = this.selectedStatuses.map(status => status.toString());
+
+        this.orderService.getUserOrders(
+            this.userId,
+            this.pageIndex,
+            this.pageSize,
+            this.searchKeyword || undefined,
+            this.minOrderPrice || undefined,
+            this.maxOrderPrice || undefined,
+            this.minUpdateDate || undefined,
+            this.maxUpdateDate || undefined,
+            statusStrings.length > 0 ? statusStrings : undefined
+        ).subscribe({
+            next: (page: Page<Order>) => {
+                console.log('Fetched orders page:', page);
+                this.orders = page.content.filter(order => order.status !== OrderStatus.PENDING);
+                console.log('Filtered orders (excluding PENDING):', this.orders);
+                this.totalElements = page.totalElements;
+                this.populateProductDetails(this.orders);
+                this.isLoading = false;
+            },
+            error: (err) => {
+                console.error('Failed to fetch orders:', err);
+                this.isLoading = false;
+            }
+        });
     }
 
     onPageChange(event: PageEvent): void {
@@ -235,8 +271,8 @@ export class MyOrders implements OnInit {
      * Only CLIENT and ADMIN roles can perform these actions, not SELLER
      */
     canPerformActions(): boolean {
-        return this.userRole !== null && 
-               (this.userRole === 'CLIENT' || this.userRole === 'ADMIN');
+        return this.userRole !== null &&
+            (this.userRole === 'CLIENT' || this.userRole === 'ADMIN');
     }
 
     /**
@@ -247,5 +283,78 @@ export class MyOrders implements OnInit {
             return "Nobody has ordered your products yet.";
         }
         return "You haven't placed any orders yet.";
+    }
+
+    /**
+     * Search and filter handler - resets to first page and fetches results
+     */
+    onSearch(): void {
+        this.pageIndex = 0;
+        this.fetchOrders();
+    }
+
+    /**
+     * Clear all filters and search - resets pagination and fetches all orders
+     */
+    clearFilters(): void {
+        this.searchKeyword = '';
+        this.minOrderPrice = null;
+        this.maxOrderPrice = null;
+        this.minUpdateDate = '';
+        this.maxUpdateDate = '';
+        this.selectedStatuses = [];
+        this.filterError = null;
+        this.pageIndex = 0;
+        this.fetchOrders();
+    }
+
+    /**
+     * Toggle status filter selection
+     */
+    toggleStatusFilter(status: OrderStatus): void {
+        const index = this.selectedStatuses.indexOf(status);
+        if (index > -1) {
+            this.selectedStatuses.splice(index, 1);
+        } else {
+            this.selectedStatuses.push(status);
+        }
+    }
+
+    /**
+     * Check if a status is selected
+     */
+    isStatusSelected(status: OrderStatus): boolean {
+        return this.selectedStatuses.includes(status);
+    }
+
+    /**
+     * Frontend validation for filter inputs
+     */
+    private isFilterValid(): boolean {
+        this.filterError = null;
+
+        // Non-negative price checks
+        if ((this.minOrderPrice ?? 0) < 0 || (this.maxOrderPrice ?? 0) < 0) {
+            this.filterError = 'Price cannot be negative.';
+            return false;
+        }
+
+        // Price ordering check
+        if (this.minOrderPrice != null && this.maxOrderPrice != null && this.minOrderPrice > this.maxOrderPrice) {
+            this.filterError = 'Min price must be less than or equal to max price.';
+            return false;
+        }
+
+        // Date ordering check
+        if (this.minUpdateDate && this.maxUpdateDate) {
+            const start = new Date(this.minUpdateDate);
+            const end = new Date(this.maxUpdateDate);
+            if (start > end) {
+                this.filterError = 'Start date must be before end date.';
+                return false;
+            }
+        }
+
+        return true;
     }
 }

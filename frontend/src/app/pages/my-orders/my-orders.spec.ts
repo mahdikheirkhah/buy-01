@@ -120,7 +120,7 @@ describe('MyOrders', () => {
             tick();
 
             expect(component.userId).toBe('user-123');
-            expect(orderServiceSpy.getUserOrders).toHaveBeenCalledWith('user-123', 0, 10);
+            expect(orderServiceSpy.getUserOrders).toHaveBeenCalledWith('user-123', 0, 10, undefined, undefined, undefined, undefined, undefined, undefined);
         }));
 
         it('should filter out PENDING orders', fakeAsync(() => {
@@ -190,7 +190,7 @@ describe('MyOrders', () => {
             component.onPageChange({ pageIndex: 1, pageSize: 5, length: 50 });
             tick();
 
-            expect(orderServiceSpy.getUserOrders).toHaveBeenCalledWith('user-123', 1, 5);
+            expect(orderServiceSpy.getUserOrders).toHaveBeenCalledWith('user-123', 1, 5, undefined, undefined, undefined, undefined, undefined, undefined);
         }));
     });
 

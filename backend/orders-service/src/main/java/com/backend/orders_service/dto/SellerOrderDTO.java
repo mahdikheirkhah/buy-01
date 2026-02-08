@@ -18,7 +18,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class SellerOrderDTO {
     @JsonProperty("id")
+    private String id;
     private String orderId;
+    private String userId;
     private List<OrderItem> items;
     private OrderStatus status;
     private Instant createdAt;
