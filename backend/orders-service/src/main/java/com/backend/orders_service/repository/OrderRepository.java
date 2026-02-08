@@ -25,4 +25,7 @@ public interface OrderRepository extends MongoRepository<Order, String> {
 
     // Get all orders for statistics calculation
     List<Order> findAll();
+
+    // Get all non-pending orders for seller view
+    List<Order> findByStatusNot(OrderStatus status);
 }
