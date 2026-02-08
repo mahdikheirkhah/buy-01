@@ -1,44 +1,42 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { ProductService, Page } from './product-service';
-import { ProductCardDTO } from '../models/productCard.model';
-import { ProductDetailDTO } from '../models/product.model';
+import { OrderService } from './order.service';
+import { Order, OrderItem, OrderStatus, PaymentMethod, CreateOrderRequest, UpdateOrderStatusRequest, CheckoutRequest, RedoOrderResponse } from '../models/order.model';
+import { Page } from './product-service';
 
-describe('ProductService', () => {
-    let service: ProductService;
+describe('OrderService', () => {
+    let service: OrderService;
     let httpMock: HttpTestingController;
 
     // Mock data
-    const mockProductCard: ProductCardDTO = {
-        id: 'prod-123',
-        name: 'Test Product',
-        description: 'A great product',
-        price: 99.99,
-        quantity: 10,
-        createdByMe: true,
-        imageUrls: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg']
-    };
-
-    const mockProductDetail: ProductDetailDTO = {
+    const mockOrderItem: OrderItem = {
         productId: 'prod-123',
-        name: 'Test Product',
-        description: 'A great product',
-        price: 99.99,
-        quantity: 10,
-        sellerId: 'seller-123',
-        sellerFirstName: 'John',
-        sellerLastName: 'Doe',
-        sellerEmail: 'john@example.com',
-        createdByMe: true,
-        media: [
-            { fileId: 'media-1', fileUrl: 'https://example.com/image1.jpg', productId: 'prod-123' },
-            { fileId: 'media-2', fileUrl: 'https://example.com/image2.jpg', productId: 'prod-123' }
-        ]
+        quantity: 2
     };
 
-    const mockProductsPage: Page<ProductCardDTO> = {
-        content: [mockProductCard],
-        totalElements: 5,
+    const mockOrder: Order = {
+        id: 'order-123',
+        userId: 'user-456',
+        shippingAddress: '123 Main St',
+        status: OrderStatus.PENDING,
+        items: [mockOrderItem],
+        paymentMethod: PaymentMethod.CARD,
+        orderDate: '2026-02-06T10:00:00Z',
+        createdAt: '2026-02-06T10:00:00Z',
+        updatedAt: '2026-02-06T10:00:00Z',
+        isRemoved: false
+    };
+
+    const mockRedoOrderResponse: RedoOrderResponse = {
+        order: mockOrder,
+        message: 'All items successfully added to cart',
+        outOfStockProducts: [],
+        partiallyFilledProducts: []
+    };
+
+    const mockOrdersPage: Page<Order> = {
+        content: [mockOrder],
+        totalElements: 1,
         totalPages: 1,
         number: 0
     };
@@ -46,10 +44,10 @@ describe('ProductService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [ProductService]
+            providers: [OrderService]
         });
 
-        service = TestBed.inject(ProductService);
+        service = TestBed.inject(OrderService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 
@@ -62,847 +60,540 @@ describe('ProductService', () => {
         it('should be created', () => {
             expect(service).toBeTruthy();
         });
-    });
 
-    // ============ Create Product Tests ============
-    describe('createProduct()', () => {
-        it('should send POST request to create product', () => {
-            const productData = {
-                name: 'New Product',
-                description: 'A new product',
-                price: 49.99,
-                quantity: 20
-            };
-
-            service.createProduct(productData).subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products');
-            expect(req.request.method).toBe('POST');
-            expect(req.request.body).toEqual(productData);
-            expect(req.request.withCredentials).toBe(true);
-            expect(req.request.withCredentials).toBe(true);
-
-            req.flush(mockProductDetail);
+        it('should have initial cart as null', () => {
+            expect(service.getCurrentCart()).toBeNull();
         });
 
-        it('should handle product creation success', () => {
-            const productData = { name: 'New Product', price: 49.99 };
-            const response = { ...mockProductDetail, name: 'New Product', price: 49.99 };
+        it('should have initial cart item count as 0', () => {
+            expect(service.getCartItemCount()).toBe(0);
+        });
+    });
 
-            service.createProduct(productData).subscribe(result => {
-                expect(result).toEqual(response);
+    // ============ Order CRUD Tests ============
+    describe('createOrder()', () => {
+        it('should send POST request to create order', () => {
+            const request: CreateOrderRequest = {
+                userId: 'user-456',
+                shippingAddress: '123 Main St',
+                items: [mockOrderItem],
+                paymentMethod: PaymentMethod.CARD
+            };
+
+            service.createOrder(request).subscribe(result => {
+                expect(result).toEqual(mockOrder);
             });
 
-            const req = httpMock.expectOne('https://localhost:8443/api/products');
+            const req = httpMock.expectOne('https://localhost:8443/api/orders');
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toEqual(request);
+            expect(req.request.withCredentials).toBe(true);
+
+            req.flush(mockOrder);
+        });
+
+        it('should handle create order error', () => {
+            const request: CreateOrderRequest = {
+                userId: 'user-456',
+                shippingAddress: '123 Main St',
+                items: [],
+                paymentMethod: PaymentMethod.CARD
+            };
+
+            service.createOrder(request).subscribe({
+                next: () => fail('should have failed'),
+                error: (error) => {
+                    expect(error.status).toBe(400);
+                }
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders');
+            req.flush('Bad Request', { status: 400, statusText: 'Bad Request' });
+        });
+    });
+
+    describe('getOrderById()', () => {
+        it('should send GET request to fetch order by id', () => {
+            service.getOrderById('order-123').subscribe(result => {
+                expect(result).toEqual(mockOrder);
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123');
+            expect(req.request.method).toBe('GET');
+            expect(req.request.withCredentials).toBe(true);
+
+            req.flush(mockOrder);
+        });
+
+        it('should handle order not found', () => {
+            service.getOrderById('nonexistent').subscribe({
+                next: () => fail('should have failed'),
+                error: (error) => {
+                    expect(error.status).toBe(404);
+                }
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/nonexistent');
+            req.flush('Not Found', { status: 404, statusText: 'Not Found' });
+        });
+    });
+
+    describe('getUserOrders()', () => {
+        it('should send GET request with pagination params', () => {
+            service.getUserOrders('user-456', 0, 10, undefined, undefined, undefined, undefined, undefined, undefined).subscribe(result => {
+                expect(result).toEqual(mockOrdersPage);
+            });
+
+            const req = httpMock.expectOne(
+                'https://localhost:8443/api/orders/user/user-456?page=0&size=10'
+            );
+            expect(req.request.method).toBe('GET');
+            expect(req.request.withCredentials).toBe(true);
+
+            req.flush(mockOrdersPage);
+        });
+
+        it('should handle different page sizes', () => {
+            service.getUserOrders('user-456', 2, 5, undefined, undefined, undefined, undefined, undefined, undefined).subscribe();
+
+            const req = httpMock.expectOne(
+                'https://localhost:8443/api/orders/user/user-456?page=2&size=5'
+            );
+            req.flush(mockOrdersPage);
+        });
+    });
+
+    describe('updateOrderStatus()', () => {
+        it('should send PUT request to update order status', () => {
+            const request: UpdateOrderStatusRequest = {
+                status: OrderStatus.PROCESSING
+            };
+            const updatedOrder = { ...mockOrder, status: OrderStatus.PROCESSING };
+
+            service.updateOrderStatus('order-123', request).subscribe(result => {
+                expect(result.status).toBe(OrderStatus.PROCESSING);
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/status');
+            expect(req.request.method).toBe('PUT');
+            expect(req.request.body).toEqual(request);
+
+            req.flush(updatedOrder);
+        });
+    });
+
+    describe('cancelOrder()', () => {
+        it('should send DELETE request to cancel order', () => {
+            service.cancelOrder('order-123').subscribe();
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123');
+            expect(req.request.method).toBe('DELETE');
+            expect(req.request.withCredentials).toBe(true);
+
+            req.flush(null);
+        });
+    });
+
+    describe('cancelShippingOrder()', () => {
+        it('should send DELETE request and handle success', () => {
+            service.cancelShippingOrder('order-123').subscribe(result => {
+                expect(result).toEqual({});
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123');
+            expect(req.request.method).toBe('DELETE');
+            expect(req.request.withCredentials).toBe(true);
+
+            req.flush(null);
+        });
+
+        it('should extract error message on failure', () => {
+            service.cancelShippingOrder('order-123').subscribe(result => {
+                expect(result.error).toBe('Order can only be cancelled when in SHIPPING status');
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123');
+            req.flush(
+                { error: 'Order can only be cancelled when in SHIPPING status' },
+                { status: 400, statusText: 'Bad Request' }
+            );
+        });
+    });
+
+    // ============ Redo Order Tests ============
+    describe('redoOrder()', () => {
+        it('should send POST request to redo order', () => {
+            service.redoOrder('order-123').subscribe(result => {
+                expect(result).toEqual(mockRedoOrderResponse);
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/redo');
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toEqual({});
+            expect(req.request.withCredentials).toBe(true);
+
+            req.flush(mockRedoOrderResponse);
+        });
+
+        it('should handle successful redo with all items in stock', () => {
+            const response: RedoOrderResponse = {
+                order: mockOrder,
+                message: 'All items successfully added to cart',
+                outOfStockProducts: [],
+                partiallyFilledProducts: []
+            };
+
+            service.redoOrder('order-123').subscribe(result => {
+                expect(result.message).toBe('All items successfully added to cart');
+                expect(result.order).toBeTruthy();
+                expect(result.outOfStockProducts.length).toBe(0);
+                expect(result.partiallyFilledProducts.length).toBe(0);
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/redo');
             req.flush(response);
         });
 
-        it('should handle product creation error', () => {
-            const productData = { name: 'New Product' };
+        it('should handle redo with out of stock products', () => {
+            const response: RedoOrderResponse = {
+                order: null,
+                message: 'No items could be added to cart. All products are out of stock.',
+                outOfStockProducts: ["'Product A' is out of stock", "'Product B' is out of stock"],
+                partiallyFilledProducts: []
+            };
 
-            service.createProduct(productData).subscribe(
-                () => fail('should have failed'),
-                (error) => {
-                    expect(error.status).toBe(400);
+            service.redoOrder('order-123').subscribe(result => {
+                expect(result.order).toBeNull();
+                expect(result.outOfStockProducts.length).toBe(2);
+                expect(result.outOfStockProducts[0]).toContain('Product A');
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/redo');
+            req.flush(response);
+        });
+
+        it('should handle redo with partially filled products', () => {
+            const partialOrder = { ...mockOrder, items: [{ productId: 'prod-123', quantity: 3 }] };
+            const response: RedoOrderResponse = {
+                order: partialOrder,
+                message: 'Some items could not be fully added to cart',
+                outOfStockProducts: [],
+                partiallyFilledProducts: ["'Product A' has only 3 available instead of 5"]
+            };
+
+            service.redoOrder('order-123').subscribe(result => {
+                expect(result.order).toBeTruthy();
+                expect(result.partiallyFilledProducts.length).toBe(1);
+                expect(result.partiallyFilledProducts[0]).toContain('only 3 available');
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/redo');
+            req.flush(response);
+        });
+
+        it('should handle redo with mixed stock issues', () => {
+            const response: RedoOrderResponse = {
+                order: mockOrder,
+                message: 'Some items could not be fully added to cart',
+                outOfStockProducts: ["'Product B' is out of stock"],
+                partiallyFilledProducts: ["'Product A' has only 2 available instead of 5"]
+            };
+
+            service.redoOrder('order-123').subscribe(result => {
+                expect(result.outOfStockProducts.length).toBe(1);
+                expect(result.partiallyFilledProducts.length).toBe(1);
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/redo');
+            req.flush(response);
+        });
+
+        it('should handle redo order error (409 Conflict)', () => {
+            const errorResponse: RedoOrderResponse = {
+                order: null,
+                message: 'No items could be added to cart. All products are out of stock.',
+                outOfStockProducts: ["'Product A' is out of stock"],
+                partiallyFilledProducts: []
+            };
+
+            service.redoOrder('order-123').subscribe({
+                next: () => fail('should have failed'),
+                error: (error) => {
+                    expect(error.status).toBe(409);
+                    expect(error.error.message).toContain('out of stock');
                 }
-            );
+            });
 
-            const req = httpMock.expectOne('https://localhost:8443/api/products');
-            req.flush('Invalid product data', { status: 400, statusText: 'Bad Request' });
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/redo');
+            req.flush(errorResponse, { status: 409, statusText: 'Conflict' });
+        });
+
+        it('should handle redo order not found', () => {
+            service.redoOrder('nonexistent').subscribe({
+                next: () => fail('should have failed'),
+                error: (error) => {
+                    expect(error.status).toBe(404);
+                }
+            });
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/nonexistent/redo');
+            req.flush('Not Found', { status: 404, statusText: 'Not Found' });
         });
     });
 
-    // ============ Upload Product Image Tests ============
-    describe('uploadProductImage()', () => {
-        it('should send FormData with image file', () => {
-            const mockFile = new File(['image-content'], 'product.jpg', { type: 'image/jpeg' });
+    // ============ Order Item Management Tests ============
+    describe('addItemToOrder()', () => {
+        it('should send POST request to add item', () => {
+            const newItem: OrderItem = { productId: 'prod-456', quantity: 1 };
+            const updatedOrder = {
+                ...mockOrder,
+                items: [...mockOrder.items, newItem]
+            };
 
-            service.uploadProductImage('prod-123', mockFile).subscribe();
+            service.addItemToOrder('order-123', newItem).subscribe(result => {
+                expect(result.items.length).toBe(2);
+            });
 
-            const req = httpMock.expectOne('https://localhost:8443/api/products/create/images');
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/items');
             expect(req.request.method).toBe('POST');
-            expect(req.request.withCredentials).toBe(true);
+            expect(req.request.body).toEqual(newItem);
 
-            req.flush('media-123');
+            req.flush(updatedOrder);
         });
 
-        it('should include file and productId in FormData', () => {
-            const mockFile = new File(['image-content'], 'product.jpg', { type: 'image/jpeg' });
+        it('should update cart subject when adding item to pending order', () => {
+            const newItem: OrderItem = { productId: 'prod-456', quantity: 1 };
 
-            service.uploadProductImage('prod-123', mockFile).subscribe();
+            service.addItemToOrder('order-123', newItem).subscribe();
 
-            const req = httpMock.expectOne('https://localhost:8443/api/products/create/images');
-            const formData = req.request.body as FormData;
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/items');
+            req.flush(mockOrder);
 
-            expect(formData.get('productId')).toBe('prod-123');
-            expect(formData.has('file')).toBe(true);
-
-            req.flush('media-123');
-        });
-
-        it('should return media ID on successful upload', () => {
-            const mockFile = new File(['image-content'], 'product.jpg');
-
-            service.uploadProductImage('prod-123', mockFile).subscribe(result => {
-                expect(result).toBe('media-123');
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/create/images');
-            req.flush('media-123');
-        });
-
-        it('should handle image upload error', () => {
-            const mockFile = new File(['image-content'], 'product.jpg');
-
-            service.uploadProductImage('prod-123', mockFile).subscribe(
-                () => fail('should have failed'),
-                (error) => {
-                    expect(error.status).toBe(413);
-                }
-            );
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/create/images');
-            req.flush('File too large', { status: 413, statusText: 'Payload Too Large' });
+            expect(service.getCurrentCart()).toEqual(mockOrder);
         });
     });
 
-    // ============ Get My Products Tests ============
-    describe('getMyProducts()', () => {
-        it('should fetch seller products with pagination', () => {
-            service.getMyProducts(0, 10).subscribe();
-
-            const req = httpMock.expectOne(request =>
-                request.url === 'https://localhost:8443/api/products/my-products'
-            );
-            expect(req.request.method).toBe('GET');
-            expect(req.request.withCredentials).toBe(true);
-            expect(req.request.params.get('page')).toBe('0');
-            expect(req.request.params.get('size')).toBe('10');
-            expect(req.request.params.get('sort')).toBe('createdAt,desc');
-
-            req.flush(mockProductsPage);
-        });
-
-        it('should return Page<ProductCardDTO>', () => {
-            service.getMyProducts(0, 10).subscribe(result => {
-                expect(result).toEqual(mockProductsPage);
-                expect(result.content.length).toBe(1);
-                expect(result.totalElements).toBe(5);
-            });
-
-            const req = httpMock.expectOne(request =>
-                request.url === 'https://localhost:8443/api/products/my-products'
-            );
-            req.flush(mockProductsPage);
-        });
-
-        it('should handle pagination parameters correctly', () => {
-            service.getMyProducts(2, 20).subscribe();
-
-            const req = httpMock.expectOne(request =>
-                request.url === 'https://localhost:8443/api/products/my-products'
-            );
-            expect(req.request.params.get('page')).toBe('2');
-            expect(req.request.params.get('size')).toBe('20');
-
-            req.flush(mockProductsPage);
-        });
-
-        it('should handle error when fetching products', () => {
-            service.getMyProducts(0, 10).subscribe(
-                () => fail('should have failed'),
-                (error) => {
-                    expect(error.status).toBe(401);
-                }
-            );
-
-            const req = httpMock.expectOne(request =>
-                request.url === 'https://localhost:8443/api/products/my-products'
-            );
-            req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
-        });
-    });
-
-    // ============ Get All Products Tests ============
-    describe('getAllProducts()', () => {
-        it('should fetch all products with pagination', () => {
-            service.getAllProducts(0, 10).subscribe();
-
-            const req = httpMock.expectOne(request =>
-                request.url === 'https://localhost:8443/api/products/all'
-            );
-            expect(req.request.method).toBe('GET');
-            expect(req.request.withCredentials).toBe(true);
-            expect(req.request.params.get('page')).toBe('0');
-            expect(req.request.params.get('size')).toBe('10');
-
-            req.flush(mockProductsPage);
-        });
-
-        it('should return paginated products', () => {
-            service.getAllProducts(0, 10).subscribe(result => {
-                expect(result).toEqual(mockProductsPage);
-                expect(result.content.length).toBe(1);
-                expect(result.totalPages).toBe(1);
-            });
-
-            const req = httpMock.expectOne(request =>
-                request.url === 'https://localhost:8443/api/products/all'
-            );
-            req.flush(mockProductsPage);
-        });
-
-        it('should sort by newest first', () => {
-            service.getAllProducts(0, 10).subscribe();
-
-            const req = httpMock.expectOne(request =>
-                request.url === 'https://localhost:8443/api/products/all'
-            );
-            expect(req.request.params.get('sort')).toBe('createdAt,desc');
-
-            req.flush(mockProductsPage);
-        });
-
-        it('should handle empty results', () => {
-            const emptyPage: Page<ProductCardDTO> = {
-                content: [],
-                totalElements: 0,
-                totalPages: 0,
-                number: 0
+    describe('updateOrderItem()', () => {
+        it('should send PUT request to update item', () => {
+            const updatedItem: OrderItem = { productId: 'prod-123', quantity: 5 };
+            const updatedOrder = {
+                ...mockOrder,
+                items: [updatedItem]
             };
 
-            service.getAllProducts(0, 10).subscribe(result => {
-                expect(result.content.length).toBe(0);
-                expect(result.totalElements).toBe(0);
+            service.updateOrderItem('order-123', 'prod-123', updatedItem).subscribe(result => {
+                expect(result.items[0].quantity).toBe(5);
             });
 
-            const req = httpMock.expectOne(request =>
-                request.url === 'https://localhost:8443/api/products/all'
-            );
-            req.flush(emptyPage);
-        });
-    });
-
-    // ============ Get Product by ID Tests ============
-    describe('getProductById()', () => {
-        it('should fetch product by ID', () => {
-            service.getProductById('prod-123').subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            expect(req.request.method).toBe('GET');
-            expect(req.request.withCredentials).toBe(true);
-
-            req.flush(mockProductDetail);
-        });
-
-        it('should return product details', () => {
-            service.getProductById('prod-123').subscribe(result => {
-                expect(result).toEqual(mockProductDetail);
-                expect(result.name).toBe('Test Product');
-                expect(result.price).toBe(99.99);
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush(mockProductDetail);
-        });
-
-        it('should include media information', () => {
-            service.getProductById('prod-123').subscribe(result => {
-                expect(result.media.length).toBe(2);
-                expect(result.media[0].fileId).toBe('media-1');
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush(mockProductDetail);
-        });
-
-        it('should handle product not found error', () => {
-            service.getProductById('invalid-id').subscribe(
-                () => fail('should have failed'),
-                (error) => {
-                    expect(error.status).toBe(404);
-                }
-            );
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/invalid-id');
-            req.flush('Product not found', { status: 404, statusText: 'Not Found' });
-        });
-    });
-
-    // ============ Delete Product Tests ============
-    describe('deleteProduct()', () => {
-        it('should send DELETE request to remove product', () => {
-            service.deleteProduct('prod-123').subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            expect(req.request.method).toBe('DELETE');
-            expect(req.request.withCredentials).toBe(true);
-
-            req.flush('Product deleted successfully');
-        });
-
-        it('should return success message', () => {
-            service.deleteProduct('prod-123').subscribe(result => {
-                expect(result).toBe('Product deleted successfully');
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush('Product deleted successfully');
-        });
-
-        it('should handle delete error', () => {
-            service.deleteProduct('prod-123').subscribe(
-                () => fail('should have failed'),
-                (error) => {
-                    expect(error.status).toBe(403);
-                }
-            );
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
-        });
-
-        it('should handle product not found on delete', () => {
-            service.deleteProduct('invalid-id').subscribe(
-                () => fail('should have failed'),
-                (error) => {
-                    expect(error.status).toBe(404);
-                }
-            );
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/invalid-id');
-            req.flush('Product not found', { status: 404, statusText: 'Not Found' });
-        });
-    });
-
-    // ============ Update Product Tests ============
-    describe('updateProduct()', () => {
-        it('should send PUT request to update product', () => {
-            const updateData = { name: 'Updated Product', price: 79.99 };
-
-            service.updateProduct('prod-123', updateData).subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/items/prod-123');
             expect(req.request.method).toBe('PUT');
-            expect(req.request.body).toEqual(updateData);
-            expect(req.request.withCredentials).toBe(true);
 
-            req.flush(mockProductDetail);
-        });
-
-        it('should return updated product', () => {
-            const updateData = { name: 'Updated Product', price: 79.99 };
-            const updatedProduct = { ...mockProductDetail, ...updateData };
-
-            service.updateProduct('prod-123', updateData).subscribe(result => {
-                expect(result.name).toBe('Updated Product');
-                expect(result.price).toBe(79.99);
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush(updatedProduct);
-        });
-
-        it('should handle update error', () => {
-            const updateData = { name: 'Updated Product' };
-
-            service.updateProduct('prod-123', updateData).subscribe(
-                () => fail('should have failed'),
-                (error) => {
-                    expect(error.status).toBe(400);
-                }
-            );
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush('Invalid update data', { status: 400, statusText: 'Bad Request' });
-        });
-
-        it('should handle unauthorized update attempt', () => {
-            const updateData = { name: 'Updated Product' };
-
-            service.updateProduct('prod-123', updateData).subscribe(
-                () => fail('should have failed'),
-                (error) => {
-                    expect(error.status).toBe(403);
-                }
-            );
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
+            req.flush(updatedOrder);
         });
     });
 
-    // ============ Delete Product Image Tests ============
-    describe('deleteProductImage()', () => {
-        it('should send DELETE request to remove media', () => {
-            service.deleteProductImage('prod-123', 'media-1').subscribe();
+    describe('removeItemFromOrder()', () => {
+        it('should send DELETE request to remove item', () => {
+            const updatedOrder = { ...mockOrder, items: [] };
 
-            const req = httpMock.expectOne('https://localhost:8443/api/products/deleteMedia/prod-123/media-1');
-            expect(req.request.method).toBe('DELETE');
-            expect(req.request.withCredentials).toBe(true);
-
-            req.flush({ success: true });
-        });
-
-        it('should return success response', () => {
-            service.deleteProductImage('prod-123', 'media-1').subscribe(result => {
-                expect(result.success).toBe(true);
+            service.removeItemFromOrder('order-123', 'prod-123').subscribe(result => {
+                expect(result.items.length).toBe(0);
             });
 
-            const req = httpMock.expectOne('https://localhost:8443/api/products/deleteMedia/prod-123/media-1');
-            req.flush({ success: true });
-        });
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/items/prod-123');
+            expect(req.request.method).toBe('DELETE');
 
-        it('should handle media not found error', () => {
-            service.deleteProductImage('prod-123', 'invalid-media').subscribe(
-                () => fail('should have failed'),
-                (error) => {
-                    expect(error.status).toBe(404);
-                }
-            );
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/deleteMedia/prod-123/invalid-media');
-            req.flush('Media not found', { status: 404, statusText: 'Not Found' });
-        });
-
-        it('should handle unauthorized delete attempt', () => {
-            service.deleteProductImage('prod-123', 'media-1').subscribe(
-                () => fail('should have failed'),
-                (error) => {
-                    expect(error.status).toBe(403);
-                }
-            );
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/deleteMedia/prod-123/media-1');
-            req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
+            req.flush(updatedOrder);
         });
     });
 
-    // ============ Edge Cases and Error Scenarios ============
-    describe('Edge Cases and Error Scenarios', () => {
-        it('should handle null pagination parameters', () => {
-            service.getAllProducts(0, 10).subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=0&size=10&sort=createdAt,desc');
-            req.flush(mockProductsPage);
-        });
-
-        it('should handle negative page index', () => {
-            service.getAllProducts(-1, 10).subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=-1&size=10&sort=createdAt,desc');
-            req.flush(mockProductsPage);
-        });
-
-        it('should handle large page size', () => {
-            service.getAllProducts(0, 1000).subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=0&size=1000&sort=createdAt,desc');
-            req.flush(mockProductsPage);
-        });
-
-        it('should handle empty product list response', () => {
-            service.getAllProducts(0, 10).subscribe(result => {
-                expect(result.content.length).toBe(0);
-                expect(result.totalElements).toBe(0);
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=0&size=10&sort=createdAt,desc');
-            req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0 });
-        });
-
-        it('should handle product with no images', () => {
-            const productNoImages = { ...mockProductCard, imageUrls: [] };
-            service.getProductById('prod-123').subscribe((result: any) => {
-                expect(result.media.length).toBe(0);
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            const detailNoImages = { ...mockProductDetail, media: [] };
-            req.flush(detailNoImages);
-        });
-
-        it('should handle product with single image', () => {
-            const productSingleImage = {
-                ...mockProductCard,
-                imageUrls: ['https://example.com/image1.jpg']
+    describe('checkoutOrder()', () => {
+        it('should send POST request to checkout', () => {
+            const request: CheckoutRequest = {
+                shippingAddress: '456 Oak Ave',
+                paymentMethod: PaymentMethod.PAY_ON_DELIVERY
             };
-            service.getProductById('prod-123').subscribe((result: any) => {
-                expect(result.media.length).toBe(1);
+            const checkedOutOrder = { ...mockOrder, status: OrderStatus.PROCESSING };
+
+            service.checkoutOrder('order-123', request).subscribe(result => {
+                expect(result.status).toBe(OrderStatus.PROCESSING);
             });
 
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            const detailSingleImage = { ...mockProductDetail, media: [mockProductDetail.media[0]] };
-            req.flush(detailSingleImage);
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/checkout');
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toEqual(request);
+
+            req.flush(checkedOutOrder);
         });
 
-        it('should handle product with many images', () => {
-            const manyImages = Array(20).fill(null).map((_, i) => ({
-                fileId: `media-${i}`,
-                fileUrl: `https://example.com/image${i}.jpg`,
-                productId: 'prod-123'
-            }));
-            service.getProductById('prod-123').subscribe((result: any) => {
-                expect(result.media.length).toBe(20);
-            });
+        it('should clear cart after successful checkout', () => {
+            // First set up a cart
+            service.cartSubject.next(mockOrder);
+            expect(service.getCurrentCart()).toBeTruthy();
 
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            const detailManyImages = { ...mockProductDetail, media: manyImages };
-            req.flush(detailManyImages);
-        });
-
-        it('should handle zero price product', () => {
-            const zeroPrice = { ...mockProductCard, price: 0 };
-            service.createProduct(zeroPrice).subscribe((result: any) => {
-                expect(result.price).toBe(0);
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products');
-            const responseZeroPrice = { ...mockProductDetail, price: 0 };
-            req.flush(responseZeroPrice);
-        });
-
-        it('should handle negative price in response (edge case)', () => {
-            service.getProductById('prod-123').subscribe((result: any) => {
-                expect(result.price).toBeLessThan(0);
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            const detailNegativePrice = { ...mockProductDetail, price: -50 };
-            req.flush(detailNegativePrice);
-        });
-
-        it('should handle very large price', () => {
-            const largePrice = { ...mockProductCard, price: 999999.99 };
-            service.createProduct(largePrice).subscribe((result: any) => {
-                expect(result.price).toBe(999999.99);
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products');
-            const responseLargePrice = { ...mockProductDetail, price: 999999.99 };
-            req.flush(responseLargePrice);
-        });
-
-        it('should handle zero quantity', () => {
-            const zeroQuantity = { ...mockProductCard, quantity: 0 };
-            service.createProduct(zeroQuantity).subscribe(result => {
-                expect(result.quantity).toBe(0);
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products');
-            const responseZeroQuantity = { ...mockProductDetail, quantity: 0 };
-            req.flush(responseZeroQuantity);
-        });
-
-        it('should handle search with empty results', () => {
-            service.getAllProducts(0, 10).subscribe(result => {
-                expect(result.content.length).toBe(0);
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=0&size=10&sort=createdAt,desc');
-            req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0 });
-        });
-
-        it('should handle search with special characters', () => {
-            service.getAllProducts(0, 10).subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/all?page=0&size=10&sort=createdAt,desc');
-            req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0 });
-        });
-
-        it('should handle update with no changes', () => {
-            const productData = { name: 'Same Name', price: 99.99 };
-            service.updateProduct('prod-123', productData).subscribe(result => {
-                expect(result.name).toBe('Test Product');
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush(mockProductDetail);
-        });
-
-        it('should handle network error on create', () => {
-            service.createProduct({ name: 'New Product' }).subscribe(
-                () => fail('should have failed'),
-                (error: any) => {
-                    expect(error).toBeDefined();
-                }
-            );
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products');
-            req.error(new ErrorEvent('Network error'));
-        });
-
-        it('should handle server error 500 on delete', () => {
-            service.deleteProduct('prod-123').subscribe(
-                () => fail('should have failed'),
-                (error: any) => {
-                    expect(error.status).toBe(500);
-                }
-            );
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
-        });
-
-        it('should handle timeout on file upload', () => {
-            const fileUploadData = new File(['test'], 'test.jpg');
-
-            service.uploadProductImage('prod-123', fileUploadData).subscribe(
-                () => fail('should have failed'),
-                (error: any) => {
-                    expect(error).toBeDefined();
-                }
-            );
-
-            const req = httpMock.expectOne(request =>
-                request.url.includes('products/create/images')
-            );
-            req.flush('Timeout', { status: 408, statusText: 'Request Timeout' });
-        });
-
-        it('should handle malformed JSON response', () => {
-            service.getProductById('prod-123').subscribe((result: any) => {
-                expect(result).toBeTruthy();
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush({ partial: 'data' });
-        });
-
-        it('should handle empty product list with pagination', () => {
-            const emptyPage: Page<ProductCardDTO> = {
-                content: [],
-                totalElements: 0,
-                totalPages: 0,
-                number: 0
+            const request: CheckoutRequest = {
+                shippingAddress: '456 Oak Ave',
+                paymentMethod: PaymentMethod.CARD
             };
 
-            service.getAllProducts(0, 10).subscribe((result: any) => {
-                expect(result.content.length).toBe(0);
-                expect(result.totalElements).toBe(0);
+            service.checkoutOrder('order-123', request).subscribe();
+
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/checkout');
+            req.flush({ ...mockOrder, status: OrderStatus.PROCESSING });
+
+            expect(service.getCurrentCart()).toBeNull();
+        });
+    });
+
+    describe('clearCartItems()', () => {
+        it('should send DELETE request to clear cart items', () => {
+            const emptyOrder = { ...mockOrder, items: [] };
+
+            service.clearCartItems('order-123').subscribe(result => {
+                expect(result.items.length).toBe(0);
             });
 
-            const req = httpMock.expectOne(request =>
-                request.url.includes('/api/products') &&
-                request.params.get('page') === '0'
-            );
-            req.flush(emptyPage);
-        });
-
-        it('should handle large page size pagination', () => {
-            service.getAllProducts(0, 1000).subscribe();
-
-            const req = httpMock.expectOne(request =>
-                request.url.includes('/api/products') &&
-                request.params.get('size') === '1000'
-            );
-            expect(req.request.params.get('size')).toBe('1000');
-            req.flush(mockProductsPage);
-        });
-
-        it('should handle search with special characters', () => {
-            const updatedData = { name: 'product@#$%&*()' };
-            service.updateProduct('prod-123', updatedData).subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            expect(req.request.body.name).toContain('@');
-            req.flush(mockProductDetail);
-        });
-
-        it('should handle search with unicode characters', () => {
-            const updatedData = { name: '中文产品' };
-            service.updateProduct('prod-123', updatedData).subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush(mockProductDetail);
-        });
-
-        it('should handle very long product names', () => {
-            const longName = 'A'.repeat(1000);
-            const productData = { name: longName, price: 49.99 };
-
-            service.createProduct(productData).subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products');
-            expect(req.request.body.name.length).toBe(1000);
-            req.flush(mockProductDetail);
-        });
-
-        it('should handle zero price product', () => {
-            const productData = { name: 'Free Product', price: 0, quantity: 100 };
-
-            service.createProduct(productData).subscribe((result: any) => {
-                expect(result.price).toBe(0);
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products');
-            req.flush({ ...mockProductDetail, price: 0 });
-        });
-
-        it('should handle negative quantity edge case', () => {
-            const productData = { name: 'Product', price: 49.99, quantity: -5 };
-
-            service.createProduct(productData).subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products');
-            req.flush(mockProductDetail);
-        });
-
-        it('should handle maximum integer price', () => {
-            const productData = { name: 'Expensive', price: Number.MAX_SAFE_INTEGER };
-
-            service.createProduct(productData).subscribe((result: any) => {
-                expect(result.price).toBeDefined();
-            });
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products');
-            req.flush({ ...mockProductDetail, price: Number.MAX_SAFE_INTEGER });
-        });
-
-        it('should handle concurrent create and delete operations', () => {
-            service.createProduct({ name: 'Product', price: 49.99 }).subscribe();
-            service.deleteProduct('prod-456').subscribe();
-
-            let req = httpMock.expectOne('https://localhost:8443/api/products');
-            req.flush(mockProductDetail);
-
-            req = httpMock.expectOne('https://localhost:8443/api/products/prod-456');
-            req.flush({ message: 'deleted' });
-        });
-
-        it('should handle concurrent get and list operations', () => {
-            service.getAllProducts(0, 10).subscribe();
-            service.getProductById('prod-123').subscribe();
-
-            let req = httpMock.expectOne(request =>
-                request.url.includes('/api/products') && !request.url.includes('prod-123')
-            );
-            req.flush(mockProductsPage);
-
-            req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush(mockProductDetail);
-        });
-
-        it('should handle multiple pagination requests', () => {
-            for (let i = 0; i < 5; i++) {
-                service.getAllProducts(i, 10).subscribe();
-            }
-
-            for (let i = 0; i < 5; i++) {
-                const req = httpMock.expectOne(request =>
-                    request.url.includes('/api/products') &&
-                    request.params.get('page') === i.toString()
-                );
-                req.flush(mockProductsPage);
-            }
-        });
-
-        it('should handle product update with partial data', () => {
-            const updateData = { name: 'Updated Name' };
-
-            service.updateProduct('prod-123', updateData).subscribe();
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            expect(req.request.method).toBe('PUT');
-            req.flush(mockProductDetail);
-        });
-
-        it('should handle delete product with special ID format', () => {
-            const specialId = 'prod-123-456-789';
-
-            service.deleteProduct(specialId).subscribe();
-
-            const req = httpMock.expectOne(`https://localhost:8443/api/products/${specialId}`);
+            const req = httpMock.expectOne('https://localhost:8443/api/orders/order-123/items');
             expect(req.request.method).toBe('DELETE');
-            req.flush({ message: 'deleted' });
+
+            req.flush(emptyOrder);
         });
+    });
 
-        it('should handle image upload with large file', () => {
-            const largeBuffer = new ArrayBuffer(10000000);
-            const largeFile = new File([largeBuffer], 'large-image.jpg', { type: 'image/jpeg' });
+    // ============ Cart Helper Tests ============
+    describe('Cart Helpers', () => {
+        describe('loadCart()', () => {
+            it('should load cart and update subject', () => {
+                service.loadCart('user-456').subscribe(result => {
+                    expect(result).toEqual(mockOrder);
+                });
 
-            service.uploadProductImage('prod-123', largeFile).subscribe();
+                const req = httpMock.expectOne('https://localhost:8443/api/orders/user/user-456/cart');
+                req.flush(mockOrder);
 
-            const req = httpMock.expectOne('https://localhost:8443/api/products/create/images');
-            req.flush('Image uploaded');
-        });
-
-        // it('should handle multiple image uploads in sequence', () => {
-        //   const mockFile1 = new File(['image1'], 'image1.jpg');
-        //   const mockFile2 = new File(['image2'], 'image2.jpg');
-
-        //   service.uploadProductImage('prod-123', mockFile1).subscribe();
-        //   service.uploadProductImage('prod-123', mockFile2).subscribe();
-
-        //   let req = httpMock.expectOne('https://localhost:8443/api/products/create/images');
-        //   req.flush({ id: 'media-123' });
-        //   req = httpMock.expectOne('https://localhost:8443/api/products/create/images');
-        //   req.flush({ id: 'media-456' });
-        // });
-
-        it('should include credentials in all product requests', () => {
-            service.getAllProducts(0, 10).subscribe();
-            service.getProductById('prod-123').subscribe();
-            service.getMyProducts(0, 10).subscribe();
-
-            let requests = httpMock.match(req => req.withCredentials);
-            expect(requests.length).toBeGreaterThan(0);
-            requests.forEach(req => req.flush({}));
-        });
-
-        it('should handle 429 too many requests error', () => {
-            service.getAllProducts(0, 10).subscribe(
-                () => fail('should have failed'),
-                (error: any) => {
-                    expect(error.status).toBe(429);
-                }
-            );
-
-            const req = httpMock.expectOne(request =>
-                request.url.includes('/api/products')
-            );
-            req.flush('Too many requests', { status: 429, statusText: 'Too Many Requests' });
-        });
-
-        it('should handle 503 service unavailable error', () => {
-            service.getProductById('prod-123').subscribe(
-                () => fail('should have failed'),
-                (error: any) => {
-                    expect(error.status).toBe(503);
-                }
-            );
-
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush('Service unavailable', { status: 503, statusText: 'Service Unavailable' });
-        });
-
-        it('should handle response with null values', () => {
-            const productWithNulls = {
-                ...mockProductDetail,
-                sellerEmail: null,
-                media: null
-            };
-
-            service.getProductById('prod-123').subscribe((result: any) => {
-                expect(result).toBeDefined();
+                expect(service.getCurrentCart()).toEqual(mockOrder);
             });
 
-            const req = httpMock.expectOne('https://localhost:8443/api/products/prod-123');
-            req.flush(productWithNulls);
+            it('should handle no cart found (204)', () => {
+                service.loadCart('user-456').subscribe(result => {
+                    expect(result).toBeNull();
+                });
+
+                const req = httpMock.expectOne('https://localhost:8443/api/orders/user/user-456/cart');
+                req.flush(null, { status: 204, statusText: 'No Content' });
+            });
         });
 
-        it('should handle HTTP client connection timeout', () => {
-            service.getAllProducts(0, 10).subscribe(
-                () => fail('should have timed out'),
-                (error: any) => {
-                    expect(error).toBeDefined();
-                }
-            );
+        describe('getActiveCart()', () => {
+            it('should return cart when exists', () => {
+                service.getActiveCart('user-456').subscribe(result => {
+                    expect(result).toEqual(mockOrder);
+                });
 
-            const req = httpMock.expectOne(request =>
-                request.url.includes('/api/products')
-            );
-            req.error(new ProgressEvent('Connection timeout'));
+                const req = httpMock.expectOne('https://localhost:8443/api/orders/user/user-456/cart');
+                req.flush(mockOrder);
+            });
+
+            it('should return null when no cart (404)', () => {
+                service.getActiveCart('user-456').subscribe(result => {
+                    expect(result).toBeNull();
+                });
+
+                const req = httpMock.expectOne('https://localhost:8443/api/orders/user/user-456/cart');
+                req.flush('Not Found', { status: 404, statusText: 'Not Found' });
+            });
+        });
+
+        describe('getOrCreateCart()', () => {
+            it('should return existing cart if available', () => {
+                service.getOrCreateCart('user-456', '123 Main St').subscribe(result => {
+                    expect(result).toEqual(mockOrder);
+                });
+
+                const req = httpMock.expectOne('https://localhost:8443/api/orders/user/user-456/cart');
+                req.flush(mockOrder);
+
+                // Should not make a create request
+                httpMock.expectNone('https://localhost:8443/api/orders');
+            });
+
+            it('should create new cart if none exists', () => {
+                service.getOrCreateCart('user-456', '123 Main St').subscribe(result => {
+                    expect(result).toEqual(mockOrder);
+                });
+
+                // First request - check for existing cart
+                const getReq = httpMock.expectOne('https://localhost:8443/api/orders/user/user-456/cart');
+                getReq.flush(null, { status: 404, statusText: 'Not Found' });
+
+                // Second request - create new cart
+                const postReq = httpMock.expectOne('https://localhost:8443/api/orders');
+                expect(postReq.request.method).toBe('POST');
+                postReq.flush(mockOrder);
+            });
+        });
+
+        describe('clearCart()', () => {
+            it('should set cart subject to null', () => {
+                service.cartSubject.next(mockOrder);
+                expect(service.getCurrentCart()).toBeTruthy();
+
+                service.clearCart();
+
+                expect(service.getCurrentCart()).toBeNull();
+            });
+        });
+
+        describe('getCartItemCount()', () => {
+            it('should return 0 when no cart', () => {
+                expect(service.getCartItemCount()).toBe(0);
+            });
+
+            it('should return total quantity of items', () => {
+                const cartWithItems: Order = {
+                    ...mockOrder,
+                    items: [
+                        { productId: 'prod-1', quantity: 3 },
+                        { productId: 'prod-2', quantity: 2 }
+                    ]
+                };
+                service.cartSubject.next(cartWithItems);
+
+                expect(service.getCartItemCount()).toBe(5);
+            });
+        });
+    });
+
+    // ============ Observable Tests ============
+    describe('Observables', () => {
+        it('cart$ should emit cart changes', (done) => {
+            const emittedValues: (Order | null)[] = [];
+
+            service.cart$.subscribe(value => {
+                emittedValues.push(value);
+                if (emittedValues.length === 2) {
+                    expect(emittedValues[0]).toBeNull();
+                    expect(emittedValues[1]).toEqual(mockOrder);
+                    done();
+                }
+            });
+
+            service.cartSubject.next(mockOrder);
+        });
+
+        it('cartItemCount$ should emit item count changes', (done) => {
+            const emittedCounts: number[] = [];
+
+            service.cartItemCount$.subscribe(count => {
+                emittedCounts.push(count);
+                if (emittedCounts.length === 2) {
+                    expect(emittedCounts[0]).toBe(0);
+                    expect(emittedCounts[1]).toBe(1);
+                    done();
+                }
+            });
+
+            service.cartSubject.next(mockOrder);
         });
     });
 });
