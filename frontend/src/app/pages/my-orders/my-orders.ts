@@ -36,6 +36,7 @@ export class MyOrders implements OnInit {
     totalElements = 0;
     isLoading = true;
     userId: string | null = null;
+    userRole: string | null = null;
     productDetails: Record<string, ProductDetailDTO> = {};
 
     constructor(
@@ -48,6 +49,7 @@ export class MyOrders implements OnInit {
         this.authService.currentUser$.subscribe(user => {
             if (user?.id) {
                 this.userId = user.id;
+                this.userRole = user.role || null;
                 this.fetchOrders();
             }
         });
@@ -60,7 +62,9 @@ export class MyOrders implements OnInit {
         this.orderService.getUserOrders(this.userId, this.pageIndex, this.pageSize)
             .subscribe({
                 next: (page: Page<Order>) => {
+                    console.log('Fetched orders page:', page);
                     this.orders = page.content.filter(order => order.status !== OrderStatus.PENDING);
+                    console.log('Filtered orders (excluding PENDING):', this.orders);
                     this.totalElements = page.totalElements;
                     this.populateProductDetails(this.orders);
                     this.isLoading = false;
@@ -194,13 +198,13 @@ export class MyOrders implements OnInit {
         if (item.imageUrl) {
             return `https://localhost:8443${item.imageUrl}`;
         }
-
+        
         // Fallback to product details
         const detail = this.productDetails[item.productId];
         if (detail && detail.media && detail.media.length > 0) {
             return `https://localhost:8443${detail.media[0].fileUrl}`;
         }
-
+        
         return 'https://localhost:8443/api/media/files/placeholder.jpg';
     }
 
@@ -224,5 +228,24 @@ export class MyOrders implements OnInit {
             },
             error: (err) => console.error('Failed to fetch product details for orders:', err)
         });
+    }
+
+    /**
+     * Check if user can perform order actions (cancel, remove, reorder)
+     * Only CLIENT and ADMIN roles can perform these actions, not SELLER
+     */
+    canPerformActions(): boolean {
+        return this.userRole !== null && 
+               (this.userRole === 'CLIENT' || this.userRole === 'ADMIN');
+    }
+
+    /**
+     * Get the appropriate empty state message based on user role
+     */
+    getEmptyStateMessage(): string {
+        if (this.userRole === 'SELLER') {
+            return "Nobody has ordered your products yet.";
+        }
+        return "You haven't placed any orders yet.";
     }
 }

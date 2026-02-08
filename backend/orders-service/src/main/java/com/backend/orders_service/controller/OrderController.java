@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.common.dto.Role;
 import com.backend.orders_service.dto.CheckoutRequest;
 import com.backend.orders_service.dto.CreateOrderRequest;
 import com.backend.orders_service.dto.UpdateOrderStatusRequest;
@@ -24,6 +26,7 @@ import com.backend.orders_service.model.Order;
 import com.backend.orders_service.model.OrderItem;
 import com.backend.orders_service.service.OrderService;
 import com.backend.orders_service.service.OrderStatsService;
+import com.backend.orders_service.service.SellerOrderService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -36,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 public class OrderController {
     private final OrderService orderService;
     private final OrderStatsService orderStatsService;
+    private final SellerOrderService sellerOrderService;
 
     private static final String USER_ID_HEADER = "X-User-ID";
     private static final String USER_ROLE_HEADER = "X-User-Role";
@@ -84,20 +88,26 @@ public class OrderController {
     }
 
     @GetMapping("/user/{userId}")
-    public Page<Order> getUserOrders(@PathVariable String userId,
+    public Object getUserOrders(@PathVariable String userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             HttpServletRequest request) {
 
-        // Check authorization - only allow if requesting user is the same as userId or
-        // is admin
-        String requestingUserId = request.getHeader(USER_ID_HEADER);
-        String userRole = request.getHeader(USER_ROLE_HEADER);
+        // Get user role from header
+        String userRole = request.getHeader("X-User-Role");
+        String requestingUserId = request.getHeader("X-User-ID");
 
+        // Check authorization
         if (!isAdmin(userRole) && !requestingUserId.equals(userId)) {
             return Page.empty();
         }
 
+        // If user is SELLER, get seller orders
+        if (userRole != null && userRole.contains(Role.SELLER.toString())) {
+            return sellerOrderService.getSellerOrders(userId, page, size);
+        }
+
+        // Otherwise, get client orders (default behavior)
         return orderService.getOrdersByUserId(userId, page, size);
     }
 
@@ -163,6 +173,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{orderId}")
+    @PreAuthorize("hasRole('ROLE_CLIENT') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<?> cancel(@PathVariable String orderId, HttpServletRequest request) {
         Order order = orderService.getOrderById(orderId);
         if (order == null) {
@@ -190,6 +201,7 @@ public class OrderController {
     }
 
     @PostMapping("/{orderId}/redo")
+    @PreAuthorize("hasRole('ROLE_CLIENT') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<?> redo(@PathVariable String orderId, HttpServletRequest request) {
         Order order = orderService.getOrderById(orderId);
         if (order == null) {
@@ -302,6 +314,7 @@ public class OrderController {
     }
 
     @PutMapping("/{orderId}/remove")
+    @PreAuthorize("hasRole('ROLE_CLIENT') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<?> removeOrder(@PathVariable String orderId, HttpServletRequest request) {
         Order order = orderService.getOrderById(orderId);
         if (order == null) {
