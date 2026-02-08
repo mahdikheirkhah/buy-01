@@ -29,13 +29,53 @@ export class OrderService {
     }
 
     getOrderById(orderId: string): Observable<Order> {
-        return this.http.get<Order>(`${this.orderApiUrl}/${orderId}`, { withCredentials: true });
+        console.log('[OrderService] Getting order detail - orderId:', orderId);
+        return this.http.get<Order>(`${this.orderApiUrl}/${orderId}`, { withCredentials: true }).pipe(
+            tap((response) => {
+                console.log('[OrderService] Order detail received successfully:', response);
+            }),
+            catchError((err) => {
+                console.error('[OrderService] Error getting order detail:', err);
+                throw err;
+            })
+        );
     }
 
-    getUserOrders(userId: string, page: number, size: number): Observable<Page<Order>> {
+    getUserOrders(
+        userId: string,
+        page: number,
+        size: number,
+        keyword?: string,
+        minPrice?: number,
+        maxPrice?: number,
+        minUpdateDate?: string,
+        maxUpdateDate?: string,
+        statuses?: string[]
+    ): Observable<Page<Order>> {
         let params = new HttpParams()
             .set('page', page.toString())
             .set('size', size.toString());
+
+        if (keyword && keyword.trim()) {
+            params = params.set('keyword', keyword);
+        }
+        if (minPrice !== null && minPrice !== undefined) {
+            params = params.set('minPrice', minPrice.toString());
+        }
+        if (maxPrice !== null && maxPrice !== undefined) {
+            params = params.set('maxPrice', maxPrice.toString());
+        }
+        if (minUpdateDate && minUpdateDate.trim()) {
+            params = params.set('minUpdateDate', minUpdateDate);
+        }
+        if (maxUpdateDate && maxUpdateDate.trim()) {
+            params = params.set('maxUpdateDate', maxUpdateDate);
+        }
+        if (statuses && statuses.length > 0) {
+            statuses.forEach(status => {
+                params = params.append('statuses', status);
+            });
+        }
 
         return this.http.get<Page<Order>>(`${this.orderApiUrl}/user/${userId}`, {
             withCredentials: true,
