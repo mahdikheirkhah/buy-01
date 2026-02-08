@@ -30,13 +30,21 @@ export class OrderDetail implements OnInit {
     isLoading = true;
     orderId: string | null = null;
     productDetails: Record<string, ProductDetailDTO> = {};
+    isSeller = false;
 
     constructor(
         private orderService: OrderService,
         private productService: ProductService,
         private activatedRoute: ActivatedRoute,
         private router: Router
-    ) { }
+    ) {
+        // Check if user is a seller from session storage or localStorage
+        const userRole = sessionStorage.getItem('userRole') || localStorage.getItem('userRole') || '';
+        this.isSeller = userRole.includes('SELLER');
+        console.log('[OrderDetail] Component initialized');
+        console.log('[OrderDetail] userRole from storage:', userRole);
+        console.log('[OrderDetail] isSeller:', this.isSeller);
+    }
 
     ngOnInit(): void {
         this.activatedRoute.paramMap.subscribe(params => {
@@ -50,9 +58,13 @@ export class OrderDetail implements OnInit {
     loadOrderDetail(): void {
         if (!this.orderId) return;
 
+        console.log('[OrderDetail] Starting loadOrderDetail - orderId:', this.orderId, 'isSeller:', this.isSeller);
         this.isLoading = true;
         this.orderService.getOrderById(this.orderId).subscribe({
             next: (order) => {
+                console.log('[OrderDetail] SUCCESS - Order loaded successfully:', order);
+                console.log('[OrderDetail] Order has', order.items ? order.items.length : 0, 'items');
+                console.log('[OrderDetail] Order type - Has shippingAddress:', !!order.shippingAddress, 'Has paymentMethod:', !!order.paymentMethod);
                 this.order = order;
                 if (order && order.items) {
                     this.populateProductDetails(order.items);
@@ -60,8 +72,22 @@ export class OrderDetail implements OnInit {
                 this.isLoading = false;
             },
             error: (err) => {
-                console.error('Failed to load order:', err);
+                console.error('[OrderDetail] ERROR - Failed to load order detail');
+                console.error('[OrderDetail] Status:', err.status);
+                console.error('[OrderDetail] Status text:', err.statusText);
+                console.error('[OrderDetail] Message:', err.message);
+                console.error('[OrderDetail] Error body:', err.error);
+                console.error('[OrderDetail] Full error:', err);
                 this.isLoading = false;
+
+                if (err.status === 403) {
+                    console.error('[OrderDetail] 403 FORBIDDEN - User does not have permission to view this order');
+                    alert('Access Denied: You don\'t have permission to view this order.');
+                } else if (err.status === 404) {
+                    alert('Order not found.');
+                } else {
+                    alert('Failed to load order details. Please try again.');
+                }
             }
         });
     }
@@ -172,13 +198,13 @@ export class OrderDetail implements OnInit {
         if (item.imageUrl) {
             return `https://localhost:8443${item.imageUrl}`;
         }
-        
+
         // Fallback to product details
         const detail = this.productDetails[item.productId];
         if (detail && detail.media && detail.media.length > 0) {
             return `https://localhost:8443${detail.media[0].fileUrl}`;
         }
-        
+
         return 'https://localhost:8443/api/media/files/placeholder.jpg';
     }
 

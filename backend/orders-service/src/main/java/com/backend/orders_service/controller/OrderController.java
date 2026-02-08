@@ -28,6 +28,7 @@ import com.backend.orders_service.model.OrderStatus;
 import com.backend.orders_service.service.OrderSearchService;
 import com.backend.orders_service.service.OrderService;
 import com.backend.orders_service.service.OrderStatsService;
+import com.backend.orders_service.service.SellerOrderService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

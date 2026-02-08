@@ -37,11 +37,12 @@
               {{ order.status }}
             </mat-chip>
           </div>
-          <div class="summary-item">
+          <!-- Only show shipping address and payment method for clients, not sellers -->
+          <div class="summary-item" *ngIf="!isSeller && order.shippingAddress">
             <span class="label">Shipping Address</span>
             <p class="value">{{ order.shippingAddress }}</p>
           </div>
-          <div class="summary-item">
+          <div class="summary-item" *ngIf="!isSeller && order.paymentMethod">
             <span class="label">Payment Method</span>
             <p class="value">{{ order.paymentMethod }}</p>
           </div>
