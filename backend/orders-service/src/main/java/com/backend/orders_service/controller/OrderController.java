@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,25 +18,31 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.common.dto.Role;
 import com.backend.orders_service.dto.CheckoutRequest;
 import com.backend.orders_service.dto.CreateOrderRequest;
 import com.backend.orders_service.dto.UpdateOrderStatusRequest;
 import com.backend.orders_service.model.Order;
 import com.backend.orders_service.model.OrderItem;
+import com.backend.orders_service.model.OrderStatus;
+import com.backend.orders_service.service.OrderSearchService;
 import com.backend.orders_service.service.OrderService;
 import com.backend.orders_service.service.OrderStatsService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
 @Validated
+@Slf4j
 public class OrderController {
     private final OrderService orderService;
     private final OrderStatsService orderStatsService;
+    private final OrderSearchService orderSearchService;
 
     private static final String USER_ID_HEADER = "X-User-ID";
     private static final String USER_ROLE_HEADER = "X-User-Role";
@@ -69,36 +76,114 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<Order> getOrderById(@PathVariable String orderId, HttpServletRequest request) {
-        Order o = orderService.getOrderById(orderId);
-        if (o == null) {
+    public ResponseEntity<?> getOrderById(@PathVariable String orderId, HttpServletRequest request) {
+        log.info("=== ORDER DETAIL REQUEST START ===");
+        log.info("orderId: {}", orderId);
+
+        // Log all headers for debugging
+        String userRole = request.getHeader(USER_ROLE_HEADER);
+        String requestingUserId = request.getHeader(USER_ID_HEADER);
+        log.info("X-User-Role header: '{}'", userRole);
+        log.info("X-User-ID header: '{}'", requestingUserId);
+
+        Order order = orderService.getOrderById(orderId);
+        if (order == null) {
+            log.warn("Order {} not found", orderId);
             return ResponseEntity.notFound().build();
         }
 
-        // Check authorization
-        if (!hasAccessToOrder(o, request)) {
+        log.info("Order found with {} items", order.getItems().size());
+
+        // Handle seller order detail - check for both "ROLE_SELLER" and "SELLER"
+        boolean isSeller = userRole != null && (userRole.equalsIgnoreCase("ROLE_SELLER")
+                || userRole.equalsIgnoreCase("SELLER") || userRole.contains("SELLER"));
+
+        log.info("Is seller check - userRole: '{}', isSeller: {}", userRole, isSeller);
+
+        if (isSeller) {
+            log.info("Processing as SELLER - Seller ID: {} requesting order detail for order {}", requestingUserId,
+                    orderId);
+
+            // Get seller's view of the order (only their items)
+            com.backend.orders_service.dto.SellerOrderDTO sellerOrderDetail = orderSearchService
+                    .getSellerOrderDetail(orderId, requestingUserId);
+
+            log.info("SellerOrderDTO result: {}", sellerOrderDetail == null ? "NULL"
+                    : "NOT NULL with " + sellerOrderDetail.getItems().size() + " items");
+
+            if (sellerOrderDetail == null) {
+                log.warn("UNAUTHORIZED - Seller {} has NO items in order {} - returning 403 FORBIDDEN",
+                        requestingUserId, orderId);
+                log.info("=== ORDER DETAIL REQUEST END (FORBIDDEN) ===");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                        java.util.Map.of("error", "You don't have permission to view this order"));
+            }
+
+            log.info("AUTHORIZED - Returning order detail for seller {} with {} items", requestingUserId,
+                    sellerOrderDetail.getItems().size());
+            log.info("=== ORDER DETAIL REQUEST END (SUCCESS) ===");
+            return ResponseEntity.ok(sellerOrderDetail);
+        }
+
+        log.info("Processing as CLIENT - Client {} requesting order detail", requestingUserId);
+        // Handle client order detail
+        if (!hasAccessToOrder(order, request)) {
+            log.warn("CLIENT UNAUTHORIZED - {} does not own order {}", requestingUserId, orderId);
+            log.info("=== ORDER DETAIL REQUEST END (FORBIDDEN) ===");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        return ResponseEntity.ok(o);
+        log.info("CLIENT AUTHORIZED - Returning full order detail");
+        log.info("=== ORDER DETAIL REQUEST END (SUCCESS) ===");
+        return ResponseEntity.ok(order);
     }
 
     @GetMapping("/user/{userId}")
-    public Page<Order> getUserOrders(@PathVariable String userId,
+    public Object getUserOrders(@PathVariable String userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String minUpdateDate,
+            @RequestParam(required = false) String maxUpdateDate,
+            @RequestParam(required = false) List<OrderStatus> statuses,
             HttpServletRequest request) {
 
-        // Check authorization - only allow if requesting user is the same as userId or
-        // is admin
-        String requestingUserId = request.getHeader(USER_ID_HEADER);
-        String userRole = request.getHeader(USER_ROLE_HEADER);
+        // Get user role from header
+        String userRole = request.getHeader("X-User-Role");
+        String requestingUserId = request.getHeader("X-User-ID");
 
+        // Check authorization
         if (!isAdmin(userRole) && !requestingUserId.equals(userId)) {
             return Page.empty();
         }
 
-        return orderService.getOrdersByUserId(userId, page, size);
+        // If user is SELLER, get seller orders with search/filters
+        if (userRole != null && userRole.contains(Role.SELLER.toString())) {
+            return orderSearchService.searchAndFilterSellerOrders(
+                    userId,
+                    keyword,
+                    minPrice,
+                    maxPrice,
+                    minUpdateDate,
+                    maxUpdateDate,
+                    statuses,
+                    page,
+                    size);
+        }
+
+        // Otherwise, get client orders with search/filters (default behavior)
+        return orderSearchService.searchAndFilterOrders(
+                userId,
+                keyword,
+                minPrice,
+                maxPrice,
+                minUpdateDate,
+                maxUpdateDate,
+                statuses,
+                page,
+                size);
     }
 
     @GetMapping("/user/{userId}/cart")
@@ -120,6 +205,7 @@ public class OrderController {
      * Only accessible from internal services
      */
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ROLE_ADMIN')") // Restrict to admin or internal services
     public ResponseEntity<List<Order>> getAllOrders() {
         List<Order> allOrders = orderService.getAllOrders();
         return ResponseEntity.ok(allOrders);
@@ -163,6 +249,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{orderId}")
+    @PreAuthorize("hasRole('ROLE_CLIENT') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<?> cancel(@PathVariable String orderId, HttpServletRequest request) {
         Order order = orderService.getOrderById(orderId);
         if (order == null) {
@@ -190,6 +277,7 @@ public class OrderController {
     }
 
     @PostMapping("/{orderId}/redo")
+    @PreAuthorize("hasRole('ROLE_CLIENT') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<?> redo(@PathVariable String orderId, HttpServletRequest request) {
         Order order = orderService.getOrderById(orderId);
         if (order == null) {
@@ -302,6 +390,7 @@ public class OrderController {
     }
 
     @PutMapping("/{orderId}/remove")
+    @PreAuthorize("hasRole('ROLE_CLIENT') || hasRole('ROLE_ADMIN')")
     public ResponseEntity<?> removeOrder(@PathVariable String orderId, HttpServletRequest request) {
         Order order = orderService.getOrderById(orderId);
         if (order == null) {
