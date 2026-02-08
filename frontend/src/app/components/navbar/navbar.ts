@@ -41,11 +41,11 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Load cart when user is available
+    // Load cart when user is available (only for clients, not sellers)
     this.currentUser$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(user => {
-      if (user && user.id) {
+      if (user && user.id && user.role === 'CLIENT') {
         console.log('[Navbar] Loading cart for user:', user.id);
         this.orderService.loadCart(user.id).pipe(
           takeUntil(this.destroy$)

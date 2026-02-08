@@ -45,7 +45,7 @@ export class Cart implements OnInit {
 
     ngOnInit(): void {
         this.authService.currentUser$.subscribe(user => {
-            if (user?.id) {
+            if (user?.id && user.role === 'CLIENT') {
                 this.userId = user.id;
                 // Fetch fresh cart data from backend when cart page is accessed
                 this.loadCart();

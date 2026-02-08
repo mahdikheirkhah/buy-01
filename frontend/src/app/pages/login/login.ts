@@ -25,13 +25,8 @@ export class LoginComponent {
         this.authService.fetchCurrentUser().subscribe({
           next: (user) => {
             console.log('User role:', user.role);
-            // Route based on user role
-            if (user.role === 'SELLER') {
-              this.router.navigate(['/seller-dashboard']);
-            } else {
-              // Default fallback for CLIENT and other roles
-              this.router.navigate(['/home']);
-            }
+            // Route all authenticated users to home
+            this.router.navigate(['/home']);
           },
           error: (err) => {
             console.error('Failed to fetch user role', err);
