@@ -368,3 +368,258 @@ mat-paginator {
   color: #333;
   font-size: 0.95rem;
 }
+
+/* MAIN STYLES - FIX FOR DESKTOP AND ALL SIZES */
+
+.my-orders-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+/* Search and Filter Styles */
+.search-filter-container {
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  box-sizing: border-box; /* IMPORTANT: Add this */
+}
+
+.search-box {
+  margin-bottom: 0.75rem;
+  width: 100%;
+  box-sizing: border-box; /* IMPORTANT: Add this */
+}
+
+.search-input {
+  width: 100%;
+  box-sizing: border-box; /* IMPORTANT: Add this */
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.filter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.85rem;
+}
+
+.filter-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+  box-sizing: border-box; /* IMPORTANT: Add this */
+}
+
+.filter-input {
+  width: 100%;
+  box-sizing: border-box; /* IMPORTANT: Add this */
+  padding: 0.5rem 0.6rem;
+  font-size: 0.85rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.status-checkboxes {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.status-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #333;
+}
+
+.status-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.button-group {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.btn-search,
+.btn-clear {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-search {
+  background-color: var(--navy);
+  color: white;
+}
+
+.btn-search:hover {
+  background-color: #001f4d;
+  box-shadow: 0 4px 12px rgba(0, 51, 102, 0.3);
+}
+
+.btn-clear {
+  background-color: #f0f0f0;
+  color: var(--navy);
+  border: 1px solid #ddd;
+}
+
+.btn-clear:hover {
+  background-color: #e6e6e6;
+  border-color: var(--navy);
+}
+
+.error-message {
+  color: #d32f2f;
+  padding: 0.75rem 1rem;
+  background-color: #ffebee;
+  border-left: 4px solid #d32f2f;
+  border-radius: 4px;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+
+
+/* Mobile layout fixes for iPhone SE and smaller screens */
+@media (max-width: 480px) {
+  .my-orders-container {
+    padding: 0.75rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .search-filter-container {
+    padding: 0.5rem;
+  }
+
+  .search-box {
+    margin-bottom: 0.5rem;
+  }
+
+  .search-input {
+    font-size: 1rem;
+    padding: 0.5rem;
+  }
+
+  .filter-controls {
+    gap: 0.4rem;
+  }
+
+  .filter-group {
+    gap: 0.2rem;
+  }
+
+  .filter-group label {
+    font-size: 0.8rem;
+  }
+
+  .filter-inputs {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+
+  .filter-input {
+    font-size: 1rem;
+    padding: 0.5rem;
+  }
+
+  .status-checkboxes {
+    gap: 0.3rem;
+  }
+
+  .status-checkbox {
+    font-size: 0.75rem;
+    gap: 0.3rem;
+  }
+
+  .status-checkbox input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+  }
+
+  .button-group {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .btn-search,
+  .btn-clear {
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .order-card mat-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .order-card mat-chip-set {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 375px) {
+  .filter-inputs {
+    gap: 0.2rem;
+  }
+
+  .filter-input {
+    padding: 0.4rem;
+  }
+}
