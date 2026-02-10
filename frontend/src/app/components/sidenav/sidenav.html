@@ -8,12 +8,12 @@
     <mat-icon matListItemIcon>account_circle</mat-icon>
     <span matListItemTitle>My Profile</span>
   </a>
-  
+
   <a mat-list-item routerLink="/my-stats" (click)="closeSidenav.emit()">
     <mat-icon matListItemIcon>bar_chart</mat-icon>
     <span matListItemTitle>My Statistics</span>
   </a>
-  
+
   <ng-container *ngIf="!isSeller()">
     <a mat-list-item routerLink="/cart" (click)="closeSidenav.emit()">
       <mat-icon matListItemIcon>shopping_cart</mat-icon>
@@ -24,20 +24,24 @@
       <span matListItemTitle>My Orders</span>
     </a>
   </ng-container>
-  
+
   <ng-container *ngIf="isSeller()">
     <a mat-list-item routerLink="/my-products" (click)="closeSidenav.emit()">
       <mat-icon matListItemIcon>inventory</mat-icon>
       <span matListItemTitle>My Products</span>
+    </a>
+    <a mat-list-item routerLink="/my-orders" (click)="closeSidenav.emit()">
+      <mat-icon matListItemIcon>receipt</mat-icon>
+      <span matListItemTitle>My Orders</span>
     </a>
     <a mat-list-item routerLink="/create-product" (click)="closeSidenav.emit()">
       <mat-icon matListItemIcon>add_box</mat-icon>
       <span matListItemTitle>Create a new product</span>
     </a>
   </ng-container>
-  
+
   <mat-divider></mat-divider>
-  
+
   <a mat-list-item (click)="logout()">
     <mat-icon matListItemIcon>logout</mat-icon>
     <span matListItemTitle>Logout</span>
