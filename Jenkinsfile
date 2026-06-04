@@ -297,7 +297,7 @@ pipeline {
                     echo "🧪 Running backend unit tests..."
 
                     // Note: orders-service excluded - no unit tests yet
-                    def services = ['user-service', 'product-service', 'media-service']
+                    def services = ['user-service', 'product-service', 'media-service', 'orders-service']
                     def failedTests = []
 
                     services.each { service ->
@@ -978,7 +978,7 @@ EOF
                     emailext(
                         subject: "Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                         body: message,
-                        to: 'mohammad.kheirkhah@gritlab.ax',
+                        to: 'mohammad.kheirkhah@gritlab.ax, parisa.rahimi@gritlab.ax',
                         mimeType: 'text/plain'
                     )
                     echo "Email notification sent"
@@ -1003,7 +1003,7 @@ EOF
                     emailext(
                         subject: "Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                         body: message,
-                        to: 'mohammad.kheirkhah@gritlab.ax',
+                        to: 'mohammad.kheirkhah@gritlab.ax, parisa.rahimi@gritlab.ax',
                         mimeType: 'text/plain'
                     )
                     echo "Email notification sent"
